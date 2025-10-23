@@ -1,0 +1,30 @@
+{
+  "name": "builders-info",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build --turbopack",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@react-google-maps/api": "^2.20.7",
+    "firebase": "^12.3.0",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.544.0",
+    "mongoose": "^8.18.2",
+    "next": "15.5.3",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-phone-input-2": "^2.15.1",
+    "swiper": "^12.0.2"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "eslint": "^9",
+    "eslint-config-next": "15.5.3",
+    "tailwindcss": "^4"
+  }
+}
