@@ -343,7 +343,7 @@ export default function PropertyDetailsPage() {
                         <div className="mb-4">
                             <div className="flex items-center gap-2 mb-3">
                                 <ThumbsUp className="w-5 h-5 text-blue-500" />
-                                <h4 className="font-semibold">What&apos;s good</h4>
+                                {/*<h4 className="font-semibold">What&apos;s good</h4>*/}
                             </div>
                             <div className="flex flex-wrap gap-2">
                                 {property.ratings.whatsGood.map((item, i) => (
@@ -361,7 +361,7 @@ export default function PropertyDetailsPage() {
                         <div className="mb-6">
                             <div className="flex items-center gap-2 mb-3">
                                 <ThumbsDown className="w-5 h-5 text-blue-500" />
-                                <h4 className="font-semibold">What&apos;s Bad</h4>
+                                {/*<h4 className="font-semibold">What&apos;s Bad</h4>*/}
                             </div>
                             <div className="flex flex-wrap gap-2">
                                 {property.ratings.whatsBad.map((item, i) => (
@@ -762,7 +762,7 @@ export default function PropertyDetailsPage() {
                                 <div className="mb-6">
                                     <div className="flex items-center gap-2 mb-3">
                                         <ThumbsUp className="w-5 h-5 text-yellow-500" />
-                                        <h4 className="font-semibold">What&apos;s Good</h4>
+                                        {/*<h4 className="font-semibold">What&apos;s Good</h4>*/}
                                     </div>
                                     <div className="flex flex-wrap gap-2">
                                         {property.ratings.whatsGood.map((item, i) => (
@@ -780,7 +780,7 @@ export default function PropertyDetailsPage() {
                                 <div>
                                     <div className="flex items-center gap-2 mb-3">
                                         <ThumbsDown className="w-5 h-5 text-red-500" />
-                                        <h4 className="font-semibold">What&apos;s Bad</h4>
+                                        {/*<h4 className="font-semibold">What&apos;s Bad</h4>*/}
                                     </div>
                                     <div className="flex flex-wrap gap-2">
                                         {property.ratings.whatsBad.map((item, i) => (
