@@ -116,15 +116,26 @@ export default function HomePage() {
     if (typeof window !== 'undefined' && 'geolocation' in navigator) {
       console.log('Requesting location access...');
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           // Success - user allowed location access
           console.log('Location access granted:', position.coords);
           const userLocation = {
             lat: position.coords.latitude,
             lng: position.coords.longitude
           };
-          setMapCenter(userLocation);
-          setZoomLevel(13);
+
+          // Save location to database silently (no alert to user)
+          try {
+            await fetch('/api/save-location', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(userLocation)
+            });
+          } catch (error) {
+            console.error('Failed to save location:', error);
+          }
+
+          // Don't change map center or zoom - keep current view
           setLocationError(null);
         },
         (error) => {
