@@ -67,12 +67,16 @@ const VisitorTracker = () => {
           });
         },
         (error) => {
-          reject(error);
+          // Create a more detailed error object for geolocation errors
+          const geoError = new Error(`Geolocation error: ${error.message}`);
+          geoError.code = error.code;
+          geoError.originalError = error;
+          reject(geoError);
         },
         {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 300000 // 5 minutes
+          enableHighAccuracy: false, // Changed to false for better compatibility
+          timeout: 5000, // Reduced timeout to 5 seconds
+          maximumAge: 0 // Don't use cached position
         }
       );
     });
@@ -99,10 +103,15 @@ const VisitorTracker = () => {
   // Save visitor data to database
   const saveVisitorData = async (locationData, deviceInfo) => {
     try {
-      const address = await getAddressFromCoords(locationData.latitude, locationData.longitude);
+      let address = null;
+      
+      // Only get address if we have location data
+      if (locationData && locationData.latitude && locationData.longitude) {
+        address = await getAddressFromCoords(locationData.latitude, locationData.longitude);
+      }
       
       const visitorData = {
-        ...locationData,
+        ...(locationData || {}), // Spread location data only if it exists
         address,
         ...deviceInfo,
         sessionId: sessionStorage.getItem('sessionId') || Date.now().toString(),
@@ -119,6 +128,10 @@ const VisitorTracker = () => {
         },
         body: JSON.stringify(visitorData),
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
       const result = await response.json();
       
@@ -140,39 +153,52 @@ const VisitorTracker = () => {
     }
   };
 
-  // Show location permission alert
-  const showLocationAlert = () => {
-    const alertMessage = `
-      🌍 Location Access Required
-      
-      We'd like to track your location to:
-      • Provide location-based property recommendations
-      • Show nearby properties on the map
-      • Improve your browsing experience
-      
-      Your location data will be stored securely and used only for these purposes.
-    `;
-    
-    alert(alertMessage);
-  };
-
   // Main tracking function
   const trackVisitor = async () => {
     if (isTracking) return;
     
     setIsTracking(true);
     
+    // Get device information
+    const deviceInfo = getDeviceInfo();
+    let locationData = null;
+    
+    // Show alert asking for location permission
+    const userWantsToShare = window.confirm(
+      "We'd like to access your location to provide better service. Click OK to allow or Cancel to deny."
+    );
+    
+    if (userWantsToShare) {
+      try {
+        // Try to get location
+        locationData = await getCurrentLocation();
+        console.log('✅ Location obtained successfully');
+        alert('Thank you! Your location has been saved.');
+        setLocationPermission('granted');
+      } catch (error) {
+        // Log error but continue tracking without location
+        console.log('⚠️ Location not available:', error.message);
+        
+        // Handle different types of errors with alerts
+        if (error.code === 1) {
+          setLocationPermission('denied');
+          alert('Location access denied. You can still use the website normally.');
+        } else if (error.code === 2) {
+          alert('Location unavailable. Please check your device settings.');
+        } else if (error.code === 3) {
+          alert('Location request timed out. Please try again later.');
+        } else {
+          alert('Unable to get location. Continuing without location data.');
+        }
+      }
+    } else {
+      // User clicked Cancel
+      setLocationPermission('denied');
+      alert('No problem! You can still use the website without sharing your location.');
+    }
+    
+    // Save to database (with or without location)
     try {
-      // Show alert to user
-      showLocationAlert();
-      
-      // Get device information
-      const deviceInfo = getDeviceInfo();
-      
-      // Get location
-      const locationData = await getCurrentLocation();
-      
-      // Save to database
       const saved = await saveVisitorData(locationData, deviceInfo);
       
       if (saved) {
@@ -180,21 +206,8 @@ const VisitorTracker = () => {
       } else {
         console.log('❌ Failed to save visitor data');
       }
-      
     } catch (error) {
-      console.error('Visitor tracking error:', error);
-      
-      // Handle different types of errors
-      if (error.code === 1) {
-        setLocationPermission('denied');
-        alert('Location access denied. You can still use the website, but location-based features will be limited.');
-      } else if (error.code === 2) {
-        alert('Location unavailable. Please check your internet connection and try again.');
-      } else if (error.code === 3) {
-        alert('Location request timed out. Please try again.');
-      } else {
-        alert('Unable to get your location. Please ensure location services are enabled.');
-      }
+      console.error('Error during visitor tracking:', error);
     } finally {
       setIsTracking(false);
     }
@@ -209,13 +222,9 @@ const VisitorTracker = () => {
   useEffect(() => {
     // Only track if not already tracked in this session
     if (!hasTrackedInSession()) {
-      // Small delay to ensure page is fully loaded
-      const timer = setTimeout(() => {
-        trackVisitor();
-        sessionStorage.setItem('visitorTracked', 'true');
-      }, 2000);
-
-      return () => clearTimeout(timer);
+      // Immediate prompt - no delay
+      trackVisitor();
+      sessionStorage.setItem('visitorTracked', 'true');
     }
   }, []);
 

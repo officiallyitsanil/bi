@@ -6,26 +6,32 @@ import {
     BadgeCheck,
     MapPin,
     X,
-    Bookmark,
+    Heart,
     Share2,
     CornerUpRight,
     SquareArrowOutUpRight,
     TriangleAlert,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    Star,
+    ThumbsUp,
+    ThumbsDown
 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
+
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import LoginModal from "./LoginModal";
 
+
+
 export default function PropertyDetailModal({ property, onClose }) {
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+    const [isFavourite, setIsFavourite] = useState(false);
 
     useEffect(() => {
         try {
@@ -33,10 +39,14 @@ export default function PropertyDetailModal({ property, onClose }) {
             if (userJson) {
                 setCurrentUser(JSON.parse(userJson));
             }
+
+            // Check if property is in favourites
+            const favourites = JSON.parse(localStorage.getItem('favourites') || '[]');
+            setIsFavourite(favourites.some(fav => fav.id === property.id));
         } catch (error) {
             console.error("Failed to parse user data from localStorage:", error);
         }
-    }, []);
+    }, [property.id]);
 
     if (!property) return null;
 
@@ -47,10 +57,51 @@ export default function PropertyDetailModal({ property, onClose }) {
         setIsContactModalOpen(false);
     };
 
+    const handleFavouriteToggle = () => {
+        try {
+            const favourites = JSON.parse(localStorage.getItem('favourites') || '[]');
+
+            if (isFavourite) {
+                // Remove from favourites
+                const updatedFavourites = favourites.filter(fav => fav.id !== property.id);
+                localStorage.setItem('favourites', JSON.stringify(updatedFavourites));
+                setIsFavourite(false);
+            } else {
+                // Add to favourites
+                favourites.push(property);
+                localStorage.setItem('favourites', JSON.stringify(favourites));
+                setIsFavourite(true);
+            }
+        } catch (error) {
+            console.error("Failed to update favourites:", error);
+        }
+    };
+
+    const handleShare = async () => {
+        const shareData = {
+            title: `${name} in ${location_district}`,
+            text: `Check out this property: ${name} at ${discountedPrice} in ${layer_location}, ${location_district}`,
+            url: `${window.location.origin}/property-details?id=${property.id}`
+        };
+
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                // Fallback: Copy to clipboard
+                await navigator.clipboard.writeText(shareData.url);
+                alert('Property link copied to clipboard!');
+            }
+        } catch (error) {
+            console.error('Error sharing:', error);
+        }
+    };
+
     const {
-        size = "N/A",
-        price_per_acre = "N/A",
-        total_price = "N/A",
+        name = "N/A",
+        originalPrice = "N/A",
+        discountedPrice = "N/A",
+        additionalPrice = "N/A",
         location_district = "N/A",
         listed_by = "Owner",
         images = [],
@@ -60,21 +111,32 @@ export default function PropertyDetailModal({ property, onClose }) {
         is_verified = false,
         sellerPhoneNumber = "N/A",
         layer_location,
-        createdBy
+        createdBy,
+        amenities = [],
+        ratings = {},
+        reviews = [],
+        floorPlans = {},
+        propertyType = "N/A"
     } = property;
+
+    const displayedAmenities = amenities.slice(0, 8);
+    const displayedReviews = reviews.slice(0, 3);
+    const whatsGood = ratings?.whatsGood || [];
+    const whatsBad = ratings?.whatsBad || [];
+    const floorPlanCategories = Object.keys(floorPlans);
 
     return (
         <div
             role="dialog"
-            className="z-50 bg-white shadow-lg flex max-w-sm flex-col overflow-hidden rounded-2xl p-0 text-left absolute bottom-5 w-[360px] top-[9rem] left-[3.5rem] h-full max-h-[calc(100%-96px-70px)]"
+           className="z-50 bg-white shadow-lg flex max-w-xl md:max-w-sm flex-col overflow-hidden rounded-2xl p-0 text-left absolute bottom-5 w-[420px] md:w-[360px] top-[9rem] left-0 md:left-[3.5rem] h-full max-h-[calc(100%-96px-70px)] max-[425px]:!w-full max-[425px]:!left-0 max-[425px]:!right-0 max-[425px]:!top-0 max-[425px]:!bottom-0 max-[425px]:!max-h-full max-[425px]:!rounded-none"
             tabIndex="-1"
         >
-            <div className="sticky top-0 mx-4 flex flex-row justify-between space-y-0 border-b py-4 pb-2 text-left items-start gap-4 lg:pt-6 bg-white">
+            <div className="sticky top-0 mx-4 flex flex-row justify-between space-y-0 border-b py-4 pb-2 text-left items-start gap-4 lg:pt-6 bg-white max-[375px]:mx-2 max-[375px]:py-3">
                 <div className="flex w-full items-start justify-between">
                     <div className="flex-1">
                         <div className="mb-3 flex w-full items-center justify-between text-left lg:mb-2">
                             <div className="flex items-center gap-1.5">
-                                <div className="text-lg font-semibold text-gray-800 lg:text-xl">{size}</div>
+                                <div className="text-lg font-semibold text-gray-800 lg:text-xl">{name}</div>
                                 {is_verified && <BadgeCheck width="18" height="18" className="text-blue-500 fill-current" />}
                             </div>
                         </div>
@@ -86,10 +148,10 @@ export default function PropertyDetailModal({ property, onClose }) {
                                 </div>
                             </div>
                             <div className="flex items-center gap-1.5">
-                                <span className="ml-[3px] text-sm font-semibold text-gray-800">₹</span>
                                 <div>
-                                    <span className="text-sm font-semibold text-gray-800">{price_per_acre} /acre</span>
-                                    <span className="text-xs font-medium text-gray-800"> (Total - {total_price})</span>
+                                    <span className="text-sm font-semibold text-gray-800">{discountedPrice}</span>
+                                    <span className="text-xs font-medium text-gray-500 line-through ml-2">{originalPrice}</span>
+                                    <span className="text-xs font-medium text-gray-800"> (+{additionalPrice})</span>
                                 </div>
                             </div>
                             <div className="flex items-center gap-1.5">
@@ -106,7 +168,7 @@ export default function PropertyDetailModal({ property, onClose }) {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 pt-0 lg:pt-4">
+            <div className="flex-1 overflow-y-auto p-4 pt-0 lg:pt-4 max-[375px]:p-2">
                 <main>
                     <section className="mb-4">
                         <div className="relative group">
@@ -136,21 +198,47 @@ export default function PropertyDetailModal({ property, onClose }) {
                     </section>
 
                     <section>
-                        <div className="flex gap-4 px-7 justify-around">
+                        <div className="flex gap-4 px-7 justify-around max-[375px]:px-2 max-[375px]:gap-2">
                             <div className="flex flex-1 flex-col items-center gap-2">
-                                <button className="cursor-pointer rounded-full bg-gray-100 p-3"><Bookmark className="w-5 h-5" /></button>
-                                <div className="text-xs text-gray-800">Shortlist</div>
+                                <button
+                                    onClick={handleFavouriteToggle}
+                                    className="cursor-pointer rounded-full bg-gray-100 p-3 hover:bg-gray-200 transition-colors"
+                                >
+                                    <Heart
+                                        className={`w-5 h-5 ${isFavourite ? 'fill-red-500 text-red-500' : 'text-gray-800'}`}
+                                    />
+                                </button>
+                                <div className="text-xs text-gray-800">Favourite</div>
                             </div>
                             <div className="flex flex-1 flex-col items-center gap-2">
-                                <button className="cursor-pointer rounded-full bg-gray-100 p-3"><Share2 className="w-5 h-5" /></button>
+                                <button
+                                    onClick={handleShare}
+                                    className="cursor-pointer rounded-full bg-gray-100 p-3 hover:bg-gray-200 transition-colors"
+                                >
+                                    <Share2 className="w-5 h-5 text-gray-800" />
+                                </button>
                                 <div className="text-xs text-gray-800">Share</div>
                             </div>
                             <div className="flex flex-1 flex-col items-center gap-2">
-                                <a target="_blank" href={`https://maps.google.com/maps?q=${property.coordinates.lat},${property.coordinates.lng}&z=16&t=h`} className="cursor-pointer rounded-full bg-gray-100 p-3"><CornerUpRight className="w-5 h-5" /></a>
+                                <a
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    href={`https://maps.google.com/maps?q=${property.coordinates?.lat || property.position?.lat},${property.coordinates?.lng || property.position?.lng}&z=16&t=h`}
+                                    className="cursor-pointer rounded-full bg-gray-100 p-3 hover:bg-gray-200 transition-colors"
+                                >
+                                    <CornerUpRight className="w-5 h-5 text-gray-800" />
+                                </a>
                                 <div className="text-xs text-gray-800">Directions</div>
                             </div>
                             <div className="flex flex-1 flex-col items-center gap-2">
-                                <a target="_blank" href={`/property-details?id=${property.id}&type=${property.propertyType || 'residential'}`} className="cursor-pointer rounded-full bg-gray-100 p-3"><SquareArrowOutUpRight className="w-5 h-5" /></a>
+                                <a
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    href={`/property-details?id=${property.id}`}
+                                    className="cursor-pointer rounded-full bg-gray-100 p-3 hover:bg-gray-200 transition-colors"
+                                >
+                                    <SquareArrowOutUpRight className="w-5 h-5 text-gray-800" />
+                                </a>
                                 <div className="text-xs text-gray-800">New tab</div>
                             </div>
                         </div>
@@ -177,6 +265,172 @@ export default function PropertyDetailModal({ property, onClose }) {
                         </div>
                     </section>
 
+                    {amenities.length > 0 && (
+                        <section className="my-4">
+                            <div className="shrink-0 h-[1px] w-full mb-4 bg-gray-200"></div>
+                            <h3 className="text-base font-semibold text-gray-800 mb-3">Amenities</h3>
+                            <div className="grid grid-cols-4 gap-3">
+                                {displayedAmenities.map((amenity, index) => (
+                                    <div key={index} className="flex flex-col items-center gap-1.5">
+                                        <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                                            <Image
+                                                src={amenity.image}
+                                                alt={amenity.name}
+                                                width={24}
+                                                height={24}
+                                                className="object-contain"
+                                            />
+                                        </div>
+                                        <span className="text-[10px] text-center text-gray-600 leading-tight">{amenity.name}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            {amenities.length > 8 && (
+                                <a
+                                    href={`/property-details?id=${property.id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-blue-600 hover:underline mt-3 inline-block"
+                                >
+                                    +{amenities.length - 8} more amenities
+                                </a>
+                            )}
+                        </section>
+                    )}
+
+                    {floorPlanCategories.length > 0 && (
+                        <section className="my-4">
+                            <div className="shrink-0 h-[1px] w-full mb-4 bg-gray-200"></div>
+                            <h3 className="text-base font-semibold text-gray-800 mb-3">Property Layout</h3>
+                            <div className="space-y-3">
+                                {floorPlanCategories.slice(0, 2).map((category, index) => (
+                                    <div key={index}>
+                                        <p className="text-xs font-medium text-gray-700 mb-2">{category}</p>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {floorPlans[category].slice(0, 2).map((img, imgIndex) => (
+                                                <Image
+                                                    key={imgIndex}
+                                                    src={img}
+                                                    alt={`${category} layout`}
+                                                    width={150}
+                                                    height={100}
+                                                    className="w-full h-20 object-cover rounded-lg"
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            {floorPlanCategories.length > 2 && (
+                                <a
+                                    href={`/property-details?id=${property.id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-blue-600 hover:underline mt-3 inline-block"
+                                >
+                                    View all layouts
+                                </a>
+                            )}
+                        </section>
+                    )}
+
+                    <section className="my-4">
+                        <div className="shrink-0 h-[1px] w-full mb-4 bg-gray-200"></div>
+                        <h3 className="text-base font-semibold text-gray-800 mb-3">Property Info</h3>
+                        <div className="space-y-2">
+                            <div className="flex gap-2">
+                                <span className="text-sm font-medium text-gray-500">Type</span>
+                                <span className="text-sm font-semibold capitalize text-gray-800">{propertyType}</span>
+                            </div>
+                            <div className="flex gap-2">
+                                <span className="text-sm font-medium text-gray-500">Location</span>
+                                <span className="text-sm font-semibold text-gray-800">{layer_location}, {location_district}</span>
+                            </div>
+                            <div className="flex gap-2">
+                                <span className="text-sm font-medium text-gray-500">Listed by</span>
+                                <span className="text-sm font-semibold text-gray-800">{listed_by}</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    {ratings?.overall && (
+                        <section className="my-4">
+                            <div className="shrink-0 h-[1px] w-full mb-4 bg-gray-200"></div>
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="text-base font-semibold text-gray-800">Ratings & Reviews</h3>
+                                <div className="flex items-center gap-1">
+                                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                                    <span className="text-sm font-semibold text-gray-800">{ratings.overall}</span>
+                                    <span className="text-xs text-gray-500">({ratings.totalRatings})</span>
+                                </div>
+                            </div>
+
+                            {(whatsGood.length > 0 || whatsBad.length > 0) && (
+                                <div className="mb-4 space-y-3">
+                                    {whatsGood.length > 0 && (
+                                        <div className="bg-green-50 rounded-lg p-3">
+                                            <div className="flex items-center gap-1.5 mb-2">
+                                                <ThumbsUp className="w-4 h-4 text-green-600" />
+                                                <span className="text-xs font-semibold text-green-800">What's Good</span>
+                                            </div>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {whatsGood.slice(0, 3).map((item, index) => (
+                                                    <span key={index} className="text-[10px] bg-white px-2 py-1 rounded-full text-gray-700">
+                                                        {item}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                    {whatsBad.length > 0 && (
+                                        <div className="bg-red-50 rounded-lg p-3">
+                                            <div className="flex items-center gap-1.5 mb-2">
+                                                <ThumbsDown className="w-4 h-4 text-red-600" />
+                                                <span className="text-xs font-semibold text-red-800">What's Bad</span>
+                                            </div>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {whatsBad.slice(0, 2).map((item, index) => (
+                                                    <span key={index} className="text-[10px] bg-white px-2 py-1 rounded-full text-gray-700">
+                                                        {item}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {displayedReviews.length > 0 && (
+                                <div className="space-y-3">
+                                    {displayedReviews.map((review, index) => (
+                                        <div key={index} className="bg-gray-50 rounded-lg p-3">
+                                            <div className="flex items-center justify-between mb-1.5">
+                                                <span className="text-xs font-medium text-gray-800">{review.user}</span>
+                                                <div className="flex items-center gap-1">
+                                                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                                    <span className="text-xs font-medium text-gray-700">{review.rating}</span>
+                                                </div>
+                                            </div>
+                                            <p className="text-xs text-gray-600 mb-1">{review.comment}</p>
+                                            <span className="text-[10px] text-gray-500">{review.date}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {reviews.length > 3 && (
+                                <a
+                                    href={`/property-details?id=${property.id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-blue-600 hover:underline mt-3 inline-block"
+                                >
+                                    View all {reviews.length} reviews
+                                </a>
+                            )}
+                        </section>
+                    )}
+
                     <div className="border bg-card text-card-foreground shadow-sm my-4 rounded-2xl border-gray-200 p-4">
                         <div className="space-y-2">
                             <div>
@@ -195,19 +449,25 @@ export default function PropertyDetailModal({ property, onClose }) {
                 </main>
             </div>
 
-            <div className="sticky bottom-0 z-20 w-full bg-white p-4 shadow-[0_-2px_10px_rgba(0,0,0,0.1)]">
-                <button
-                    onClick={() => {
-                        if (!currentUser) {
-                            setIsLoginModalOpen(true);
-                        } else {
-                            setIsContactModalOpen(true);
-                        }
-                    }}
-                    className="inline-flex items-center text-wrap h-auto justify-center gap-2 rounded-full bg-yellow-400 px-4 py-2 text-sm font-medium text-gray-800 w-full"
-                >
-                    Contact owner
-                </button>
+            <div className="sticky bottom-0 z-20 w-full bg-white p-4 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] max-[375px]:p-2">
+                <div className="flex gap-3 max-[375px]:gap-2">
+                    <button className="flex-1 border-2 border-green-500 text-green-500 py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-green-50 cursor-pointer transition-colors">
+                        <img
+                            src="/property-details/whatsapp.png"
+                            alt="WhatsApp"
+                            className="w-4 h-4 object-contain"
+                        />
+                        WhatsApp
+                    </button>
+                    <button className="flex-1 bg-green-500 text-white py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors">
+                        <img
+                            src="/property-details/call-icon.png"
+                            alt="Call"
+                            className="w-4 h-4 object-contain"
+                        />
+                        Request for call
+                    </button>
+                </div>
             </div>
 
             {isLoginModalOpen && (

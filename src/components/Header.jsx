@@ -33,7 +33,7 @@ export default function Header() {
         { href: '/', label: 'Map-View', icon: <div className="bg-yellow-300 w-2 h-2 rounded-full"></div> },
         { href: '/commercial', label: 'Commercial' },
         { href: '/residential', label: 'Residential' },
-        { href: '/subscribe', label: 'Builders', icon: <Image src="/crown.svg" alt="Crown" width={24} height={24} /> },
+        { href: '/builders', label: 'Builders', icon: <Image src="/crown.svg" alt="Crown" width={24} height={24} /> },
     ];
 
     const handleLoginSuccess = (userData) => {

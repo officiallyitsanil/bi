@@ -4,11 +4,11 @@ const VisitorSchema = new mongoose.Schema({
   // Location data
   latitude: {
     type: Number,
-    required: true
+    required: false
   },
   longitude: {
     type: Number,
-    required: true
+    required: false
   },
   accuracy: {
     type: Number

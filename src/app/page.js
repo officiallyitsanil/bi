@@ -1,14 +1,14 @@
 "use client";
 import MenuSideBar from '@/components/MenuSideBar';
 import FiltersModal from '@/components/FiltersModal';
-import LayersModal from '@/components/LayersModal';
-import { Search, X, Plus, Share2, SlidersHorizontal, Layers, Copy, CopyCheck, Menu, ArrowRight, List } from 'lucide-react';
+import { Search, X, Plus, Share2, SlidersHorizontal, Copy, CopyCheck, Menu, List } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from "next/dynamic";
 import PropertyDetailModal from '@/components/PropertyDetailModal';
 import VisitorTracker from '@/components/VisitorTracker';
+import { propertiesData } from '@/data/properties';
 
 const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 
@@ -38,20 +38,23 @@ export default function HomePage() {
   const [activeModal, setActiveModal] = useState(null);
   const [modalPos, setModalPos] = useState({ top: 0, right: 0 });
   const [copied, setCopied] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
 
-  const [layersProceeded, setLayersProceeded] = useState(false);
+
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isPropertyListVisible, setPropertyListVisible] = useState(false);
 
-  const [mapCenter, setMapCenter] = useState({ lat: 20.5937, lng: 78.9629 });
+  const [mapCenter, setMapCenter] = useState({ lat: 17.4200, lng: 78.4867 });
   const [markers, setMarkers] = useState([]);
   const [selectedCity, setSelectedCity] = useState(null);
   const [selectedMarker, setSelectedMarker] = useState(null);
 
-  const [zoomLevel, setZoomLevel] = useState(5);
+  const [zoomLevel, setZoomLevel] = useState(11);
+  const [, setLocationError] = useState(null);
   const [propertyTypeFilter, setPropertyTypeFilter] = useState('all'); // 'all', 'commercial', 'residential'
-  
+
   const [filters, setFilters] = useState({
     type: {
       commercial: false,
@@ -81,116 +84,141 @@ export default function HomePage() {
     }
   }, [filters.type]);
 
+  // Hide suggestions when clicking outside
   useEffect(() => {
-    const fetchProperties = async () => {
-      try {
-        // Fetch both residential and commercial properties
-        const [residentialResponse, commercialResponse] = await Promise.all([
-          fetch('/api/residential'),
-          fetch('/api/commercial').catch(() => ({ json: () => ({ success: false }) })) // Fallback if commercial API doesn't exist
-        ]);
-
-        const residentialResult = await residentialResponse.json();
-        const commercialResult = await commercialResponse.json();
-
-        let allMarkers = [];
-
-        // Process residential properties
-        if (residentialResult.success && residentialResult.data.residentialProperties) {
-          const residentialMarkers = residentialResult.data.residentialProperties
-            .filter(prop => prop.latitude && prop.longitude && 
-                           typeof prop.latitude === 'number' && 
-                           typeof prop.longitude === 'number' &&
-                           !isNaN(prop.latitude) && !isNaN(prop.longitude))
-            .map(prop => {
-              const allImages = Object.values(prop.images || {}).flat().map(img => img.url);
-              return {
-                id: prop._id,
-                propertyType: 'residential',
-                state_name: prop.state,
-                coordinates: {
-                  lat: prop.latitude,
-                  lng: prop.longitude,
-                },
-                position: {
-                  lat: prop.latitude,
-                  lng: prop.longitude,
-                },
-                size: `${prop.landSize} Acres`,
-                price_per_acre: `${prop.pricePerAcreLakhs} Lakh`,
-                total_price: `${prop.totalValue} Lakh`,
-                listed_by: prop.sellerType ? prop.sellerType.charAt(0).toUpperCase() + prop.sellerType.slice(1) : 'N/A',
-                images: allImages.length > 0 ? allImages : [prop.featuredImageUrl || '/placeholder.png'],
-                zoning: prop.zoneType ? prop.zoneType.charAt(0).toUpperCase() + prop.zoneType.slice(1) : 'N/A',
-                approach_road: prop.approachRoad ? 'Available' : 'Not Available',
-                date_added: new Date(prop.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
-                is_verified: prop.physicalVerificationCompleted,
-                sellerPhoneNumber: prop.sellerPhoneNumber,
-                layer_location: prop.state,
-                location_district: prop.state,
-                createdBy: prop.createdBy,
-              };
-            });
-          allMarkers = [...allMarkers, ...residentialMarkers];
-        }
-
-        // Process commercial properties (if API exists)
-        if (commercialResult.success && commercialResult.data.commercialProperties) {
-          const commercialMarkers = commercialResult.data.commercialProperties
-            .filter(prop => prop.latitude && prop.longitude && 
-                           typeof prop.latitude === 'number' && 
-                           typeof prop.longitude === 'number' &&
-                           !isNaN(prop.latitude) && !isNaN(prop.longitude))
-            .map(prop => {
-              const allImages = Object.values(prop.images || {}).flat().map(img => img.url);
-              return {
-                id: prop._id,
-                propertyType: 'commercial',
-                state_name: prop.state,
-                coordinates: {
-                  lat: prop.latitude,
-                  lng: prop.longitude,
-                },
-                position: {
-                  lat: prop.latitude,
-                  lng: prop.longitude,
-                },
-                size: `${prop.landSize} Acres`,
-                price_per_acre: `${prop.pricePerAcreLakhs} Lakh`,
-                total_price: `${prop.totalValue} Lakh`,
-                listed_by: prop.sellerType ? prop.sellerType.charAt(0).toUpperCase() + prop.sellerType.slice(1) : 'N/A',
-                images: allImages.length > 0 ? allImages : [prop.featuredImageUrl || '/placeholder.png'],
-                zoning: prop.zoneType ? prop.zoneType.charAt(0).toUpperCase() + prop.zoneType.slice(1) : 'N/A',
-                approach_road: prop.approachRoad ? 'Available' : 'Not Available',
-                date_added: new Date(prop.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
-                is_verified: prop.physicalVerificationCompleted,
-                sellerPhoneNumber: prop.sellerPhoneNumber,
-                layer_location: prop.state,
-                location_district: prop.state,
-                createdBy: prop.createdBy,
-              };
-            });
-          allMarkers = [...allMarkers, ...commercialMarkers];
-        }
-
-        setMarkers(allMarkers);
-      } catch (error) {
-        console.error("Failed to fetch properties:", error);
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.search-container')) {
+        setShowSuggestions(false);
       }
     };
 
-    fetchProperties();
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const loadProperties = () => {
+      console.log('Loading properties:', propertiesData.length);
+      console.log('Properties data:', propertiesData.map(p => ({
+        id: p.id,
+        name: p.name,
+        position: p.position,
+        coordinates: p.coordinates
+      })));
+      setMarkers(propertiesData);
+    };
+
+    loadProperties();
+  }, []);
+
+  // Get user's location on mount (optional - only if user allows)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'geolocation' in navigator) {
+      console.log('Requesting location access...');
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          // Success - user allowed location access
+          console.log('Location access granted:', position.coords);
+          const userLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          setMapCenter(userLocation);
+          setZoomLevel(13);
+          setLocationError(null);
+        },
+        (error) => {
+          // Error or user denied - just use default location
+          if (error.code === 1) {
+            console.log('User denied location access. Using default location.');
+          } else if (error.code === 2) {
+            console.warn('Location unavailable. Using default location.');
+          } else if (error.code === 3) {
+            console.warn('Location request timeout. Using default location.');
+          }
+          setLocationError(error.message);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    } else {
+      console.log('Geolocation not supported by browser');
+      setLocationError('Geolocation not supported');
+    }
   }, []);
 
   const filtersBtnRef = useRef(null);
-  const layersBtnRef = useRef(null);
   const addBtnRef = useRef(null);
   const shareBtnRef = useRef(null);
+
+  // Generate suggestions based on search query
+  const generateSuggestions = (query) => {
+    if (!query.trim()) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    const uniqueLocations = new Set();
+    const filteredSuggestions = [];
+
+    markers.forEach(marker => {
+      const locations = [
+        marker.state_name,
+        marker.layer_location,
+        marker.location_district
+      ].filter(Boolean);
+
+      locations.forEach(location => {
+        if (location && location.toLowerCase().includes(query.toLowerCase()) && !uniqueLocations.has(location.toLowerCase())) {
+          uniqueLocations.add(location.toLowerCase());
+          filteredSuggestions.push({
+            text: location,
+            marker: marker
+          });
+        }
+      });
+    });
+
+    const finalSuggestions = filteredSuggestions.slice(0, 5);
+    setSuggestions(finalSuggestions); // Limit to 5 suggestions
+    setShowSuggestions(true);
+  };
+
+  const handleSearchInputChange = (e) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    generateSuggestions(value);
+  };
+
+
 
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery) return;
 
+    setShowSuggestions(false);
+
+    // First check if the search query matches any property location
+    const matchingProperty = markers.find(marker =>
+      marker.state_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      marker.layer_location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      marker.location_district?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    if (matchingProperty && matchingProperty.position) {
+      // If found in properties, zoom to that location
+      setMapCenter(matchingProperty.position);
+      setZoomLevel(14);
+      handleMarkerClick(matchingProperty);
+      setSearchQuery("");
+      return;
+    }
+
+    // If not found in properties, use Google Geocoding API
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
     const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchQuery)}&key=${apiKey}`;
 
@@ -202,17 +230,23 @@ export default function HomePage() {
         const { lat, lng } = data.results[0].geometry.location;
         const pos = { lat, lng };
 
-        const newMarker = {
-          id: Date.now(),
+        // Create a red marker for searched location (not in properties)
+        const searchMarker = {
+          id: `search-${Date.now()}`,
           layer_location: data.results[0].formatted_address,
           popup_text: 'This is the location you searched for.',
           position: pos,
+          isSearchResult: true, // Flag to identify search result markers
         };
 
         setZoomLevel(14);
-
         setMapCenter(pos);
-        setMarkers(prevMarkers => [...prevMarkers, newMarker]);
+
+        // Remove previous search markers and add new one
+        setMarkers(prevMarkers => [
+          ...prevMarkers.filter(marker => !marker.isSearchResult),
+          searchMarker
+        ]);
         setSearchQuery("");
       } else {
         console.error("Geocoding failed:", data.status, data.error_message);
@@ -235,15 +269,19 @@ export default function HomePage() {
     setSelectedMarker(null);
   };
 
+
+
   const getFilteredMarkers = () => {
     let filtered = markers;
+    console.log('Original markers count:', markers.length);
+    console.log('Markers being filtered:', markers.map(m => ({ id: m.id, position: m.position })));
 
     // Check if any filters are applied
     const hasTypeFilters = filters.type.commercial || filters.type.residential;
     const hasListedByFilters = filters.listedBy.owner || filters.listedBy.agent || filters.listedBy.iacre;
     const hasBudgetFilters = !(filters.budget[0] === 0 && filters.budget[1] === 30);
     const hasSizeFilters = !(filters.size[0] === 0 && filters.size[1] === 50000);
-    
+
     const hasAnyFilters = hasTypeFilters || hasListedByFilters || hasBudgetFilters || hasSizeFilters;
 
     // If no filters are applied, show all markers
@@ -301,7 +339,7 @@ export default function HomePage() {
         const size = parseFloat(sizeStr.replace(/[^0-9.]/g, '')) || 0;
         const minSize = filters.size[0];
         const maxSize = filters.size[1];
-        
+
         // Handle different size units based on the selected unit in the filter
         let sizeInFilterUnit = size;
         if (sizeStr.toLowerCase().includes('sq ft') || sizeStr.toLowerCase().includes('sqft')) {
@@ -317,11 +355,12 @@ export default function HomePage() {
           }
           // If filter unit is also square yards, no conversion needed
         }
-        
+
         return sizeInFilterUnit >= minSize && sizeInFilterUnit <= maxSize;
       });
     }
 
+    console.log('Filtered markers count:', filtered.length);
     return filtered;
   };
 
@@ -338,10 +377,7 @@ export default function HomePage() {
       const rect = ref.current.getBoundingClientRect();
       let pos = { top: rect.bottom + window.scrollY + 8, right: window.innerWidth - rect.right - window.scrollX };
 
-      if (modalType === "filters") {
-        const layersRect = layersBtnRef.current?.getBoundingClientRect();
-        if (layersRect) pos = { top: layersRect.bottom + window.scrollY + 8, right: window.innerWidth - layersRect.right - window.scrollX };
-      } else if (modalType === "add") {
+      if (modalType === "add") {
         pos = { top: rect.top + window.scrollY, right: window.innerWidth - rect.left - window.scrollX + 8 };
       } else if (modalType === "share") {
         const addRect = addBtnRef.current?.getBoundingClientRect();
@@ -399,22 +435,114 @@ export default function HomePage() {
             onSubmit={handleSearch}
             className="flex absolute top-4 md:top-6 left-1/2 transform -translate-x-1/2 z-10 w-full px-4 md:px-0 md:w-auto"
           >
-            <div className="bg-white rounded-full pl-5 pr-3 py-1 md:py-2.5 shadow-xl w-full md:min-w-80 flex items-center gap-3">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search Location"
-                className="flex-1 outline-none text-gray-700 text-[0.9rem] font-medium placeholder-gray-400"
-              />
-              <Search className="hidden md:block text-gray-500 w-5 h-5 hover:text-gray-950 hover:cursor-pointer" onClick={handleSearch} />
-              <button
-                type="button"
-                className="block md:hidden p-2 rounded-md hover:cursor-pointer"
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-              >
-                <Menu className="w-6 h-6 text-gray-800" />
-              </button>
+            <div className="relative w-full md:min-w-80 search-container">
+              <div className="bg-white rounded-full pl-5 pr-3 py-1 md:py-2.5 shadow-xl w-full flex items-center gap-3">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={handleSearchInputChange}
+                  onFocus={() => searchQuery && setShowSuggestions(true)}
+                  onBlur={() => {
+                    // Delay hiding suggestions to allow click events to fire
+                    setTimeout(() => setShowSuggestions(false), 150);
+                  }}
+                  placeholder="Search Location"
+                  className="flex-1 outline-none text-gray-700 text-[0.9rem] font-medium placeholder-gray-400"
+                />
+                <Search
+                  className="hidden md:block text-gray-500 w-5 h-5 hover:text-gray-950 hover:cursor-pointer"
+                  onClick={() => {
+                    if (searchQuery.trim()) {
+                      const fakeEvent = { preventDefault: () => { } };
+                      handleSearch(fakeEvent);
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className="block md:hidden p-2 rounded-md hover:cursor-pointer"
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                >
+                  <Menu className="w-6 h-6 text-gray-800" />
+                </button>
+              </div>
+
+              {/* Suggestions Dropdown */}
+              {showSuggestions && (
+                <div className="absolute top-full left-0 right-0 bg-white rounded-lg shadow-xl mt-1 max-h-60 overflow-y-auto z-20 border border-gray-200">
+                  {suggestions.length > 0 ? (
+                    suggestions.map((suggestion, index) => (
+                      <div
+                        key={index}
+                        onMouseDown={async (e) => {
+                          e.preventDefault();
+                          setSearchQuery(suggestion.text);
+                          setShowSuggestions(false);
+
+                          // Automatically trigger search with the suggestion text
+                          const searchText = suggestion.text;
+
+                          // First check if the search query matches any property location
+                          const matchingProperty = markers.find(marker =>
+                            marker.state_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+                            marker.layer_location?.toLowerCase().includes(searchText.toLowerCase()) ||
+                            marker.location_district?.toLowerCase().includes(searchText.toLowerCase())
+                          );
+
+                          if (matchingProperty && matchingProperty.position) {
+                            // If found in properties, zoom to that location
+                            setMapCenter(matchingProperty.position);
+                            setZoomLevel(14);
+                            handleMarkerClick(matchingProperty);
+                            return;
+                          }
+
+                          // If not found in properties, use Google Geocoding API
+                          const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+                          const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchText)}&key=${apiKey}`;
+
+                          try {
+                            const res = await fetch(url);
+                            const data = await res.json();
+
+                            if (data.status === "OK" && data.results && data.results.length > 0) {
+                              const { lat, lng } = data.results[0].geometry.location;
+                              const pos = { lat, lng };
+
+                              // Create a red marker for searched location (not in properties)
+                              const searchMarker = {
+                                id: `search-${Date.now()}`,
+                                layer_location: data.results[0].formatted_address,
+                                popup_text: 'This is the location you searched for.',
+                                position: pos,
+                                isSearchResult: true,
+                              };
+
+                              setZoomLevel(14);
+                              setMapCenter(pos);
+
+                              // Remove previous search markers and add new one
+                              setMarkers(prevMarkers => [
+                                ...prevMarkers.filter(marker => !marker.isSearchResult),
+                                searchMarker
+                              ]);
+                            }
+                          } catch (err) {
+                            console.error("Search error:", err);
+                          }
+                        }}
+                        className="px-4 py-3 hover:bg-gray-800 hover:text-white cursor-pointer border-b border-gray-100 last:border-b-0 text-gray-700 text-sm transition-all duration-200"
+                      >
+                        {suggestion.text}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-4 py-3 text-gray-500 text-sm">
+                      No suggestions for this location
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </form>
 
@@ -424,7 +552,7 @@ export default function HomePage() {
                 onClick={() => {
                   const newFilter = propertyTypeFilter === 'commercial' ? 'all' : 'commercial';
                   setPropertyTypeFilter(newFilter);
-                  
+
                   // Update filters.type to sync with modal
                   if (newFilter === 'all') {
                     setFilters(prev => ({
@@ -453,7 +581,7 @@ export default function HomePage() {
                 onClick={() => {
                   const newFilter = propertyTypeFilter === 'residential' ? 'all' : 'residential';
                   setPropertyTypeFilter(newFilter);
-                  
+
                   // Update filters.type to sync with modal
                   if (newFilter === 'all') {
                     setFilters(prev => ({
@@ -487,14 +615,6 @@ export default function HomePage() {
               >
                 <SlidersHorizontal className="w-3.5 h-3.5" />
                 <span className='text-[0.75rem]'>Filters</span>
-              </button>
-              <button
-                ref={layersBtnRef}
-                onClick={() => openModal("layers", layersBtnRef)}
-                className="bg-white px-2 py-1 rounded-full shadow-xl flex items-center gap-1.5 text-gray-700 hover:bg-gray-50 hover:cursor-pointer"
-              >
-                <Layers className="w-3.5 h-3.5" />
-                <span className='text-[0.75rem]'>Layers</span>
               </button>
             </div>
           </div>
@@ -541,11 +661,11 @@ export default function HomePage() {
 
       {activeModal === "filters" && (
         <Modal
-          style={{ top: modalPos.top + 10, maxWidth: 370, maxHeight: 'calc(100vh - 120px)', "--filters-modal-right": `${((modalPos.right - 15 ?? 0))}px`, }}
+          style={{ top: modalPos.top + 10, maxWidth: window.innerWidth <= 425 ? 450 : 370, maxHeight: 'calc(100vh - 120px)', "--filters-modal-right": `${((modalPos.right ?? 0))}px`, }}
           onClose={() => setActiveModal(null)}
-          className={`p-4 pr-0 bg-white bottom-0 w-[100%] right-0 md:right-[var(--filters-modal-right)] md:w-[90%] md:bottom-auto`}
+          className={`p-4 pr-0 bg-white bottom-0 w-full left-0 right-0 max-[425px]:!w-full max-[425px]:!left-0 max-[425px]:!right-0 md:right-[var(--filters-modal-right)] md:w-[90%] md:left-auto md:bottom-auto`}
         >
-          <FiltersModal 
+          <FiltersModal
             filters={filters}
             setFilters={setFilters}
             sizeUnit={sizeUnit}
@@ -555,75 +675,7 @@ export default function HomePage() {
         </Modal>
       )}
 
-      {activeModal === "layers" && (
-        layersProceeded ? (
-          <Modal
-            style={{
-              top: modalPos.top + 10,
-              maxWidth: 350,
-              maxHeight: "calc(100vh - 120px)",
-              "--layers-modal-right": `${((modalPos.right - 15 ?? 0))}px`,
-            }}
-            onClose={() => {
-              setActiveModal(null);
-              setLayersProceeded(false);
-            }}
-            className="p-6 bg-white bottom-0 w-[100%] md:w-[90%] right-0 md:right-[var(--layers-modal-right)]"
-          >
-            <LayersModal />
-          </Modal>
-        ) : (
-          <div
-            className="fixed inset-0 flex items-center justify-center bg-black/50 w-full h-full z-50"
-            onClick={() => setActiveModal(null)}
-          >
-            <div
-              className="bg-white rounded-2xl shadow-lg h-auto w-[90%] max-w-md px-4 py-4"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="pb-3 border-b border-gray-300 flex flex-row justify-between items-center">
-                <div className="text-base md:text-lg">Layers Declaration</div>
-                <button
-                  onClick={() => setActiveModal(null)}
-                  className="hover:cursor-pointer text-gray-500 hover:text-gray-700"
-                >
-                  <X className="w-5 h-5 md:w-6 md:h-6" />
-                </button>
-              </div>
 
-              <div className="flex flex-col gap-2 text-xs md:text-sm overflow-y-auto mt-3 space-y-2 max-h-[60vh] md:max-h-[20rem] py-2 pr-2">
-                <p>
-                  Disclaimer: The map layers on <b>Buildersinfo.in</b> are created using
-                  publicly available data and are intended for general informational
-                  purposes only. While we have made best efforts to ensure accuracy by
-                  referencing sources like HMDA.gov.in, Bhuvan-ISRO, and others,
-                  limitations such as outdated records, digitisation errors, satellite
-                  distortions, and missing cadastral data may affect the accuracy of
-                  the visual overlays.
-                </p>
-                <p>
-                  These maps are not substitutes for official government surveys or
-                  legal verification. Users are advised to independently verify all
-                  details with the appropriate authorities before making any land or
-                  investment decisions.
-                </p>
-                <p>
-                  By using these layers, you acknowledge and accept these limitations.
-                  Click on the info icon (in layers section) to know more about
-                  individual layers.
-                </p>
-              </div>
-
-              <button
-                onClick={() => setLayersProceeded(true)}
-                className="px-4 py-2 w-full rounded-full bg-[#fee47b] hover:shadow-lg hover:cursor-pointer flex flex-row justify-center mt-4 text-sm md:text-base"
-              >
-                Proceed <ArrowRight className="ml-2 w-4 h-4 md:w-5 md:h-5" />
-              </button>
-            </div>
-          </div>
-        )
-      )}
 
       {activeModal === "add" && (
         <Modal

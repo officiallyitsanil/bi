@@ -53,7 +53,7 @@ export default function Footer() {
                         </span>
                     </Link>
 
-                    <Link href="/subscribe" className={`flex flex-col items-center justify-center w-1/5 h-14 transition-colors duration-200 ${pathName === '/subscribe' ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
+                    <Link href="/builders" className={`flex flex-col items-center justify-center w-1/5 h-14 transition-colors duration-200 ${pathName === '/builders' ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
                         <Image src="/crown.svg" alt="Crown" width={20} height={20} />
                         <span className="text-[0.65rem] mt-0.5">Builders</span>
                     </Link>

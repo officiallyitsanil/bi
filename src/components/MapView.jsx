@@ -9,6 +9,9 @@ export default function MapView({ center, markers, selectedMarker, onMarkerClick
     id: 'google-map-script',
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
     libraries: ['places'],
+    language: 'en',
+    region: 'US',
+    version: 'weekly',
   });
 
   const containerStyle = {
@@ -20,6 +23,56 @@ export default function MapView({ center, markers, selectedMarker, onMarkerClick
     mapTypeId: "hybrid",
     disableDefaultUI: true,
     mapTypeControl: false,
+    restriction: {
+      latLngBounds: {
+        north: 85,
+        south: -85,
+        west: -180,
+        east: 180,
+      },
+    },
+    styles: [
+      {
+        featureType: "poi",
+        stylers: [{ visibility: "off" }]
+      },
+      {
+        featureType: "poi.business",
+        stylers: [{ visibility: "off" }]
+      },
+      {
+        featureType: "poi.attraction",
+        stylers: [{ visibility: "off" }]
+      },
+      {
+        featureType: "poi.government",
+        stylers: [{ visibility: "off" }]
+      },
+      {
+        featureType: "poi.medical",
+        stylers: [{ visibility: "off" }]
+      },
+      {
+        featureType: "poi.park",
+        stylers: [{ visibility: "off" }]
+      },
+      {
+        featureType: "poi.place_of_worship",
+        stylers: [{ visibility: "off" }]
+      },
+      {
+        featureType: "poi.school",
+        stylers: [{ visibility: "off" }]
+      },
+      {
+        featureType: "poi.sports_complex",
+        stylers: [{ visibility: "off" }]
+      },
+      {
+        featureType: "transit",
+        stylers: [{ visibility: "off" }]
+      }
+    ]
   }), []);
 
 
@@ -36,7 +89,11 @@ export default function MapView({ center, markers, selectedMarker, onMarkerClick
       mapContainerStyle={containerStyle}
       center={mapCenter}
       zoom={zoom}
-      options={mapOptions}
+      options={{
+        ...mapOptions,
+        language: 'en',
+        region: 'US'
+      }}
     >
       {markers && markers.map((marker) => {
         // Validate marker position - ensure lat and lng are valid numbers
@@ -53,15 +110,25 @@ export default function MapView({ center, markers, selectedMarker, onMarkerClick
         
         // Create colored circle icon
         const getMarkerIcon = () => {
-          if (isSelected) {
-            // Red circle for selected marker
+          if (marker.isSearchResult) {
+            // Red circle for search result markers (locations not in properties)
             return {
               path: window.google?.maps?.SymbolPath?.CIRCLE || 0,
               fillColor: '#FF0000',
               fillOpacity: 1,
-              strokeColor: 'transparent',
-              strokeWeight: 0,
-              scale: 6,
+              strokeColor: '#FFFFFF',
+              strokeWeight: 2,
+              scale: 8,
+            };
+          } else if (isSelected) {
+            // Highlighted circle for selected property marker
+            return {
+              path: window.google?.maps?.SymbolPath?.CIRCLE || 0,
+              fillColor: markerType === 'commercial' ? '#0861b4' : '#fee123',
+              fillOpacity: 1,
+              strokeColor: '#FFFFFF',
+              strokeWeight: 3,
+              scale: 8,
             };
           } else {
             // Blue for commercial, yellow for residential

@@ -12,19 +12,18 @@ export const PremiumFeaturesBanner = () => {
     { text: "Unlock All Landowner Listings", hasInfo: true },
     { text: "Exclusive Access To Facilitated Land Deals", hasInfo: true },
     { text: "Discover Exclusive Tag-Along Opportunities", hasInfo: true },
-    { text: "Visualise with Premium Map Layers", hasInfo: false, hasButton: true },
     { text: "Early Access to Future Features", hasInfo: false },
   ];
 
   const subscribers = [
-    { src: "/subscribe/subscribers/subscriber-1.png", alt: "Subscriber 1" },
-    { src: "/subscribe/subscribers/subscriber-2.png", alt: "Subscriber 2" },
-    { src: "/subscribe/subscribers/subscriber-3.png", alt: "Subscriber 3" },
-    { src: "/subscribe/subscribers/subscriber-4.png", alt: "Subscriber 4" },
-    { src: "/subscribe/subscribers/subscriber-5.png", alt: "Subscriber 5" },
-    { src: "/subscribe/subscribers/subscriber-6.png", alt: "Subscriber 6" },
-    { src: "/subscribe/subscribers/subscriber-7.png", alt: "Subscriber 7" },
-    { src: "/subscribe/subscribers/subscriber-8.png", alt: "Subscriber 8" },
+    { src: "/builders/buildersrs/buildersr-1.png", alt: "Subscriber 1" },
+    { src: "/builders/buildersrs/buildersr-2.png", alt: "Subscriber 2" },
+    { src: "/builders/buildersrs/buildersr-3.png", alt: "Subscriber 3" },
+    { src: "/builders/buildersrs/buildersr-4.png", alt: "Subscriber 4" },
+    { src: "/builders/buildersrs/buildersr-5.png", alt: "Subscriber 5" },
+    { src: "/builders/buildersrs/buildersr-6.png", alt: "Subscriber 6" },
+    { src: "/builders/buildersrs/buildersr-7.png", alt: "Subscriber 7" },
+    { src: "/builders/buildersrs/buildersr-8.png", alt: "Subscriber 8" },
   ];
 
   const makePayment = async ({ amount }) => {
@@ -150,7 +149,7 @@ export const PremiumFeaturesBanner = () => {
               <span className="text-sm text-gray-600">Secured by</span>
               <div className="relative h-6 w-24">
                 <Image
-                  src="/subscribe/razorpay.png"
+                  src="/builders/razorpay.png"
                   alt="Razorpay logo"
                   layout="fill"
                   objectFit="contain"
