@@ -50,7 +50,7 @@ const VisitorTracker = () => {
     };
   };
 
-  // Get current location
+  // Get current location with high accuracy
   const getCurrentLocation = () => {
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
@@ -67,15 +67,14 @@ const VisitorTracker = () => {
           });
         },
         (error) => {
-          // Create a more detailed error object for geolocation errors
           const geoError = new Error(`Geolocation error: ${error.message}`);
           geoError.code = error.code;
           geoError.originalError = error;
           reject(geoError);
         },
         {
-          enableHighAccuracy: false, // Changed to false for better compatibility
-          timeout: 5000, // Reduced timeout to 5 seconds
+          enableHighAccuracy: true, // Enable high accuracy for exact location
+          timeout: 10000, // 10 seconds timeout
           maximumAge: 0 // Don't use cached position
         }
       );
@@ -105,14 +104,14 @@ const VisitorTracker = () => {
     try {
       let address = null;
       
-      // Only get address if we have location data
+      // Get address if we have location data
       if (locationData && locationData.latitude && locationData.longitude) {
         address = await getAddressFromCoords(locationData.latitude, locationData.longitude);
       }
       
       const visitorData = {
         ...(locationData || {}), // Spread location data only if it exists
-        address,
+        address, // Include address in the data
         ...deviceInfo,
         sessionId: sessionStorage.getItem('sessionId') || Date.now().toString(),
         referrer: document.referrer,
@@ -140,15 +139,11 @@ const VisitorTracker = () => {
         localStorage.setItem('hasVisited', 'true');
         localStorage.setItem('visitCount', visitorData.visitCount.toString());
         sessionStorage.setItem('sessionId', visitorData.sessionId);
-        
-        console.log('Visitor data saved successfully');
         return true;
       } else {
-        console.error('Failed to save visitor data:', result.message);
         return false;
       }
     } catch (error) {
-      console.error('Error saving visitor data:', error);
       return false;
     }
   };
@@ -158,74 +153,57 @@ const VisitorTracker = () => {
     if (isTracking) return;
     
     setIsTracking(true);
+    console.log('📍 Tracking visitor - getting device info...');
     
     // Get device information
     const deviceInfo = getDeviceInfo();
     let locationData = null;
     
-    // Show alert asking for location permission
-    const userWantsToShare = window.confirm(
-      "We'd like to access your location to provide better service. Click OK to allow or Cancel to deny."
-    );
-    
-    if (userWantsToShare) {
-      try {
-        // Try to get location
-        locationData = await getCurrentLocation();
-        console.log('✅ Location obtained successfully');
-        alert('Thank you! Your location has been saved.');
-        setLocationPermission('granted');
-      } catch (error) {
-        // Log error but continue tracking without location
-        console.log('⚠️ Location not available:', error.message);
-        
-        // Handle different types of errors with alerts
-        if (error.code === 1) {
-          setLocationPermission('denied');
-          alert('Location access denied. You can still use the website normally.');
-        } else if (error.code === 2) {
-          alert('Location unavailable. Please check your device settings.');
-        } else if (error.code === 3) {
-          alert('Location request timed out. Please try again later.');
-        } else {
-          alert('Unable to get location. Continuing without location data.');
-        }
+    // FORCE location request - browser WILL show permission popup
+    try {
+      console.log('🔍 Requesting location permission from browser...');
+      locationData = await getCurrentLocation();
+      console.log('✅ Location obtained successfully:', locationData);
+      setLocationPermission('granted');
+    } catch (error) {
+      console.error('❌ Location access FAILED:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      // Silently handle location errors - no alerts
+      if (error.code === 1) {
+        console.log('User DENIED location permission');
+        setLocationPermission('denied');
+      } else if (error.code === 2) {
+        console.log('Location UNAVAILABLE');
+      } else if (error.code === 3) {
+        console.log('Location request TIMEOUT');
       }
-    } else {
-      // User clicked Cancel
-      setLocationPermission('denied');
-      alert('No problem! You can still use the website without sharing your location.');
+      // Continue without location data
     }
     
     // Save to database (with or without location)
     try {
+      console.log('💾 Saving visitor data to database...', locationData ? 'WITH location' : 'WITHOUT location');
       const saved = await saveVisitorData(locationData, deviceInfo);
-      
       if (saved) {
-        console.log('✅ Visitor tracking completed successfully');
+        console.log('✅✅✅ Visitor data SAVED to database successfully!');
       } else {
-        console.log('❌ Failed to save visitor data');
+        console.log('❌❌❌ FAILED to save visitor data to database');
       }
     } catch (error) {
-      console.error('Error during visitor tracking:', error);
+      console.error('💥 Error during visitor tracking:', error);
     } finally {
       setIsTracking(false);
     }
   };
 
-  // Check if visitor has already been tracked in this session
-  const hasTrackedInSession = () => {
-    return sessionStorage.getItem('visitorTracked') === 'true';
-  };
-
   // Initialize tracking on component mount
   useEffect(() => {
-    // Only track if not already tracked in this session
-    if (!hasTrackedInSession()) {
-      // Immediate prompt - no delay
+    console.log('🚀 Starting visitor tracking - requesting location...');
+    // Request location immediately on every page load
+    setTimeout(() => {
       trackVisitor();
-      sessionStorage.setItem('visitorTracked', 'true');
-    }
+    }, 500);
   }, []);
 
   // This component doesn't render anything visible

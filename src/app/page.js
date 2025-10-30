@@ -111,55 +111,7 @@ export default function HomePage() {
     loadProperties();
   }, []);
 
-  // Get user's location on mount (optional - only if user allows)
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'geolocation' in navigator) {
-      console.log('Requesting location access...');
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          // Success - user allowed location access
-          console.log('Location access granted:', position.coords);
-          const userLocation = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-
-          // Save location to database silently (no alert to user)
-          try {
-            await fetch('/api/save-location', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(userLocation)
-            });
-          } catch (error) {
-            console.error('Failed to save location:', error);
-          }
-
-          // Don't change map center or zoom - keep current view
-          setLocationError(null);
-        },
-        (error) => {
-          // Error or user denied - just use default location
-          if (error.code === 1) {
-            console.log('User denied location access. Using default location.');
-          } else if (error.code === 2) {
-            console.warn('Location unavailable. Using default location.');
-          } else if (error.code === 3) {
-            console.warn('Location request timeout. Using default location.');
-          }
-          setLocationError(error.message);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
-        }
-      );
-    } else {
-      console.log('Geolocation not supported by browser');
-      setLocationError('Geolocation not supported');
-    }
-  }, []);
+  // Location tracking is handled by VisitorTracker component
 
   const filtersBtnRef = useRef(null);
   const addBtnRef = useRef(null);
@@ -478,7 +430,7 @@ export default function HomePage() {
         <div className="flex-1 relative">
           <form
             onSubmit={handleSearch}
-            className="flex absolute top-4 md:top-6 left-1/2 transform -translate-x-1/2 z-10 w-full px-4 md:px-0 md:w-auto"
+            className={`flex absolute top-4 md:top-6 left-1/2 transform -translate-x-1/2 z-10 w-full px-4 md:px-0 md:w-auto transition-all duration-300 ${isPropertyListVisible ? 'md:-translate-x-[calc(50%+190px)]' : ''}`}
           >
             <div className="relative w-full md:min-w-80 search-container">
               <div className="bg-white rounded-full pl-5 pr-3 py-1 md:py-2.5 shadow-xl w-full flex items-center gap-3">
@@ -704,7 +656,11 @@ export default function HomePage() {
       {isMenuOpen && <MenuSideBar onClose={() => setIsMenuOpen(false)} />}
 
       {selectedCity && (
-        <PropertyDetailModal property={selectedCity} onClose={closeCityModal} />
+        <PropertyDetailModal
+          property={selectedCity}
+          onClose={closeCityModal}
+          isPropertyListVisible={isPropertyListVisible}
+        />
       )}
 
       {activeModal === "filters" && (

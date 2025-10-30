@@ -27,11 +27,12 @@ import LoginModal from "./LoginModal";
 
 
 
-export default function PropertyDetailModal({ property, onClose }) {
+export default function PropertyDetailModal({ property, onClose, isPropertyListVisible = false }) {
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
     const [isFavourite, setIsFavourite] = useState(false);
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
     useEffect(() => {
         try {
@@ -128,7 +129,7 @@ export default function PropertyDetailModal({ property, onClose }) {
     return (
         <div
             role="dialog"
-           className="z-50 bg-white shadow-lg flex max-w-xl md:max-w-sm flex-col overflow-hidden rounded-2xl p-0 text-left absolute bottom-5 w-[420px] md:w-[360px] top-[9rem] left-0 md:left-[3.5rem] h-full max-h-[calc(100%-96px-70px)] max-[425px]:!w-full max-[425px]:!left-0 max-[425px]:!right-0 max-[425px]:!top-0 max-[425px]:!bottom-0 max-[425px]:!max-h-full max-[425px]:!rounded-none"
+            className={`z-50 bg-white shadow-lg flex max-w-xl md:max-w-sm flex-col overflow-hidden rounded-2xl p-0 text-left absolute bottom-5 w-[420px] md:w-[360px] left-0 h-full max-h-[calc(100%-96px-70px)] max-[425px]:!w-full max-[425px]:!left-0 max-[425px]:!right-0 max-[425px]:!top-0 max-[425px]:!bottom-0 max-[425px]:!max-h-full max-[425px]:!rounded-none transition-all duration-300 ${isPropertyListVisible ? 'md:left-[400px] md:top-[11rem]' : 'md:left-[3.5rem] top-[9rem]'}`}
             tabIndex="-1"
         >
             <div className="sticky top-0 mx-4 flex flex-row justify-between space-y-0 border-b py-4 pb-2 text-left items-start gap-4 lg:pt-6 bg-white max-[375px]:mx-2 max-[375px]:py-3">
@@ -441,7 +442,10 @@ export default function PropertyDetailModal({ property, onClose }) {
                             </div>
                         </div>
                         <div className="shrink-0 h-[1px] w-full my-3 bg-gray-200"></div>
-                        <div className="flex cursor-pointer items-center gap-2 ">
+                        <div
+                            onClick={() => setIsReportModalOpen(true)}
+                            className="flex cursor-pointer items-center gap-2 "
+                        >
                             <TriangleAlert className="h-4 w-4 text-gray-800" />
                             <span className="text-sm font-normal text-gray-800 underline underline-offset-2">Report this listing</span>
                         </div>
@@ -496,6 +500,113 @@ export default function PropertyDetailModal({ property, onClose }) {
                                 <a href={`tel:${sellerPhoneNumber}`} className="font-semibold text-blue-600 hover:underline ml-2">{sellerPhoneNumber}</a>
                             </p>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {isReportModalOpen && (
+                <div
+                    onClick={() => setIsReportModalOpen(false)}
+                    style={{ background: "rgba(0,0,0,0.7)" }}
+                    className="fixed inset-0 flex items-center justify-center z-[60] p-4"
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="bg-white rounded-2xl shadow-lg w-full max-w-md relative max-h-[90vh] overflow-y-auto"
+                    >
+                        <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-white z-10 rounded-t-2xl">
+                            <h2 className="text-xl font-semibold text-gray-800">Report this Property</h2>
+                            <button onClick={() => setIsReportModalOpen(false)} className="text-gray-500 hover:text-gray-800">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+                        <form className="p-6 space-y-4" onSubmit={(e) => {
+                            e.preventDefault();
+                            // Handle form submission here
+                            alert('Report submitted successfully!');
+                            setIsReportModalOpen(false);
+                        }}>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Your Name <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                    placeholder="Enter your name"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Email <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="email"
+                                    required
+                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                    placeholder="your.email@example.com"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Phone Number
+                                </label>
+                                <input
+                                    type="tel"
+                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                    placeholder="+91 XXXXX XXXXX"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Reason for Report <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                    required
+                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all bg-white"
+                                >
+                                    <option value="">Select a reason</option>
+                                    <option value="incorrect_info">Incorrect Information</option>
+                                    <option value="fraud">Fraudulent Listing</option>
+                                    <option value="duplicate">Duplicate Listing</option>
+                                    <option value="sold">Property Already Sold</option>
+                                    <option value="inappropriate">Inappropriate Content</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Additional Details <span className="text-red-500">*</span>
+                                </label>
+                                <textarea
+                                    required
+                                    rows="4"
+                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
+                                    placeholder="Please provide more details about your report..."
+                                ></textarea>
+                            </div>
+
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsReportModalOpen(false)}
+                                    className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
+                                >
+                                    Submit Report
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

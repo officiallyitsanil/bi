@@ -1,9 +1,13 @@
 "use client";
-import { GoogleMap, useJsApiLoader, MarkerF } from "@react-google-maps/api";
-import { useMemo } from "react";
+import { GoogleMap, useJsApiLoader, MarkerF, TrafficLayer } from "@react-google-maps/api";
+import { useMemo, useState } from "react";
+import { Layers } from "lucide-react";
 
 export default function MapView({ center, markers, selectedMarker, onMarkerClick, zoom }) {
   const mapCenter = useMemo(() => center, [center]);
+  const [mapType, setMapType] = useState("hybrid");
+  const [showTraffic, setShowTraffic] = useState(false);
+  const [showLayerMenu, setShowLayerMenu] = useState(false);
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
@@ -20,7 +24,7 @@ export default function MapView({ center, markers, selectedMarker, onMarkerClick
   };
 
   const mapOptions = useMemo(() => ({
-    mapTypeId: "hybrid",
+    mapTypeId: mapType,
     disableDefaultUI: true,
     mapTypeControl: false,
     restriction: {
@@ -73,7 +77,7 @@ export default function MapView({ center, markers, selectedMarker, onMarkerClick
         stylers: [{ visibility: "off" }]
       }
     ]
-  }), []);
+  }), [mapType]);
 
 
   if (loadError) return <div>Error loading maps.</div>;
@@ -84,17 +88,89 @@ export default function MapView({ center, markers, selectedMarker, onMarkerClick
       </div>
     );
 
+  const mapTypes = [
+    { id: "roadmap", name: "Default", icon: "🗺️" },
+    { id: "satellite", name: "Satellite", icon: "🛰️" },
+    { id: "hybrid", name: "Hybrid", icon: "🌍" },
+    { id: "terrain", name: "Terrain", icon: "⛰️" }
+  ];
+
   return (
-    <GoogleMap
-      mapContainerStyle={containerStyle}
-      center={mapCenter}
-      zoom={zoom}
-      options={{
-        ...mapOptions,
-        language: 'en',
-        region: 'US'
-      }}
-    >
+    <div className="relative w-full h-full">
+      {/* Layer Control Button */}
+      <div className="absolute top-4 left-4 z-10">
+        <button
+          onClick={() => setShowLayerMenu(!showLayerMenu)}
+          className="bg-white p-2.5 rounded-lg shadow-xl hover:bg-gray-50 transition-colors"
+          title="Map Layers"
+        >
+          <Layers className="w-5 h-5 text-gray-700" />
+        </button>
+
+        {/* Layer Menu */}
+        {showLayerMenu && (
+          <div className="absolute top-14 left-0 bg-white rounded-lg shadow-xl p-3 w-48">
+            <h3 className="text-sm font-semibold text-gray-800 mb-2">Map Type</h3>
+            <div className="space-y-1 mb-3">
+              {mapTypes.map((type) => (
+                <button
+                  key={type.id}
+                  onClick={() => {
+                    setMapType(type.id);
+                    setShowLayerMenu(false);
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center gap-2 ${
+                    mapType === type.id
+                      ? "bg-blue-50 text-blue-700 font-medium"
+                      : "text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  <span>{type.icon}</span>
+                  <span>{type.name}</span>
+                  {mapType === type.id && (
+                    <svg className="w-4 h-4 ml-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </button>
+              ))}
+            </div>
+            
+            <div className="border-t pt-3">
+              <h3 className="text-sm font-semibold text-gray-800 mb-2">Layers</h3>
+              <button
+                onClick={() => setShowTraffic(!showTraffic)}
+                className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center gap-2 ${
+                  showTraffic
+                    ? "bg-blue-50 text-blue-700 font-medium"
+                    : "text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                <span>🚦</span>
+                <span>Traffic</span>
+                {showTraffic && (
+                  <svg className="w-4 h-4 ml-auto" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <GoogleMap
+        mapContainerStyle={containerStyle}
+        center={mapCenter}
+        zoom={zoom}
+        options={{
+          ...mapOptions,
+          language: 'en',
+          region: 'US'
+        }}
+      >
+      {showTraffic && <TrafficLayer />}
+      
       {markers && markers.map((marker) => {
         // Validate marker position - ensure lat and lng are valid numbers
         if (!marker.position || 
@@ -154,5 +230,6 @@ export default function MapView({ center, markers, selectedMarker, onMarkerClick
         );
       }).filter(Boolean)}
     </GoogleMap>
+    </div>
   );
 }

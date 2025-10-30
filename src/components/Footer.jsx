@@ -98,12 +98,12 @@ export default function Footer() {
                         </div>
                         <div className='ml-4'>
                             <h4 className="font-semibold text-black mb-2">Contact Us</h4>
-                            <p className="mb-1">+918151915199</p>
-                            <p className="mb-2">email: <Link href="mailto:hi@buildersinfo.in">hi@buildersinfo.in</Link></p>
+                            <p className="mb-1">+918884886822</p>
+                            <p className="mb-2">email: <Link href="mailto:support@buildersinfo.in">support@buildersinfo.in</Link></p>
                             <div className="flex space-x-4 mt-2">
                                 <Link href="https://www.instagram.com/buildersinfo.in/"><Instagram className="w-7" alt='instagram' /></Link>
                                 <Link href="https://www.youtube.com/@buildersinfo.in"><Youtube className="w-7" alt='youtube' /></Link>
-                                <Link href="https://www.linkedin.com/company/buildersinfo.in/"><Linkedin className="w-7" alt='linkedin' /></Link>
+                                <Link href="http://www.linkedin.com/company/buildersinfo"><Linkedin className="w-7" alt='linkedin' /></Link>
                             </div>
                         </div>
                     </div>

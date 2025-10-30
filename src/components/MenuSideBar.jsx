@@ -38,12 +38,12 @@ export default function MenuSideBar({ onClose }) {
         } catch (error) {
             console.error("Failed to parse user data from localStorage:", error);
         }
-        
+
         setTimeout(() => setIsVisible(true), 10);
     }, []);
 
     const handleCopy = () => {
-        navigator.clipboard.writeText("hi@buildersinfo.in");
+        navigator.clipboard.writeText("support@buildersinfo.in");
         setCopied(true);
         setTimeout(() => setCopied(false), 1000);
     };
@@ -80,8 +80,8 @@ export default function MenuSideBar({ onClose }) {
                             {currentUser ? (
                                 <div className="flex flex-col">
                                     <span className="text-gray-800 font-semibold">{currentUser.phoneNumber}</span>
-                                    <Link 
-                                        href="/dashboard" 
+                                    <Link
+                                        href="/dashboard"
                                         onClick={handleClose}
                                         className="text-sm text-blue-600 hover:underline"
                                     >
@@ -136,19 +136,19 @@ export default function MenuSideBar({ onClose }) {
                                     <div className="absolute left-4 top-0 bottom-1.5 w-[1.5px] bg-gray-400"></div>
                                     <span className="flex flex-row items-center justify-between relative">
                                         <div className="absolute -left-4 rounded-full w-4 h-0.5 bg-gray-400"></div>
-                                        <Link href="mailto:hi@buildersinfo.in" className="flex items-center gap-2 rounded-lg px-2 py-2 underline hover:no-underline">
-                                            <Mail className="w-4 h-4" /> hi@buildersinfo.in
+                                        <Link href="mailto:support@buildersinfo.in" className="flex items-center gap-2 rounded-lg px-2 py-2 underline hover:no-underline">
+                                            <Mail className="w-4 h-4" /> support@buildersinfo.in
                                         </Link>
                                         <button onClick={handleCopy} className="p-1">
                                             {copied ? <CopyCheck className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5 hover:cursor-pointer" />}
                                         </button>
                                     </span>
-                                    <Link href="https://wa.me/+918151915199/?text=Hello%20buildersinfo.in" className="flex text-gray-700 items-center gap-2 rounded-lg px-2 py-2 underline hover:no-underline relative">
+                                    <Link href="https://wa.me/+918884886822/?text=Hello%20buildersinfo.in" className="flex text-gray-700 items-center gap-2 rounded-lg px-2 py-2 underline hover:no-underline relative">
                                         <div className="absolute -left-4 rounded-full w-4 h-0.5 bg-gray-400"></div>
                                         <Image src="/whatsapp-line.svg" width={16} height={16} alt="WhatsApp" />
                                         Whatsapp
                                     </Link>
-                                    <Link href="https://www.linkedin.com/company/buildersinfo/" className="flex items-center gap-2 rounded-lg px-2 py-2 underline hover:no-underline relative">
+                                    <Link href="http://www.linkedin.com/company/buildersinfo" className="flex items-center gap-2 rounded-lg px-2 py-2 underline hover:no-underline relative">
                                         <div className="absolute -left-4 rounded-full w-4 h-0.5 bg-gray-400"></div>
                                         <Linkedin className="w-4 h-4" /> LinkedIn
                                     </Link>
