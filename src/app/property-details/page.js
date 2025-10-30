@@ -73,6 +73,8 @@ function PropertyDetailsContent() {
     const [property, setProperty] = useState(null);
     const [showMoreNearby, setShowMoreNearby] = useState(false);
     const [showReviewsModal, setShowReviewsModal] = useState(false);
+    const [touchStart, setTouchStart] = useState(0);
+    const [touchEnd, setTouchEnd] = useState(0);
 
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -202,6 +204,34 @@ function PropertyDetailsContent() {
         setCurrentImageIndex((prev) => (prev - 1 + property.images.length) % property.images.length);
     };
 
+    // Swipe handlers for mobile
+    const handleTouchStart = (e) => {
+        setTouchStart(e.targetTouches[0].clientX);
+    };
+
+    const handleTouchMove = (e) => {
+        setTouchEnd(e.targetTouches[0].clientX);
+    };
+
+    const handleTouchEnd = () => {
+        if (!touchStart || !touchEnd) return;
+
+        const distance = touchStart - touchEnd;
+        const isLeftSwipe = distance > 50;
+        const isRightSwipe = distance < -50;
+
+        if (isLeftSwipe) {
+            nextImage();
+        }
+        if (isRightSwipe) {
+            prevImage();
+        }
+
+        // Reset
+        setTouchStart(0);
+        setTouchEnd(0);
+    };
+
     const handleShare = () => {
         if (navigator.share) {
             navigator.share({
@@ -265,31 +295,46 @@ function PropertyDetailsContent() {
             {/* Mobile Layout (below md) */}
             <div className="md:hidden">
                 {/* Mobile Hero Section */}
-                <div className="relative">
+                <div
+                    className="relative group"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                >
                     <img
                         src={property.images[currentImageIndex]}
                         alt="Property"
-                        className="w-full h-96 object-cover transition-transform duration-300 hover:scale-110"
+                        className="w-full h-96 object-cover transition-transform duration-300"
                     />
 
-                    {/* Back Button */}
-                    <button className="absolute top-4 left-4 w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-lg">
-                        <ArrowLeft className="w-5 h-5" />
+                    {/* Image Navigation Arrows - Always visible on mobile */}
+                    <button
+                        onClick={prevImage}
+                        className="cursor-pointer absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg z-10"
+                    >
+                        <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <button
+                        onClick={nextImage}
+                        className="cursor-pointer absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg z-10"
+                    >
+                        <ChevronRight className="w-5 h-5" />
                     </button>
 
                     {/* Action Icons */}
-                    <div className="absolute top-4 right-4 flex gap-2">
-                        <button className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-lg">
+                    <div className="absolute top-4 right-4 flex gap-2 z-10">
+                        <button
+                            onClick={handleShare}
+                            className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                        >
                             <Share2 className="w-5 h-5" />
                         </button>
-                        <button className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-lg">
-                            <Bookmark className="w-5 h-5" />
-                        </button>
                         <button
-                            onClick={() => setShowModal(true)}
-                            className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg"
+                            onClick={handleLike}
+                            className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg cursor-pointer transition-colors ${isLiked ? 'bg-red-500 hover:bg-red-600' : 'bg-white hover:bg-gray-100'
+                                }`}
                         >
-                            <span className="text-sm">≡</span>
+                            <Heart className={`w-5 h-5 ${isLiked ? 'text-white fill-white' : 'text-gray-700'}`} />
                         </button>
                     </div>
 
@@ -338,25 +383,7 @@ function PropertyDetailsContent() {
                         <span className="text-base">{property.additionalPrice}</span>
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex gap-2 mb-5 scroll-animate" data-animation="animate-fade-up">
-                        <button className="flex-1 bg-green-500 text-white py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors">
-                            <img
-                                src="/property-details/whatsapp.png"
-                                alt="WhatsApp"
-                                className="w-4 h-4 object-contain"
-                            />
-                            Whatsapp
-                        </button>
-                        <button className="flex-1 bg-green-500 text-white py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors">
-                            <img
-                                src="/property-details/call-icon.png"
-                                alt="Call"
-                                className="w-4 h-4 object-contain"
-                            />
-                            Request for call
-                        </button>
-                    </div>
+
 
                     {/* Amenities */}
                     <div className="mb-5 scroll-animate" data-animation="animate-slide-top">
@@ -396,9 +423,9 @@ function PropertyDetailsContent() {
 
                     {/* Location & Landmark */}
                     <div className="mb-5 scroll-animate" data-animation="animate-slide-top">
-                        <button className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium text-sm mb-3 scroll-animate" data-animation="animate-pop">
-                            Location & Landmark
-                        </button>
+                        <AnimatedText className="text-base font-bold mb-3 text-blue-600 inline-block" delay={1000} lineColor="#f8c02f">
+                            <h3>Location & Landmark</h3>
+                        </AnimatedText>
 
                         {/* Map */}
                         <div className="h-56 rounded-lg mb-3 overflow-hidden scroll-animate" data-animation="animate-fade-up">
@@ -439,7 +466,7 @@ function PropertyDetailsContent() {
                                         setActiveCategory(category);
                                         setShowMoreNearby(false);
                                     }}
-                                    className={`px-3 py-1.5 rounded-lg font-medium text-sm capitalize whitespace-nowrap ${activeCategory === category
+                                    className={`px-3 py-1.5 rounded-lg font-medium text-sm capitalize whitespace-nowrap cursor-pointer transition-colors hover:bg-blue-600 hover:text-white ${activeCategory === category
                                         ? 'bg-blue-600 text-white'
                                         : 'bg-white border border-gray-300 text-gray-700'
                                         }`}
@@ -468,12 +495,8 @@ function PropertyDetailsContent() {
                         {/* View More Button */}
                         {property.nearbyPlaces && property.nearbyPlaces[activeCategory] && property.nearbyPlaces[activeCategory].length > 4 && (
                             <button
-                                onClick={() => {
-                                    console.log('Button clicked, current showMoreNearby:', showMoreNearby);
-                                    setShowMoreNearby(!showMoreNearby);
-                                    console.log('Setting showMoreNearby to:', !showMoreNearby);
-                                }}
-                                className="w-28 bg-blue-600 text-white py-2.5 rounded-lg font-medium text-sm hover:cursor-pointer transition-colors hover:bg-blue-700"
+                                onClick={() => setShowMoreNearby(!showMoreNearby)}
+                                className="w-28 bg-blue-600 text-white py-2.5 rounded-lg font-medium text-sm cursor-pointer transition-colors hover:bg-blue-700"
                             >
                                 {showMoreNearby ? 'View Less' : 'View More'}
                             </button>
@@ -593,9 +616,12 @@ function PropertyDetailsContent() {
                 </div>
 
                 {/* Fixed Bottom Action Bar */}
-                <div className="fixed left-0 right-0 bg-white border-t border-gray-200 p-4 md:hidden" style={{ bottom: '60px' }}>
+                <div className="fixed left-0 right-0 bg-white border-t border-gray-200 p-4 md:hidden z-30" style={{ bottom: '60px' }}>
                     <div className="flex gap-3">
-                        <button className="flex-1 bg-green-500 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors">
+                        <button
+                            onClick={() => window.open(`https://wa.me/1234567890?text=Hi, I'm interested in ${property.name}`, '_blank')}
+                            className="flex-1 bg-green-500 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors"
+                        >
                             <img
                                 src="/property-details/whatsapp.png"
                                 alt="WhatsApp"
@@ -603,7 +629,10 @@ function PropertyDetailsContent() {
                             />
                             Whatsapp
                         </button>
-                        <button className="flex-1 bg-green-500 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors">
+                        <button
+                            onClick={() => window.location.href = 'tel:+911234567890'}
+                            className="flex-1 bg-green-500 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors"
+                        >
                             <img
                                 src="/property-details/call-icon.png"
                                 alt="Call"
@@ -673,8 +702,11 @@ function PropertyDetailsContent() {
                                     />
                                 </div>
                                 <button
-                                    onClick={() => setShowModal(false)}
-                                    className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold"
+                                    onClick={() => {
+                                        alert('Form submitted successfully!');
+                                        setShowModal(false);
+                                    }}
+                                    className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors cursor-pointer"
                                 >
                                     Submit
                                 </button>
@@ -734,7 +766,7 @@ function PropertyDetailsContent() {
             {/* Desktop Layout (md and above) */}
             <div className="hidden md:block">
                 {/* Main Content */}
-                <div className="w-3/4 mx-auto px-4 py-6">
+                <div className="w-full px-12 py-6">
                     <div className="mb-6 scroll-animate" data-animation="animate-pop">
                         <AnimatedText className="text-lg font-bold inline-block" lineColor="#f8c02f">
                             <h1>Showing Spaces in Delhi</h1>
@@ -876,7 +908,10 @@ function PropertyDetailsContent() {
 
                                 {/* Buttons */}
                                 <div className="flex gap-3 mb-5 scroll-animate" data-animation="animate-fade-up">
-                                    <button className="flex-1 border-2 border-green-500 text-green-500 py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-green-50 cursor-pointer transition-colors">
+                                    <button
+                                        onClick={() => window.open(`https://wa.me/1234567890?text=Hi, I'm interested in ${property.name}`, '_blank')}
+                                        className="flex-1 border-2 border-green-500 text-green-500 py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-green-50 cursor-pointer transition-colors"
+                                    >
                                         <img
                                             src="/property-details/whatsapp.png"
                                             alt="WhatsApp"
@@ -884,7 +919,10 @@ function PropertyDetailsContent() {
                                         />
                                         WhatsApp
                                     </button>
-                                    <button className="flex-1 bg-green-500 text-white py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors">
+                                    <button
+                                        onClick={() => window.location.href = 'tel:+911234567890'}
+                                        className="flex-1 bg-green-500 text-white py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors"
+                                    >
                                         <img
                                             src="/property-details/call-icon.png"
                                             alt="Call"
@@ -971,7 +1009,10 @@ function PropertyDetailsContent() {
                                         rows={3}
                                         className="w-full px-3 py-2.5 border-0 rounded-lg bg-white shadow-sm placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none text-sm"
                                     />
-                                    <button className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium text-sm hover:bg-blue-700 transition-colors shadow-md">
+                                    <button
+                                        onClick={() => alert('Form submitted successfully!')}
+                                        className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium text-sm hover:bg-blue-700 transition-colors shadow-md cursor-pointer"
+                                    >
                                         Submit
                                     </button>
                                 </div>
@@ -1307,7 +1348,10 @@ function PropertyDetailsContent() {
                                     </p>
 
                                     <div className="flex flex-col sm:flex-row gap-2 md:gap-3 justify-center lg:justify-start scroll-animate" data-animation="animate-fade-up">
-                                        <button className="flex items-center gap-1.5 md:gap-2.5 bg-black text-white px-3 py-1.5 md:px-6 md:py-3 rounded-lg hover:bg-gray-800 transition-colors shadow-lg">
+                                        <button
+                                            onClick={() => window.open('https://apps.apple.com', '_blank')}
+                                            className="flex items-center gap-1.5 md:gap-2.5 bg-black text-white px-3 py-1.5 md:px-6 md:py-3 rounded-lg hover:bg-gray-800 transition-colors shadow-lg cursor-pointer"
+                                        >
                                             <div className="w-4 h-4 md:w-7 md:h-7 bg-white rounded flex items-center justify-center">
                                                 <span className="text-black font-bold text-xs md:text-sm">🍎</span>
                                             </div>
@@ -1317,7 +1361,10 @@ function PropertyDetailsContent() {
                                             </div>
                                         </button>
 
-                                        <button className="flex items-center gap-1.5 md:gap-2.5 bg-black text-white px-3 py-1.5 md:px-6 md:py-3 rounded-lg hover:bg-gray-800 transition-colors shadow-lg">
+                                        <button
+                                            onClick={() => window.open('https://play.google.com', '_blank')}
+                                            className="flex items-center gap-1.5 md:gap-2.5 bg-black text-white px-3 py-1.5 md:px-6 md:py-3 rounded-lg hover:bg-gray-800 transition-colors shadow-lg cursor-pointer"
+                                        >
                                             <div className="w-4 h-4 md:w-7 md:h-7 bg-white rounded flex items-center justify-center">
                                                 <span className="text-black font-bold text-xs md:text-sm">▶</span>
                                             </div>

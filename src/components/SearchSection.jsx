@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 export default function SearchSection() {
+  const router = useRouter();
   const [selectedFilter, setSelectedFilter] = useState("Managed Space");
   const [location, setLocation] = useState("");
   const [managedSpace, setManagedSpace] = useState("");
@@ -80,16 +82,19 @@ export default function SearchSection() {
   };
 
   const handleSearch = () => {
-    // Handle search functionality
-    console.log("Search:", { 
-      location, 
-      managedSpace, 
-      preferences, 
-      selectedFilter,
-      pricePerDesk,
-      pricePerSqft,
-      noOfSeats
-    });
+    // Build URL parameters
+    const params = new URLSearchParams();
+    
+    if (location) params.append('location', location);
+    if (selectedFilter) params.append('filter', selectedFilter);
+    if (managedSpace) params.append('propertyType', managedSpace);
+    if (preferences) params.append('preferences', preferences);
+    if (pricePerDesk && pricePerDesk !== 'Any') params.append('pricePerDesk', pricePerDesk);
+    if (pricePerSqft && pricePerSqft !== 'Any') params.append('pricePerSqft', pricePerSqft);
+    if (noOfSeats && noOfSeats !== 'Any') params.append('noOfSeats', noOfSeats);
+    
+    // Redirect to properties-search with parameters
+    router.push(`/properties-search?${params.toString()}`);
   };
 
   // Get dropdown options based on selected filter
@@ -188,12 +193,12 @@ export default function SearchSection() {
           
           {/* Top Box - Filter Options */}
           <div className="bg-white rounded-2xl shadow-2xl p-3 md:p-4 w-full max-w-4xl animate-slideDown">
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2 md:gap-3">
+            <div className="flex overflow-x-auto gap-2 md:gap-3 md:grid md:grid-cols-7 scrollbar-hide pb-1">
               {filterOptions.map((option) => (
                 <div
                   key={option.id}
                   onClick={() => handleFilterClick(option.name)}
-                  className={`flex flex-col items-center justify-center cursor-pointer transition-all duration-200 aspect-square ${
+                  className={`flex flex-col items-center justify-center cursor-pointer transition-all duration-200 flex-shrink-0 w-20 md:w-auto md:aspect-square ${
                     selectedFilter === option.name
                       ? "bg-blue-50 border-2 border-blue-500 rounded-xl p-1 md:p-2"
                       : "hover:bg-gray-50 rounded-xl p-1 md:p-2 border border-gray-100"
@@ -216,9 +221,32 @@ export default function SearchSection() {
             </div>
           </div>
 
-          {/* Bottom Box - Search Inputs */}
-          <div className="bg-white rounded-3xl shadow-2xl p-2 w-11/12 max-w-3xl group/container mt-1 animate-slideDown animation-delay-200">
-            <div className="flex flex-col md:flex-row gap-0 items-center">
+          {/* Bottom Box - Search Inputs - RESPONSIVE */}
+          <div className="bg-white shadow-2xl p-2 w-11/12 max-w-3xl group/container mt-1 animate-slideDown animation-delay-200 rounded-full max-[425px]:rounded-3xl md:rounded-3xl">
+            {/* Mobile View (425px and below) - Simple search with icon */}
+            <div className="flex items-center gap-2 max-[425px]:flex md:hidden">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  placeholder="Search by Location"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="w-full px-4 py-2.5 border-0 focus:outline-none focus:ring-0 text-gray-700 text-sm bg-transparent rounded-full cursor-pointer"
+                />
+              </div>
+              <button
+                onClick={handleSearch}
+                style={{ backgroundColor: '#fdc700' }}
+                className="hover:opacity-90 text-white p-3 rounded-full transition-all duration-300 flex items-center justify-center flex-shrink-0 cursor-pointer"
+              >
+                <svg className="w-5 h-5 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Desktop View (above 425px) - Full search with dropdowns */}
+            <div className="hidden max-[425px]:hidden md:flex flex-col md:flex-row gap-0 items-center">
               {/* Location Input */}
               <div className="flex-[2.5] w-full">
                 <input
@@ -226,7 +254,7 @@ export default function SearchSection() {
                   placeholder="Search by Location"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  className="w-full px-3 py-2.5 border-0 focus:outline-none focus:ring-0 text-gray-700 text-sm transition-all"
+                  className="w-full px-3 py-2.5 border-0 focus:outline-none focus:ring-0 text-gray-700 text-sm transition-all cursor-pointer"
                 />
               </div>
 
@@ -387,9 +415,9 @@ export default function SearchSection() {
               <button
                 onClick={handleSearch}
                 style={{ backgroundColor: '#fdc700' }}
-                className="hover:opacity-90 text-white px-3 py-2.5 rounded-full transition-all duration-300 flex items-center justify-center gap-2 font-medium text-sm overflow-hidden w-full md:w-auto mt-2 md:mt-0"
+                className="hover:opacity-90 text-white px-3 py-2.5 rounded-full transition-all duration-300 flex items-center justify-center gap-2 font-medium text-sm overflow-hidden w-full md:w-auto mt-2 md:mt-0 cursor-pointer"
               >
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 flex-shrink-0 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <span className="md:max-w-0 md:group-hover/container:max-w-xs transition-all duration-300 overflow-hidden whitespace-nowrap">

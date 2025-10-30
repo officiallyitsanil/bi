@@ -167,36 +167,70 @@ export default function HomePage() {
 
   // Generate suggestions based on search query
   const generateSuggestions = (query) => {
-    if (!query.trim()) {
+    // Only show suggestions if query has at least 2 characters
+    if (!query.trim() || query.trim().length < 2) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
     }
 
-    const uniqueLocations = new Set();
+    const uniqueLocations = new Map();
     const filteredSuggestions = [];
 
     markers.forEach(marker => {
-      const locations = [
-        marker.state_name,
-        marker.layer_location,
-        marker.location_district
-      ].filter(Boolean);
-
-      locations.forEach(location => {
-        if (location && location.toLowerCase().includes(query.toLowerCase()) && !uniqueLocations.has(location.toLowerCase())) {
-          uniqueLocations.add(location.toLowerCase());
+      // Check state name
+      if (marker.state_name && marker.state_name.toLowerCase().includes(query.toLowerCase())) {
+        const key = marker.state_name.toLowerCase();
+        if (!uniqueLocations.has(key)) {
+          uniqueLocations.set(key, true);
+          // Show just city name for short queries, add ", India" for longer queries
+          const displayText = query.trim().length >= 3
+            ? `${marker.state_name}, India`
+            : marker.state_name;
           filteredSuggestions.push({
-            text: location,
+            text: marker.state_name,
+            displayText: displayText,
             marker: marker
           });
         }
-      });
+      }
+
+      // Check district
+      if (marker.location_district && marker.location_district.toLowerCase().includes(query.toLowerCase())) {
+        const key = marker.location_district.toLowerCase();
+        if (!uniqueLocations.has(key)) {
+          uniqueLocations.set(key, true);
+          const displayText = query.trim().length >= 3
+            ? `${marker.location_district}, India`
+            : marker.location_district;
+          filteredSuggestions.push({
+            text: marker.location_district,
+            displayText: displayText,
+            marker: marker
+          });
+        }
+      }
+
+      // Check layer location
+      if (marker.layer_location && marker.layer_location.toLowerCase().includes(query.toLowerCase())) {
+        const key = marker.layer_location.toLowerCase();
+        if (!uniqueLocations.has(key)) {
+          uniqueLocations.set(key, true);
+          const displayText = query.trim().length >= 3
+            ? `${marker.layer_location}, India`
+            : marker.layer_location;
+          filteredSuggestions.push({
+            text: marker.layer_location,
+            displayText: displayText,
+            marker: marker
+          });
+        }
+      }
     });
 
     const finalSuggestions = filteredSuggestions.slice(0, 5);
-    setSuggestions(finalSuggestions); // Limit to 5 suggestions
-    setShowSuggestions(true);
+    setSuggestions(finalSuggestions);
+    setShowSuggestions(true); // Always show dropdown when query has 2+ characters
   };
 
   const handleSearchInputChange = (e) => {
@@ -480,7 +514,7 @@ export default function HomePage() {
 
               {/* Suggestions Dropdown */}
               {showSuggestions && (
-                <div className="absolute top-full left-0 right-0 bg-white rounded-lg shadow-xl mt-1 max-h-60 overflow-y-auto z-20 border border-gray-200">
+                <div className="absolute top-full left-0 right-0 bg-white rounded-lg shadow-xl mt-1 max-h-60 overflow-y-auto z-500 border border-gray-200">
                   {suggestions.length > 0 ? (
                     suggestions.map((suggestion, index) => (
                       <div
@@ -542,14 +576,14 @@ export default function HomePage() {
                             console.error("Search error:", err);
                           }
                         }}
-                        className="px-4 py-3 hover:bg-gray-800 hover:text-white cursor-pointer border-b border-gray-100 last:border-b-0 text-gray-700 text-sm transition-all duration-200"
+                        className="px-4 py-2.5 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0 transition-all duration-200"
                       >
-                        {suggestion.text}
+                        <div className="text-gray-800 text-sm">{suggestion.displayText}</div>
                       </div>
                     ))
                   ) : (
-                    <div className="px-4 py-3 text-gray-500 text-sm">
-                      No suggestions for this location
+                    <div className="px-4 py-2.5 text-gray-500 text-sm">
+                      No suggestions found
                     </div>
                   )}
                 </div>
@@ -557,78 +591,81 @@ export default function HomePage() {
             </div>
           </form>
 
-          <div className="flex absolute top-20 w-full md:w-auto md:top-8 md:right-4 z-10 justify-between md:gap-3 px-5 md:px-0">
-            <div className="flex gap-1.5">
-              <button
-                onClick={() => {
-                  const newFilter = propertyTypeFilter === 'commercial' ? 'all' : 'commercial';
-                  setPropertyTypeFilter(newFilter);
+          {/* Hide buttons when suggestions dropdown is shown */}
+          {!showSuggestions && (
+            <div className="flex absolute top-20 w-full md:w-auto md:top-8 md:right-4 z-10 justify-between md:gap-3 px-5 md:px-0">
+              <div className="flex gap-1.5">
+                <button
+                  onClick={() => {
+                    const newFilter = propertyTypeFilter === 'commercial' ? 'all' : 'commercial';
+                    setPropertyTypeFilter(newFilter);
 
-                  // Update filters.type to sync with modal
-                  if (newFilter === 'all') {
-                    setFilters(prev => ({
-                      ...prev,
-                      type: { commercial: false, residential: false }
-                    }));
-                  } else if (newFilter === 'commercial') {
-                    setFilters(prev => ({
-                      ...prev,
-                      type: { commercial: true, residential: false }
-                    }));
-                  }
-                }}
-                className="bg-white px-2 py-1 rounded-full shadow-xl flex items-center gap-1.5 text-gray-700 hover:bg-gray-50 hover:cursor-pointer"
-              >
-                {propertyTypeFilter === 'commercial' ? (
-                  <svg className="w-3.5 h-3.5 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                ) : (
-                  <div className="w-3.5 h-3.5 border border-gray-300 rounded"></div>
-                )}
-                <span className='text-[0.75rem]'>Commercial</span>
-              </button>
-              <button
-                onClick={() => {
-                  const newFilter = propertyTypeFilter === 'residential' ? 'all' : 'residential';
-                  setPropertyTypeFilter(newFilter);
+                    // Update filters.type to sync with modal
+                    if (newFilter === 'all') {
+                      setFilters(prev => ({
+                        ...prev,
+                        type: { commercial: false, residential: false }
+                      }));
+                    } else if (newFilter === 'commercial') {
+                      setFilters(prev => ({
+                        ...prev,
+                        type: { commercial: true, residential: false }
+                      }));
+                    }
+                  }}
+                  className="bg-white px-2 py-1 rounded-full shadow-xl flex items-center gap-1.5 text-gray-700 hover:bg-gray-50 hover:cursor-pointer"
+                >
+                  {propertyTypeFilter === 'commercial' ? (
+                    <svg className="w-3.5 h-3.5 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <div className="w-3.5 h-3.5 border border-gray-300 rounded"></div>
+                  )}
+                  <span className='text-[0.75rem]'>Commercial</span>
+                </button>
+                <button
+                  onClick={() => {
+                    const newFilter = propertyTypeFilter === 'residential' ? 'all' : 'residential';
+                    setPropertyTypeFilter(newFilter);
 
-                  // Update filters.type to sync with modal
-                  if (newFilter === 'all') {
-                    setFilters(prev => ({
-                      ...prev,
-                      type: { commercial: false, residential: false }
-                    }));
-                  } else if (newFilter === 'residential') {
-                    setFilters(prev => ({
-                      ...prev,
-                      type: { commercial: false, residential: true }
-                    }));
-                  }
-                }}
-                className="bg-white px-2 py-1 rounded-full shadow-xl flex items-center gap-1.5 text-gray-700 hover:bg-gray-50 hover:cursor-pointer"
-              >
-                {propertyTypeFilter === 'residential' ? (
-                  <svg className="w-3.5 h-3.5 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                ) : (
-                  <div className="w-3.5 h-3.5 border border-gray-300 rounded"></div>
-                )}
-                <span className='text-[0.75rem]'>Residential</span>
-              </button>
+                    // Update filters.type to sync with modal
+                    if (newFilter === 'all') {
+                      setFilters(prev => ({
+                        ...prev,
+                        type: { commercial: false, residential: false }
+                      }));
+                    } else if (newFilter === 'residential') {
+                      setFilters(prev => ({
+                        ...prev,
+                        type: { commercial: false, residential: true }
+                      }));
+                    }
+                  }}
+                  className="bg-white px-2 py-1 rounded-full shadow-xl flex items-center gap-1.5 text-gray-700 hover:bg-gray-50 hover:cursor-pointer"
+                >
+                  {propertyTypeFilter === 'residential' ? (
+                    <svg className="w-3.5 h-3.5 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <div className="w-3.5 h-3.5 border border-gray-300 rounded"></div>
+                  )}
+                  <span className='text-[0.75rem]'>Residential</span>
+                </button>
+              </div>
+              <div className="flex gap-1.5">
+                <button
+                  ref={filtersBtnRef}
+                  onClick={() => openModal("filters", filtersBtnRef)}
+                  className="bg-white px-2 py-1 rounded-full shadow-xl flex items-center gap-1.5 text-gray-700 hover:bg-gray-50 hover:cursor-pointer"
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span className='text-[0.75rem]'>Filters</span>
+                </button>
+              </div>
             </div>
-            <div className="flex gap-1.5">
-              <button
-                ref={filtersBtnRef}
-                onClick={() => openModal("filters", filtersBtnRef)}
-                className="bg-white px-2 py-1 rounded-full shadow-xl flex items-center gap-1.5 text-gray-700 hover:bg-gray-50 hover:cursor-pointer"
-              >
-                <SlidersHorizontal className="w-3.5 h-3.5" />
-                <span className='text-[0.75rem]'>Filters</span>
-              </button>
-            </div>
-          </div>
+          )}
 
           <button
             onClick={() => setPropertyListVisible(!isPropertyListVisible)}
