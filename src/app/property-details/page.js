@@ -73,6 +73,10 @@ function PropertyDetailsContent() {
     const [property, setProperty] = useState(null);
     const [showMoreNearby, setShowMoreNearby] = useState(false);
     const [showReviewsModal, setShowReviewsModal] = useState(false);
+    const [showRatingModal, setShowRatingModal] = useState(false);
+    const [selectedRating, setSelectedRating] = useState(0);
+    const [hoverRating, setHoverRating] = useState(0);
+    const [reviewText, setReviewText] = useState('');
     const [touchStart, setTouchStart] = useState(0);
     const [touchEnd, setTouchEnd] = useState(0);
 
@@ -562,7 +566,11 @@ function PropertyDetailsContent() {
                                 {property.ratings?.whatsGood?.map((item, i) => (
                                     <span
                                         key={i}
-                                        className="px-4 py-2 max-w-44 bg-gray-100 text-gray-700 rounded-full text-xs"
+                                        onClick={() => {
+                                            setReviewText(item);
+                                            setShowRatingModal(true);
+                                        }}
+                                        className="px-4 py-2 max-w-44 bg-gray-100 text-gray-700 rounded-full text-xs cursor-pointer hover:bg-gray-200 transition-colors"
                                     >
                                         {item}
                                     </span>
@@ -580,7 +588,11 @@ function PropertyDetailsContent() {
                                 {property.ratings?.whatsBad?.map((item, i) => (
                                     <span
                                         key={i}
-                                        className="px-4 py-2 max-w-44 bg-red-100 text-red-700 rounded-full text-xs"
+                                        onClick={() => {
+                                            setReviewText(item);
+                                            setShowRatingModal(true);
+                                        }}
+                                        className="px-4 py-2 max-w-44 bg-red-100 text-red-700 rounded-full text-xs cursor-pointer hover:bg-red-200 transition-colors"
                                     >
                                         {item}
                                     </span>
@@ -757,6 +769,75 @@ function PropertyDetailsContent() {
                                 ) : (
                                     <p className="text-gray-500 text-center py-10">No reviews available</p>
                                 )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Rating Submit Modal */}
+                {showRatingModal && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                        <div className="bg-white rounded-2xl w-full max-w-md p-8">
+                            {/* Title with underline */}
+                            <div className="text-center mb-8">
+                                <h3 className="text-2xl font-bold text-gray-800 mb-2">Rate Your Experience</h3>
+                                <div className="w-32 h-1 bg-yellow-400 mx-auto"></div>
+                            </div>
+
+                            {/* Rating Section */}
+                            <div className="mb-6">
+                                <label className="block text-base font-medium text-gray-700 mb-3">Rating</label>
+                                <div className="flex justify-center gap-2">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <Star
+                                            key={star}
+                                            onClick={() => setSelectedRating(star)}
+                                            onMouseEnter={() => setHoverRating(star)}
+                                            onMouseLeave={() => setHoverRating(0)}
+                                            className={`w-12 h-12 cursor-pointer transition-all ${star <= (hoverRating || selectedRating)
+                                                ? 'text-gray-400 fill-gray-400'
+                                                : 'text-gray-300'
+                                                }`}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Review Text Area */}
+                            <div className="mb-6">
+                                <label className="block text-base font-medium text-gray-700 mb-3">Review (optional)</label>
+                                <textarea
+                                    value={reviewText}
+                                    onChange={(e) => setReviewText(e.target.value)}
+                                    rows={4}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                    placeholder="Share your experience..."
+                                />
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() => {
+                                        setShowRatingModal(false);
+                                        setSelectedRating(0);
+                                        setReviewText('');
+                                    }}
+                                    className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold text-base hover:bg-gray-300 transition-colors cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        alert(`Rating submitted: ${selectedRating} stars\nReview: ${reviewText}`);
+                                        setShowRatingModal(false);
+                                        setSelectedRating(0);
+                                        setReviewText('');
+                                    }}
+                                    className="flex-1 bg-blue-500 text-white py-3 rounded-lg font-semibold text-base hover:bg-blue-600 transition-colors cursor-pointer"
+                                >
+                                    Submit Rating
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1183,7 +1264,11 @@ function PropertyDetailsContent() {
                                     {property.ratings?.whatsGood?.map((item, i) => (
                                         <span
                                             key={i}
-                                            className="px-4 py-2 max-w-44 bg-gray-100 text-gray-700 rounded-full text-xs"
+                                            onClick={() => {
+                                                setReviewText(item);
+                                                setShowRatingModal(true);
+                                            }}
+                                            className="px-4 py-2 max-w-44 bg-gray-100 text-gray-700 rounded-full text-xs cursor-pointer hover:bg-gray-200 transition-colors"
                                         >
                                             {item}
                                         </span>
@@ -1201,7 +1286,11 @@ function PropertyDetailsContent() {
                                     {property.ratings?.whatsBad?.map((item, i) => (
                                         <span
                                             key={i}
-                                            className="px-4 py-2 max-w-44 bg-red-100 text-red-700 rounded-full text-xs"
+                                            onClick={() => {
+                                                setReviewText(item);
+                                                setShowRatingModal(true);
+                                            }}
+                                            className="px-4 py-2 max-w-44 bg-red-100 text-red-700 rounded-full text-xs cursor-pointer hover:bg-red-200 transition-colors"
                                         >
                                             {item}
                                         </span>
@@ -1433,6 +1522,75 @@ function PropertyDetailsContent() {
                                 ) : (
                                     <p className="text-gray-500 text-center py-10">No reviews available</p>
                                 )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Rating Submit Modal - Desktop */}
+                {showRatingModal && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                        <div className="bg-white rounded-2xl w-full max-w-md p-8">
+                            {/* Title with underline */}
+                            <div className="text-center mb-8">
+                                <h3 className="text-2xl font-bold text-gray-800 mb-2">Rate Your Experience</h3>
+                                <div className="w-32 h-1 bg-yellow-400 mx-auto"></div>
+                            </div>
+
+                            {/* Rating Section */}
+                            <div className="mb-6">
+                                <label className="block text-base font-medium text-gray-700 mb-3">Rating</label>
+                                <div className="flex justify-center gap-2">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <Star
+                                            key={star}
+                                            onClick={() => setSelectedRating(star)}
+                                            onMouseEnter={() => setHoverRating(star)}
+                                            onMouseLeave={() => setHoverRating(0)}
+                                            className={`w-12 h-12 cursor-pointer transition-all ${star <= (hoverRating || selectedRating)
+                                                ? 'text-gray-400 fill-gray-400'
+                                                : 'text-gray-300'
+                                                }`}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Review Text Area */}
+                            <div className="mb-6">
+                                <label className="block text-base font-medium text-gray-700 mb-3">Review (optional)</label>
+                                <textarea
+                                    value={reviewText}
+                                    onChange={(e) => setReviewText(e.target.value)}
+                                    rows={4}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                    placeholder="Share your experience..."
+                                />
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() => {
+                                        setShowRatingModal(false);
+                                        setSelectedRating(0);
+                                        setReviewText('');
+                                    }}
+                                    className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold text-base hover:bg-gray-300 transition-colors cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        alert(`Rating submitted: ${selectedRating} stars\nReview: ${reviewText}`);
+                                        setShowRatingModal(false);
+                                        setSelectedRating(0);
+                                        setReviewText('');
+                                    }}
+                                    className="flex-1 bg-blue-500 text-white py-3 rounded-lg font-semibold text-base hover:bg-blue-600 transition-colors cursor-pointer"
+                                >
+                                    Submit Rating
+                                </button>
                             </div>
                         </div>
                     </div>

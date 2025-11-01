@@ -98,18 +98,18 @@ export default function MapView({ center, markers, selectedMarker, onMarkerClick
   return (
     <div className="relative w-full h-full">
       {/* Layer Control Button */}
-      <div className="absolute top-4 left-4 z-10">
+      <div className="absolute max-[425px]:bottom-[140px] max-[425px]:right-4 max-[425px]:top-auto max-[425px]:left-auto min-[426px]:top-4 min-[426px]:left-4 z-10">
         <button
           onClick={() => setShowLayerMenu(!showLayerMenu)}
-          className="bg-white p-2.5 rounded-lg shadow-xl hover:bg-gray-50 transition-colors"
+          className="bg-white p-2.5 max-[425px]:p-3 rounded-lg shadow-xl hover:bg-gray-50 transition-colors"
           title="Map Layers"
         >
-          <Layers className="w-5 h-5 text-gray-700" />
+          <Layers className="w-5 h-5 max-[425px]:w-5.5 max-[425px]:h-5.5 text-gray-700" />
         </button>
 
         {/* Layer Menu */}
         {showLayerMenu && (
-          <div className="absolute top-14 left-0 bg-white rounded-lg shadow-xl p-3 w-48">
+          <div className="absolute max-[425px]:bottom-14 max-[425px]:right-0 max-[425px]:top-auto max-[425px]:left-auto min-[426px]:top-14 min-[426px]:left-0 bg-white rounded-lg shadow-xl p-3 w-48">
             <h3 className="text-sm font-semibold text-gray-800 mb-2">Map Type</h3>
             <div className="space-y-1 mb-3">
               {mapTypes.map((type) => (

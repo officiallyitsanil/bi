@@ -15,17 +15,29 @@ export default function SearchSection() {
   const [noOfSeats, setNoOfSeats] = useState("Any");
   const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
   const preferencesRef = useRef(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (preferencesRef.current && !preferencesRef.current.contains(event.target)) {
         setIsPreferencesOpen(false);
       }
+      if (!event.target.closest('.search-container')) {
+        setShowSuggestions(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Popular cities for suggestions
+  const popularCities = [
+    "Mumbai", "Hyderabad", "Bangalore", "Chennai", "Pune", "Noida", 
+    "Delhi", "Indore", "Ahmedabad", "Jaipur", "Kerala", "Chandigarh",
+    "Kolkata", "Goa", "Bhubaneswar", "Uttar Pradesh", "Lucknow"
+  ];
 
   const filterOptions = [
     {
@@ -79,6 +91,37 @@ export default function SearchSection() {
     setPricePerDesk("Any");
     setPricePerSqft("Any");
     setNoOfSeats("Any");
+  };
+
+  // Generate suggestions based on search query
+  const generateSuggestions = (query) => {
+    if (!query.trim() || query.trim().length < 1) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    const filteredSuggestions = popularCities
+      .filter(city => city.toLowerCase().includes(query.toLowerCase()))
+      .slice(0, 5)
+      .map(city => ({
+        text: city,
+        displayText: query.trim().length >= 3 ? `${city}, India` : city
+      }));
+
+    setSuggestions(filteredSuggestions);
+    setShowSuggestions(true);
+  };
+
+  const handleLocationChange = (e) => {
+    const value = e.target.value;
+    setLocation(value);
+    generateSuggestions(value);
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    setLocation(suggestion.text);
+    setShowSuggestions(false);
   };
 
   const handleSearch = () => {
@@ -222,17 +265,39 @@ export default function SearchSection() {
           </div>
 
           {/* Bottom Box - Search Inputs - RESPONSIVE */}
-          <div className="bg-white shadow-2xl p-2 w-11/12 max-w-3xl group/container mt-1 animate-slideDown animation-delay-200 rounded-full max-[425px]:rounded-3xl md:rounded-3xl">
+          <div className="bg-white shadow-2xl p-2 w-11/12 max-w-3xl group/container mt-1 animate-slideDown animation-delay-200 rounded-full max-[425px]:rounded-3xl md:rounded-3xl search-container relative">
             {/* Mobile View (425px and below) - Simple search with icon */}
             <div className="flex items-center gap-2 max-[425px]:flex md:hidden">
-              <div className="flex-1">
+              <div className="flex-1 relative">
                 <input
                   type="text"
                   placeholder="Search by Location"
                   value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                  onChange={handleLocationChange}
+                  onFocus={() => location && setShowSuggestions(true)}
                   className="w-full px-4 py-2.5 border-0 focus:outline-none focus:ring-0 text-gray-700 text-sm bg-transparent rounded-full cursor-pointer"
                 />
+                
+                {/* Mobile Suggestions Dropdown */}
+                {showSuggestions && (
+                  <div className="absolute top-full left-0 right-0 bg-white rounded-lg shadow-xl mt-2 max-h-60 overflow-y-auto z-50 border border-gray-200">
+                    {suggestions.length > 0 ? (
+                      suggestions.map((suggestion, index) => (
+                        <div
+                          key={index}
+                          onClick={() => handleSuggestionClick(suggestion)}
+                          className="px-4 py-2.5 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0 transition-all duration-200"
+                        >
+                          <div className="text-gray-800 text-sm">{suggestion.displayText}</div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="px-4 py-2.5 text-gray-500 text-sm">
+                        No suggestions found
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <button
                 onClick={handleSearch}
@@ -248,14 +313,36 @@ export default function SearchSection() {
             {/* Desktop View (above 425px) - Full search with dropdowns */}
             <div className="hidden max-[425px]:hidden md:flex flex-col md:flex-row gap-0 items-center">
               {/* Location Input */}
-              <div className="flex-[2.5] w-full">
+              <div className="flex-[2.5] w-full relative">
                 <input
                   type="text"
                   placeholder="Search by Location"
                   value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                  onChange={handleLocationChange}
+                  onFocus={() => location && setShowSuggestions(true)}
                   className="w-full px-3 py-2.5 border-0 focus:outline-none focus:ring-0 text-gray-700 text-sm transition-all cursor-pointer"
                 />
+                
+                {/* Desktop Suggestions Dropdown */}
+                {showSuggestions && (
+                  <div className="absolute top-full left-0 right-0 bg-white rounded-lg shadow-xl mt-1 max-h-60 overflow-y-auto z-50 border border-gray-200">
+                    {suggestions.length > 0 ? (
+                      suggestions.map((suggestion, index) => (
+                        <div
+                          key={index}
+                          onClick={() => handleSuggestionClick(suggestion)}
+                          className="px-4 py-2.5 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0 transition-all duration-200"
+                        >
+                          <div className="text-gray-800 text-sm">{suggestion.displayText}</div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="px-4 py-2.5 text-gray-500 text-sm">
+                        No suggestions found
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Divider */}

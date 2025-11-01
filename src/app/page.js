@@ -119,8 +119,8 @@ export default function HomePage() {
 
   // Generate suggestions based on search query
   const generateSuggestions = (query) => {
-    // Only show suggestions if query has at least 2 characters
-    if (!query.trim() || query.trim().length < 2) {
+    // Only show suggestions if query has at least 1 character
+    if (!query.trim() || query.trim().length < 1) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
@@ -182,7 +182,7 @@ export default function HomePage() {
 
     const finalSuggestions = filteredSuggestions.slice(0, 5);
     setSuggestions(finalSuggestions);
-    setShowSuggestions(true); // Always show dropdown when query has 2+ characters
+    setShowSuggestions(true); // Always show dropdown when query has 1+ characters
   };
 
   const handleSearchInputChange = (e) => {
