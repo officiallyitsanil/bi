@@ -33,6 +33,14 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
     const [isFavourite, setIsFavourite] = useState(false);
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+    const [reportFormData, setReportFormData] = useState({
+        reporterName: "",
+        reporterEmail: "",
+        reporterPhone: "",
+        reason: "",
+        details: "",
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         try {
@@ -104,10 +112,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
         discountedPrice = "N/A",
         additionalPrice = "N/A",
         location_district = "N/A",
-        listed_by = "Owner",
         images = [],
-        zoning = "N/A",
-        approach_road = "N/A",
         date_added = "N/A",
         is_verified = false,
         sellerPhoneNumber = "N/A",
@@ -154,12 +159,6 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                     <span className="text-xs font-medium text-gray-500 line-through ml-2">{originalPrice}</span>
                                     <span className="text-xs font-medium text-gray-800"> (+{additionalPrice})</span>
                                 </div>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                <div className="flex items-center justify-center">
-                                    <Image src={createdBy?.avatarUrl || "/owner-icon.svg"} width={14} height={14} alt="Listed by" className="rounded-full" />
-                                </div>
-                                <span className="text-xs font-medium text-gray-600">{listed_by} Listed</span>
                             </div>
                         </div>
                     </div>
@@ -249,18 +248,6 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                     <section>
                         <div className="flex flex-col">
                             <div className="space-y-2">
-                                <div className="flex gap-2"><span className="flex-1 text-sm font-medium text-gray-500">Zoning</span><span className="flex-1 text-sm font-semibold capitalize text-gray-800">{zoning}</span></div>
-                            </div>
-                            <div className="shrink-0 h-[1px] w-full my-4 bg-gray-200"></div>
-                        </div>
-                        <div className="flex flex-col">
-                            <div className="space-y-2">
-                                <div className="flex gap-2"><span className="flex-1 text-sm font-medium text-gray-500">Approach road</span><span className="flex-1 text-sm font-semibold capitalize text-gray-800">{approach_road}</span></div>
-                            </div>
-                            <div className="shrink-0 h-[1px] w-full my-4 bg-gray-200"></div>
-                        </div>
-                        <div className="flex flex-col">
-                            <div className="space-y-2">
                                 <div className="flex gap-2"><span className="flex-1 text-sm font-medium text-gray-500">Date Added</span><span className="flex-1 text-sm font-semibold capitalize text-gray-800">{date_added}</span></div>
                             </div>
                         </div>
@@ -334,25 +321,6 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                             )}
                         </section>
                     )}
-
-                    <section className="my-4">
-                        <div className="shrink-0 h-[1px] w-full mb-4 bg-gray-200"></div>
-                        <h3 className="text-base font-semibold text-gray-800 mb-3">Property Info</h3>
-                        <div className="space-y-2">
-                            <div className="flex gap-2">
-                                <span className="text-sm font-medium text-gray-500">Type</span>
-                                <span className="text-sm font-semibold capitalize text-gray-800">{propertyType}</span>
-                            </div>
-                            <div className="flex gap-2">
-                                <span className="text-sm font-medium text-gray-500">Location</span>
-                                <span className="text-sm font-semibold text-gray-800">{layer_location}, {location_district}</span>
-                            </div>
-                            <div className="flex gap-2">
-                                <span className="text-sm font-medium text-gray-500">Listed by</span>
-                                <span className="text-sm font-semibold text-gray-800">{listed_by}</span>
-                            </div>
-                        </div>
-                    </section>
 
                     {ratings?.overall && (
                         <section className="my-4">
@@ -455,7 +423,10 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
 
             <div className="sticky bottom-0 z-20 w-full bg-white p-4 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] max-[375px]:p-2">
                 <div className="flex gap-3 max-[375px]:gap-2">
-                    <button className="flex-1 border-2 border-green-500 text-green-500 py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-green-50 cursor-pointer transition-colors">
+                    <button
+                        onClick={() => window.open(`https://wa.me/${sellerPhoneNumber.replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${name}`, '_blank')}
+                        className="flex-1 border-2 border-green-500 text-green-500 py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-green-50 cursor-pointer transition-colors"
+                    >
                         <img
                             src="/property-details/whatsapp.png"
                             alt="WhatsApp"
@@ -463,7 +434,10 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                         />
                         WhatsApp
                     </button>
-                    <button className="flex-1 bg-green-500 text-white py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors">
+                    <button
+                        onClick={() => window.location.href = `tel:${sellerPhoneNumber}`}
+                        className="flex-1 bg-green-500 text-white py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors"
+                    >
                         <img
                             src="/property-details/call-icon.png"
                             alt="Call"
@@ -506,7 +480,16 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
 
             {isReportModalOpen && (
                 <div
-                    onClick={() => setIsReportModalOpen(false)}
+                    onClick={() => {
+                        setIsReportModalOpen(false);
+                        setReportFormData({
+                            reporterName: "",
+                            reporterEmail: "",
+                            reporterPhone: "",
+                            reason: "",
+                            details: "",
+                        });
+                    }}
                     style={{ background: "rgba(0,0,0,0.7)" }}
                     className="fixed inset-0 flex items-center justify-center z-[60] p-4"
                 >
@@ -516,15 +499,59 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                     >
                         <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-white z-10 rounded-t-2xl">
                             <h2 className="text-xl font-semibold text-gray-800">Report this Property</h2>
-                            <button onClick={() => setIsReportModalOpen(false)} className="text-gray-500 hover:text-gray-800">
+                            <button
+                                onClick={() => {
+                                    setIsReportModalOpen(false);
+                                    setReportFormData({
+                                        reporterName: "",
+                                        reporterEmail: "",
+                                        reporterPhone: "",
+                                        reason: "",
+                                        details: "",
+                                    });
+                                }}
+                                className="text-gray-500 hover:text-gray-800"
+                            >
                                 <X className="w-6 h-6" />
                             </button>
                         </div>
-                        <form className="p-6 space-y-4" onSubmit={(e) => {
+                        <form className="p-6 space-y-4" onSubmit={async (e) => {
                             e.preventDefault();
-                            // Handle form submission here
-                            alert('Report submitted successfully!');
-                            setIsReportModalOpen(false);
+                            setIsSubmitting(true);
+
+                            try {
+                                const response = await fetch('/api/report-property', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        propertyId: property.id,
+                                        propertyName: name,
+                                        ...reportFormData,
+                                    }),
+                                });
+
+                                const data = await response.json();
+
+                                if (data.success) {
+                                    setIsReportModalOpen(false);
+                                    setReportFormData({
+                                        reporterName: "",
+                                        reporterEmail: "",
+                                        reporterPhone: "",
+                                        reason: "",
+                                        details: "",
+                                    });
+                                } else {
+                                    alert('Failed to submit report. Please try again.');
+                                }
+                            } catch (error) {
+                                console.error('Error submitting report:', error);
+                                alert('An error occurred. Please try again.');
+                            } finally {
+                                setIsSubmitting(false);
+                            }
                         }}>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -533,6 +560,8 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                 <input
                                     type="text"
                                     required
+                                    value={reportFormData.reporterName}
+                                    onChange={(e) => setReportFormData({ ...reportFormData, reporterName: e.target.value })}
                                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                                     placeholder="Enter your name"
                                 />
@@ -545,6 +574,8 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                 <input
                                     type="email"
                                     required
+                                    value={reportFormData.reporterEmail}
+                                    onChange={(e) => setReportFormData({ ...reportFormData, reporterEmail: e.target.value })}
                                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                                     placeholder="your.email@example.com"
                                 />
@@ -556,6 +587,8 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                 </label>
                                 <input
                                     type="tel"
+                                    value={reportFormData.reporterPhone}
+                                    onChange={(e) => setReportFormData({ ...reportFormData, reporterPhone: e.target.value })}
                                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                                     placeholder="+91 XXXXX XXXXX"
                                 />
@@ -567,6 +600,8 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                 </label>
                                 <select
                                     required
+                                    value={reportFormData.reason}
+                                    onChange={(e) => setReportFormData({ ...reportFormData, reason: e.target.value })}
                                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all bg-white"
                                 >
                                     <option value="">Select a reason</option>
@@ -586,6 +621,8 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                 <textarea
                                     required
                                     rows="4"
+                                    value={reportFormData.details}
+                                    onChange={(e) => setReportFormData({ ...reportFormData, details: e.target.value })}
                                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
                                     placeholder="Please provide more details about your report..."
                                 ></textarea>
@@ -594,16 +631,26 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                             <div className="flex gap-3 pt-4">
                                 <button
                                     type="button"
-                                    onClick={() => setIsReportModalOpen(false)}
-                                    className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                                    onClick={() => {
+                                        setIsReportModalOpen(false);
+                                        setReportFormData({
+                                            reporterName: "",
+                                            reporterEmail: "",
+                                            reporterPhone: "",
+                                            reason: "",
+                                            details: "",
+                                        });
+                                    }}
+                                    className="flex-1 px-4 py-2.5 border-2 border-yellow-400 text-yellow-600 rounded-lg font-medium hover:bg-yellow-50 transition-colors cursor-pointer"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
+                                    disabled={isSubmitting}
+                                    className="flex-1 px-4 py-2.5 bg-yellow-400 text-black rounded-lg font-medium hover:bg-yellow-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    Submit Report
+                                    {isSubmitting ? "Submitting..." : "Submit Report"}
                                 </button>
                             </div>
                         </form>

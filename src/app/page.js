@@ -97,15 +97,44 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    const loadProperties = () => {
-      console.log('Loading properties:', propertiesData.length);
-      console.log('Properties data:', propertiesData.map(p => ({
-        id: p.id,
-        name: p.name,
-        position: p.position,
-        coordinates: p.coordinates
-      })));
-      setMarkers(propertiesData);
+    const loadProperties = async () => {
+      try {
+        const response = await fetch('/api/properties');
+        const result = await response.json();
+
+        if (result.success && result.data) {
+          const properties = result.data.map(property => ({
+            ...property,
+            id: property._id || 'XX',
+            name: property.name || 'Property Name',
+            propertyType: property.propertyType || 'residential',
+            state_name: property.state_name || 'Location',
+            layer_location: property.layer_location || 'Area',
+            location_district: property.location_district || 'District',
+            position: property.position || property.coordinates || { lat: 17.4200, lng: 78.4867 },
+            coordinates: property.coordinates || property.position || { lat: 17.4200, lng: 78.4867 },
+            images: property.images || ['/placeholder.png'],
+            featuredImageUrl: property.featuredImageUrl || '/placeholder.png',
+            originalPrice: property.originalPrice || '₹XX',
+            discountedPrice: property.discountedPrice || '₹XX',
+            date_added: property.date_added || 'N/A',
+            is_verified: property.is_verified || false,
+            sellerPhoneNumber: property.sellerPhoneNumber || '+91 XXXXXXXXXX',
+            address: property.address || 'Address not available',
+            amenities: property.amenities || [],
+            nearbyPlaces: property.nearbyPlaces || { school: [], hospital: [], hotel: [], business: [] },
+            floorPlans: property.floorPlans || {},
+            ratings: property.ratings || { overall: 0, totalRatings: 0, breakdown: {}, whatsGood: [], whatsBad: [] },
+            reviews: property.reviews || []
+          }));
+
+          console.log('Loading properties from API:', properties.length);
+          setMarkers(properties);
+        }
+      } catch (error) {
+        console.error('Error loading properties:', error);
+        setMarkers([]);
+      }
     };
 
     loadProperties();

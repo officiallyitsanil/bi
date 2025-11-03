@@ -79,6 +79,14 @@ function PropertyDetailsContent() {
     const [reviewText, setReviewText] = useState('');
     const [touchStart, setTouchStart] = useState(0);
     const [touchEnd, setTouchEnd] = useState(0);
+    const [interestFormData, setInterestFormData] = useState({
+        name: "",
+        email: "",
+        phone: "",
+        message: "",
+    });
+    const [isSubmittingInterest, setIsSubmittingInterest] = useState(false);
+    const [showSuccessTooltip, setShowSuccessTooltip] = useState(false);
 
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -88,7 +96,6 @@ function PropertyDetailsContent() {
     const locationRef = useRef(null);
     const reviewsRef = useRef(null);
     const layoutRef = useRef(null);
-    const infoRef = useRef(null);
 
     // Scroll animation effect
     useEffect(() => {
@@ -196,8 +203,7 @@ function PropertyDetailsContent() {
         { id: 'amenities', label: 'Amenities' },
         { id: 'location', label: 'Location & Landmark' },
         { id: 'reviews', label: 'Rating & Reviews' },
-        { id: 'layout', label: 'Property Layout' },
-        { id: 'info', label: 'Property Info' }
+        { id: 'layout', label: 'Property Layout' }
     ];
 
     const nextImage = () => {
@@ -264,8 +270,7 @@ function PropertyDetailsContent() {
             'amenities': amenitiesRef,
             'location': locationRef,
             'reviews': reviewsRef,
-            'layout': layoutRef,
-            'info': infoRef
+            'layout': layoutRef
         };
 
         if (refs[sectionId]?.current) {
@@ -362,7 +367,7 @@ function PropertyDetailsContent() {
                 </div>
 
                 {/* Mobile Property Info */}
-                <div className="w-3/4 mx-auto px-3 py-5">
+                <div className="w-full px-4 py-5 max-[425px]:px-3 min-[426px]:w-3/4 min-[426px]:mx-auto">
                     <h2 className="text-xl font-bold mb-2 scroll-animate" data-animation="animate-pop">{property.name}</h2>
                     <p className="text-xs text-gray-600 mb-3 scroll-animate" data-animation="animate-fade-up">{property.address}</p>
 
@@ -631,7 +636,7 @@ function PropertyDetailsContent() {
                 <div className="fixed left-0 right-0 bg-white border-t border-gray-200 p-4 md:hidden z-30" style={{ bottom: '60px' }}>
                     <div className="flex gap-3">
                         <button
-                            onClick={() => window.open(`https://wa.me/1234567890?text=Hi, I'm interested in ${property.name}`, '_blank')}
+                            onClick={() => window.open(`https://wa.me/${property.sellerPhoneNumber?.replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${property.name}`, '_blank')}
                             className="flex-1 bg-green-500 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors"
                         >
                             <img
@@ -642,7 +647,7 @@ function PropertyDetailsContent() {
                             Whatsapp
                         </button>
                         <button
-                            onClick={() => window.location.href = 'tel:+911234567890'}
+                            onClick={() => window.location.href = `tel:${property.sellerPhoneNumber}`}
                             className="flex-1 bg-green-500 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors"
                         >
                             <img
@@ -823,7 +828,7 @@ function PropertyDetailsContent() {
                                         setSelectedRating(0);
                                         setReviewText('');
                                     }}
-                                    className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold text-base hover:bg-gray-300 transition-colors cursor-pointer"
+                                    className="flex-1 bg-transparent border-2 border-[#f8c02f] text-gray-800 py-3 rounded-lg font-semibold text-base hover:bg-[#f8c02f]/10 transition-colors cursor-pointer"
                                 >
                                     Cancel
                                 </button>
@@ -834,7 +839,7 @@ function PropertyDetailsContent() {
                                         setSelectedRating(0);
                                         setReviewText('');
                                     }}
-                                    className="flex-1 bg-blue-500 text-white py-3 rounded-lg font-semibold text-base hover:bg-blue-600 transition-colors cursor-pointer"
+                                    className="flex-1 bg-[#f8c02f] text-gray-800 py-3 rounded-lg font-semibold text-base hover:bg-[#e0ad2a] transition-colors cursor-pointer"
                                 >
                                     Submit Rating
                                 </button>
@@ -990,7 +995,7 @@ function PropertyDetailsContent() {
                                 {/* Buttons */}
                                 <div className="flex gap-3 mb-5 scroll-animate" data-animation="animate-fade-up">
                                     <button
-                                        onClick={() => window.open(`https://wa.me/1234567890?text=Hi, I'm interested in ${property.name}`, '_blank')}
+                                        onClick={() => window.open(`https://wa.me/${property.sellerPhoneNumber?.replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${property.name}`, '_blank')}
                                         className="flex-1 border-2 border-green-500 text-green-500 py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-green-50 cursor-pointer transition-colors"
                                     >
                                         <img
@@ -1001,7 +1006,7 @@ function PropertyDetailsContent() {
                                         WhatsApp
                                     </button>
                                     <button
-                                        onClick={() => window.location.href = 'tel:+911234567890'}
+                                        onClick={() => window.location.href = `tel:${property.sellerPhoneNumber}`}
                                         className="flex-1 bg-green-500 text-white py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors"
                                     >
                                         <img
@@ -1069,34 +1074,88 @@ function PropertyDetailsContent() {
                                 <h3 className="text-lg font-bold text-blue-600 mb-2">Interested in this Property</h3>
                                 <p className="text-gray-600 text-xs mb-5">Fill your details for a customized quote</p>
 
-                                <div className="space-y-3">
+                                <form className="space-y-3" onSubmit={async (e) => {
+                                    e.preventDefault();
+                                    setIsSubmittingInterest(true);
+
+                                    try {
+                                        const response = await fetch('/api/property-interest', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                            },
+                                            body: JSON.stringify({
+                                                propertyName: property?.name,
+                                                ...interestFormData,
+                                            }),
+                                        });
+
+                                        const data = await response.json();
+
+                                        if (data.success) {
+                                            setInterestFormData({
+                                                name: "",
+                                                email: "",
+                                                phone: "",
+                                                message: "",
+                                            });
+                                            setShowSuccessTooltip(true);
+                                            setTimeout(() => setShowSuccessTooltip(false), 5000);
+                                        } else {
+                                            alert('Failed to submit. Please try again.');
+                                        }
+                                    } catch (error) {
+                                        console.error('Error submitting interest:', error);
+                                        alert('An error occurred. Please try again.');
+                                    } finally {
+                                        setIsSubmittingInterest(false);
+                                    }
+                                }}>
                                     <input
                                         type="text"
-                                        placeholder="Name"
+                                        placeholder="Name *"
+                                        required
+                                        value={interestFormData.name}
+                                        onChange={(e) => setInterestFormData({ ...interestFormData, name: e.target.value })}
                                         className="w-full px-3 py-2.5 border-0 rounded-lg bg-white shadow-sm placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
                                     />
                                     <input
                                         type="email"
-                                        placeholder="Email Address"
+                                        placeholder="Email Address *"
+                                        required
+                                        value={interestFormData.email}
+                                        onChange={(e) => setInterestFormData({ ...interestFormData, email: e.target.value })}
                                         className="w-full px-3 py-2.5 border-0 rounded-lg bg-white shadow-sm placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
                                     />
                                     <input
                                         type="tel"
-                                        placeholder="Phone Number"
+                                        placeholder="Phone Number *"
+                                        required
+                                        value={interestFormData.phone}
+                                        onChange={(e) => setInterestFormData({ ...interestFormData, phone: e.target.value })}
                                         className="w-full px-3 py-2.5 border-0 rounded-lg bg-white shadow-sm placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
                                     />
                                     <textarea
                                         placeholder="Messages"
                                         rows={3}
+                                        value={interestFormData.message}
+                                        onChange={(e) => setInterestFormData({ ...interestFormData, message: e.target.value })}
                                         className="w-full px-3 py-2.5 border-0 rounded-lg bg-white shadow-sm placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none text-sm"
                                     />
                                     <button
-                                        onClick={() => alert('Form submitted successfully!')}
-                                        className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium text-sm hover:bg-blue-700 transition-colors shadow-md cursor-pointer"
+                                        type="submit"
+                                        disabled={isSubmittingInterest}
+                                        className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium text-sm hover:bg-blue-700 transition-colors shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        Submit
+                                        {isSubmittingInterest ? "Submitting..." : "Submit"}
                                     </button>
-                                </div>
+
+                                    {showSuccessTooltip && (
+                                        <div className="bg-green-500 text-white px-4 py-3 rounded-lg text-center text-xs font-medium">
+                                            Submission successful! We will contact you soon.
+                                        </div>
+                                    )}
+                                </form>
                             </div>
 
                             {/* Trusted Companies */}
@@ -1354,60 +1413,7 @@ function PropertyDetailsContent() {
                                 </div>
                             </div>
 
-                            {/* Property Info Section - Full Width */}
-                            <div ref={infoRef} className="bg-white rounded-2xl p-5 mb-6 scroll-animate" data-animation="animate-slide-top">
-                                <AnimatedText className="text-lg font-bold mb-3 inline-block" delay={2500} lineColor="#f8c02f">
-                                    <h3>Property Info</h3>
-                                </AnimatedText>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5 scroll-animate" data-animation="animate-fade-up">
-                                    <div className="space-y-3">
-                                        <div className="flex justify-between py-1.5 border-b">
-                                            <span className="font-medium text-sm text-gray-600">Property Type</span>
-                                            <span className="text-sm text-gray-900">Commercial Office Space</span>
-                                        </div>
-                                        <div className="flex justify-between py-1.5 border-b">
-                                            <span className="font-medium text-sm text-gray-600">Built Year</span>
-                                            <span className="text-sm text-gray-900">2020</span>
-                                        </div>
-                                        <div className="flex justify-between py-1.5 border-b">
-                                            <span className="font-medium text-sm text-gray-600">Furnishing</span>
-                                            <span className="text-sm text-gray-900">Semi-Furnished</span>
-                                        </div>
-                                        <div className="flex justify-between py-1.5 border-b">
-                                            <span className="font-medium text-sm text-gray-600">Floor</span>
-                                            <span className="text-sm text-gray-900">3rd Floor</span>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-3">
-                                        <div className="flex justify-between py-1.5 border-b">
-                                            <span className="font-medium text-sm text-gray-600">Carpet Area</span>
-                                            <span className="text-sm text-gray-900">1200 sq ft</span>
-                                        </div>
-                                        <div className="flex justify-between py-1.5 border-b">
-                                            <span className="font-medium text-sm text-gray-600">Super Area</span>
-                                            <span className="text-sm text-gray-900">1500 sq ft</span>
-                                        </div>
-                                        <div className="flex justify-between py-1.5 border-b">
-                                            <span className="font-medium text-sm text-gray-600">Parking</span>
-                                            <span className="text-sm text-gray-900">Available</span>
-                                        </div>
-                                        <div className="flex justify-between py-1.5 border-b">
-                                            <span className="font-medium text-sm text-gray-600">Security</span>
-                                            <span className="text-sm text-gray-900">24/7 Security</span>
-                                        </div>
-                                    </div>
-                                </div>
 
-                                <div className="mt-6 scroll-animate" data-animation="animate-fade-up">
-                                    <h4 className="font-medium text-base mb-3">Property Description</h4>
-                                    <p className="text-gray-700 text-sm leading-relaxed">
-                                        This modern commercial office space is located in the heart of Delhi, offering excellent connectivity and premium amenities.
-                                        The property features contemporary design with natural lighting, modern HVAC systems, and high-speed internet connectivity.
-                                        Perfect for corporate offices, co-working spaces, or business centers. The location provides easy access to major business districts,
-                                        metro stations, and essential services.
-                                    </p>
-                                </div>
-                            </div>
                         </div>
 
                     </div>
@@ -1576,7 +1582,7 @@ function PropertyDetailsContent() {
                                         setSelectedRating(0);
                                         setReviewText('');
                                     }}
-                                    className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold text-base hover:bg-gray-300 transition-colors cursor-pointer"
+                                    className="flex-1 bg-transparent border-2 border-[#f8c02f] text-gray-800 py-3 rounded-lg font-semibold text-base hover:bg-[#f8c02f]/10 transition-colors cursor-pointer"
                                 >
                                     Cancel
                                 </button>
@@ -1587,7 +1593,7 @@ function PropertyDetailsContent() {
                                         setSelectedRating(0);
                                         setReviewText('');
                                     }}
-                                    className="flex-1 bg-blue-500 text-white py-3 rounded-lg font-semibold text-base hover:bg-blue-600 transition-colors cursor-pointer"
+                                    className="flex-1 bg-[#f8c02f] text-gray-800 py-3 rounded-lg font-semibold text-base hover:bg-[#e0ad2a] transition-colors cursor-pointer"
                                 >
                                     Submit Rating
                                 </button>

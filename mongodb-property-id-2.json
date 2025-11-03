@@ -1,0 +1,405 @@
+{
+  "id": "2",
+  "propertyType": "residential",
+  "state_name": "Telangana",
+  "coordinates": {
+    "lat": 17.3850,
+    "lng": 78.4867
+  },
+  "name": "Luxury Residential Plot",
+  "originalPrice": "₹2,50,00,000",
+  "discountedPrice": "₹2,27,50,000",
+  "additionalPrice": "₹15,00,000",
+  "images": [
+    "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1582407947304-fd86f028f716?w=800&h=600&fit=crop",
+    "https://images.unsplash.com/photo-1500076656116-558758c991c1?w=800&h=600&fit=crop"
+  ],
+  "featuredImageUrl": "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop",
+  "date_added": "15 December 2024",
+  "is_verified": true,
+  "sellerPhoneNumber": "+91 8884886822",
+  "layer_location": "Gachibowli",
+  "location_district": "Hyderabad",
+  "address": "Gachibowli, Hyderabad, Telangana 500032, India",
+  "amenities": [
+    {
+      "name": "Water Supply",
+      "image": "/property-details/amenties/water-supply.png"
+    },
+    {
+      "name": "Electricity",
+      "image": "/property-details/amenties/electricity.png"
+    },
+    {
+      "name": "Sewage System",
+      "image": "/property-details/amenties/sewage-system.png"
+    },
+    {
+      "name": "Property Insurance",
+      "image": "/property-details/amenties/property-insurance.png"
+    },
+    {
+      "name": "Power Supply 24/7",
+      "image": "/property-details/amenties/power-supply.png"
+    },
+    {
+      "name": "2W Parking",
+      "image": "/property-details/amenties/2wparking.png"
+    },
+    {
+      "name": "4W Parking",
+      "image": "/property-details/amenties/4wparking.png"
+    },
+    {
+      "name": "Visitor Parking",
+      "image": "/property-details/amenties/visitor-parking.png"
+    },
+    {
+      "name": "Building Security",
+      "image": "/property-details/amenties/building-security.png"
+    },
+    {
+      "name": "First Aid Kit",
+      "image": "/property-details/amenties/first-aidkit.png"
+    },
+    {
+      "name": "DG Backup",
+      "image": "/property-details/amenties/dg-backup.png"
+    },
+    {
+      "name": "Extinguisher",
+      "image": "/property-details/amenties/fire-extinguisher.png"
+    },
+    {
+      "name": "EV Charging Space",
+      "image": "/property-details/amenties/ev-charging-space.png"
+    },
+    {
+      "name": "Accessible To Persons with Disabilities",
+      "image": "/property-details/amenties/accessable.png"
+    },
+    {
+      "name": "Building Permit",
+      "image": "/property-details/amenties/permit.png"
+    },
+    {
+      "name": "Guest check-in/ Registration",
+      "image": "/property-details/amenties/guest-checkin.png"
+    },
+    {
+      "name": "Waste Disposal",
+      "image": "/property-details/amenties/nighty-trash.png"
+    },
+    {
+      "name": "CCTV",
+      "image": "/property-details/amenties/security-guard.png"
+    },
+    {
+      "name": "Intercom",
+      "image": "/property-details/amenties/guest-management.png"
+    },
+    {
+      "name": "Security guards and video surveillance",
+      "image": "/property-details/amenties/security-guard.png"
+    },
+    {
+      "name": "High - speed wi-fi 24/7",
+      "image": "/property-details/amenties/wifi.png"
+    },
+    {
+      "name": "24 / 7 general cleaning ",
+      "image": "/property-details/amenties/general-cleaning.png"
+    }
+  ],
+  "nearbyPlaces": {
+    "school": [
+      {
+        "name": "Oakridge International School",
+        "location": "Gachibowli",
+        "distance": "0.8 km >"
+      },
+      {
+        "name": "Chirec International School",
+        "location": "Kondapur",
+        "distance": "2.1 km >"
+      },
+      {
+        "name": "Indus International School",
+        "location": "Shankarpally",
+        "distance": "4.5 km >"
+      },
+      {
+        "name": "International School of Hyderabad",
+        "location": "Madhapur",
+        "distance": "3.5 km >"
+      },
+      {
+        "name": "Glendale Academy",
+        "location": "Miyapur",
+        "distance": "5.8 km >"
+      },
+      {
+        "name": "Sancta Maria International School",
+        "location": "Attapur",
+        "distance": "7.2 km >"
+      }
+    ],
+    "hospital": [
+      {
+        "name": "Continental Hospitals",
+        "location": "Gachibowli",
+        "distance": "1.5 km >"
+      },
+      {
+        "name": "Apollo Hospitals",
+        "location": "Jubilee Hills",
+        "distance": "6.2 km >"
+      },
+      {
+        "name": "KIMS Hospital",
+        "location": "Kondapur",
+        "distance": "3.8 km >"
+      },
+      {
+        "name": "Medicover Hospitals",
+        "location": "Madhapur",
+        "distance": "3.2 km >"
+      },
+      {
+        "name": "AIG Hospitals",
+        "location": "Gachibowli",
+        "distance": "2.1 km >"
+      },
+      {
+        "name": "Global Hospitals",
+        "location": "Lakdi-ka-pul",
+        "distance": "8.5 km >"
+      }
+    ],
+    "hotel": [
+      {
+        "name": "Hyatt Hyderabad Gachibowli",
+        "location": "Gachibowli",
+        "distance": "1.2 km >"
+      },
+      {
+        "name": "Marriott Hyderabad",
+        "location": "Gachibowli",
+        "distance": "1.8 km >"
+      },
+      {
+        "name": "Novotel Hyderabad",
+        "location": "Gachibowli",
+        "distance": "2.0 km >"
+      },
+      {
+        "name": "Westin Hyderabad Mindspace",
+        "location": "Madhapur",
+        "distance": "3.5 km >"
+      },
+      {
+        "name": "Courtyard by Marriott",
+        "location": "Madhapur",
+        "distance": "3.8 km >"
+      },
+      {
+        "name": "Four Points by Sheraton",
+        "location": "Kukatpally",
+        "distance": "6.5 km >"
+      }
+    ],
+    "business": [
+      {
+        "name": "DLF Cyber City",
+        "location": "Gachibowli",
+        "distance": "1.0 km >"
+      },
+      {
+        "name": "Mindspace IT Park",
+        "location": "Madhapur",
+        "distance": "3.2 km >"
+      },
+      {
+        "name": "HITEC City",
+        "location": "Madhapur",
+        "distance": "3.8 km >"
+      },
+      {
+        "name": "Nanakramguda Financial District",
+        "location": "Nanakramguda",
+        "distance": "2.5 km >"
+      },
+      {
+        "name": "Wipro Corporate Office",
+        "location": "Gachibowli",
+        "distance": "1.8 km >"
+      },
+      {
+        "name": "Microsoft India Development Center",
+        "location": "Gachibowli",
+        "distance": "2.3 km >"
+      }
+    ]
+  },
+  "floorPlans": {
+    "6-15 Seats": [
+      "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1582407947304-fd86f028f716?w=600&h=400&fit=crop"
+    ],
+    "16-30 Seats": [
+      "https://images.unsplash.com/photo-1500076656116-558758c991c1?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&h=400&fit=crop"
+    ],
+    "31-60 Seats": [
+      "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&h=400&fit=crop"
+    ]
+  },
+  "ratings": {
+    "overall": 4.2,
+    "totalRatings": 24,
+    "breakdown": {
+      "5": 10,
+      "4": 12,
+      "3": 2,
+      "2": 0,
+      "1": 0
+    },
+    "whatsGood": [
+      "Prime Residential Location",
+      "Good Connectivity",
+      "Peaceful Environment",
+      "Investment Potential",
+      "Infrastructure Development"
+    ],
+    "whatsBad": [
+      "Distance from City Center",
+      "Limited Public Transport"
+    ]
+  },
+  "reviews": [
+    {
+      "user": "User",
+      "rating": 5,
+      "date": "Aug 20, 2025",
+      "comment": "Excellent location with great amenities. Perfect for families."
+    },
+    {
+      "user": "User",
+      "rating": 4,
+      "date": "Aug 15, 2025",
+      "comment": "Good property with peaceful surroundings. Highly recommended."
+    },
+    {
+      "user": "User",
+      "rating": 5,
+      "date": "Aug 10, 2025",
+      "comment": "Amazing infrastructure and connectivity. Worth the investment."
+    },
+    {
+      "user": "User",
+      "rating": 4,
+      "date": "Aug 5, 2025",
+      "comment": "Nice residential area with good facilities."
+    },
+    {
+      "user": "User",
+      "rating": 3,
+      "date": "Jul 30, 2025",
+      "comment": "Decent property but a bit far from city center."
+    },
+    {
+      "user": "User",
+      "rating": 5,
+      "date": "Jul 28, 2025",
+      "comment": "Beautiful residential plot with excellent connectivity. Great for building dream home."
+    },
+    {
+      "user": "User",
+      "rating": 4,
+      "date": "Jul 25, 2025",
+      "comment": "Good investment opportunity. Peaceful neighborhood with all amenities nearby."
+    },
+    {
+      "user": "User",
+      "rating": 5,
+      "date": "Jul 22, 2025",
+      "comment": "Perfect location for residential property. Close to schools and hospitals."
+    },
+    {
+      "user": "User",
+      "rating": 3,
+      "date": "Jul 20, 2025",
+      "comment": "Nice plot but price is slightly on the higher side."
+    },
+    {
+      "user": "User",
+      "rating": 4,
+      "date": "Jul 18, 2025",
+      "comment": "Great property with good potential. Recommended for long-term investment."
+    },
+    {
+      "user": "User",
+      "rating": 5,
+      "date": "Jul 15, 2025",
+      "comment": "Excellent residential area with modern infrastructure. Very satisfied."
+    },
+    {
+      "user": "User",
+      "rating": 4,
+      "date": "Jul 12, 2025",
+      "comment": "Good plot with clear documentation. Peaceful environment."
+    },
+    {
+      "user": "User",
+      "rating": 5,
+      "date": "Jul 10, 2025",
+      "comment": "Outstanding property! Perfect for building a luxury home."
+    },
+    {
+      "user": "User",
+      "rating": 3,
+      "date": "Jul 8, 2025",
+      "comment": "Average property. Location is good but needs better road connectivity."
+    },
+    {
+      "user": "User",
+      "rating": 4,
+      "date": "Jul 5, 2025",
+      "comment": "Nice residential plot in a developing area. Good for future investment."
+    },
+    {
+      "user": "User",
+      "rating": 5,
+      "date": "Jul 3, 2025",
+      "comment": "Fantastic property with all amenities. Highly recommended for families."
+    },
+    {
+      "user": "User",
+      "rating": 4,
+      "date": "Jul 1, 2025",
+      "comment": "Good value for money. Clean and well-maintained area."
+    },
+    {
+      "user": "User",
+      "rating": 5,
+      "date": "Jun 28, 2025",
+      "comment": "Amazing location with great connectivity. Perfect for residential development."
+    },
+    {
+      "user": "User",
+      "rating": 4,
+      "date": "Jun 25, 2025",
+      "comment": "Nice property with good infrastructure. Recommended for investment."
+    },
+    {
+      "user": "User",
+      "rating": 3,
+      "date": "Jun 22, 2025",
+      "comment": "Decent plot but could be better maintained. Location is the main advantage."
+    }
+  ]
+}

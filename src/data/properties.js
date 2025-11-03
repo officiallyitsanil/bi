@@ -11,7 +11,6 @@ const commercialBase = {
   originalPrice: '₹95,00,000',
   discountedPrice: '₹90,00,000',
   additionalPrice: '₹5,00,000',
-  listed_by: 'Owner',
   images: [
     'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=600&fit=crop',
     'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=600&fit=crop',
@@ -20,17 +19,11 @@ const commercialBase = {
     'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800&h=600&fit=crop'
   ],
   featuredImageUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=300&fit=crop',
-  zoning: 'Commercial',
-  approach_road: 'Available',
   date_added: '10 December 2024',
   is_verified: true,
   sellerPhoneNumber: '+91 9876543211',
   layer_location: 'Madhapur',
   location_district: 'Hyderabad',
-  createdBy: {
-    name: 'Rajesh Kumar',
-    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face'
-  },
   // Property details page specific data
   address: 'Madhapur, Hyderabad, Telangana 500081, India',
   amenities: [
@@ -278,7 +271,6 @@ const residentialBase = {
   originalPrice: '₹2,50,00,000',
   discountedPrice: '₹2,27,50,000',
   additionalPrice: '₹15,00,000',
-  listed_by: 'Agent',
   images: [
     'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&h=600&fit=crop',
     'https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=800&h=600&fit=crop',
@@ -287,17 +279,11 @@ const residentialBase = {
     'https://images.unsplash.com/photo-1500076656116-558758c991c1?w=800&h=600&fit=crop'
   ],
   featuredImageUrl: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop',
-  zoning: 'Residential',
-  approach_road: 'Available',
   date_added: '15 December 2024',
   is_verified: true,
   sellerPhoneNumber: '+91 9876543210',
   layer_location: 'Gachibowli',
   location_district: 'Hyderabad',
-  createdBy: {
-    name: 'Priya Sharma',
-    avatarUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face'
-  },
   // Property details page specific data
   address: 'Gachibowli, Hyderabad, Telangana 500032, India',
   amenities: [
@@ -591,7 +577,6 @@ export const propertiesData = [
     name: 'Serene Residential Plot',
     layer_location: 'Kondapur',
     address: 'Kondapur, Hyderabad, Telangana 500084, India',
-    listed_by: 'Owner',
     reviews: [
       ...residentialBase.reviews,
       {
@@ -614,10 +599,6 @@ export const propertiesData = [
     address: 'Nanakramguda, Hyderabad, Telangana 500032, India',
     originalPrice: '₹3,00,00,000', // Higher price variation
     discountedPrice: '₹2,75,00,000',
-    createdBy: {
-      name: 'Amit Varma',
-      avatarUrl: 'https://images.unsplash.com/photo-1557862921-3783df4ed85a?w=100&h=100&fit=crop&crop=face'
-    },
   },
 
   // --- Replication 3 of Property 2: Residential Plot (Manikonda) ---

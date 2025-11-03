@@ -24,17 +24,17 @@ export default function Footer() {
             }
         };
 
-        syncUser(); 
-        
+        syncUser();
+
         window.addEventListener('onAuthChange', syncUser);
 
         return () => {
             window.removeEventListener('onAuthChange', syncUser);
         };
-    }, []); 
+    }, []);
 
     const handleLoginSuccess = (userData) => {
-        loginUser(userData); 
+        loginUser(userData);
         setIsLoginOpen(false);
     };
 
@@ -48,8 +48,8 @@ export default function Footer() {
                     </Link>
 
                     <Link href="/residential" className="flex flex-col items-center justify-center w-1/5 h-14">
-                        <span className={`py-1.5 px-4 rounded-full text-sm font-semibold transition-colors duration-200 ${pathName === '/residential' ? 'text-gray-900 bg-[#ffefad]' : 'text-gray-500 bg-transparent'}`}>
-                            Sell
+                        <span className={`py-1.5 px-3 rounded-full text-[0.7rem] font-semibold transition-colors duration-200 ${pathName === '/residential' ? 'text-gray-900 bg-[#ffefad]' : 'text-gray-500 bg-transparent'}`}>
+                            Residential
                         </span>
                     </Link>
 
@@ -59,8 +59,8 @@ export default function Footer() {
                     </Link>
 
                     <Link href="/commercial" className="flex flex-col items-center justify-center w-1/5 h-14">
-                        <span className={`py-1.5 px-4 rounded-full text-sm font-semibold transition-colors duration-200 ${pathName === '/commercial' ? 'text-gray-900 bg-[#ffefad]' : 'text-gray-500 bg-transparent'}`}>
-                            Buy
+                        <span className={`py-1.5 px-3 rounded-full text-[0.7rem] font-semibold transition-colors duration-200 ${pathName === '/commercial' ? 'text-gray-900 bg-[#ffefad]' : 'text-gray-500 bg-transparent'}`}>
+                            Commercial
                         </span>
                     </Link>
 
