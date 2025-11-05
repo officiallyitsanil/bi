@@ -1,7 +1,10 @@
 {
-  "id": "1",
+  "_id": {
+    "$oid": "690956881f32787e946737f2"
+  },
   "propertyType": "commercial",
   "state_name": "Telangana",
+  "city": "Mumbai",
   "coordinates": {
     "lat": 17.4065,
     "lng": 78.4772
@@ -363,14 +366,14 @@
     ]
   },
   "ratings": {
-    "overall": 4.5,
-    "totalRatings": 32,
+    "overall": 3.7,
+    "totalRatings": 11,
     "breakdown": {
-      "5": 18,
-      "4": 10,
-      "3": 3,
+      "1": 1,
       "2": 1,
-      "1": 0
+      "3": 2,
+      "4": 3,
+      "5": 4
     },
     "whatsGood": [
       "Prime IT Hub Location",
@@ -386,10 +389,28 @@
   },
   "reviews": [
     {
-      "user": "User",
-      "rating": 2,
-      "date": "Aug 17, 2025",
-      "comment": "Business Hubs & Offices in Close Proximity."
+      "user": "Zxscdvfbng",
+      "rating": 4,
+      "date": "Nov 4, 2025",
+      "comment": "XACSDVBF"
+    },
+    {
+      "user": "Great",
+      "rating": 5,
+      "date": "Nov 4, 2025",
+      "comment": "Good"
+    },
+    {
+      "user": "demo",
+      "rating": 5,
+      "date": "Nov 4, 2025",
+      "comment": "demo"
+    },
+    {
+      "user": "A",
+      "rating": 4,
+      "date": "Nov 4, 2025",
+      "comment": "A"
     },
     {
       "user": "User",
@@ -411,13 +432,13 @@
     },
     {
       "user": "User",
-      "rating": 4,
+      "rating": 3,
       "date": "Jul 24, 2025",
       "comment": "Best review"
     },
     {
       "user": "User",
-      "rating": 5,
+      "rating": 2,
       "date": "Jul 20, 2025",
       "comment": "Excellent property with modern amenities. Highly recommended for businesses."
     },
@@ -429,81 +450,18 @@
     },
     {
       "user": "User",
-      "rating": 5,
+      "rating": 1,
       "date": "Jul 15, 2025",
       "comment": "Perfect office space with all necessary facilities. Great connectivity to metro."
-    },
-    {
-      "user": "User",
-      "rating": 4,
-      "date": "Jul 12, 2025",
-      "comment": "Nice property with professional environment. Good for startups."
-    },
-    {
-      "user": "User",
-      "rating": 5,
-      "date": "Jul 10, 2025",
-      "comment": "Outstanding infrastructure and security. Worth every penny."
-    },
-    {
-      "user": "User",
-      "rating": 4,
-      "date": "Jul 8, 2025",
-      "comment": "Great location in IT hub. Easy access to restaurants and cafes."
-    },
-    {
-      "user": "User",
-      "rating": 3,
-      "date": "Jul 5, 2025",
-      "comment": "Decent property but could use better maintenance in common areas."
-    },
-    {
-      "user": "User",
-      "rating": 5,
-      "date": "Jul 3, 2025",
-      "comment": "Fantastic office space with excellent amenities. Very satisfied with the property."
-    },
-    {
-      "user": "User",
-      "rating": 4,
-      "date": "Jul 1, 2025",
-      "comment": "Good value for money. Professional setup with modern facilities."
-    },
-    {
-      "user": "User",
-      "rating": 5,
-      "date": "Jun 28, 2025",
-      "comment": "Amazing property! Clean, well-maintained, and in a prime location."
-    },
-    {
-      "user": "User",
-      "rating": 2,
-      "date": "Jun 25, 2025",
-      "comment": "Property is good but rental cost is quite high compared to nearby options."
-    },
-    {
-      "user": "User",
-      "rating": 4,
-      "date": "Jun 22, 2025",
-      "comment": "Nice commercial space with good ventilation and natural light."
-    },
-    {
-      "user": "User",
-      "rating": 5,
-      "date": "Jun 20, 2025",
-      "comment": "Excellent property management and responsive staff. Highly recommended."
-    },
-    {
-      "user": "User",
-      "rating": 4,
-      "date": "Jun 18, 2025",
-      "comment": "Good office space with reliable power backup and internet connectivity."
-    },
-    {
-      "user": "User",
-      "rating": 3,
-      "date": "Jun 15, 2025",
-      "comment": "Average property. Location is good but facilities need improvement."
     }
-  ]
+  ],
+  "price_per_desk": 6000,
+  "price_per_sqft": 70,
+  "no_of_seats": 56,
+  "category": "rent",
+  "badge": "new",
+  "__v": 5,
+  "updatedAt": {
+    "$date": "2025-11-04T17:19:28.042Z"
+  }
 }

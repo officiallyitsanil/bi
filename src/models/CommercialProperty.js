@@ -58,17 +58,11 @@ const CommercialPropertySchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  coordinates: {
-    lat: {
-      type: Number,
-      required: true,
-    },
-    lng: {
-      type: Number,
-      required: true,
-    },
+  city: {
+    type: String,
+    required: true,
   },
-  position: {
+  coordinates: {
     lat: {
       type: Number,
       required: true,
@@ -166,9 +160,8 @@ const CommercialPropertySchema = new mongoose.Schema({
       default: 0,
     },
     breakdown: {
-      type: Map,
-      of: Number,
-      default: {},
+      type: Object,
+      default: { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 },
     },
     whatsGood: {
       type: [String],
@@ -183,8 +176,26 @@ const CommercialPropertySchema = new mongoose.Schema({
     type: [ReviewSchema],
     default: [],
   },
+  price_per_desk: {
+    type: Number,
+  },
+  price_per_sqft: {
+    type: Number,
+  },
+  no_of_seats: {
+    type: Number,
+  },
+  category: {
+    type: String,
+    enum: ['rent', 'sale', 'lease'],
+  },
+  badge: {
+    type: String,
+    enum: ['new', 'featured', 'hot', 'trending'],
+  },
 }, {
   timestamps: true,
+  strict: false,
 });
 
 export default mongoose.models.CommercialProperty || mongoose.model('CommercialProperty', CommercialPropertySchema);

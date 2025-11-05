@@ -3,10 +3,11 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { KeyRound, BadgeDollarSign, Hotel, UsersRound } from "lucide-react";
 
 export default function SearchSection() {
   const router = useRouter();
-  const [selectedFilter, setSelectedFilter] = useState("Managed Space");
+  const [selectedFilter, setSelectedFilter] = useState("Rent");
   const [location, setLocation] = useState("");
   const [managedSpace, setManagedSpace] = useState("");
   const [preferences, setPreferences] = useState("");
@@ -34,34 +35,34 @@ export default function SearchSection() {
 
   // Popular cities for suggestions
   const popularCities = [
-    "Mumbai", "Hyderabad", "Bangalore", "Chennai", "Pune", "Noida", 
+    "Mumbai", "Hyderabad", "Bangalore", "Chennai", "Pune", "Noida",
     "Delhi", "Indore", "Ahmedabad", "Jaipur", "Kerala", "Chandigarh",
     "Kolkata", "Goa", "Bhubaneswar", "Uttar Pradesh", "Lucknow"
   ];
 
   const filterOptions = [
     {
-      id: "managed-space",
-      name: "Managed Space",
-      icon: "/commercial/managed-space.png",
+      id: "rent",
+      name: "Rent",
+      icon: KeyRound,
       active: true
     },
     {
-      id: "unmanaged-space",
-      name: "Unmanaged Space", 
-      icon: "/commercial/unmanaged-space.png",
+      id: "sale",
+      name: "Sale",
+      icon: BadgeDollarSign,
       active: false
     },
     {
-      id: "coworking-dedicated",
-      name: "Coworking Dedicated",
-      icon: "/commercial/coworking-dedicated.png",
+      id: "pg-hostel",
+      name: "PG/Hostel",
+      icon: Hotel,
       active: false
     },
     {
-      id: "coworking-shared",
-      name: "Coworking Shared",
-      icon: "/commercial/coworking-shared.png",
+      id: "flatmates",
+      name: "Flatmates",
+      icon: UsersRound,
       active: false
     },
     {
@@ -125,17 +126,23 @@ export default function SearchSection() {
   };
 
   const handleSearch = () => {
+    // Validate location is required
+    if (!location || !location.trim()) {
+      alert('Please enter a location to search');
+      return;
+    }
+
     // Build URL parameters
     const params = new URLSearchParams();
-    
-    if (location) params.append('location', location);
-    if (selectedFilter) params.append('filter', selectedFilter);
+
+    if (location) params.append('city', location);
+    if (selectedFilter) params.append('type', selectedFilter);
     if (managedSpace) params.append('propertyType', managedSpace);
     if (preferences) params.append('preferences', preferences);
     if (pricePerDesk && pricePerDesk !== 'Any') params.append('pricePerDesk', pricePerDesk);
     if (pricePerSqft && pricePerSqft !== 'Any') params.append('pricePerSqft', pricePerSqft);
     if (noOfSeats && noOfSeats !== 'Any') params.append('noOfSeats', noOfSeats);
-    
+
     // Redirect to properties-search with parameters
     router.push(`/properties-search?${params.toString()}`);
   };
@@ -143,10 +150,10 @@ export default function SearchSection() {
   // Get dropdown options based on selected filter
   const getPropertyTypeOptions = () => {
     return [
-      { value: "managed-space", label: "Managed Space" },
-      { value: "unmanaged-space", label: "Unmanaged Space" },
-      { value: "coworking-shared", label: "Coworking Shared" },
-      { value: "coworking-dedicated", label: "Coworking Dedicated" }
+      { value: "rent", label: "Rent" },
+      { value: "sale", label: "Sale" },
+      { value: "pg-hostel", label: "PG/Hostel" },
+      { value: "flatmates", label: "Flatmates" }
     ];
   };
 
@@ -215,14 +222,14 @@ export default function SearchSection() {
   };
 
   return (
-    <div className="relative min-h-screen bg-cover bg-center bg-no-repeat" 
-         style={{
-           backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop')`
-         }}>
-      
+    <div className="relative py-16 md:py-24 bg-cover bg-center bg-no-repeat z-10"
+      style={{
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop')`
+      }}>
+
       {/* Centered Content Container */}
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-6xl px-4 md:px-6 z-10">
-        
+      <div className="w-full max-w-6xl px-4 md:px-6 mx-auto relative z-10">
+
         {/* Hero Text */}
         <div className="text-center mb-4 md:mb-6 flex justify-center">
           <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-bold text-white animate-slideInLeft hover:scale-105 transition-transform duration-300 cursor-default px-2 md:whitespace-nowrap">
@@ -233,34 +240,42 @@ export default function SearchSection() {
 
         {/* Search Component - Two Separate Boxes */}
         <div className="w-full space-y-3 flex flex-col items-center">
-          
+
           {/* Top Box - Filter Options */}
           <div className="bg-white rounded-2xl shadow-2xl p-3 md:p-4 w-full max-w-4xl animate-slideDown">
             <div className="flex overflow-x-auto gap-2 md:gap-3 md:grid md:grid-cols-7 scrollbar-hide pb-1">
-              {filterOptions.map((option) => (
-                <div
-                  key={option.id}
-                  onClick={() => handleFilterClick(option.name)}
-                  className={`flex flex-col items-center justify-center cursor-pointer transition-all duration-200 flex-shrink-0 w-20 md:w-auto md:aspect-square ${
-                    selectedFilter === option.name
-                      ? "bg-blue-50 border-2 border-blue-500 rounded-xl p-1 md:p-2"
-                      : "hover:bg-gray-50 rounded-xl p-1 md:p-2 border border-gray-100"
-                  }`}
-                >
-                  <div className="w-10 h-10 md:w-14 md:h-14 mb-1 flex items-center justify-center flex-shrink-0">
-                    <Image
-                      src={option.icon}
-                      alt={option.name}
-                      width={56}
-                      height={56}
-                      className="object-contain"
-                    />
+              {filterOptions.map((option) => {
+                const IconComponent = option.icon;
+                const isLucideIcon = typeof option.icon !== 'string';
+
+                return (
+                  <div
+                    key={option.id}
+                    onClick={() => handleFilterClick(option.name)}
+                    className={`flex flex-col items-center justify-center cursor-pointer transition-all duration-200 flex-shrink-0 w-20 md:w-auto md:aspect-square ${selectedFilter === option.name
+                        ? "bg-blue-50 border-2 border-blue-500 rounded-xl p-1 md:p-2"
+                        : "hover:bg-gray-50 rounded-xl p-1 md:p-2 border border-gray-100"
+                      }`}
+                  >
+                    <div className="w-10 h-10 md:w-14 md:h-14 mb-1 flex items-center justify-center flex-shrink-0">
+                      {isLucideIcon ? (
+                        <IconComponent className="w-8 h-8 md:w-10 md:h-10 text-blue-600" />
+                      ) : (
+                        <Image
+                          src={option.icon}
+                          alt={option.name}
+                          width={56}
+                          height={56}
+                          className="object-contain"
+                        />
+                      )}
+                    </div>
+                    <span className="text-[10px] md:text-xs font-medium text-gray-700 text-center leading-tight">
+                      {option.name}
+                    </span>
                   </div>
-                  <span className="text-[10px] md:text-xs font-medium text-gray-700 text-center leading-tight">
-                    {option.name}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -277,7 +292,7 @@ export default function SearchSection() {
                   onFocus={() => location && setShowSuggestions(true)}
                   className="w-full px-4 py-2.5 border-0 focus:outline-none focus:ring-0 text-gray-700 text-sm bg-transparent rounded-full cursor-pointer"
                 />
-                
+
                 {/* Mobile Suggestions Dropdown */}
                 {showSuggestions && (
                   <div className="absolute top-full left-0 right-0 bg-white rounded-lg shadow-xl mt-2 max-h-60 overflow-y-auto z-50 border border-gray-200">
@@ -322,7 +337,7 @@ export default function SearchSection() {
                   onFocus={() => location && setShowSuggestions(true)}
                   className="w-full px-3 py-2.5 border-0 focus:outline-none focus:ring-0 text-gray-700 text-sm transition-all cursor-pointer"
                 />
-                
+
                 {/* Desktop Suggestions Dropdown */}
                 {showSuggestions && (
                   <div className="absolute top-full left-0 right-0 bg-white rounded-lg shadow-xl mt-1 max-h-60 overflow-y-auto z-50 border border-gray-200">
@@ -375,9 +390,9 @@ export default function SearchSection() {
               <div className="hidden md:block h-8 w-px bg-gray-300"></div>
 
               {/* Preferences Dropdown - Custom for all space types */}
-              {(selectedFilter === "Managed Space" || selectedFilter === "Unmanaged Space" || selectedFilter === "Coworking Dedicated" || selectedFilter === "Coworking Shared") ? (
+              {(selectedFilter === "Rent" || selectedFilter === "Sale" || selectedFilter === "PG/Hostel" || selectedFilter === "Flatmates") ? (
                 <div className="flex-[1] w-full relative border-t md:border-t-0" ref={preferencesRef}>
-                  <div 
+                  <div
                     onClick={() => setIsPreferencesOpen(!isPreferencesOpen)}
                     className="w-full px-3 py-2.5 border-0 focus:outline-none focus:ring-0 text-gray-700 bg-white text-sm transition-all cursor-pointer flex items-center justify-between"
                   >
@@ -389,7 +404,7 @@ export default function SearchSection() {
 
                   {/* Custom Dropdown Panel - Compact size */}
                   {isPreferencesOpen && (
-                    <div className="absolute top-full left-0 md:left-auto md:right-0 mt-2 bg-white rounded-lg shadow-2xl py-3 px-4 w-[calc(100vw-2rem)] max-w-[380px] z-50 border border-gray-200">
+                    <div className="absolute top-full left-0 md:left-auto md:right-0 mt-2 bg-white rounded-lg shadow-2xl py-3 px-4 w-[calc(100vw-2rem)] max-w-[380px] z-[9999] border border-gray-200">
                       {/* Price per Desk */}
                       <div className="flex items-center justify-between py-2.5 border-b border-gray-200">
                         <div className="flex-1">

@@ -1,15 +1,18 @@
 "use client";
 
 import { Suspense, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 
 function PropertiesSearchContent() {
+  const searchParams = useSearchParams();
+  const cityParam = searchParams.get('city') || '';
+
   // State for filters
   const [selectedBadge, setSelectedBadge] = useState('');
   const [selectedPropertyType, setSelectedPropertyType] = useState('');
   const [selectedFacilities, setSelectedFacilities] = useState('');
   const [selectedFloorsOffered, setSelectedFloorsOffered] = useState('');
   const [selectedAmenities, setSelectedAmenities] = useState([]);
-  const [selectedPostedBy, setSelectedPostedBy] = useState('');
   const [selectedSortBy, setSelectedSortBy] = useState('');
 
   // Dropdown open states
@@ -18,119 +21,164 @@ function PropertiesSearchContent() {
   // Favorites state
   const [favorites, setFavorites] = useState([]);
 
-  // Mock properties data with Unsplash images
-  const [allProperties] = useState([
-    {
-      id: 1,
-      name: "Statesman house",
-      location: "Barakhamba Road, New Delhi",
-      price: "₹0",
-      badge: "Newly Opened",
-      propertyType: "Office Space",
-      facilities: "Parking",
-      floors: "Ground Floor",
-      amenities: ["guest_checkin", "delivery_notification", "keycard_access", "video_surveillance"],
-      postedBy: "Owner",
-      image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80"
-    },
-    {
-      id: 2,
-      name: "Statesman house",
-      location: "Connaught Place, New Delhi",
-      price: "₹0",
-      badge: "Newly Opened",
-      propertyType: "Co-working Space",
-      facilities: "Conference Room",
-      floors: "First Floor",
-      amenities: ["tea", "coffee", "water", "milk_sweeteners"],
-      postedBy: "Agent",
-      image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80"
-    },
-    {
-      id: 3,
-      name: "Statesman house",
-      location: "Nehru Place, New Delhi",
-      price: "₹0",
-      badge: "Newly Opened",
-      propertyType: "Office Space",
-      facilities: "Parking",
-      floors: "Second Floor",
-      amenities: ["cups_mugs", "food_vendor", "pantry_24x7"],
-      postedBy: "Owner",
-      image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80"
-    },
-    {
-      id: 4,
-      name: "Statesman house",
-      location: "Saket, New Delhi",
-      price: "₹0",
-      badge: "Newly Opened",
-      propertyType: "Retail Space",
-      facilities: "Elevator",
-      floors: "Ground Floor",
-      amenities: ["daily_upkeep", "nightly_trash", "deep_clean_weekly"],
-      postedBy: "Builder",
-      image: "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=800&q=80"
-    },
-    {
-      id: 5,
-      name: "Statesman house",
-      location: "Dwarka, New Delhi",
-      price: "₹0",
-      badge: "Newly Opened",
-      propertyType: "Office Space",
-      facilities: "Parking",
-      floors: "Third Floor",
-      amenities: ["high_speed_wifi", "tape_paper_clips"],
-      postedBy: "Owner",
-      image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80"
-    },
-    {
-      id: 6,
-      name: "Statesman house",
-      location: "Rohini, New Delhi",
-      price: "₹0",
-      badge: "Newly Opened",
-      propertyType: "Co-working Space",
-      facilities: "Cafeteria",
-      floors: "Ground Floor",
-      amenities: ["pest_control", "general_clean_24x7"],
-      postedBy: "Agent",
-      image: "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800&q=80"
-    },
-    {
-      id: 7,
-      name: "Statesman house",
-      location: "Janakpuri, New Delhi",
-      price: "₹0",
-      badge: "Newly Opened",
-      propertyType: "Office Space",
-      facilities: "Gym",
-      floors: "Second Floor",
-      amenities: ["guest_checkin", "video_surveillance"],
-      postedBy: "Builder",
-      image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80"
-    },
-    {
-      id: 8,
-      name: "Statesman house",
-      location: "Lajpat Nagar, New Delhi",
-      price: "₹0",
-      badge: "Newly Opened",
-      propertyType: "Retail Space",
-      facilities: "Parking",
-      floors: "Ground Floor",
-      amenities: ["tea", "coffee", "water"],
-      postedBy: "Owner",
-      image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80"
-    }
-  ]);
+  // Properties state
+  const [allProperties, setAllProperties] = useState([]);
+  const [filteredProperties, setFilteredProperties] = useState([]);
+  const [mongodbId, setMongodbId] = useState('');
 
-  const [filteredProperties, setFilteredProperties] = useState(allProperties);
+  // Capitalize city name
+  const capitalizeCity = (city) => {
+    if (!city) return '';
+    return city.charAt(0).toUpperCase() + city.slice(1).toLowerCase();
+  };
+
+  // Fetch property from MongoDB and replicate
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        // Base property from MongoDB
+        const baseProperty = {
+          "_id": "690956881f32787e946737f2",
+          "propertyType": "commercial",
+          "state_name": "Telangana",
+          "city": "Mumbai",
+          "coordinates": { "lat": 17.4065, "lng": 78.4772 },
+          "name": "Premium Business Hub",
+          "originalPrice": "₹95,00,000",
+          "discountedPrice": "₹90,00,000",
+          "additionalPrice": "₹5,00,000",
+          "images": [
+            "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=600&fit=crop",
+            "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800&h=600&fit=crop"
+          ],
+          "featuredImageUrl": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=300&fit=crop",
+          "date_added": "10 December 2024",
+          "is_verified": true,
+          "sellerPhoneNumber": "+91 8884886822",
+          "layer_location": "Madhapur",
+          "location_district": "Hyderabad",
+          "address": "Madhapur, Hyderabad, Telangana 500081, India",
+          "amenities": [
+            { "name": "OC Certificate", "image": "/property-details/amenties/oc.png" },
+            { "name": "SEZ Approved", "image": "/property-details/amenties/sez.png" },
+            { "name": "Fire NOC", "image": "/property-details/amenties/fire-noc.png" },
+            { "name": "Water Supply", "image": "/property-details/amenties/water-supply.png" },
+            { "name": "HVAC", "image": "/property-details/amenties/hvac.png" },
+            { "name": "Electricity", "image": "/property-details/amenties/electricity.png" },
+            { "name": "Elevators", "image": "/property-details/amenties/elevator.png" },
+            { "name": "Parking", "image": "/property-details/amenties/parking.png" }
+          ],
+          "facilities": ["Parking", "Conference Room", "Elevator", "Gym"],
+          "floors_available": ["First Floor", "Second Floor", "Top Floor"],
+          "ratings": { "overall": 3.7, "totalRatings": 11 },
+          "price_per_desk": 6000,
+          "price_per_sqft": 70,
+          "no_of_seats": 56,
+          "category": "rent",
+          "badge": "new"
+        };
+
+        // Store the MongoDB ID
+        setMongodbId(baseProperty._id);
+
+        // Replicate the property 7 times with different values
+        const replicatedProperties = [
+          {
+            ...baseProperty,
+            badge: "new",
+            propertyType: "commercial",
+            facilities: ["Parking", "Conference Room"],
+            floors_available: ["First Floor", "Second Floor"],
+            name: "Premium Business Hub",
+            discountedPrice: "₹90,00,000",
+            date_added: "10 December 2024",
+          },
+          {
+            ...baseProperty,
+            badge: "premium",
+            propertyType: "residential",
+            facilities: ["Gym", "Elevator"],
+            floors_available: ["Ground Floor", "First Floor"],
+            name: "Luxury Apartment Complex",
+            discountedPrice: "₹1,20,00,000",
+            date_added: "5 November 2024",
+          },
+          {
+            ...baseProperty,
+            badge: "new",
+            propertyType: "commercial",
+            facilities: ["Parking", "Cafeteria"],
+            floors_available: ["Second Floor", "Third Floor"],
+            name: "Modern Office Space",
+            discountedPrice: "₹75,00,000",
+            date_added: "20 October 2024",
+          },
+          {
+            ...baseProperty,
+            badge: "premium",
+            propertyType: "commercial",
+            facilities: ["Conference Room", "Elevator"],
+            floors_available: ["Top Floor"],
+            name: "Executive Business Center",
+            discountedPrice: "₹1,50,00,000",
+            date_added: "15 September 2024",
+          },
+          {
+            ...baseProperty,
+            badge: "new",
+            propertyType: "residential",
+            facilities: ["Parking", "Gym"],
+            floors_available: ["First Floor"],
+            name: "Cozy Family Home",
+            discountedPrice: "₹85,00,000",
+            date_added: "1 December 2024",
+          },
+          {
+            ...baseProperty,
+            badge: "premium",
+            propertyType: "commercial",
+            facilities: ["Parking", "Conference Room", "Elevator"],
+            floors_available: ["Ground Floor", "First Floor", "Second Floor"],
+            name: "Corporate Tower",
+            discountedPrice: "₹2,00,00,000",
+            date_added: "25 August 2024",
+          },
+          {
+            ...baseProperty,
+            badge: "new",
+            propertyType: "residential",
+            facilities: ["Elevator", "Gym"],
+            floors_available: ["Second Floor", "Top Floor"],
+            name: "Skyline Residency",
+            discountedPrice: "₹95,00,000",
+            date_added: "18 November 2024",
+          },
+          {
+            ...baseProperty,
+            badge: "premium",
+            propertyType: "commercial",
+            facilities: ["Parking", "Cafeteria", "Conference Room"],
+            floors_available: ["First Floor", "Second Floor", "Third Floor"],
+            name: "Tech Park Plaza",
+            discountedPrice: "₹1,80,00,000",
+            date_added: "12 July 2024",
+          }
+        ];
+
+        setAllProperties(replicatedProperties);
+        setFilteredProperties(replicatedProperties);
+      } catch (error) {
+        console.error('Error fetching properties:', error);
+      }
+    };
+
+    fetchProperties();
+  }, []);
 
   // Filter options
-  const badges = ["Newly Opened", "Premium"];
-  const propertyTypes = ["Office Space", "Co-working Space", "Retail Space", "Warehouse"];
+  const badges = ["new", "premium"];
+  const propertyTypes = ["commercial", "residential"];
   const facilities = ["Parking", "Conference Room", "Elevator", "Cafeteria", "Gym"];
   const floorsOffered = ["Ground Floor", "First Floor", "Second Floor", "Third Floor", "Top Floor"];
   const amenities = [
@@ -154,10 +202,9 @@ function PropertiesSearchContent() {
     { value: "high_speed_wifi", label: "High Speed WiFi" },
     { value: "tape_paper_clips", label: "Tape & Paper Clips" }
   ];
-  const postedByOptions = ["Owner", "Agent", "Builder"];
   const sortByOptions = ["Price: Low to High", "Price: High to Low", "Newest First", "Oldest First"];
 
-  // Apply filters
+  // Apply filters and sorting
   useEffect(() => {
     let filtered = [...allProperties];
 
@@ -173,28 +220,46 @@ function PropertiesSearchContent() {
 
     // Facilities filter
     if (selectedFacilities) {
-      filtered = filtered.filter(prop => prop.facilities === selectedFacilities);
+      filtered = filtered.filter(prop =>
+        Array.isArray(prop.facilities) && prop.facilities.includes(selectedFacilities)
+      );
     }
 
     // Floors offered filter
     if (selectedFloorsOffered) {
-      filtered = filtered.filter(prop => prop.floors === selectedFloorsOffered);
+      filtered = filtered.filter(prop =>
+        Array.isArray(prop.floors_available) && prop.floors_available.includes(selectedFloorsOffered)
+      );
     }
 
     // Amenities filter
     if (selectedAmenities.length > 0) {
       filtered = filtered.filter(prop =>
-        selectedAmenities.every(amenity => prop.amenities.includes(amenity))
+        Array.isArray(prop.amenities) && selectedAmenities.every(amenity =>
+          prop.amenities.some(a => a.name && a.name.toLowerCase().includes(amenity.toLowerCase()))
+        )
       );
     }
 
-    // Posted by filter
-    if (selectedPostedBy) {
-      filtered = filtered.filter(prop => prop.postedBy === selectedPostedBy);
+    // Sorting
+    if (selectedSortBy) {
+      const parsePrice = (priceStr) => {
+        return parseInt(priceStr.replace(/[₹,]/g, ''));
+      };
+
+      if (selectedSortBy === "Price: Low to High") {
+        filtered.sort((a, b) => parsePrice(a.discountedPrice) - parsePrice(b.discountedPrice));
+      } else if (selectedSortBy === "Price: High to Low") {
+        filtered.sort((a, b) => parsePrice(b.discountedPrice) - parsePrice(a.discountedPrice));
+      } else if (selectedSortBy === "Newest First") {
+        filtered.sort((a, b) => new Date(b.date_added) - new Date(a.date_added));
+      } else if (selectedSortBy === "Oldest First") {
+        filtered.sort((a, b) => new Date(a.date_added) - new Date(b.date_added));
+      }
     }
 
     setFilteredProperties(filtered);
-  }, [selectedBadge, selectedPropertyType, selectedFacilities, selectedFloorsOffered, selectedAmenities, selectedPostedBy, selectedSortBy, allProperties]);
+  }, [selectedBadge, selectedPropertyType, selectedFacilities, selectedFloorsOffered, selectedAmenities, selectedSortBy, allProperties]);
 
   // Toggle dropdown
   const toggleDropdown = (dropdownName) => {
@@ -226,7 +291,6 @@ function PropertiesSearchContent() {
     setSelectedFacilities('');
     setSelectedFloorsOffered('');
     setSelectedAmenities([]);
-    setSelectedPostedBy('');
     setSelectedSortBy('');
   };
 
@@ -388,29 +452,6 @@ function PropertiesSearchContent() {
               )}
             </div>
 
-            {/* Posted By Dropdown */}
-            <div className="relative">
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleDropdown('postedBy'); }}
-                className={`px-3 py-1.5 sm:px-4 sm:py-2 border rounded-full hover:bg-gray-50 flex items-center gap-1.5 text-xs sm:text-sm whitespace-nowrap ${selectedPostedBy ? 'border-gray-400 bg-gray-100 text-gray-800' : 'border-gray-300 text-gray-600'}`}
-              >
-                {selectedPostedBy || 'Posted By'}
-              </button>
-              {openDropdown === 'postedBy' && (
-                <div className="absolute top-full left-0 mt-2 w-40 sm:w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-                  {postedByOptions.map(option => (
-                    <div
-                      key={option}
-                      onClick={() => { setSelectedPostedBy(option); setOpenDropdown(null); }}
-                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-xs sm:text-sm"
-                    >
-                      {option}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
             {/* Sort By Dropdown */}
             <div className="relative w-full sm:w-auto sm:ml-auto">
               <button
@@ -441,29 +482,38 @@ function PropertiesSearchContent() {
 
         {/* Results Header */}
         <div className="text-center mb-4 sm:mb-6">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Showing Spaces</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
+            Showing spaces {cityParam ? `in ${capitalizeCity(cityParam)}` : ''}
+          </h2>
           <div className="w-20 sm:w-24 h-1 bg-yellow-400 mx-auto mt-2"></div>
         </div>
 
         {/* Properties Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-          {filteredProperties.map((property) => (
-            <div key={property.id} className="bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl hover:-translate-y-1 sm:hover:-translate-y-2 transition-all duration-300 relative">
+          {filteredProperties.map((property, index) => (
+            <div
+              key={index}
+              onClick={() => window.open(`/property-details?id=${mongodbId}&type=commercial`, '_blank')}
+              className="bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl hover:-translate-y-1 sm:hover:-translate-y-2 transition-all duration-300 relative cursor-pointer"
+            >
               {/* Badge */}
               <div className="absolute top-2 left-2 sm:top-4 sm:left-4 bg-white px-2 py-1 sm:px-3 sm:py-1.5 rounded-full flex items-center gap-1 sm:gap-2 z-10 shadow-md">
                 <svg className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                <span className="text-[10px] sm:text-xs font-semibold text-blue-600">{property.badge}</span>
+                <span className="text-[10px] sm:text-xs font-semibold text-blue-600 uppercase">{property.badge}</span>
               </div>
 
               {/* Favorite Icon */}
               <button
-                onClick={() => toggleFavorite(property.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFavorite(index);
+                }}
                 className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-white p-1.5 sm:p-2 rounded-full shadow-md z-10 hover:bg-gray-50 transition-colors"
               >
                 <svg
-                  className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors ${favorites.includes(property.id) ? 'text-red-500' : 'text-gray-700'}`}
+                  className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors ${favorites.includes(index) ? 'text-red-500' : 'text-gray-700'}`}
                   fill="currentColor"
                   viewBox="0 0 24 24"
                 >
@@ -474,7 +524,7 @@ function PropertiesSearchContent() {
               {/* Property Image */}
               <div className="h-48 sm:h-56 md:h-64 bg-gradient-to-br from-blue-300 to-blue-500 relative overflow-hidden">
                 <img
-                  src={property.image}
+                  src={property.featuredImageUrl || property.images?.[0] || '/property-icon.svg'}
                   alt={property.name}
                   className="w-full h-full object-cover"
                 />
@@ -487,13 +537,13 @@ function PropertiesSearchContent() {
                     {property.name}
                   </h3>
                   <span className="px-2 py-0.5 bg-green-50 text-green-600 text-[9px] sm:text-[10px] font-medium rounded-md border border-green-200 whitespace-nowrap">
-                    No ratings yet
+                    {property.ratings?.overall ? `${property.ratings.overall} ⭐` : 'No ratings yet'}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between mt-3 sm:mt-4">
-                  <span className="text-sm sm:text-base font-bold text-gray-900">{property.price}</span>
-                  <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-green-50 text-green-600 text-[10px] sm:text-xs font-semibold rounded-md border border-green-200">
+                  <span className="text-sm sm:text-base font-bold text-gray-900">{property.discountedPrice}</span>
+                  <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-green-50 text-green-600 text-[10px] sm:text-xs font-semibold rounded-md border border-green-200 uppercase">
                     {property.badge}
                   </span>
                 </div>

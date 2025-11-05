@@ -9,6 +9,7 @@ export default function SelectCityBox({ title = "Select by City", cities = [] })
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCity, setSelectedCity] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [isSeeAllModalOpen, setIsSeeAllModalOpen] = useState(false);
   const sectionRef = useRef(null);
   const router = useRouter();
 
@@ -39,7 +40,7 @@ export default function SelectCityBox({ title = "Select by City", cities = [] })
     if (!selectedCity) return;
 
     const params = new URLSearchParams({
-      location: selectedCity.name,
+      city: selectedCity.name,
       type: category,
     });
 
@@ -48,18 +49,11 @@ export default function SelectCityBox({ title = "Select by City", cities = [] })
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row" ref={sectionRef}>
+    <div className="flex flex-col md:flex-row relative z-0" ref={sectionRef}>
       {/* Mobile View */}
-      <div
-        className="max-[425px]:block hidden w-full relative min-h-screen bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${currentCity?.backgroundImage})`,
-        }}
-      >
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full px-4">
-          <h1 className="text-3xl font-bold text-white text-center mb-8">{title}</h1>
-
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+      <div className="max-[425px]:block hidden w-full py-8 mb-11">
+        <div className="w-full px-4">
+          <div className="bg-blue-50 rounded-2xl p-4">
             <div className="flex overflow-x-auto gap-4 scrollbar-hide pb-2">
               {cities.map((city) => (
                 <div
@@ -79,19 +73,22 @@ export default function SelectCityBox({ title = "Select by City", cities = [] })
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <span className="text-xs font-medium text-white text-center whitespace-nowrap">
+                  <span className="text-xs font-medium text-gray-700 text-center whitespace-nowrap">
                     {city.name}
                   </span>
                 </div>
               ))}
 
-              <div className="flex flex-col items-center space-y-2 cursor-pointer flex-shrink-0">
+              <div 
+                className="flex flex-col items-center space-y-2 cursor-pointer flex-shrink-0"
+                onClick={() => setIsSeeAllModalOpen(true)}
+              >
                 <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center hover:bg-blue-700 transition-colors">
                   <span className="text-white font-bold text-xs text-center">
                     See<br />All
                   </span>
                 </div>
-                <span className="text-xs font-medium text-white text-center whitespace-nowrap">
+                <span className="text-xs font-medium text-gray-700 text-center whitespace-nowrap">
                   More Cities
                 </span>
               </div>
@@ -149,6 +146,7 @@ export default function SelectCityBox({ title = "Select by City", cities = [] })
                   isVisible ? "animate-slideInLeft" : "opacity-0"
                 }`}
                 style={{ animationDelay: isVisible ? `${cities.length * 0.05}s` : "0s" }}
+                onClick={() => setIsSeeAllModalOpen(true)}
               >
                 <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-blue-600 flex items-center justify-center hover:bg-blue-700 transition-colors">
                   <span className="text-white font-bold text-xs text-center">
@@ -162,7 +160,7 @@ export default function SelectCityBox({ title = "Select by City", cities = [] })
         </div>
 
         {/* Right Panel */}
-        <div className="w-full md:w-1/2 relative min-h-[300px] md:min-h-screen">
+        <div className="w-full md:w-1/2 relative min-h-[300px] md:min-h-[600px]">
           <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-500"
             style={{
@@ -174,7 +172,7 @@ export default function SelectCityBox({ title = "Select by City", cities = [] })
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Category Selection Modal */}
       {isModalOpen && (
         <div
           className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-50"
@@ -190,10 +188,10 @@ export default function SelectCityBox({ title = "Select by City", cities = [] })
 
             <div className="space-y-3">
               {[
-                "Managed Space",
-                "Unmanaged Space",
-                "Coworking Dedicated",
-                "Coworking Shared",
+                "Rent",
+                "Sale",
+                "PG/Hostel",
+                "Flatmates",
               ].map((category) => (
                 <button
                   key={category}
@@ -204,6 +202,66 @@ export default function SelectCityBox({ title = "Select by City", cities = [] })
                   {category}
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* See All Cities Modal */}
+      {isSeeAllModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setIsSeeAllModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-3xl w-full max-w-3xl h-[80vh] flex flex-col shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header - Fixed */}
+            <div className="flex items-center justify-between p-6 md:p-8 border-b border-gray-200 flex-shrink-0">
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                Select a City
+              </h2>
+              <button
+                onClick={() => setIsSeeAllModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Cities Grid - Scrollable */}
+            <div className="flex-1 overflow-y-auto p-6 md:p-8">
+              <div className="grid grid-cols-3 md:grid-cols-4 gap-6 md:gap-8">
+                {cities.map((city) => (
+                  <div
+                    key={city.name}
+                    className="flex flex-col items-center space-y-2 cursor-pointer transition-all duration-200 hover:scale-105"
+                    onClick={() => {
+                      setIsSeeAllModalOpen(false);
+                      handleCityClick(city);
+                    }}
+                  >
+                    <div
+                      className="w-16 h-16 md:w-20 md:h-20 rounded-full border-3 overflow-hidden bg-white shadow-md transition-all duration-200"
+                      style={{ borderColor: "#ff9d4d", borderWidth: "3px" }}
+                    >
+                      <Image
+                        src={city.image}
+                        alt={city.name}
+                        width={80}
+                        height={80}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <span className="text-xs md:text-sm font-semibold text-gray-700 text-center">
+                      {city.name}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

@@ -1,44 +1,39 @@
 "use client";
 
+import { useState } from 'react';
 import { ArrowLeft, RefreshCw, Grid3x3, Circle, Download, Share2, Info, Home, Building2, Calendar, Star, ChevronRight, MoreVertical, Users, Eye, Bed, Bath, SquareIcon, Search, Phone, ExternalLink } from 'lucide-react';
 
 export default function BuildersPage() {
+  const [showBuilderDetails, setShowBuilderDetails] = useState(false);
+
+  if (!showBuilderDetails) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-5xl sm:text-7xl font-bold text-gray-900 mb-8">
+            Builders Lists
+          </h1>
+          <button
+            onClick={() => setShowBuilderDetails(true)}
+            className="px-8 py-4 bg-teal-600 hover:bg-teal-700 text-white text-xl font-semibold rounded-xl transition-colors shadow-lg"
+          >
+            Next Builder
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header Section */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
-            {/* Left: Title with back button */}
             <div className="flex items-center gap-2 sm:gap-4">
-              <button className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
-              </button>
               <h1 className="text-xl sm:text-4xl font-semibold text-gray-900">
-                Estate<br className="hidden sm:block" /><span className="sm:hidden"> </span>Management
+                Estate Management
               </h1>
-            </div>
-
-            {/* Center: Action Icons */}
-            <div className="flex items-center gap-1.5 sm:gap-3 overflow-x-auto">
-              <button className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-              </button>
-              <button className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition-colors hidden xs:block">
-                <Grid3x3 className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-              </button>
-              <button className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition-colors hidden xs:block">
-                <Circle className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-              </button>
-              <button className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <Download className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-              </button>
-              <button className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <Share2 className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-              </button>
-              <button className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition-colors hidden xs:block">
-                <Info className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-              </button>
             </div>
 
             {/* Right: Stats Cards */}

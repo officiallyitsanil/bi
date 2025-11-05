@@ -3,8 +3,6 @@
 import { useState, useRef, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-    ArrowLeft,
-    Bookmark,
     Share2,
     Home,
     Star,
@@ -16,7 +14,6 @@ import {
     Heart
 } from "lucide-react";
 import GoogleMap from "../../components/GoogleMap";
-import { propertiesData } from '@/data/properties';
 
 import "./animations.css";
 
@@ -87,6 +84,9 @@ function PropertyDetailsContent() {
     });
     const [isSubmittingInterest, setIsSubmittingInterest] = useState(false);
     const [showSuccessTooltip, setShowSuccessTooltip] = useState(false);
+    const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+    const [reviewSubmitSuccess, setReviewSubmitSuccess] = useState(false);
+    const [userName, setUserName] = useState('');
 
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -104,8 +104,8 @@ function PropertyDetailsContent() {
         // Wait for DOM to be ready
         const timer = setTimeout(() => {
             const observerOptions = {
-                threshold: 0.05, // Lower threshold for better detection
-                rootMargin: '50px 0px -50px 0px' // Start observing earlier
+                threshold: 0.1,
+                rootMargin: '0px 0px -100px 0px'
             };
 
             const observer = new IntersectionObserver((entries) => {
@@ -113,10 +113,8 @@ function PropertyDetailsContent() {
                     if (entry.isIntersecting && !entry.target.classList.contains('animated')) {
                         const animationClass = entry.target.dataset.animation;
                         if (animationClass) {
-                            // Add animation class
                             entry.target.classList.add(animationClass);
                             entry.target.classList.add('animated');
-                            // Unobserve after animation is applied
                             observer.unobserve(entry.target);
                         }
                     }
@@ -134,23 +132,19 @@ function PropertyDetailsContent() {
                     el.classList.remove(animationClass);
                 }
 
-                // Check if element is already in viewport
+                // Check if element is in viewport
                 const rect = el.getBoundingClientRect();
-                const isInViewport = (
-                    rect.top >= 0 &&
-                    rect.left >= 0 &&
-                    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-                    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
-                );
+                const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+                const isInViewport = rect.top < windowHeight && rect.bottom > 0;
 
-                if (isInViewport) {
-                    // Element is already visible, animate immediately with slight delay
+                if (isInViewport && rect.top < windowHeight * 0.8) {
+                    // Element is already visible in upper portion, animate immediately
                     setTimeout(() => {
                         if (animationClass) {
                             el.classList.add(animationClass);
                             el.classList.add('animated');
                         }
-                    }, index * 50); // Stagger animations for elements already in view
+                    }, index * 30);
                 } else {
                     // Element not in viewport, observe it
                     observer.observe(el);
@@ -158,40 +152,90 @@ function PropertyDetailsContent() {
             });
 
             return () => observer.disconnect();
-        }, 150); // Small delay to ensure DOM is ready
+        }, 100);
 
         return () => clearTimeout(timer);
     }, [property]);
 
-    // Get property data from URL params or use first property as default
+    // Fetch property data from MongoDB based on ID and type
     useEffect(() => {
-        const idParam = searchParams.get('id');
-        const dataParam = searchParams.get('data');
+        const fetchPropertyFromAPI = async () => {
+            const idParam = searchParams.get('id');
+            const typeParam = searchParams.get('type');
 
-        if (idParam) {
-            // Find property by ID from shared data
-            const foundProperty = propertiesData.find(p => p.id === idParam);
-            setProperty(foundProperty || propertiesData[0]);
-        } else if (dataParam) {
+            if (!idParam) {
+                console.error('No property ID provided');
+                router.push('/');
+                return;
+            }
+
+            console.log('Fetching property:', idParam, 'Type:', typeParam);
+
             try {
-                const parsedData = JSON.parse(decodeURIComponent(dataParam));
-                // If parsed data has an ID, try to get full data from propertiesData
-                if (parsedData.id) {
-                    const foundProperty = propertiesData.find(p => p.id === parsedData.id);
-                    setProperty(foundProperty || parsedData);
+                const apiUrl = `/api/properties?id=${idParam}&type=${typeParam || ''}`;
+                console.log('Fetching from:', apiUrl);
+
+                const response = await fetch(apiUrl);
+
+                console.log('API Response status:', response.status);
+
+                const data = await response.json();
+                console.log('API Response data:', JSON.stringify(data, null, 2));
+                console.log('data.success:', data.success);
+                console.log('data.property:', data.property);
+
+                if (data.success && data.property) {
+                    // Log the raw ratings data
+                    console.log('Raw ratings from API:', data.property.ratings);
+                    console.log('Raw breakdown:', data.property.ratings?.breakdown);
+
+                    const formattedProperty = {
+                        ...data.property,
+                        id: data.property._id || data.property.id,
+                        _id: data.property._id || data.property.id,
+                        position: data.property.position || data.property.coordinates || { lat: 28.6139, lng: 77.2090 },
+                        coordinates: data.property.coordinates || data.property.position || { lat: 28.6139, lng: 77.2090 },
+                        images: data.property.images && data.property.images.length > 0 ? data.property.images : ['/placeholder.png'],
+                        featuredImageUrl: data.property.featuredImageUrl || data.property.images?.[0] || '/placeholder.png',
+                        amenities: data.property.amenities || [],
+                        nearbyPlaces: data.property.nearbyPlaces || { school: [], hospital: [], hotel: [], business: [] },
+                        floorPlans: data.property.floorPlans || {},
+                        ratings: data.property.ratings || {
+                            overall: 0,
+                            totalRatings: 0,
+                            breakdown: { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 },
+                            whatsGood: [],
+                            whatsBad: []
+                        },
+                        reviews: data.property.reviews || [],
+                        name: data.property.name || 'Property Name',
+                        address: data.property.address || 'Address not available',
+                        originalPrice: data.property.originalPrice || '₹XX',
+                        discountedPrice: data.property.discountedPrice || '₹XX',
+                        additionalPrice: data.property.additionalPrice || '₹XX',
+                        sellerPhoneNumber: data.property.sellerPhoneNumber || '+91 XXXXXXXXXX'
+                    };
+
+                    console.log('Property loaded successfully:', formattedProperty.name);
+                    console.log('Formatted ratings:', formattedProperty.ratings);
+                    console.log('Formatted breakdown:', formattedProperty.ratings?.breakdown);
+                    setProperty(formattedProperty);
                 } else {
-                    setProperty(parsedData);
+                    console.error('❌ Property not found in database');
+                    console.error('Response was:', data);
+                    console.error('data.success:', data.success);
+                    console.error('data.property:', data.property);
+                    console.error('Full response:', JSON.stringify(data, null, 2));
                 }
             } catch (error) {
-                console.error('Error parsing property data:', error);
-                // Use first property from shared data as fallback
-                setProperty(propertiesData[0]);
+                console.error('❌ Error fetching property from API:', error);
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
             }
-        } else {
-            // Use first property from shared data as default
-            setProperty(propertiesData[0]);
-        }
-    }, [searchParams]);
+        };
+
+        fetchPropertyFromAPI();
+    }, [searchParams, router]);
 
     // Map configuration - using property data as reference
     const mapCenter = property ? { lat: property.coordinates.lat, lng: property.coordinates.lng } : { lat: 28.6139, lng: 77.2090 };
@@ -294,6 +338,7 @@ function PropertyDetailsContent() {
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
                     <p className="text-gray-600">Loading property details...</p>
+                    <p className="text-gray-500 text-sm mt-2">Property ID: {searchParams.get('id')}</p>
                 </div>
             </div>
         );
@@ -413,7 +458,7 @@ function PropertyDetailsContent() {
                                         </div>
                                         <p className="text-[0.6rem] text-gray-700 text-center">{truncatedName}</p>
                                         {amenity.name.length > 12 && (
-                                            <div className="absolute top-6 left-1/2 transform -translate-x-1/2 px-3 py-2 bg-black text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-[99999]">
+                                            <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 px-3 py-2 bg-black text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-[9999]">
                                                 {amenity.name}
                                             </div>
                                         )}
@@ -518,12 +563,20 @@ function PropertyDetailsContent() {
                             <AnimatedText className="text-base font-bold inline-block" delay={1500} lineColor="#f8c02f">
                                 <h3>Rating & Reviews</h3>
                             </AnimatedText>
-                            <button
-                                onClick={() => setShowReviewsModal(true)}
-                                className="text-blue-600 font-medium text-xs hover:underline cursor-pointer"
-                            >
-                                View All
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setShowRatingModal(true)}
+                                    className="bg-[#f8c02f] text-gray-800 px-3 py-1.5 rounded-lg font-medium text-xs hover:bg-[#e0ad2a] cursor-pointer transition-colors"
+                                >
+                                    Add Review
+                                </button>
+                                <button
+                                    onClick={() => setShowReviewsModal(true)}
+                                    className="text-blue-600 font-medium text-xs hover:underline cursor-pointer"
+                                >
+                                    View All
+                                </button>
+                            </div>
                         </div>
 
                         {/* Stars and Rating */}
@@ -544,21 +597,37 @@ function PropertyDetailsContent() {
 
                         {/* Rating Bars */}
                         <div className="space-y-1.5 mb-5 scroll-animate" data-animation="animate-fade-up">
-                            {[5, 4, 3, 2, 1].map((star) => (
-                                <div key={star} className="flex items-center gap-2">
-                                    <span className="text-xs font-medium w-10">{star} Star</span>
-                                    <div className="flex-1 bg-gray-200 rounded-full h-1.5">
-                                        <div
-                                            className="bg-yellow-400 h-1.5 rounded-full"
-                                            style={{
-                                                width: `${property.ratings?.breakdown && property.ratings?.totalRatings ?
-                                                    (property.ratings.breakdown[star] / property.ratings.totalRatings) * 100 : 0}%`
-                                            }}
-                                        />
+                            {(() => {
+                                if (property.ratings?.breakdown) {
+                                    console.log('Breakdown keys:', Object.keys(property.ratings.breakdown));
+                                    console.log('Breakdown values:', Object.values(property.ratings.breakdown));
+                                    console.log('Full breakdown:', property.ratings.breakdown);
+                                }
+                                return null;
+                            })()}
+                            {[5, 4, 3, 2, 1].map((star) => {
+                                const getBreakdownCount = (star) => {
+                                    if (!property.ratings?.breakdown) return 0;
+                                    // Handle both Map and object formats
+                                    const breakdown = property.ratings.breakdown;
+                                    return breakdown[star] || breakdown[String(star)] || 0;
+                                };
+                                const count = getBreakdownCount(star);
+                                const percentage = property.ratings?.totalRatings ? (count / property.ratings.totalRatings) * 100 : 0;
+
+                                return (
+                                    <div key={star} className="flex items-center gap-2">
+                                        <span className="text-xs font-medium w-10">{star} Star</span>
+                                        <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+                                            <div
+                                                className="bg-yellow-400 h-1.5 rounded-full"
+                                                style={{ width: `${percentage}%` }}
+                                            />
+                                        </div>
+                                        <span className="text-xs font-medium w-5">{count}</span>
                                     </div>
-                                    <span className="text-xs font-medium w-5">{property.ratings?.breakdown?.[star] || 0}</span>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
 
                         {/* What's Good */}
@@ -606,248 +675,406 @@ function PropertyDetailsContent() {
                         </div>
                     </div>
 
-                    {/* Properties Nearby */}
-                    <div className="mb-16 scroll-animate" data-animation="animate-slide-top">
-                        <h3 className="text-base font-bold mb-3 text-center scroll-animate" data-animation="animate-pop">Properties Nearby</h3>
-                        <div className="w-6 h-0.5 bg-red-500 mx-auto mb-4"></div>
+                    {/* Property Layout */}
+                    <div className="mb-5 scroll-animate" data-animation="animate-slide-top">
+                        <AnimatedText className="text-base font-bold mb-3 inline-block" delay={2000} lineColor="#f8c02f">
+                            <h3>Property Layout</h3>
+                        </AnimatedText>
 
-                        <div className="grid grid-cols-2 gap-2.5">
-                            {/* Property Cards */}
-                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((item) => (
-                                <div key={item} className="relative overflow-hidden rounded-lg scroll-animate" data-animation="animate-fade-up" style={{ animationDelay: `${item * 100}ms` }}>
-                                    <img
-                                        src={property.images[0]}
-                                        alt="Property"
-                                        className="w-full h-28 object-cover rounded-lg transition-transform duration-300 hover:scale-110"
-                                    />
-                                    <div className="absolute top-1.5 right-1.5 w-7 h-7 bg-white rounded-full flex items-center justify-center border border-blue-500">
-                                        <span className="text-blue-500 text-xs font-bold">Ne</span>
-                                    </div>
-                                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-1.5 rounded-b-lg">
-                                        <p className="text-xs text-center">Statesman house</p>
-                                    </div>
-                                </div>
+                        <div className="flex my-3 gap-2 justify-center scroll-animate" data-animation="animate-fade-up">
+                            {['6-15 Seats', '16-30 Seats', '31-60 Seats'].map((option) => (
+                                <button
+                                    key={option}
+                                    onClick={() => setSelectedCapacity(option)}
+                                    className={`px-3 py-2 rounded-full text-xs font-medium cursor-pointer transition-colors ${selectedCapacity === option
+                                        ? 'bg-black text-white'
+                                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                                        }`}
+                                >
+                                    {option}
+                                </button>
                             ))}
                         </div>
+
+                        {/* Floor Plans */}
+                        <div className="grid grid-cols-2 gap-2 mt-5 scroll-animate" data-animation="animate-fade-up">
+                            {property.floorPlans && property.floorPlans[selectedCapacity] ? (
+                                property.floorPlans[selectedCapacity].map((floorPlan, index) => (
+                                    <div key={index} className="overflow-hidden rounded-lg">
+                                        <img
+                                            src={floorPlan}
+                                            alt={`Floor Plan ${index + 1}`}
+                                            className="w-full h-full object-cover rounded-lg transition-transform duration-300 hover:scale-110 cursor-pointer"
+                                        />
+                                    </div>
+                                ))
+                            ) : (
+                                <>
+                                    <div className="overflow-hidden rounded-lg">
+                                        <img
+                                            src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600"
+                                            alt="Floor Plan 1"
+                                            className="w-full h-full object-cover rounded-lg transition-transform duration-300 hover:scale-110 cursor-pointer"
+                                        />
+                                    </div>
+                                    <div className="overflow-hidden rounded-lg">
+                                        <img
+                                            src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600"
+                                            alt="Floor Plan 2"
+                                            className="w-full h-full object-cover rounded-lg transition-transform duration-300 hover:scale-110 cursor-pointer"
+                                        />
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                {/* Fixed Bottom Action Bar */}
-                <div className="fixed left-0 right-0 bg-white border-t border-gray-200 p-4 md:hidden z-30" style={{ bottom: '60px' }}>
-                    <div className="flex gap-3">
-                        <button
-                            onClick={() => window.open(`https://wa.me/${property.sellerPhoneNumber?.replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${property.name}`, '_blank')}
-                            className="flex-1 bg-green-500 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors"
-                        >
-                            <img
-                                src="/property-details/whatsapp.png"
-                                alt="WhatsApp"
-                                className="w-5 h-5 object-contain"
-                            />
-                            Whatsapp
-                        </button>
-                        <button
-                            onClick={() => window.location.href = `tel:${property.sellerPhoneNumber}`}
-                            className="flex-1 bg-green-500 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors"
-                        >
-                            <img
-                                src="/property-details/call-icon.png"
-                                alt="Call"
-                                className="w-5 h-5 object-contain"
-                            />
-                            Request for call
-                        </button>
+                {/* Promotional Banner Section - Mobile */}
+                <div className="mt-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-3 mx-4 mb-20 scroll-animate" data-animation="animate-slide-top">
+                    <div className="space-y-2">
+                        {/* House Icon */}
+                        <div className="flex justify-center scroll-animate" data-animation="animate-pop">
+                            <div className="w-8 h-8 border-2 border-blue-600 rounded-lg flex items-center justify-center">
+                                <Home className="w-4 h-4 text-blue-600" />
+                            </div>
+                        </div>
+
+                        {/* Main Content */}
+                        <div className="text-center">
+                            <h2 className="text-sm font-bold text-blue-900 mb-2 leading-tight scroll-animate" data-animation="animate-pop">
+                                Brokerage – Free Real Estate at Your Fingertips
+                            </h2>
+
+                            <p className="text-xs text-blue-800 leading-relaxed mb-3 scroll-animate" data-animation="animate-fade-up">
+                                Find your dream home faster with our app—less searching, more living. Download now!
+                            </p>
+
+                            <div className="flex flex-col gap-2 scroll-animate" data-animation="animate-fade-up">
+                                <button
+                                    onClick={() => window.open('https://apps.apple.com', '_blank')}
+                                    className="flex items-center gap-1.5 bg-black text-white px-3 py-1.5 rounded-lg hover:bg-gray-800 transition-colors shadow-lg cursor-pointer justify-center"
+                                >
+                                    <div className="w-4 h-4 bg-white rounded flex items-center justify-center">
+                                        <span className="text-black font-bold text-xs">🍎</span>
+                                    </div>
+                                    <div className="text-left">
+                                        <div className="text-xs">Download on the</div>
+                                        <div className="font-bold text-xs">App Store</div>
+                                    </div>
+                                </button>
+
+                                <button
+                                    onClick={() => window.open('https://play.google.com', '_blank')}
+                                    className="flex items-center gap-1.5 bg-black text-white px-3 py-1.5 rounded-lg hover:bg-gray-800 transition-colors shadow-lg cursor-pointer justify-center"
+                                >
+                                    <div className="w-4 h-4 bg-white rounded flex items-center justify-center">
+                                        <span className="text-black font-bold text-xs">▶</span>
+                                    </div>
+                                    <div className="text-left">
+                                        <div className="text-xs">GET IT ON</div>
+                                        <div className="font-bold text-xs">Google Play</div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                {/* Floating Chat Icon */}
-                <div className="fixed right-4 z-40 md:hidden" style={{ bottom: '140px' }}>
+            {/* Fixed Bottom Action Bar */}
+            <div className="fixed left-0 right-0 bg-white border-t border-gray-200 p-4 md:hidden z-30" style={{ bottom: '60px' }}>
+                <div className="flex gap-3">
                     <button
-                        onClick={() => setShowModal(true)}
-                        className="w-14 h-14 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-blue-700 transition-colors"
+                        onClick={() => window.open(`https://wa.me/${property.sellerPhoneNumber?.replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${property.name}`, '_blank')}
+                        className="flex-1 bg-green-500 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors"
                     >
-                        <MessageCircle className="w-6 h-6" />
+                        <img
+                            src="/property-details/whatsapp.png"
+                            alt="WhatsApp"
+                            className="w-5 h-5 object-contain"
+                        />
+                        Whatsapp
+                    </button>
+                    <button
+                        onClick={() => window.location.href = `tel:${property.sellerPhoneNumber}`}
+                        className="flex-1 bg-green-500 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors"
+                    >
+                        <img
+                            src="/property-details/call-icon.png"
+                            alt="Call"
+                            className="w-5 h-5 object-contain"
+                        />
+                        Request for call
                     </button>
                 </div>
+            </div>
 
-                {/* Mobile Modal */}
-                {showModal && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 md:hidden">
-                        <div className="bg-white rounded-2xl w-full max-w-sm p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-bold text-blue-600">Interested in this Property</h3>
-                                <button
-                                    onClick={() => setShowModal(false)}
-                                    className="text-gray-500 hover:text-gray-700"
-                                >
-                                    ✕
-                                </button>
-                            </div>
-                            <p className="text-gray-600 text-sm mb-6">Fill your details for a customized quote</p>
+            {/* Floating Chat Icon */}
+            <div className="fixed right-4 z-40 md:hidden" style={{ bottom: '140px' }}>
+                <button
+                    onClick={() => setShowModal(true)}
+                    className="w-14 h-14 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-blue-700 transition-colors"
+                >
+                    <MessageCircle className="w-6 h-6" />
+                </button>
+            </div>
 
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                                    <input
-                                        type="text"
-                                        defaultValue="Ytefhn Jin"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                                    <input
-                                        type="email"
-                                        defaultValue="ggffdtyul@gmail.com"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                                    <input
-                                        type="tel"
-                                        defaultValue="+91 1234567890"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Messages</label>
-                                    <textarea
-                                        defaultValue="Thank you for sharing home and helping to create incredible experiences for our guests."
-                                        rows={3}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none"
-                                    />
-                                </div>
-                                <button
-                                    onClick={() => {
-                                        alert('Form submitted successfully!');
-                                        setShowModal(false);
-                                    }}
-                                    className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors cursor-pointer"
-                                >
-                                    Submit
-                                </button>
-                            </div>
+            {/* Mobile Modal */}
+            {showModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 md:hidden">
+                    <div className="bg-white rounded-2xl w-full max-w-sm p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold text-blue-600">Interested in this Property</h3>
+                            <button
+                                onClick={() => setShowModal(false)}
+                                className="text-gray-500 hover:text-gray-700"
+                            >
+                                ✕
+                            </button>
                         </div>
-                    </div>
-                )}
+                        <p className="text-gray-600 text-sm mb-6">Fill your details for a customized quote</p>
 
-                {/* Reviews Modal */}
-                {showReviewsModal && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-                            {/* Modal Header */}
-                            <div className="flex items-center justify-between p-5 border-b sticky top-0 bg-white">
-                                <h3 className="text-xl font-bold">All Ratings & Reviews</h3>
-                                <button
-                                    onClick={() => setShowReviewsModal(false)}
-                                    className="text-gray-400 hover:text-gray-900 text-2xl w-8 h-8 flex items-center justify-center transition-colors cursor-pointer"
-                                >
-                                    ✕
-                                </button>
-                            </div>
-
-                            {/* Modal Content - Scrollable */}
-                            <div className="overflow-y-auto p-5 flex-1">
-                                {property.reviews && property.reviews.length > 0 ? (
-                                    <div className="space-y-5">
-                                        {property.reviews.map((review, index) => (
-                                            <div key={index} className="border-b pb-5 last:border-b-0">
-                                                <div className="flex items-start justify-between mb-2">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-medium text-gray-900">{review.user}</span>
-                                                        <div className="flex">
-                                                            {[1, 2, 3, 4, 5].map((star) => (
-                                                                <Star
-                                                                    key={star}
-                                                                    className={`w-4 h-4 ${star <= review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
-                                                                />
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                    <span className="text-sm text-gray-500">{review.date}</span>
-                                                </div>
-                                                <p className="text-gray-700 text-sm leading-relaxed">{review.comment}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <p className="text-gray-500 text-center py-10">No reviews available</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Rating Submit Modal */}
-                {showRatingModal && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-2xl w-full max-w-md p-8">
-                            {/* Title with underline */}
-                            <div className="text-center mb-8">
-                                <h3 className="text-2xl font-bold text-gray-800 mb-2">Rate Your Experience</h3>
-                                <div className="w-32 h-1 bg-yellow-400 mx-auto"></div>
-                            </div>
-
-                            {/* Rating Section */}
-                            <div className="mb-6">
-                                <label className="block text-base font-medium text-gray-700 mb-3">Rating</label>
-                                <div className="flex justify-center gap-2">
-                                    {[1, 2, 3, 4, 5].map((star) => (
-                                        <Star
-                                            key={star}
-                                            onClick={() => setSelectedRating(star)}
-                                            onMouseEnter={() => setHoverRating(star)}
-                                            onMouseLeave={() => setHoverRating(0)}
-                                            className={`w-12 h-12 cursor-pointer transition-all ${star <= (hoverRating || selectedRating)
-                                                ? 'text-gray-400 fill-gray-400'
-                                                : 'text-gray-300'
-                                                }`}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Review Text Area */}
-                            <div className="mb-6">
-                                <label className="block text-base font-medium text-gray-700 mb-3">Review (optional)</label>
-                                <textarea
-                                    value={reviewText}
-                                    onChange={(e) => setReviewText(e.target.value)}
-                                    rows={4}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                                    placeholder="Share your experience..."
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                                <input
+                                    type="text"
+                                    placeholder="Enter your name"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                                 />
                             </div>
-
-                            {/* Action Buttons */}
-                            <div className="flex gap-4">
-                                <button
-                                    onClick={() => {
-                                        setShowRatingModal(false);
-                                        setSelectedRating(0);
-                                        setReviewText('');
-                                    }}
-                                    className="flex-1 bg-transparent border-2 border-[#f8c02f] text-gray-800 py-3 rounded-lg font-semibold text-base hover:bg-[#f8c02f]/10 transition-colors cursor-pointer"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        alert(`Rating submitted: ${selectedRating} stars\nReview: ${reviewText}`);
-                                        setShowRatingModal(false);
-                                        setSelectedRating(0);
-                                        setReviewText('');
-                                    }}
-                                    className="flex-1 bg-[#f8c02f] text-gray-800 py-3 rounded-lg font-semibold text-base hover:bg-[#e0ad2a] transition-colors cursor-pointer"
-                                >
-                                    Submit Rating
-                                </button>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                                <input
+                                    type="email"
+                                    placeholder="Enter your email"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                />
                             </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                                <input
+                                    type="tel"
+                                    placeholder="Enter phone number"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Messages</label>
+                                <textarea
+                                    placeholder="Enter your message..."
+                                    rows={3}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none"
+                                />
+                            </div>
+                            <button
+                                onClick={() => {
+                                    alert('Form submitted successfully!');
+                                    setShowModal(false);
+                                }}
+                                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors cursor-pointer"
+                            >
+                                Submit
+                            </button>
                         </div>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
+
+            {/* Reviews Modal */}
+            {showReviewsModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between p-5 border-b sticky top-0 bg-white">
+                            <h3 className="text-xl font-bold">All Ratings & Reviews</h3>
+                            <button
+                                onClick={() => setShowReviewsModal(false)}
+                                className="text-gray-400 hover:text-gray-900 text-2xl w-8 h-8 flex items-center justify-center transition-colors cursor-pointer"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* Modal Content - Scrollable */}
+                        <div className="overflow-y-auto p-5 flex-1">
+                            {property.reviews && property.reviews.length > 0 ? (
+                                <div className="space-y-5">
+                                    {property.reviews.map((review, index) => (
+                                        <div key={index} className="border-b pb-5 last:border-b-0">
+                                            <div className="flex items-start justify-between mb-2">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-medium text-gray-900">{review.user}</span>
+                                                    <div className="flex">
+                                                        {[1, 2, 3, 4, 5].map((star) => (
+                                                            <Star
+                                                                key={star}
+                                                                className={`w-4 h-4 ${star <= review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <span className="text-sm text-gray-500">{review.date}</span>
+                                            </div>
+                                            <p className="text-gray-700 text-sm leading-relaxed">{review.comment}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-gray-500 text-center py-10">No reviews available</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Rating Submit Modal */}
+            {showRatingModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-xl w-full max-w-sm p-5">
+                        {/* Title with underline */}
+                        <div className="text-center mb-5">
+                            <h3 className="text-lg font-bold text-gray-800 mb-1.5">Rate Your Experience</h3>
+                            <div className="w-24 h-0.5 bg-yellow-400 mx-auto"></div>
+                        </div>
+
+                        {/* Success Message */}
+                        {reviewSubmitSuccess && (
+                            <div className="mb-3 bg-green-100 border border-green-400 text-green-700 px-3 py-2 rounded-lg text-center text-sm">
+                                Review submitted successfully!
+                            </div>
+                        )}
+
+                        {/* User Name Input */}
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Your Name *</label>
+                            <input
+                                type="text"
+                                value={userName}
+                                onChange={(e) => setUserName(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                placeholder="Enter your name"
+                                required
+                            />
+                        </div>
+
+                        {/* Rating Section */}
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Rating *</label>
+                            <div className="flex justify-center gap-1.5">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <Star
+                                        key={star}
+                                        onClick={() => setSelectedRating(star)}
+                                        onMouseEnter={() => setHoverRating(star)}
+                                        onMouseLeave={() => setHoverRating(0)}
+                                        className={`w-9 h-9 cursor-pointer transition-all ${star <= (hoverRating || selectedRating)
+                                            ? 'text-yellow-400 fill-yellow-400'
+                                            : 'text-gray-300'
+                                            }`}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Review Text Area */}
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Review *</label>
+                            <textarea
+                                value={reviewText}
+                                onChange={(e) => setReviewText(e.target.value)}
+                                rows={3}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                placeholder="Share your experience..."
+                            />
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-4">
+                            <button
+                                onClick={() => {
+                                    setShowRatingModal(false);
+                                    setSelectedRating(0);
+                                    setReviewText('');
+                                    setUserName('');
+                                    setReviewSubmitSuccess(false);
+                                }}
+                                className="flex-1 bg-transparent border-2 border-[#f8c02f] text-gray-800 py-3 rounded-lg font-semibold text-base hover:bg-[#f8c02f]/10 transition-colors cursor-pointer"
+                                disabled={isSubmittingReview}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    if (!selectedRating) {
+                                        alert('Please select a rating');
+                                        return;
+                                    }
+                                    if (!userName.trim()) {
+                                        alert('Please enter your name');
+                                        return;
+                                    }
+
+                                    setIsSubmittingReview(true);
+                                    setReviewSubmitSuccess(false);
+
+                                    try {
+                                        const propertyId = property._id || property.id;
+                                        const propertyType = property.propertyType;
+                                        console.log('Submitting review for:', propertyId, 'Type:', propertyType);
+                                        const response = await fetch('/api/reviews', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                            },
+                                            body: JSON.stringify({
+                                                propertyId,
+                                                propertyType,
+                                                user: userName.trim(),
+                                                rating: selectedRating, comment: reviewText.trim()
+                                            }),
+                                        });
+
+                                        const data = await response.json();
+
+                                        if (data.success) {
+                                            // Update local state with new data
+                                            setProperty(prev => ({
+                                                ...prev,
+                                                ratings: data.ratings,
+                                                reviews: [data.review, ...(prev.reviews || [])]
+                                            }));
+
+                                            setReviewSubmitSuccess(true);
+
+                                            // Close modal after showing success
+                                            setTimeout(() => {
+                                                setShowRatingModal(false);
+                                                setSelectedRating(0);
+                                                setReviewText('');
+                                                setUserName('');
+                                                setReviewSubmitSuccess(false);
+                                            }, 1500);
+                                        } else {
+                                            alert(data.message || 'Failed to submit review. Please try again.');
+                                        }
+                                    } catch (error) {
+                                        console.error('Error submitting review:', error);
+                                        alert('An error occurred. Please try again.');
+                                    } finally {
+                                        setIsSubmittingReview(false);
+                                    }
+                                }}
+                                className="flex-1 bg-[#f8c02f] text-gray-800 py-3 rounded-lg font-semibold text-base hover:bg-[#e0ad2a] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={isSubmittingReview || !selectedRating || !userName.trim()}
+                            >
+                                {isSubmittingReview ? 'Submitting...' : 'Submit Rating'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Desktop Layout (md and above) */}
             <div className="hidden md:block">
@@ -1055,7 +1282,7 @@ function PropertyDetailsContent() {
                                                     </div>
                                                     <p className="text-[0.6rem] text-gray-700">{truncatedName}</p>
                                                     {amenity.name.length > 15 && (
-                                                        <div className="absolute top-6 left-1/2 transform -translate-x-1/2 px-3 py-2 bg-black text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-[99999]">
+                                                        <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 px-3 py-2 bg-black text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-[9999]">
                                                             {amenity.name}
                                                         </div>
                                                     )}
@@ -1270,12 +1497,20 @@ function PropertyDetailsContent() {
                                 <AnimatedText className="text-lg font-bold inline-block" delay={1500} lineColor="#f8c02f">
                                     <h3>Rating & Reviews</h3>
                                 </AnimatedText>
-                                <button
-                                    onClick={() => setShowReviewsModal(true)}
-                                    className="text-blue-600 font-medium text-xs hover:underline cursor-pointer"
-                                >
-                                    View All
-                                </button>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setShowRatingModal(true)}
+                                        className="bg-[#f8c02f] text-gray-800 px-4 py-2 rounded-lg font-medium text-sm hover:bg-[#e0ad2a] cursor-pointer transition-colors"
+                                    >
+                                        Add Review
+                                    </button>
+                                    <button
+                                        onClick={() => setShowReviewsModal(true)}
+                                        className="text-blue-600 font-medium text-sm hover:underline cursor-pointer"
+                                    >
+                                        View All
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Stars and Rating */}
@@ -1296,21 +1531,29 @@ function PropertyDetailsContent() {
 
                             {/* Rating Bars */}
                             <div className="space-y-1.5 mb-6 scroll-animate" data-animation="animate-fade-up">
-                                {[5, 4, 3, 2, 1].map((star) => (
-                                    <div key={star} className="flex items-center gap-3">
-                                        <span className="text-xs font-medium w-14">{star} Star</span>
-                                        <div className="flex-1 bg-gray-200 rounded-full h-1.5">
-                                            <div
-                                                className="bg-yellow-400 h-1.5 rounded-full"
-                                                style={{
-                                                    width: `${property.ratings?.breakdown && property.ratings?.totalRatings ?
-                                                        (property.ratings.breakdown[star] / property.ratings.totalRatings) * 100 : 0}%`
-                                                }}
-                                            />
+                                {[5, 4, 3, 2, 1].map((star) => {
+                                    const getBreakdownCount = (star) => {
+                                        if (!property.ratings?.breakdown) return 0;
+                                        // Handle both Map and object formats
+                                        const breakdown = property.ratings.breakdown;
+                                        return breakdown[star] || breakdown[String(star)] || 0;
+                                    };
+                                    const count = getBreakdownCount(star);
+                                    const percentage = property.ratings?.totalRatings ? (count / property.ratings.totalRatings) * 100 : 0;
+
+                                    return (
+                                        <div key={star} className="flex items-center gap-3">
+                                            <span className="text-xs font-medium w-14">{star} Star</span>
+                                            <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+                                                <div
+                                                    className="bg-yellow-400 h-1.5 rounded-full"
+                                                    style={{ width: `${percentage}%` }}
+                                                />
+                                            </div>
+                                            <span className="text-xs font-medium w-6">{count}</span>
                                         </div>
-                                        <span className="text-xs font-medium w-6">{property.ratings?.breakdown?.[star] || 0}</span>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
 
                             {/* What's Good */}
@@ -1533,28 +1776,48 @@ function PropertyDetailsContent() {
                     </div>
                 )}
 
-                {/* Rating Submit Modal - Desktop */}
+                {/* Rating Submit Modal - Desktop (Same as Mobile) */}
                 {showRatingModal && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-2xl w-full max-w-md p-8">
+                        <div className="bg-white rounded-xl w-full max-w-sm p-5">
                             {/* Title with underline */}
-                            <div className="text-center mb-8">
-                                <h3 className="text-2xl font-bold text-gray-800 mb-2">Rate Your Experience</h3>
-                                <div className="w-32 h-1 bg-yellow-400 mx-auto"></div>
+                            <div className="text-center mb-5">
+                                <h3 className="text-lg font-bold text-gray-800 mb-1.5">Rate Your Experience</h3>
+                                <div className="w-24 h-0.5 bg-yellow-400 mx-auto"></div>
+                            </div>
+
+                            {/* Success Message */}
+                            {reviewSubmitSuccess && (
+                                <div className="mb-3 bg-green-100 border border-green-400 text-green-700 px-3 py-2 rounded-lg text-center text-sm">
+                                    Review submitted successfully!
+                                </div>
+                            )}
+
+                            {/* User Name Input */}
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Your Name *</label>
+                                <input
+                                    type="text"
+                                    value={userName}
+                                    onChange={(e) => setUserName(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                    placeholder="Enter your name"
+                                    required
+                                />
                             </div>
 
                             {/* Rating Section */}
-                            <div className="mb-6">
-                                <label className="block text-base font-medium text-gray-700 mb-3">Rating</label>
-                                <div className="flex justify-center gap-2">
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Rating *</label>
+                                <div className="flex justify-center gap-1.5">
                                     {[1, 2, 3, 4, 5].map((star) => (
                                         <Star
                                             key={star}
                                             onClick={() => setSelectedRating(star)}
                                             onMouseEnter={() => setHoverRating(star)}
                                             onMouseLeave={() => setHoverRating(0)}
-                                            className={`w-12 h-12 cursor-pointer transition-all ${star <= (hoverRating || selectedRating)
-                                                ? 'text-gray-400 fill-gray-400'
+                                            className={`w-9 h-9 cursor-pointer transition-all ${star <= (hoverRating || selectedRating)
+                                                ? 'text-yellow-400 fill-yellow-400'
                                                 : 'text-gray-300'
                                                 }`}
                                         />
@@ -1563,46 +1826,104 @@ function PropertyDetailsContent() {
                             </div>
 
                             {/* Review Text Area */}
-                            <div className="mb-6">
-                                <label className="block text-base font-medium text-gray-700 mb-3">Review (optional)</label>
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Review *</label>
                                 <textarea
                                     value={reviewText}
                                     onChange={(e) => setReviewText(e.target.value)}
-                                    rows={4}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                    rows={3}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                                     placeholder="Share your experience..."
                                 />
                             </div>
 
                             {/* Action Buttons */}
-                            <div className="flex gap-4">
+                            <div className="flex gap-3">
                                 <button
                                     onClick={() => {
                                         setShowRatingModal(false);
                                         setSelectedRating(0);
                                         setReviewText('');
+                                        setUserName('');
+                                        setReviewSubmitSuccess(false);
                                     }}
-                                    className="flex-1 bg-transparent border-2 border-[#f8c02f] text-gray-800 py-3 rounded-lg font-semibold text-base hover:bg-[#f8c02f]/10 transition-colors cursor-pointer"
+                                    className="flex-1 bg-transparent border-2 border-[#f8c02f] text-gray-800 py-2 rounded-lg font-medium text-sm hover:bg-[#f8c02f]/10 transition-colors cursor-pointer"
+                                    disabled={isSubmittingReview}
                                 >
                                     Cancel
                                 </button>
                                 <button
-                                    onClick={() => {
-                                        alert(`Rating submitted: ${selectedRating} stars\nReview: ${reviewText}`);
-                                        setShowRatingModal(false);
-                                        setSelectedRating(0);
-                                        setReviewText('');
+                                    onClick={async () => {
+                                        if (!selectedRating) {
+                                            alert('Please select a rating');
+                                            return;
+                                        }
+                                        if (!userName.trim()) {
+                                            alert('Please enter your name');
+                                            return;
+                                        }
+
+                                        setIsSubmittingReview(true);
+                                        setReviewSubmitSuccess(false);
+
+                                        try {
+                                            const propertyId = property._id || property.id;
+                                            const propertyType = property.propertyType;
+                                            console.log('Submitting review for:', propertyId, 'Type:', propertyType);
+                                            const response = await fetch('/api/reviews', {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                },
+                                                body: JSON.stringify({
+                                                    propertyId,
+                                                    propertyType,
+                                                    user: userName.trim(),
+                                                    rating: selectedRating, comment: reviewText.trim()
+                                                }),
+                                            });
+
+                                            const data = await response.json();
+
+                                            if (data.success) {
+                                                // Update local state with new data
+                                                setProperty(prev => ({
+                                                    ...prev,
+                                                    ratings: data.ratings,
+                                                    reviews: [data.review, ...(prev.reviews || [])]
+                                                }));
+
+                                                setReviewSubmitSuccess(true);
+
+                                                // Close modal after showing success
+                                                setTimeout(() => {
+                                                    setShowRatingModal(false);
+                                                    setSelectedRating(0);
+                                                    setReviewText('');
+                                                    setUserName('');
+                                                    setReviewSubmitSuccess(false);
+                                                }, 1500);
+                                            } else {
+                                                alert(data.message || 'Failed to submit review. Please try again.');
+                                            }
+                                        } catch (error) {
+                                            console.error('Error submitting review:', error);
+                                            alert('An error occurred. Please try again.');
+                                        } finally {
+                                            setIsSubmittingReview(false);
+                                        }
                                     }}
-                                    className="flex-1 bg-[#f8c02f] text-gray-800 py-3 rounded-lg font-semibold text-base hover:bg-[#e0ad2a] transition-colors cursor-pointer"
+                                    className="flex-1 bg-[#f8c02f] text-gray-800 py-2 rounded-lg font-medium text-sm hover:bg-[#e0ad2a] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled={isSubmittingReview || !selectedRating || !userName.trim()}
                                 >
-                                    Submit Rating
+                                    {isSubmittingReview ? 'Submitting...' : 'Submit Rating'}
                                 </button>
                             </div>
                         </div>
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 }
 
@@ -1620,3 +1941,7 @@ export default function PropertyDetailsPage() {
         </Suspense>
     );
 }
+
+
+
+

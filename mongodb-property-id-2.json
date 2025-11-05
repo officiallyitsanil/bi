@@ -1,9 +1,12 @@
 {
-  "id": "2",
+  "_id": {
+    "$oid": "690956881f32787e946767f1"
+  },
   "propertyType": "residential",
   "state_name": "Telangana",
+  "city": "Mumbai",
   "coordinates": {
-    "lat": 17.3850,
+    "lat": 17.385,
     "lng": 78.4867
   },
   "name": "Luxury Residential Plot",
@@ -11,11 +14,11 @@
   "discountedPrice": "₹2,27,50,000",
   "additionalPrice": "₹15,00,000",
   "images": [
-    "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=800&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1582407947304-fd86f028f716?w=800&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1500076656116-558758c991c1?w=800&h=600&fit=crop"
+      "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1582407947304-fd86f028f716?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1500076656116-558758c991c1?w=800&h=600&fit=crop"
   ],
   "featuredImageUrl": "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop",
   "date_added": "15 December 2024",
@@ -26,12 +29,32 @@
   "address": "Gachibowli, Hyderabad, Telangana 500032, India",
   "amenities": [
     {
+      "name": "OC Certificate",
+      "image": "/property-details/amenties/oc.png"
+    },
+    {
+      "name": "SEZ Approved",
+      "image": "/property-details/amenties/sez.png"
+    },
+    {
+      "name": "Fire NOC",
+      "image": "/property-details/amenties/fire-noc.png"
+    },
+    {
       "name": "Water Supply",
       "image": "/property-details/amenties/water-supply.png"
     },
     {
+      "name": "HVAC",
+      "image": "/property-details/amenties/hvac.png"
+    },
+    {
       "name": "Electricity",
       "image": "/property-details/amenties/electricity.png"
+    },
+    {
+      "name": "Elevators",
+      "image": "/property-details/amenties/elevator.png"
     },
     {
       "name": "Sewage System",
@@ -44,6 +67,14 @@
     {
       "name": "Power Supply 24/7",
       "image": "/property-details/amenties/power-supply.png"
+    },
+    {
+      "name": "Fire Alarm",
+      "image": "/property-details/amenties/fire-alarm.png"
+    },
+    {
+      "name": "Smoke Detector",
+      "image": "/property-details/amenties/smoke-detector.png"
     },
     {
       "name": "2W Parking",
@@ -94,11 +125,23 @@
       "image": "/property-details/amenties/nighty-trash.png"
     },
     {
+      "name": "Delivery acceptance/notification",
+      "image": "/property-details/amenties/delivery-acceptance.png"
+    },
+    {
       "name": "CCTV",
       "image": "/property-details/amenties/security-guard.png"
     },
     {
+      "name": "Package notification",
+      "image": "/property-details/amenties/package-notification.png"
+    },
+    {
       "name": "Intercom",
+      "image": "/property-details/amenties/guest-management.png"
+    },
+    {
+      "name": "Guest management / keycard access",
       "image": "/property-details/amenties/guest-management.png"
     },
     {
@@ -106,300 +149,330 @@
       "image": "/property-details/amenties/security-guard.png"
     },
     {
-      "name": "High - speed wi-fi 24/7",
-      "image": "/property-details/amenties/wifi.png"
+      "name": "Tea",
+      "image": "/property-details/amenties/tea.png"
+    },
+    {
+      "name": "Coffee",
+      "image": "/property-details/amenties/coffee.png"
+    },
+    {
+      "name": "Water",
+      "image": "/property-details/amenties/water.png"
+    },
+    {
+      "name": "Milk / Sweeteners",
+      "image": "/property-details/amenties/milk.png"
+    },
+    {
+      "name": "Cups, mugs, and more",
+      "image": "/property-details/amenties/cups-mugs.png"
+    },
+    {
+      "name": "Food Vendor",
+      "image": "/property-details/amenties/food-vendor.png"
+    },
+    {
+      "name": "Daily upkeep of bathrooms, pantries, conference rooms, and common areas",
+      "image": "/property-details/amenties/daily-upkeep.png"
+    },
+    {
+      "name": "Nightly trash removal from offices, conference rooms, and common areas ",
+      "image": "/property-details/amenties/nighty-trash.png"
+    },
+    {
+      "name": "Deep - cleaning of offices on a weekly basis",
+      "image": "/property-details/amenties/deep-cleaning.png"
+    },
+    {
+      "name": "Pest extermination",
+      "image": "/property-details/amenties/pest-extermination.png"
     },
     {
       "name": "24 / 7 general cleaning ",
       "image": "/property-details/amenties/general-cleaning.png"
+    },
+    {
+      "name": "High - speed wi-fi 24/7",
+      "image": "/property-details/amenties/wifi.png"
+    },
+    {
+      "name": "Tape and paper clips",
+      "image": "/property-details/amenties/tape-paper.png"
+    },
+    {
+      "name": "Sticky notes",
+      "image": "/property-details/amenties/sticky-notes.png"
+    },
+    {
+      "name": "Printers and copiers",
+      "image": "/property-details/amenties/printers.png"
+    },
+    {
+      "name": "Paper shredding",
+      "image": "/property-details/amenties/paper-shreding.png"
+    },
+    {
+      "name": "Envelopes",
+      "image": "/property-details/amenties/enevelopes.png"
+    },
+    {
+      "name": "Open desk",
+      "image": "/property-details/amenties/open-desk.png"
     }
+  ],
+  "facilities": [
+    "Parking",
+    "Conference Room",
+    "Elevator",
+    "Gym"
+  ],
+  "floors_available": [
+    "First Floor",
+    "Second Floor",
+    "Top Floor"
   ],
   "nearbyPlaces": {
     "school": [
       {
+        "name": "International School of Hyderabad",
+        "location": "Madhapur",
+        "distance": "1.2 km >"
+      },
+      {
         "name": "Oakridge International School",
         "location": "Gachibowli",
-        "distance": "0.8 km >"
+        "distance": "2.5 km >"
       },
       {
         "name": "Chirec International School",
         "location": "Kondapur",
-        "distance": "2.1 km >"
+        "distance": "3.1 km >"
       },
       {
-        "name": "Indus International School",
-        "location": "Shankarpally",
-        "distance": "4.5 km >"
+        "name": "Delhi Public School",
+        "location": "Nacharam",
+        "distance": "4.8 km >"
       },
       {
-        "name": "International School of Hyderabad",
-        "location": "Madhapur",
-        "distance": "3.5 km >"
+        "name": "Bharatiya Vidya Bhavan",
+        "location": "Jubilee Hills",
+        "distance": "5.2 km >"
       },
       {
-        "name": "Glendale Academy",
-        "location": "Miyapur",
-        "distance": "5.8 km >"
-      },
-      {
-        "name": "Sancta Maria International School",
-        "location": "Attapur",
-        "distance": "7.2 km >"
+        "name": "Meridian School",
+        "location": "Banjara Hills",
+        "distance": "6.1 km >"
       }
     ],
     "hospital": [
       {
-        "name": "Continental Hospitals",
-        "location": "Gachibowli",
-        "distance": "1.5 km >"
-      },
-      {
         "name": "Apollo Hospitals",
         "location": "Jubilee Hills",
-        "distance": "6.2 km >"
+        "distance": "4.2 km >"
       },
       {
         "name": "KIMS Hospital",
         "location": "Kondapur",
-        "distance": "3.8 km >"
+        "distance": "2.8 km >"
       },
       {
-        "name": "Medicover Hospitals",
-        "location": "Madhapur",
-        "distance": "3.2 km >"
-      },
-      {
-        "name": "AIG Hospitals",
+        "name": "Continental Hospitals",
         "location": "Gachibowli",
-        "distance": "2.1 km >"
+        "distance": "3.5 km >"
       },
       {
-        "name": "Global Hospitals",
-        "location": "Lakdi-ka-pul",
-        "distance": "8.5 km >"
+        "name": "Yashoda Hospitals",
+        "location": "Somajiguda",
+        "distance": "7.3 km >"
+      },
+      {
+        "name": "Care Hospitals",
+        "location": "Banjara Hills",
+        "distance": "6.8 km >"
+      },
+      {
+        "name": "Rainbow Children Hospital",
+        "location": "Madhapur",
+        "distance": "1.8 km >"
       }
     ],
     "hotel": [
       {
         "name": "Hyatt Hyderabad Gachibowli",
         "location": "Gachibowli",
-        "distance": "1.2 km >"
+        "distance": "2.0 km >"
       },
       {
         "name": "Marriott Hyderabad",
         "location": "Gachibowli",
-        "distance": "1.8 km >"
-      },
-      {
-        "name": "Novotel Hyderabad",
-        "location": "Gachibowli",
-        "distance": "2.0 km >"
+        "distance": "2.3 km >"
       },
       {
         "name": "Westin Hyderabad Mindspace",
         "location": "Madhapur",
-        "distance": "3.5 km >"
+        "distance": "1.5 km >"
       },
       {
-        "name": "Courtyard by Marriott",
-        "location": "Madhapur",
-        "distance": "3.8 km >"
+        "name": "Radisson Blu Plaza",
+        "location": "Banjara Hills",
+        "distance": "5.9 km >"
       },
       {
-        "name": "Four Points by Sheraton",
-        "location": "Kukatpally",
-        "distance": "6.5 km >"
+        "name": "Park Hyatt Hyderabad",
+        "location": "Banjara Hills",
+        "distance": "6.2 km >"
+      },
+      {
+        "name": "Sheraton Hyderabad Hotel",
+        "location": "Gachibowli",
+        "distance": "2.7 km >"
       }
     ],
     "business": [
       {
-        "name": "DLF Cyber City",
-        "location": "Gachibowli",
-        "distance": "1.0 km >"
+        "name": "HITEC City",
+        "location": "Madhapur",
+        "distance": "0.8 km >"
       },
       {
         "name": "Mindspace IT Park",
         "location": "Madhapur",
-        "distance": "3.2 km >"
+        "distance": "1.0 km >"
       },
       {
-        "name": "HITEC City",
+        "name": "DLF Cyber City",
+        "location": "Gachibowli",
+        "distance": "2.2 km >"
+      },
+      {
+        "name": "Raheja Mindspace",
         "location": "Madhapur",
-        "distance": "3.8 km >"
+        "distance": "1.3 km >"
       },
       {
-        "name": "Nanakramguda Financial District",
-        "location": "Nanakramguda",
-        "distance": "2.5 km >"
+        "name": "Cyber Towers",
+        "location": "Madhapur",
+        "distance": "1.1 km >"
       },
       {
-        "name": "Wipro Corporate Office",
-        "location": "Gachibowli",
-        "distance": "1.8 km >"
-      },
-      {
-        "name": "Microsoft India Development Center",
-        "location": "Gachibowli",
-        "distance": "2.3 km >"
+        "name": "Salarpuria Sattva Knowledge City",
+        "location": "Raidurg",
+        "distance": "3.4 km >"
       }
     ]
   },
   "floorPlans": {
     "6-15 Seats": [
-      "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1582407947304-fd86f028f716?w=600&h=400&fit=crop"
+      "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&h=400&fit=crop"
     ],
     "16-30 Seats": [
-      "https://images.unsplash.com/photo-1500076656116-558758c991c1?w=600&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&h=400&fit=crop"
+      "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1497366412874-3415097a27e7?w=600&h=400&fit=crop"
     ],
     "31-60 Seats": [
-      "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=600&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&h=400&fit=crop"
+      "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=600&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&h=400&fit=crop"
     ]
   },
   "ratings": {
-    "overall": 4.2,
-    "totalRatings": 24,
+    "overall": 3.7,
+    "totalRatings": 11,
     "breakdown": {
-      "5": 10,
-      "4": 12,
+      "1": 1,
+      "2": 1,
       "3": 2,
-      "2": 0,
-      "1": 0
+      "4": 3,
+      "5": 4
     },
     "whatsGood": [
-      "Prime Residential Location",
-      "Good Connectivity",
-      "Peaceful Environment",
-      "Investment Potential",
-      "Infrastructure Development"
+      "Prime IT Hub Location",
+      "Excellent Connectivity",
+      "Modern Infrastructure",
+      "Professional Environment",
+      "Metro Connectivity"
     ],
     "whatsBad": [
-      "Distance from City Center",
-      "Limited Public Transport"
+      "High Rental Cost",
+      "Traffic Congestion"
     ]
   },
   "reviews": [
     {
+      "user": "Zxscdvfbng",
+      "rating": 4,
+      "date": "Nov 4, 2025",
+      "comment": "XACSDVBF"
+    },
+    {
+      "user": "Great",
+      "rating": 5,
+      "date": "Nov 4, 2025",
+      "comment": "Good"
+    },
+    {
+      "user": "demo",
+      "rating": 5,
+      "date": "Nov 4, 2025",
+      "comment": "demo"
+    },
+    {
+      "user": "A",
+      "rating": 4,
+      "date": "Nov 4, 2025",
+      "comment": "A"
+    },
+    {
       "user": "User",
       "rating": 5,
-      "date": "Aug 20, 2025",
-      "comment": "Excellent location with great amenities. Perfect for families."
+      "date": "Jul 24, 2025",
+      "comment": "Near Metro of Good Public Transport. Near Metross of Good Public Transport."
+    },
+    {
+      "user": "User",
+      "rating": 5,
+      "date": "Jul 24, 2025",
+      "comment": "Good review"
     },
     {
       "user": "User",
       "rating": 4,
-      "date": "Aug 15, 2025",
-      "comment": "Good property with peaceful surroundings. Highly recommended."
-    },
-    {
-      "user": "User",
-      "rating": 5,
-      "date": "Aug 10, 2025",
-      "comment": "Amazing infrastructure and connectivity. Worth the investment."
-    },
-    {
-      "user": "User",
-      "rating": 4,
-      "date": "Aug 5, 2025",
-      "comment": "Nice residential area with good facilities."
+      "date": "Jul 24, 2025",
+      "comment": "Best review"
     },
     {
       "user": "User",
       "rating": 3,
-      "date": "Jul 30, 2025",
-      "comment": "Decent property but a bit far from city center."
+      "date": "Jul 24, 2025",
+      "comment": "Best review"
     },
     {
       "user": "User",
-      "rating": 5,
-      "date": "Jul 28, 2025",
-      "comment": "Beautiful residential plot with excellent connectivity. Great for building dream home."
-    },
-    {
-      "user": "User",
-      "rating": 4,
-      "date": "Jul 25, 2025",
-      "comment": "Good investment opportunity. Peaceful neighborhood with all amenities nearby."
-    },
-    {
-      "user": "User",
-      "rating": 5,
-      "date": "Jul 22, 2025",
-      "comment": "Perfect location for residential property. Close to schools and hospitals."
-    },
-    {
-      "user": "User",
-      "rating": 3,
+      "rating": 2,
       "date": "Jul 20, 2025",
-      "comment": "Nice plot but price is slightly on the higher side."
+      "comment": "Excellent property with modern amenities. Highly recommended for businesses."
     },
     {
       "user": "User",
-      "rating": 4,
+      "rating": 3,
       "date": "Jul 18, 2025",
-      "comment": "Great property with good potential. Recommended for long-term investment."
+      "comment": "Good location but parking can be challenging during peak hours."
     },
     {
       "user": "User",
-      "rating": 5,
+      "rating": 1,
       "date": "Jul 15, 2025",
-      "comment": "Excellent residential area with modern infrastructure. Very satisfied."
-    },
-    {
-      "user": "User",
-      "rating": 4,
-      "date": "Jul 12, 2025",
-      "comment": "Good plot with clear documentation. Peaceful environment."
-    },
-    {
-      "user": "User",
-      "rating": 5,
-      "date": "Jul 10, 2025",
-      "comment": "Outstanding property! Perfect for building a luxury home."
-    },
-    {
-      "user": "User",
-      "rating": 3,
-      "date": "Jul 8, 2025",
-      "comment": "Average property. Location is good but needs better road connectivity."
-    },
-    {
-      "user": "User",
-      "rating": 4,
-      "date": "Jul 5, 2025",
-      "comment": "Nice residential plot in a developing area. Good for future investment."
-    },
-    {
-      "user": "User",
-      "rating": 5,
-      "date": "Jul 3, 2025",
-      "comment": "Fantastic property with all amenities. Highly recommended for families."
-    },
-    {
-      "user": "User",
-      "rating": 4,
-      "date": "Jul 1, 2025",
-      "comment": "Good value for money. Clean and well-maintained area."
-    },
-    {
-      "user": "User",
-      "rating": 5,
-      "date": "Jun 28, 2025",
-      "comment": "Amazing location with great connectivity. Perfect for residential development."
-    },
-    {
-      "user": "User",
-      "rating": 4,
-      "date": "Jun 25, 2025",
-      "comment": "Nice property with good infrastructure. Recommended for investment."
-    },
-    {
-      "user": "User",
-      "rating": 3,
-      "date": "Jun 22, 2025",
-      "comment": "Decent plot but could be better maintained. Location is the main advantage."
+      "comment": "Perfect office space with all necessary facilities. Great connectivity to metro."
     }
-  ]
+  ],
+  "price_per_desk": 6000,
+  "price_per_sqft": 70,
+  "no_of_seats": 56,
+  "category": "rent",
+  "badge": "new",
+  "__v": 5,
+  "updatedAt": {
+    "$date": "2025-11-04T17:19:28.042Z"
+  }
 }

@@ -8,7 +8,6 @@ import Image from 'next/image';
 import dynamic from "next/dynamic";
 import PropertyDetailModal from '@/components/PropertyDetailModal';
 import VisitorTracker from '@/components/VisitorTracker';
-import { propertiesData } from '@/data/properties';
 
 const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 
@@ -54,6 +53,7 @@ export default function HomePage() {
   const [zoomLevel, setZoomLevel] = useState(11);
   const [, setLocationError] = useState(null);
   const [propertyTypeFilter, setPropertyTypeFilter] = useState('all'); // 'all', 'commercial', 'residential'
+  const [isLoadingLocation, setIsLoadingLocation] = useState(true);
 
   const [filters, setFilters] = useState({
     type: {
@@ -70,6 +70,37 @@ export default function HomePage() {
   });
 
   const [sizeUnit, setSizeUnit] = useState('Square Yards');
+
+  // Fetch user's location on initial load
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const userLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          setMapCenter(userLocation);
+          setZoomLevel(12);
+          setIsLoadingLocation(false);
+        },
+        (error) => {
+          console.log('Location access denied or unavailable:', error.message);
+          setLocationError(error.message);
+          setIsLoadingLocation(false);
+          // Keep default Hyderabad location if user denies or location unavailable
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        }
+      );
+    } else {
+      console.log('Geolocation is not supported by this browser');
+      setIsLoadingLocation(false);
+    }
+  }, []);
 
   // Sync propertyTypeFilter with filters.type
   useEffect(() => {

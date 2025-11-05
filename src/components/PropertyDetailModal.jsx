@@ -234,7 +234,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                 <a
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    href={`/property-details?id=${property.id}`}
+                                    href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
                                     className="cursor-pointer rounded-full bg-gray-100 p-3 hover:bg-gray-200 transition-colors"
                                 >
                                     <SquareArrowOutUpRight className="w-5 h-5 text-gray-800" />
@@ -275,7 +275,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                             </div>
                             {amenities.length > 8 && (
                                 <a
-                                    href={`/property-details?id=${property.id}`}
+                                    href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-xs text-blue-600 hover:underline mt-3 inline-block"
@@ -311,7 +311,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                             </div>
                             {floorPlanCategories.length > 2 && (
                                 <a
-                                    href={`/property-details?id=${property.id}`}
+                                    href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-xs text-blue-600 hover:underline mt-3 inline-block"
@@ -389,7 +389,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
 
                             {reviews.length > 3 && (
                                 <a
-                                    href={`/property-details?id=${property.id}`}
+                                    href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-xs text-blue-600 hover:underline mt-3 inline-block"
