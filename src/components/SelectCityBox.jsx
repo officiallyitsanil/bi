@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-export default function SelectCityBox({ title = "Select by City", cities = [] }) {
+export default function SelectCityBox({ title = "Select by City", cities = [], isCommercial = false }) {
   const [hoveredCity, setHoveredCity] = useState(cities.length > 0 ? cities[0].name : "");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCity, setSelectedCity] = useState(null);
@@ -28,6 +28,8 @@ export default function SelectCityBox({ title = "Select by City", cities = [] })
       if (sectionRef.current) observer.unobserve(sectionRef.current);
     };
   }, []);
+
+
 
   const currentCity = cities.find((city) => city.name === hoveredCity);
 
@@ -175,28 +177,33 @@ export default function SelectCityBox({ title = "Select by City", cities = [] })
       {/* Category Selection Modal */}
       {isModalOpen && (
         <div
-          className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-[10000]"
           onClick={() => setIsModalOpen(false)}
         >
           <div
-            className="bg-white rounded-2xl p-8 w-96 shadow-2xl"
+            className="bg-white rounded-2xl p-6 w-80 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+            <h2 className="text-xl font-bold text-gray-900 mb-4 text-center">
               Select Category for {selectedCity?.name}
             </h2>
 
-            <div className="space-y-3">
-              {[
+            <div className="space-y-2">
+              {(isCommercial ? [
+                "Managed Space",
+                "Unmanaged Space",
+                "Coworking Dedicated",
+                "Coworking Shared",
+              ] : [
                 "Rent",
                 "Sale",
                 "PG/Hostel",
                 "Flatmates",
-              ].map((category) => (
+              ]).map((category) => (
                 <button
                   key={category}
                   onClick={() => handleCategorySelect(category)}
-                  className="w-full py-3 px-6 rounded-lg text-white font-semibold text-base transition-all duration-200 hover:scale-[1.02] hover:opacity-90 cursor-pointer"
+                  className="w-full py-2 px-4 rounded-lg text-white font-semibold text-sm transition-all duration-200 hover:scale-[1.02] hover:opacity-90 cursor-pointer"
                   style={{ backgroundColor: "#ff9d4d" }}
                 >
                   {category}
@@ -210,31 +217,31 @@ export default function SelectCityBox({ title = "Select by City", cities = [] })
       {/* See All Cities Modal */}
       {isSeeAllModalOpen && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[10000] p-4"
           onClick={() => setIsSeeAllModalOpen(false)}
         >
           <div
-            className="bg-white rounded-3xl w-full max-w-3xl h-[80vh] flex flex-col shadow-2xl"
+            className="bg-white rounded-2xl w-full max-w-2xl max-h-[70vh] flex flex-col shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header - Fixed */}
-            <div className="flex items-center justify-between p-6 md:p-8 border-b border-gray-200 flex-shrink-0">
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+            <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-200 flex-shrink-0">
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900">
                 Select a City
               </h2>
               <button
                 onClick={() => setIsSeeAllModalOpen(false)}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
             {/* Cities Grid - Scrollable */}
-            <div className="flex-1 overflow-y-auto p-6 md:p-8">
-              <div className="grid grid-cols-3 md:grid-cols-4 gap-6 md:gap-8">
+            <div className="flex-1 overflow-y-auto p-4 md:p-6">
+              <div className="grid grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">
                 {cities.map((city) => (
                   <div
                     key={city.name}
@@ -245,18 +252,18 @@ export default function SelectCityBox({ title = "Select by City", cities = [] })
                     }}
                   >
                     <div
-                      className="w-16 h-16 md:w-20 md:h-20 rounded-full border-3 overflow-hidden bg-white shadow-md transition-all duration-200"
+                      className="w-14 h-14 md:w-16 md:h-16 rounded-full border-3 overflow-hidden bg-white shadow-md transition-all duration-200"
                       style={{ borderColor: "#ff9d4d", borderWidth: "3px" }}
                     >
                       <Image
                         src={city.image}
                         alt={city.name}
-                        width={80}
-                        height={80}
+                        width={64}
+                        height={64}
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <span className="text-xs md:text-sm font-semibold text-gray-700 text-center">
+                    <span className="text-xs font-semibold text-gray-700 text-center">
                       {city.name}
                     </span>
                   </div>

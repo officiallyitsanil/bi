@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { KeyRound, BadgeDollarSign, Hotel, UsersRound } from "lucide-react";
 
-export default function SearchSection() {
+export default function SearchSection({ isCommercial = false }) {
   const router = useRouter();
-  const [selectedFilter, setSelectedFilter] = useState("Rent");
+  const [selectedFilter, setSelectedFilter] = useState(isCommercial ? "Managed Space" : "Rent");
   const [location, setLocation] = useState("");
   const [managedSpace, setManagedSpace] = useState("");
   const [preferences, setPreferences] = useState("");
@@ -39,8 +39,51 @@ export default function SearchSection() {
     "Delhi", "Indore", "Ahmedabad", "Jaipur", "Kerala", "Chandigarh",
     "Kolkata", "Goa", "Bhubaneswar", "Uttar Pradesh", "Lucknow"
   ];
-
-  const filterOptions = [
+  
+  const filterOptions = isCommercial ? [
+    {
+      id: "managed-space",
+      name: "Managed Space",
+      icon: "/commercial/managed-space.png",
+      active: true
+    },
+    {
+      id: "unmanaged-space",
+      name: "Unmanaged Space",
+      icon: "/commercial/unmanaged-space.png",
+      active: false
+    },
+    {
+      id: "coworking-dedicated",
+      name: "Coworking Dedicated",
+      icon: "/commercial/coworking-dedicated.png",
+      active: false
+    },
+    {
+      id: "coworking-shared",
+      name: "Coworking Shared",
+      icon: "/commercial/coworking-shared.png",
+      active: false
+    },
+    {
+      id: "price-desk",
+      name: "Price Per Desk",
+      icon: "/commercial/price-desk.png",
+      active: false
+    },
+    {
+      id: "price-sqft",
+      name: "Price Per Sqft",
+      icon: "/commercial/price-sqft.png",
+      active: false
+    },
+    {
+      id: "seats",
+      name: "No. Of Seats",
+      icon: "/commercial/seats.png",
+      active: false
+    }
+  ] : [
     {
       id: "rent",
       name: "Rent",
@@ -149,6 +192,14 @@ export default function SearchSection() {
 
   // Get dropdown options based on selected filter
   const getPropertyTypeOptions = () => {
+    if (isCommercial) {
+      return [
+        { value: "managed-space", label: "Managed Space" },
+        { value: "unmanaged-space", label: "Unmanaged Space" },
+        { value: "coworking-dedicated", label: "Coworking Dedicated" },
+        { value: "coworking-shared", label: "Coworking Shared" }
+      ];
+    }
     return [
       { value: "rent", label: "Rent" },
       { value: "sale", label: "Sale" },
@@ -253,13 +304,13 @@ export default function SearchSection() {
                     key={option.id}
                     onClick={() => handleFilterClick(option.name)}
                     className={`flex flex-col items-center justify-center cursor-pointer transition-all duration-200 flex-shrink-0 w-20 md:w-auto md:aspect-square ${selectedFilter === option.name
-                        ? "bg-blue-50 border-2 border-blue-500 rounded-xl p-1 md:p-2"
-                        : "hover:bg-gray-50 rounded-xl p-1 md:p-2 border border-gray-100"
+                        ? "bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-xl p-1 md:p-2 shadow-md"
+                        : "hover:bg-gray-50 rounded-xl p-1 md:p-2 border border-gray-200 hover:border-gray-300 hover:shadow-sm"
                       }`}
                   >
                     <div className="w-10 h-10 md:w-14 md:h-14 mb-1 flex items-center justify-center flex-shrink-0">
                       {isLucideIcon ? (
-                        <IconComponent className="w-8 h-8 md:w-10 md:h-10 text-blue-600" />
+                        <IconComponent className="w-8 h-8 md:w-10 md:h-10" style={{ color: '#ff6273' }} />
                       ) : (
                         <Image
                           src={option.icon}
@@ -270,7 +321,7 @@ export default function SearchSection() {
                         />
                       )}
                     </div>
-                    <span className="text-[10px] md:text-xs font-medium text-gray-700 text-center leading-tight">
+                    <span className={`text-[10px] md:text-xs font-medium text-center leading-tight ${selectedFilter === option.name ? 'text-gray-800' : 'text-gray-600'}`}>
                       {option.name}
                     </span>
                   </div>
@@ -390,7 +441,8 @@ export default function SearchSection() {
               <div className="hidden md:block h-8 w-px bg-gray-300"></div>
 
               {/* Preferences Dropdown - Custom for all space types */}
-              {(selectedFilter === "Rent" || selectedFilter === "Sale" || selectedFilter === "PG/Hostel" || selectedFilter === "Flatmates") ? (
+              {(selectedFilter === "Rent" || selectedFilter === "Sale" || selectedFilter === "PG/Hostel" || selectedFilter === "Flatmates" || 
+                selectedFilter === "Managed Space" || selectedFilter === "Unmanaged Space" || selectedFilter === "Coworking Dedicated" || selectedFilter === "Coworking Shared") ? (
                 <div className="flex-[1] w-full relative border-t md:border-t-0" ref={preferencesRef}>
                   <div
                     onClick={() => setIsPreferencesOpen(!isPreferencesOpen)}

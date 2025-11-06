@@ -187,7 +187,7 @@ const CommercialPropertySchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    enum: ['rent', 'sale', 'lease'],
+    enum: ['rent', 'sale', 'lease', 'managed-space', 'unmanaged-space', 'coworking-dedicated', 'coworking-shared'],
   },
   badge: {
     type: String,

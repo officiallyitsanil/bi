@@ -94,10 +94,11 @@ export default function CommercialPage() {
 
   return (
     <div>
-      <SearchSection />
+      <SearchSection isCommercial={true} />
       <SelectCityBox
         title="Select by City"
         cities={cities}
+        isCommercial={true}
       />
     </div>
   );
