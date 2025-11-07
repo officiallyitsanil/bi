@@ -14,6 +14,8 @@ import {
     Heart
 } from "lucide-react";
 import GoogleMap from "../../components/GoogleMap";
+import LoginModal from "../../components/LoginModal";
+import { loginUser } from "../../utils/auth";
 
 import "./animations.css";
 
@@ -87,9 +89,27 @@ function PropertyDetailsContent() {
     const [isSubmittingReview, setIsSubmittingReview] = useState(false);
     const [reviewSubmitSuccess, setReviewSubmitSuccess] = useState(false);
     const [userName, setUserName] = useState('');
+    const [fullScreenImage, setFullScreenImage] = useState(null);
+    const [isLoginOpen, setIsLoginOpen] = useState(false);
+    const [currentUser, setCurrentUser] = useState(null);
 
     const router = useRouter();
     const searchParams = useSearchParams();
+
+    // Check login status
+    useEffect(() => {
+        const syncUser = () => {
+            const userJson = localStorage.getItem('currentUser');
+            setCurrentUser(userJson ? JSON.parse(userJson) : null);
+        };
+
+        syncUser();
+        window.addEventListener('onAuthChange', syncUser);
+
+        return () => {
+            window.removeEventListener('onAuthChange', syncUser);
+        };
+    }, []);
 
     // Refs for scroll-to-section functionality
     const amenitiesRef = useRef(null);
@@ -287,25 +307,74 @@ function PropertyDetailsContent() {
     };
 
     const handleShare = () => {
+        if (!currentUser) {
+            setIsLoginOpen(true);
+            return;
+        }
         if (navigator.share) {
             navigator.share({
                 title: property.name,
                 text: `Check out this property: ${property.name}`,
-                url: 'http://localhost:3000'
+                url: window.location.href
             });
         } else {
             // Fallback for browsers that don't support Web Share API
-            navigator.clipboard.writeText('http://localhost:3000');
+            navigator.clipboard.writeText(window.location.href);
             alert('Link copied to clipboard!');
         }
     };
 
     const handleLike = () => {
+        if (!currentUser) {
+            setIsLoginOpen(true);
+            return;
+        }
         setIsLiked(!isLiked);
     };
 
     const handleMessage = () => {
-        window.open('http://localhost:3000', '_blank');
+        if (!currentUser) {
+            setIsLoginOpen(true);
+            return;
+        }
+        window.open(`https://wa.me/${property.sellerPhoneNumber?.replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${property.name}`, '_blank');
+    };
+
+    const handleWhatsApp = () => {
+        if (!currentUser) {
+            setIsLoginOpen(true);
+            return;
+        }
+        window.open(`https://wa.me/${property.sellerPhoneNumber?.replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${property.name}`, '_blank');
+    };
+
+    const handleCall = () => {
+        if (!currentUser) {
+            setIsLoginOpen(true);
+            return;
+        }
+        window.location.href = `tel:${property.sellerPhoneNumber}`;
+    };
+
+    const handleShowInterestModal = () => {
+        if (!currentUser) {
+            setIsLoginOpen(true);
+            return;
+        }
+        setShowModal(true);
+    };
+
+    const handleAddReview = () => {
+        if (!currentUser) {
+            setIsLoginOpen(true);
+            return;
+        }
+        setShowRatingModal(true);
+    };
+
+    const handleLoginSuccess = (userData) => {
+        loginUser(userData);
+        setIsLoginOpen(false);
     };
 
     const scrollToSection = (sectionId) => {
@@ -358,7 +427,8 @@ function PropertyDetailsContent() {
                     <img
                         src={property.images[currentImageIndex]}
                         alt="Property"
-                        className="w-full h-96 object-cover transition-transform duration-300"
+                        className="w-full h-96 object-cover transition-transform duration-300 cursor-pointer"
+                        onClick={() => setFullScreenImage(property.images[currentImageIndex])}
                     />
 
                     {/* Image Navigation Arrows - Always visible on mobile */}
@@ -565,7 +635,7 @@ function PropertyDetailsContent() {
                             </AnimatedText>
                             <div className="flex gap-2">
                                 <button
-                                    onClick={() => setShowRatingModal(true)}
+                                    onClick={handleAddReview}
                                     className="bg-[#f8c02f] text-gray-800 px-3 py-1.5 rounded-lg font-medium text-xs hover:bg-[#e0ad2a] cursor-pointer transition-colors"
                                 >
                                     Add Review
@@ -641,6 +711,10 @@ function PropertyDetailsContent() {
                                     <span
                                         key={i}
                                         onClick={() => {
+                                            if (!currentUser) {
+                                                setIsLoginOpen(true);
+                                                return;
+                                            }
                                             setReviewText(item);
                                             setShowRatingModal(true);
                                         }}
@@ -663,6 +737,10 @@ function PropertyDetailsContent() {
                                     <span
                                         key={i}
                                         onClick={() => {
+                                            if (!currentUser) {
+                                                setIsLoginOpen(true);
+                                                return;
+                                            }
                                             setReviewText(item);
                                             setShowRatingModal(true);
                                         }}
@@ -705,6 +783,7 @@ function PropertyDetailsContent() {
                                             src={floorPlan}
                                             alt={`Floor Plan ${index + 1}`}
                                             className="w-full h-full object-cover rounded-lg transition-transform duration-300 hover:scale-110 cursor-pointer"
+                                            onClick={() => setFullScreenImage(floorPlan)}
                                         />
                                     </div>
                                 ))
@@ -715,6 +794,7 @@ function PropertyDetailsContent() {
                                             src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600"
                                             alt="Floor Plan 1"
                                             className="w-full h-full object-cover rounded-lg transition-transform duration-300 hover:scale-110 cursor-pointer"
+                                            onClick={() => setFullScreenImage("https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600")}
                                         />
                                     </div>
                                     <div className="overflow-hidden rounded-lg">
@@ -722,6 +802,7 @@ function PropertyDetailsContent() {
                                             src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600"
                                             alt="Floor Plan 2"
                                             className="w-full h-full object-cover rounded-lg transition-transform duration-300 hover:scale-110 cursor-pointer"
+                                            onClick={() => setFullScreenImage("https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600")}
                                         />
                                     </div>
                                 </>
@@ -786,7 +867,7 @@ function PropertyDetailsContent() {
             <div className="fixed left-0 right-0 bg-white border-t border-gray-200 p-4 md:hidden z-30" style={{ bottom: '60px' }}>
                 <div className="flex gap-3">
                     <button
-                        onClick={() => window.open(`https://wa.me/${property.sellerPhoneNumber?.replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${property.name}`, '_blank')}
+                        onClick={handleWhatsApp}
                         className="flex-1 bg-green-500 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors"
                     >
                         <img
@@ -797,7 +878,7 @@ function PropertyDetailsContent() {
                         Whatsapp
                     </button>
                     <button
-                        onClick={() => window.location.href = `tel:${property.sellerPhoneNumber}`}
+                        onClick={handleCall}
                         className="flex-1 bg-green-500 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors"
                     >
                         <img
@@ -813,7 +894,7 @@ function PropertyDetailsContent() {
             {/* Floating Chat Icon */}
             <div className="fixed right-4 z-40 md:hidden" style={{ bottom: '140px' }}>
                 <button
-                    onClick={() => setShowModal(true)}
+                    onClick={handleShowInterestModal}
                     className="w-14 h-14 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-blue-700 transition-colors"
                 >
                     <MessageCircle className="w-6 h-6" />
@@ -1082,7 +1163,7 @@ function PropertyDetailsContent() {
                 <div className="w-full px-12 py-6">
                     <div className="mb-6 scroll-animate" data-animation="animate-pop">
                         <AnimatedText className="text-lg font-bold inline-block" lineColor="#f8c02f">
-                            <h1>Showing Spaces in Delhi</h1>
+                            <h1>Showing Spaces in {property.city || property.address?.split(',').pop()?.trim() || 'Delhi'}</h1>
                         </AnimatedText>
                     </div>
 
@@ -1094,7 +1175,8 @@ function PropertyDetailsContent() {
                                 <img
                                     src={property.images[currentImageIndex]}
                                     alt="Property"
-                                    className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+                                    className="w-full h-full object-cover transition-transform duration-300 cursor-pointer"
+                                    onClick={() => setFullScreenImage(property.images[currentImageIndex])}
                                 />
                                 <button
                                     onClick={prevImage}
@@ -1162,7 +1244,7 @@ function PropertyDetailsContent() {
                                         src={property.images[1] || property.images[0]}
                                         alt="Thumbnail 1"
                                         className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
-                                        onClick={() => setCurrentImageIndex(1)}
+                                        onClick={() => setFullScreenImage(property.images[1] || property.images[0])}
                                     />
                                 </div>
                                 <div className="aspect-square overflow-hidden rounded-xl cursor-pointer scroll-animate" data-animation="animate-fade-up" style={{ animationDelay: '200ms' }}>
@@ -1170,7 +1252,7 @@ function PropertyDetailsContent() {
                                         src={property.images[2] || property.images[0]}
                                         alt="Thumbnail 2"
                                         className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
-                                        onClick={() => setCurrentImageIndex(2)}
+                                        onClick={() => setFullScreenImage(property.images[2] || property.images[0])}
                                     />
                                 </div>
                                 <div className="aspect-square overflow-hidden rounded-xl cursor-pointer scroll-animate" data-animation="animate-fade-up" style={{ animationDelay: '300ms' }}>
@@ -1178,7 +1260,7 @@ function PropertyDetailsContent() {
                                         src={property.images[3] || property.images[0]}
                                         alt="Thumbnail 3"
                                         className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
-                                        onClick={() => setCurrentImageIndex(3)}
+                                        onClick={() => setFullScreenImage(property.images[3] || property.images[0])}
                                     />
                                 </div>
                                 <div className="aspect-square overflow-hidden rounded-xl cursor-pointer scroll-animate" data-animation="animate-fade-up" style={{ animationDelay: '400ms' }}>
@@ -1186,7 +1268,7 @@ function PropertyDetailsContent() {
                                         src={property.images[4] || property.images[0]}
                                         alt="Thumbnail 4"
                                         className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
-                                        onClick={() => setCurrentImageIndex(4)}
+                                        onClick={() => setFullScreenImage(property.images[4] || property.images[0])}
                                     />
                                 </div>
                             </div>
@@ -1222,7 +1304,7 @@ function PropertyDetailsContent() {
                                 {/* Buttons */}
                                 <div className="flex gap-3 mb-5 scroll-animate" data-animation="animate-fade-up">
                                     <button
-                                        onClick={() => window.open(`https://wa.me/${property.sellerPhoneNumber?.replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${property.name}`, '_blank')}
+                                        onClick={handleWhatsApp}
                                         className="flex-1 border-2 border-green-500 text-green-500 py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-green-50 cursor-pointer transition-colors"
                                     >
                                         <img
@@ -1233,7 +1315,7 @@ function PropertyDetailsContent() {
                                         WhatsApp
                                     </button>
                                     <button
-                                        onClick={() => window.location.href = `tel:${property.sellerPhoneNumber}`}
+                                        onClick={handleCall}
                                         className="flex-1 bg-green-500 text-white py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors"
                                     >
                                         <img
@@ -1303,6 +1385,12 @@ function PropertyDetailsContent() {
 
                                 <form className="space-y-3" onSubmit={async (e) => {
                                     e.preventDefault();
+
+                                    if (!currentUser) {
+                                        setIsLoginOpen(true);
+                                        return;
+                                    }
+
                                     setIsSubmittingInterest(true);
 
                                     try {
@@ -1383,11 +1471,6 @@ function PropertyDetailsContent() {
                                         </div>
                                     )}
                                 </form>
-                            </div>
-
-                            {/* Trusted Companies */}
-                            <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm scroll-animate" data-animation="animate-fade-up">
-                                <h3 className="text-base font-bold text-gray-800 mb-3">Trusted Companies</h3>
                             </div>
                         </div>
                     </div>
@@ -1499,7 +1582,7 @@ function PropertyDetailsContent() {
                                 </AnimatedText>
                                 <div className="flex gap-3">
                                     <button
-                                        onClick={() => setShowRatingModal(true)}
+                                        onClick={handleAddReview}
                                         className="bg-[#f8c02f] text-gray-800 px-4 py-2 rounded-lg font-medium text-sm hover:bg-[#e0ad2a] cursor-pointer transition-colors"
                                     >
                                         Add Review
@@ -1567,6 +1650,10 @@ function PropertyDetailsContent() {
                                         <span
                                             key={i}
                                             onClick={() => {
+                                                if (!currentUser) {
+                                                    setIsLoginOpen(true);
+                                                    return;
+                                                }
                                                 setReviewText(item);
                                                 setShowRatingModal(true);
                                             }}
@@ -1589,6 +1676,10 @@ function PropertyDetailsContent() {
                                         <span
                                             key={i}
                                             onClick={() => {
+                                                if (!currentUser) {
+                                                    setIsLoginOpen(true);
+                                                    return;
+                                                }
                                                 setReviewText(item);
                                                 setShowRatingModal(true);
                                             }}
@@ -1632,6 +1723,7 @@ function PropertyDetailsContent() {
                                                     src={floorPlan}
                                                     alt={`Floor Plan ${index + 1}`}
                                                     className="w-full h-full object-cover rounded-lg transition-transform duration-300 hover:scale-110 cursor-pointer"
+                                                    onClick={() => setFullScreenImage(floorPlan)}
                                                 />
                                             </div>
                                         ))
@@ -1642,6 +1734,7 @@ function PropertyDetailsContent() {
                                                     src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600"
                                                     alt="Floor Plan 1"
                                                     className="w-full h-full object-cover rounded-lg transition-transform duration-300 hover:scale-110 cursor-pointer"
+                                                    onClick={() => setFullScreenImage("https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600")}
                                                 />
                                             </div>
                                             <div className="overflow-hidden rounded-lg">
@@ -1649,6 +1742,7 @@ function PropertyDetailsContent() {
                                                     src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600"
                                                     alt="Floor Plan 2"
                                                     className="w-full h-full object-cover rounded-lg transition-transform duration-300 hover:scale-110 cursor-pointer"
+                                                    onClick={() => setFullScreenImage("https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600")}
                                                 />
                                             </div>
                                         </>
@@ -1923,6 +2017,35 @@ function PropertyDetailsContent() {
                     </div>
                 )}
             </div>
+
+            {/* Full Screen Image Modal */}
+            {fullScreenImage && (
+                <div
+                    className="fixed inset-0 bg-black/95 flex items-center justify-center z-[9999] p-4"
+                    onClick={() => setFullScreenImage(null)}
+                >
+                    <button
+                        onClick={() => setFullScreenImage(null)}
+                        className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-2xl font-bold transition-colors z-[10000]"
+                    >
+                        ✕
+                    </button>
+                    <img
+                        src={fullScreenImage}
+                        alt="Full screen view"
+                        className="max-w-full max-h-full object-contain"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                </div>
+            )}
+
+            {/* Login Modal */}
+            {isLoginOpen && (
+                <LoginModal
+                    onClose={() => setIsLoginOpen(false)}
+                    onProceed={handleLoginSuccess}
+                />
+            )}
         </div >
     );
 }

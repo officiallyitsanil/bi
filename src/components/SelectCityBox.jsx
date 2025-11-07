@@ -51,7 +51,7 @@ export default function SelectCityBox({ title = "Select by City", cities = [], i
   };
 
   return (
-    <div className="flex flex-col md:flex-row relative z-0" ref={sectionRef}>
+    <div className="flex flex-col md:flex-row relative" ref={sectionRef}>
       {/* Mobile View */}
       <div className="max-[425px]:block hidden w-full py-8 mb-11">
         <div className="w-full px-4">
@@ -177,7 +177,7 @@ export default function SelectCityBox({ title = "Select by City", cities = [], i
       {/* Category Selection Modal */}
       {isModalOpen && (
         <div
-          className="fixed inset-0 bg-black/50 bg-opacity-50 flex items-center justify-center z-[10000]"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"
           onClick={() => setIsModalOpen(false)}
         >
           <div
@@ -217,7 +217,7 @@ export default function SelectCityBox({ title = "Select by City", cities = [], i
       {/* See All Cities Modal */}
       {isSeeAllModalOpen && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[10000] p-4"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] p-4"
           onClick={() => setIsSeeAllModalOpen(false)}
         >
           <div

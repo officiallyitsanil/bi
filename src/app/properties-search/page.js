@@ -3,6 +3,67 @@
 import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
+// Skeleton Loader Component
+function PropertyCardSkeleton() {
+  return (
+    <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden animate-pulse">
+      {/* Image Skeleton */}
+      <div className="h-48 sm:h-56 md:h-64 bg-gradient-to-br from-gray-200 to-gray-300 relative">
+        <div className="absolute top-2 left-2 sm:top-4 sm:left-4 bg-gray-300 px-2 py-1 sm:px-3 sm:py-1.5 rounded-full w-16 h-6"></div>
+        <div className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-gray-300 p-1.5 sm:p-2 rounded-full w-8 h-8"></div>
+      </div>
+
+      {/* Content Skeleton */}
+      <div className="p-3 sm:p-4">
+        <div className="flex items-center justify-between mb-2 sm:mb-3">
+          <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+          <div className="h-5 bg-gray-300 rounded w-12"></div>
+        </div>
+
+        <div className="flex items-center justify-between mt-3 sm:mt-4">
+          <div className="h-5 bg-gray-300 rounded w-24"></div>
+          <div className="h-6 bg-gray-300 rounded w-16"></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SearchPageSkeleton() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* Filters Bar Skeleton */}
+        <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4 mb-4 sm:mb-6 animate-pulse">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="h-8 bg-gray-300 rounded-full w-24"></div>
+            <div className="h-8 bg-gray-300 rounded-full w-8"></div>
+            <div className="h-8 bg-gray-300 rounded-full w-28"></div>
+            <div className="h-8 bg-gray-300 rounded-full w-32"></div>
+            <div className="h-8 bg-gray-300 rounded-full w-24"></div>
+            <div className="h-8 bg-gray-300 rounded-full w-32"></div>
+            <div className="h-8 bg-gray-300 rounded-full w-28"></div>
+            <div className="h-8 bg-gray-300 rounded-full w-20 ml-auto"></div>
+          </div>
+        </div>
+
+        {/* Results Header Skeleton */}
+        <div className="text-center mb-4 sm:mb-6 animate-pulse">
+          <div className="h-8 bg-gray-300 rounded w-64 mx-auto mb-2"></div>
+          <div className="w-20 sm:w-24 h-1 bg-gray-300 mx-auto mt-2"></div>
+        </div>
+
+        {/* Properties Grid Skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+          {[...Array(8)].map((_, index) => (
+            <PropertyCardSkeleton key={index} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PropertiesSearchContent() {
   const searchParams = useSearchParams();
   const cityParam = searchParams.get('city') || '';
@@ -25,6 +86,7 @@ function PropertiesSearchContent() {
   const [allProperties, setAllProperties] = useState([]);
   const [filteredProperties, setFilteredProperties] = useState([]);
   const [mongodbId, setMongodbId] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
   // Capitalize city name
   const capitalizeCity = (city) => {
@@ -35,7 +97,11 @@ function PropertiesSearchContent() {
   // Fetch property from MongoDB and replicate
   useEffect(() => {
     const fetchProperties = async () => {
+      setIsLoading(true);
       try {
+        // Simulate loading delay for better UX
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
         // Base property from MongoDB
         const baseProperty = {
           "_id": "690956881f32787e946737f2",
@@ -170,6 +236,8 @@ function PropertiesSearchContent() {
         setFilteredProperties(replicatedProperties);
       } catch (error) {
         console.error('Error fetching properties:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -302,6 +370,11 @@ function PropertiesSearchContent() {
         : [...prev, propertyId]
     );
   };
+
+  // Show loading skeleton while fetching data
+  if (isLoading) {
+    return <SearchPageSkeleton />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -575,14 +648,7 @@ function PropertiesSearchContent() {
 
 export default function PropertiesSearchPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading search results...</p>
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<SearchPageSkeleton />}>
       <PropertiesSearchContent />
     </Suspense>
   );

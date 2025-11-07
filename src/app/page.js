@@ -8,6 +8,7 @@ import Image from 'next/image';
 import dynamic from "next/dynamic";
 import PropertyDetailModal from '@/components/PropertyDetailModal';
 import VisitorTracker from '@/components/VisitorTracker';
+import { getUserLocation } from '@/utils/geolocation';
 
 const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 
@@ -45,15 +46,16 @@ export default function HomePage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isPropertyListVisible, setPropertyListVisible] = useState(false);
 
-  const [mapCenter, setMapCenter] = useState({ lat: 17.4200, lng: 78.4867 });
+  const [mapCenter, setMapCenter] = useState({ lat: 20.5937, lng: 78.9629 }); // Center of India as initial
   const [markers, setMarkers] = useState([]);
   const [selectedCity, setSelectedCity] = useState(null);
   const [selectedMarker, setSelectedMarker] = useState(null);
 
-  const [zoomLevel, setZoomLevel] = useState(11);
+  const [zoomLevel, setZoomLevel] = useState(5); // Start zoomed out to show India
   const [, setLocationError] = useState(null);
   const [propertyTypeFilter, setPropertyTypeFilter] = useState('all'); // 'all', 'commercial', 'residential'
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
+  const [userLocationInfo, setUserLocationInfo] = useState(null);
 
   const [filters, setFilters] = useState({
     type: {
@@ -73,33 +75,30 @@ export default function HomePage() {
 
   // Fetch user's location on initial load
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const userLocation = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          setMapCenter(userLocation);
-          setZoomLevel(12);
-          setIsLoadingLocation(false);
-        },
-        (error) => {
-          console.log('Location access denied or unavailable:', error.message);
-          setLocationError(error.message);
-          setIsLoadingLocation(false);
-          // Keep default Hyderabad location if user denies or location unavailable
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0
+    const initializeLocation = async () => {
+      try {
+        const locationData = await getUserLocation();
+        setUserLocationInfo(locationData);
+        setMapCenter({ lat: locationData.lat, lng: locationData.lng });
+
+        // Set zoom based on location accuracy
+        if (locationData.isFallback) {
+          setZoomLevel(5); // Zoomed out for India view
+        } else if (locationData.isApproximate) {
+          setZoomLevel(10); // City-level zoom for IP location
+        } else {
+          setZoomLevel(13); // Street-level zoom for exact GPS location
         }
-      );
-    } else {
-      console.log('Geolocation is not supported by this browser');
-      setIsLoadingLocation(false);
-    }
+
+        setIsLoadingLocation(false);
+      } catch (error) {
+        console.error('Error initializing location:', error);
+        setLocationError(error.message);
+        setIsLoadingLocation(false);
+      }
+    };
+
+    initializeLocation();
   }, []);
 
   // Sync propertyTypeFilter with filters.type
@@ -189,20 +188,69 @@ export default function HomePage() {
     const uniqueLocations = new Map();
     const filteredSuggestions = [];
 
+    // Indian cities and capitals database
+    const indianCities = [
+      'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Ahmedabad', 'Chennai', 'Kolkata', 'Pune', 'Jaipur', 'Surat',
+      'Lucknow', 'Kanpur', 'Nagpur', 'Indore', 'Thane', 'Bhopal', 'Visakhapatnam', 'Pimpri-Chinchwad', 'Patna', 'Vadodara',
+      'Ghaziabad', 'Ludhiana', 'Agra', 'Nashik', 'Faridabad', 'Meerut', 'Rajkot', 'Kalyan-Dombivali', 'Vasai-Virar', 'Varanasi',
+      'Srinagar', 'Aurangabad', 'Dhanbad', 'Amritsar', 'Navi Mumbai', 'Allahabad', 'Ranchi', 'Howrah', 'Coimbatore', 'Jabalpur',
+      'Gwalior', 'Vijayawada', 'Jodhpur', 'Madurai', 'Raipur', 'Kota', 'Chandigarh', 'Guwahati', 'Solapur', 'Hubli-Dharwad',
+      'Mysore', 'Tiruchirappalli', 'Bareilly', 'Aligarh', 'Tiruppur', 'Moradabad', 'Jalandhar', 'Bhubaneswar', 'Salem', 'Warangal',
+      'Guntur', 'Bhiwandi', 'Saharanpur', 'Gorakhpur', 'Bikaner', 'Amravati', 'Noida', 'Jamshedpur', 'Bhilai', 'Cuttack',
+      'Firozabad', 'Kochi', 'Nellore', 'Bhavnagar', 'Dehradun', 'Durgapur', 'Asansol', 'Rourkela', 'Nanded', 'Kolhapur',
+      'Ajmer', 'Akola', 'Gulbarga', 'Jamnagar', 'Ujjain', 'Loni', 'Siliguri', 'Jhansi', 'Ulhasnagar', 'Jammu',
+      'Sangli-Miraj', 'Mangalore', 'Erode', 'Belgaum', 'Ambattur', 'Tirunelveli', 'Malegaon', 'Gaya', 'Jalgaon', 'Udaipur'
+    ];
+
+    const indianStates = [
+      'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh',
+      'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland',
+      'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal'
+    ];
+
+    // Check cities and states from the database
+    indianCities.forEach(city => {
+      if (city.toLowerCase().includes(query.toLowerCase())) {
+        const key = city.toLowerCase();
+        if (!uniqueLocations.has(key)) {
+          uniqueLocations.set(key, true);
+          filteredSuggestions.push({
+            text: city,
+            displayText: `${city}, India`,
+            marker: null,
+            isProperty: false
+          });
+        }
+      }
+    });
+
+    indianStates.forEach(state => {
+      if (state.toLowerCase().includes(query.toLowerCase())) {
+        const key = state.toLowerCase();
+        if (!uniqueLocations.has(key)) {
+          uniqueLocations.set(key, true);
+          filteredSuggestions.push({
+            text: state,
+            displayText: `${state}, India`,
+            marker: null,
+            isProperty: false
+          });
+        }
+      }
+    });
+
+    // Also check locations from existing properties
     markers.forEach(marker => {
       // Check state name
       if (marker.state_name && marker.state_name.toLowerCase().includes(query.toLowerCase())) {
         const key = marker.state_name.toLowerCase();
         if (!uniqueLocations.has(key)) {
           uniqueLocations.set(key, true);
-          // Show just city name for short queries, add ", India" for longer queries
-          const displayText = query.trim().length >= 3
-            ? `${marker.state_name}, India`
-            : marker.state_name;
           filteredSuggestions.push({
             text: marker.state_name,
-            displayText: displayText,
-            marker: marker
+            displayText: `${marker.state_name}, India`,
+            marker: marker,
+            isProperty: false
           });
         }
       }
@@ -212,13 +260,11 @@ export default function HomePage() {
         const key = marker.location_district.toLowerCase();
         if (!uniqueLocations.has(key)) {
           uniqueLocations.set(key, true);
-          const displayText = query.trim().length >= 3
-            ? `${marker.location_district}, India`
-            : marker.location_district;
           filteredSuggestions.push({
             text: marker.location_district,
-            displayText: displayText,
-            marker: marker
+            displayText: `${marker.location_district}, India`,
+            marker: marker,
+            isProperty: false
           });
         }
       }
@@ -228,13 +274,11 @@ export default function HomePage() {
         const key = marker.layer_location.toLowerCase();
         if (!uniqueLocations.has(key)) {
           uniqueLocations.set(key, true);
-          const displayText = query.trim().length >= 3
-            ? `${marker.layer_location}, India`
-            : marker.layer_location;
           filteredSuggestions.push({
             text: marker.layer_location,
-            displayText: displayText,
-            marker: marker
+            displayText: `${marker.layer_location}, India`,
+            marker: marker,
+            isProperty: false
           });
         }
       }
@@ -536,25 +580,24 @@ export default function HomePage() {
                           setSearchQuery(suggestion.text);
                           setShowSuggestions(false);
 
-                          // Automatically trigger search with the suggestion text
                           const searchText = suggestion.text;
 
-                          // First check if the search query matches any property location
+                          // First check if there's a property in that location
                           const matchingProperty = markers.find(marker =>
-                            marker.state_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-                            marker.layer_location?.toLowerCase().includes(searchText.toLowerCase()) ||
-                            marker.location_district?.toLowerCase().includes(searchText.toLowerCase())
+                            marker.state_name?.toLowerCase() === searchText.toLowerCase() ||
+                            marker.layer_location?.toLowerCase() === searchText.toLowerCase() ||
+                            marker.location_district?.toLowerCase() === searchText.toLowerCase()
                           );
 
                           if (matchingProperty && matchingProperty.position) {
-                            // If found in properties, zoom to that location
+                            // If found property in that city, zoom to it
                             setMapCenter(matchingProperty.position);
-                            setZoomLevel(14);
-                            handleMarkerClick(matchingProperty);
+                            setZoomLevel(12);
+                            setSearchQuery("");
                             return;
                           }
 
-                          // If not found in properties, use Google Geocoding API
+                          // If no property found, use Google Geocoding API to zoom to the city
                           const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
                           const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchText)}&key=${apiKey}`;
 
@@ -566,23 +609,9 @@ export default function HomePage() {
                               const { lat, lng } = data.results[0].geometry.location;
                               const pos = { lat, lng };
 
-                              // Create a red marker for searched location (not in properties)
-                              const searchMarker = {
-                                id: `search-${Date.now()}`,
-                                layer_location: data.results[0].formatted_address,
-                                popup_text: 'This is the location you searched for.',
-                                position: pos,
-                                isSearchResult: true,
-                              };
-
-                              setZoomLevel(14);
+                              setZoomLevel(12);
                               setMapCenter(pos);
-
-                              // Remove previous search markers and add new one
-                              setMarkers(prevMarkers => [
-                                ...prevMarkers.filter(marker => !marker.isSearchResult),
-                                searchMarker
-                              ]);
+                              setSearchQuery("");
                             }
                           } catch (err) {
                             console.error("Search error:", err);
@@ -603,81 +632,79 @@ export default function HomePage() {
             </div>
           </form>
 
-          {/* Hide buttons when suggestions dropdown is shown */}
-          {!showSuggestions && (
-            <div className="flex absolute top-20 w-full md:w-auto md:top-8 md:right-4 z-10 justify-between md:gap-3 px-5 md:px-0">
-              <div className="flex gap-1.5">
-                <button
-                  onClick={() => {
-                    const newFilter = propertyTypeFilter === 'commercial' ? 'all' : 'commercial';
-                    setPropertyTypeFilter(newFilter);
+          {/* Hide buttons when suggestions dropdown is shown on mobile only */}
+          <div className={`flex absolute top-20 w-full md:w-auto md:top-8 md:right-4 z-10 justify-between md:gap-3 px-5 md:px-0 ${showSuggestions ? 'hidden md:flex' : 'flex'}`}>
+            <div className="flex gap-1.5">
+              <button
+                onClick={() => {
+                  const newFilter = propertyTypeFilter === 'commercial' ? 'all' : 'commercial';
+                  setPropertyTypeFilter(newFilter);
 
-                    // Update filters.type to sync with modal
-                    if (newFilter === 'all') {
-                      setFilters(prev => ({
-                        ...prev,
-                        type: { commercial: false, residential: false }
-                      }));
-                    } else if (newFilter === 'commercial') {
-                      setFilters(prev => ({
-                        ...prev,
-                        type: { commercial: true, residential: false }
-                      }));
-                    }
-                  }}
-                  className="bg-white px-2 py-1 rounded-full shadow-xl flex items-center gap-1.5 text-gray-700 hover:bg-gray-50 hover:cursor-pointer"
-                >
-                  {propertyTypeFilter === 'commercial' ? (
-                    <svg className="w-3.5 h-3.5 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  ) : (
-                    <div className="w-3.5 h-3.5 border border-gray-300 rounded"></div>
-                  )}
-                  <span className='text-[0.75rem]'>Commercial</span>
-                </button>
-                <button
-                  onClick={() => {
-                    const newFilter = propertyTypeFilter === 'residential' ? 'all' : 'residential';
-                    setPropertyTypeFilter(newFilter);
+                  // Update filters.type to sync with modal
+                  if (newFilter === 'all') {
+                    setFilters(prev => ({
+                      ...prev,
+                      type: { commercial: false, residential: false }
+                    }));
+                  } else if (newFilter === 'commercial') {
+                    setFilters(prev => ({
+                      ...prev,
+                      type: { commercial: true, residential: false }
+                    }));
+                  }
+                }}
+                className="bg-white px-2 py-1 rounded-full shadow-xl flex items-center gap-1.5 text-gray-700 hover:bg-gray-50 hover:cursor-pointer"
+              >
+                {propertyTypeFilter === 'commercial' ? (
+                  <svg className="w-3.5 h-3.5 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <div className="w-3.5 h-3.5 border border-gray-300 rounded"></div>
+                )}
+                <span className='text-[0.75rem]'>Commercial</span>
+              </button>
+              <button
+                onClick={() => {
+                  const newFilter = propertyTypeFilter === 'residential' ? 'all' : 'residential';
+                  setPropertyTypeFilter(newFilter);
 
-                    // Update filters.type to sync with modal
-                    if (newFilter === 'all') {
-                      setFilters(prev => ({
-                        ...prev,
-                        type: { commercial: false, residential: false }
-                      }));
-                    } else if (newFilter === 'residential') {
-                      setFilters(prev => ({
-                        ...prev,
-                        type: { commercial: false, residential: true }
-                      }));
-                    }
-                  }}
-                  className="bg-white px-2 py-1 rounded-full shadow-xl flex items-center gap-1.5 text-gray-700 hover:bg-gray-50 hover:cursor-pointer"
-                >
-                  {propertyTypeFilter === 'residential' ? (
-                    <svg className="w-3.5 h-3.5 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  ) : (
-                    <div className="w-3.5 h-3.5 border border-gray-300 rounded"></div>
-                  )}
-                  <span className='text-[0.75rem]'>Residential</span>
-                </button>
-              </div>
-              <div className="flex gap-1.5">
-                <button
-                  ref={filtersBtnRef}
-                  onClick={() => openModal("filters", filtersBtnRef)}
-                  className="bg-white px-2 py-1 rounded-full shadow-xl flex items-center gap-1.5 text-gray-700 hover:bg-gray-50 hover:cursor-pointer"
-                >
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
-                  <span className='text-[0.75rem]'>Filters</span>
-                </button>
-              </div>
+                  // Update filters.type to sync with modal
+                  if (newFilter === 'all') {
+                    setFilters(prev => ({
+                      ...prev,
+                      type: { commercial: false, residential: false }
+                    }));
+                  } else if (newFilter === 'residential') {
+                    setFilters(prev => ({
+                      ...prev,
+                      type: { commercial: false, residential: true }
+                    }));
+                  }
+                }}
+                className="bg-white px-2 py-1 rounded-full shadow-xl flex items-center gap-1.5 text-gray-700 hover:bg-gray-50 hover:cursor-pointer"
+              >
+                {propertyTypeFilter === 'residential' ? (
+                  <svg className="w-3.5 h-3.5 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <div className="w-3.5 h-3.5 border border-gray-300 rounded"></div>
+                )}
+                <span className='text-[0.75rem]'>Residential</span>
+              </button>
             </div>
-          )}
+            <div className="flex gap-1.5">
+              <button
+                ref={filtersBtnRef}
+                onClick={() => openModal("filters", filtersBtnRef)}
+                className="bg-white px-2 py-1 rounded-full shadow-xl flex items-center gap-1.5 text-gray-700 hover:bg-gray-50 hover:cursor-pointer"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                <span className='text-[0.75rem]'>Filters</span>
+              </button>
+            </div>
+          </div>
 
           <button
             onClick={() => setPropertyListVisible(!isPropertyListVisible)}

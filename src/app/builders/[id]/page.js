@@ -2,11 +2,17 @@
 
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Home, Building2, Calendar, Star } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function BuilderDetailPage() {
   const router = useRouter();
   const params = useParams();
   const builderId = params.id;
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
 
   // Mock data - in real app, fetch based on builderId
   const builderData = {
@@ -47,7 +53,11 @@ export default function BuilderDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header Section */}
-      <div className="bg-white border-b">
+      <div 
+        className={`bg-white border-b transition-all duration-700 ${
+          isVisible ? 'translate-y-0 opacity-100' : '-translate-y-10 opacity-0'
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
             <div className="flex items-center gap-2 sm:gap-4">
@@ -100,7 +110,12 @@ export default function BuilderDetailPage() {
       <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
           {/* Left Column - Company Info */}
-          <div className="lg:col-span-5 space-y-4 sm:space-y-6">
+          <div 
+            className={`lg:col-span-5 space-y-4 sm:space-y-6 transition-all duration-700 ${
+              isVisible ? 'translate-y-0 opacity-100' : '-translate-y-20 opacity-0'
+            }`}
+            style={{ transitionDelay: '100ms' }}
+          >
             {/* Builder Logo */}
             <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-8 shadow-sm">
               <div className="flex items-center justify-center">
@@ -183,7 +198,12 @@ export default function BuilderDetailPage() {
           </div>
 
           {/* Right Column - Property Card */}
-          <div className="lg:col-span-7">
+          <div 
+            className={`lg:col-span-7 transition-all duration-700 ${
+              isVisible ? 'translate-y-0 opacity-100' : '-translate-y-20 opacity-0'
+            }`}
+            style={{ transitionDelay: '250ms' }}
+          >
             <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm overflow-hidden">
               {/* Property Images */}
               <div className="relative">
@@ -319,7 +339,12 @@ export default function BuilderDetailPage() {
         </div>
 
         {/* About the Builder Section */}
-        <div className="mt-4 sm:mt-8">
+        <div 
+          className={`mt-4 sm:mt-8 transition-all duration-700 ${
+            isVisible ? 'translate-y-0 opacity-100' : '-translate-y-20 opacity-0'
+          }`}
+          style={{ transitionDelay: '400ms' }}
+        >
           {/* Purple Header Section */}
           <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-purple-600 rounded-t-xl sm:rounded-t-2xl p-6 sm:p-12">
             <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8">

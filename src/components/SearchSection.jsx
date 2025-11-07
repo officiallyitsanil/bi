@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { KeyRound, BadgeDollarSign, Hotel, UsersRound } from "lucide-react";
+import { getLocationSuggestions } from "@/utils/indianCities";
 
 export default function SearchSection({ isCommercial = false }) {
   const router = useRouter();
@@ -33,13 +33,6 @@ export default function SearchSection({ isCommercial = false }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Popular cities for suggestions
-  const popularCities = [
-    "Mumbai", "Hyderabad", "Bangalore", "Chennai", "Pune", "Noida",
-    "Delhi", "Indore", "Ahmedabad", "Jaipur", "Kerala", "Chandigarh",
-    "Kolkata", "Goa", "Bhubaneswar", "Uttar Pradesh", "Lucknow"
-  ];
-  
   const filterOptions = isCommercial ? [
     {
       id: "managed-space",
@@ -87,43 +80,25 @@ export default function SearchSection({ isCommercial = false }) {
     {
       id: "rent",
       name: "Rent",
-      icon: KeyRound,
+      icon: "/residential/rent.png",
       active: true
     },
     {
       id: "sale",
       name: "Sale",
-      icon: BadgeDollarSign,
+      icon: "/residential/sale.png",
       active: false
     },
     {
       id: "pg-hostel",
       name: "PG/Hostel",
-      icon: Hotel,
+      icon: "/residential/pg-hostel.png",
       active: false
     },
     {
       id: "flatmates",
       name: "Flatmates",
-      icon: UsersRound,
-      active: false
-    },
-    {
-      id: "price-desk",
-      name: "Price Per Desk",
-      icon: "/commercial/price-desk.png",
-      active: false
-    },
-    {
-      id: "price-sqft",
-      name: "Price Per Sqft",
-      icon: "/commercial/price-sqft.png",
-      active: false
-    },
-    {
-      id: "seats",
-      name: "No. Of Seats",
-      icon: "/commercial/seats.png",
+      icon: "/residential/flatmates.png",
       active: false
     }
   ];
@@ -145,16 +120,9 @@ export default function SearchSection({ isCommercial = false }) {
       return;
     }
 
-    const filteredSuggestions = popularCities
-      .filter(city => city.toLowerCase().includes(query.toLowerCase()))
-      .slice(0, 5)
-      .map(city => ({
-        text: city,
-        displayText: query.trim().length >= 3 ? `${city}, India` : city
-      }));
-
+    const filteredSuggestions = getLocationSuggestions(query, 8);
     setSuggestions(filteredSuggestions);
-    setShowSuggestions(true);
+    setShowSuggestions(filteredSuggestions.length > 0);
   };
 
   const handleLocationChange = (e) => {
@@ -273,7 +241,7 @@ export default function SearchSection({ isCommercial = false }) {
   };
 
   return (
-    <div className="relative py-16 md:py-24 bg-cover bg-center bg-no-repeat z-10"
+    <div className="relative py-16 md:py-24 bg-cover bg-center bg-no-repeat"
       style={{
         backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop')`
       }}>
@@ -294,32 +262,25 @@ export default function SearchSection({ isCommercial = false }) {
 
           {/* Top Box - Filter Options */}
           <div className="bg-white rounded-2xl shadow-2xl p-3 md:p-4 w-full max-w-4xl animate-slideDown">
-            <div className="flex overflow-x-auto gap-2 md:gap-3 md:grid md:grid-cols-7 scrollbar-hide pb-1">
+            <div className={`flex overflow-x-auto gap-2 md:gap-3 scrollbar-hide pb-1 ${isCommercial ? 'md:grid md:grid-cols-7' : 'md:grid md:grid-cols-4 justify-items-center'}`}>
               {filterOptions.map((option) => {
-                const IconComponent = option.icon;
-                const isLucideIcon = typeof option.icon !== 'string';
-
                 return (
                   <div
                     key={option.id}
                     onClick={() => handleFilterClick(option.name)}
-                    className={`flex flex-col items-center justify-center cursor-pointer transition-all duration-200 flex-shrink-0 w-20 md:w-auto md:aspect-square ${selectedFilter === option.name
-                        ? "bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-xl p-1 md:p-2 shadow-md"
-                        : "hover:bg-gray-50 rounded-xl p-1 md:p-2 border border-gray-200 hover:border-gray-300 hover:shadow-sm"
+                    className={`flex flex-col items-center justify-center cursor-pointer transition-all duration-200 flex-shrink-0 w-20 ${isCommercial ? 'md:w-auto md:aspect-square' : 'md:w-full'} ${selectedFilter === option.name
+                      ? "bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-400 rounded-xl p-1 md:p-2 shadow-md"
+                      : "hover:bg-gray-50 rounded-xl p-1 md:p-2 border border-gray-200 hover:border-gray-300 hover:shadow-sm"
                       }`}
                   >
                     <div className="w-10 h-10 md:w-14 md:h-14 mb-1 flex items-center justify-center flex-shrink-0">
-                      {isLucideIcon ? (
-                        <IconComponent className="w-8 h-8 md:w-10 md:h-10" style={{ color: '#ff6273' }} />
-                      ) : (
-                        <Image
-                          src={option.icon}
-                          alt={option.name}
-                          width={56}
-                          height={56}
-                          className="object-contain"
-                        />
-                      )}
+                      <Image
+                        src={option.icon}
+                        alt={option.name}
+                        width={56}
+                        height={56}
+                        className="object-contain"
+                      />
                     </div>
                     <span className={`text-[10px] md:text-xs font-medium text-center leading-tight ${selectedFilter === option.name ? 'text-gray-800' : 'text-gray-600'}`}>
                       {option.name}
@@ -345,23 +306,20 @@ export default function SearchSection({ isCommercial = false }) {
                 />
 
                 {/* Mobile Suggestions Dropdown */}
-                {showSuggestions && (
+                {showSuggestions && suggestions.length > 0 && (
                   <div className="absolute top-full left-0 right-0 bg-white rounded-lg shadow-xl mt-2 max-h-60 overflow-y-auto z-50 border border-gray-200">
-                    {suggestions.length > 0 ? (
-                      suggestions.map((suggestion, index) => (
-                        <div
-                          key={index}
-                          onClick={() => handleSuggestionClick(suggestion)}
-                          className="px-4 py-2.5 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0 transition-all duration-200"
-                        >
+                    {suggestions.map((suggestion, index) => (
+                      <div
+                        key={index}
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        className="px-4 py-2.5 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0 transition-all duration-200"
+                      >
+                        <div className="flex items-center justify-between">
                           <div className="text-gray-800 text-sm">{suggestion.displayText}</div>
+                          <span className="text-xs text-gray-400 ml-2 capitalize">{suggestion.type}</span>
                         </div>
-                      ))
-                    ) : (
-                      <div className="px-4 py-2.5 text-gray-500 text-sm">
-                        No suggestions found
                       </div>
-                    )}
+                    ))}
                   </div>
                 )}
               </div>
@@ -390,23 +348,20 @@ export default function SearchSection({ isCommercial = false }) {
                 />
 
                 {/* Desktop Suggestions Dropdown */}
-                {showSuggestions && (
+                {showSuggestions && suggestions.length > 0 && (
                   <div className="absolute top-full left-0 right-0 bg-white rounded-lg shadow-xl mt-1 max-h-60 overflow-y-auto z-50 border border-gray-200">
-                    {suggestions.length > 0 ? (
-                      suggestions.map((suggestion, index) => (
-                        <div
-                          key={index}
-                          onClick={() => handleSuggestionClick(suggestion)}
-                          className="px-4 py-2.5 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0 transition-all duration-200"
-                        >
+                    {suggestions.map((suggestion, index) => (
+                      <div
+                        key={index}
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        className="px-4 py-2.5 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0 transition-all duration-200"
+                      >
+                        <div className="flex items-center justify-between">
                           <div className="text-gray-800 text-sm">{suggestion.displayText}</div>
+                          <span className="text-xs text-gray-400 ml-2 capitalize">{suggestion.type}</span>
                         </div>
-                      ))
-                    ) : (
-                      <div className="px-4 py-2.5 text-gray-500 text-sm">
-                        No suggestions found
                       </div>
-                    )}
+                    ))}
                   </div>
                 )}
               </div>
@@ -437,12 +392,13 @@ export default function SearchSection({ isCommercial = false }) {
                 </div>
               </div>
 
-              {/* Divider */}
-              <div className="hidden md:block h-8 w-px bg-gray-300"></div>
+              {/* Divider - Only show for commercial when preferences exist */}
+              {isCommercial && (selectedFilter === "Managed Space" || selectedFilter === "Unmanaged Space" || selectedFilter === "Coworking Dedicated" || selectedFilter === "Coworking Shared" || selectedFilter === "Price Per Desk" || selectedFilter === "Price Per Sqft" || selectedFilter === "No. Of Seats") && (
+                <div className="hidden md:block h-8 w-px bg-gray-300 mr-2"></div>
+              )}
 
-              {/* Preferences Dropdown - Custom for all space types */}
-              {(selectedFilter === "Rent" || selectedFilter === "Sale" || selectedFilter === "PG/Hostel" || selectedFilter === "Flatmates" || 
-                selectedFilter === "Managed Space" || selectedFilter === "Unmanaged Space" || selectedFilter === "Coworking Dedicated" || selectedFilter === "Coworking Shared") ? (
+              {/* Preferences Dropdown - Only show for commercial */}
+              {isCommercial && (selectedFilter === "Managed Space" || selectedFilter === "Unmanaged Space" || selectedFilter === "Coworking Dedicated" || selectedFilter === "Coworking Shared") && (
                 <div className="flex-[1] w-full relative border-t md:border-t-0" ref={preferencesRef}>
                   <div
                     onClick={() => setIsPreferencesOpen(!isPreferencesOpen)}
@@ -456,7 +412,7 @@ export default function SearchSection({ isCommercial = false }) {
 
                   {/* Custom Dropdown Panel - Compact size */}
                   {isPreferencesOpen && (
-                    <div className="absolute top-full left-0 md:left-auto md:right-0 mt-2 bg-white rounded-lg shadow-2xl py-3 px-4 w-[calc(100vw-2rem)] max-w-[380px] z-[9999] border border-gray-200">
+                    <div className="absolute top-full left-0 md:left-auto md:right-0 mt-2 bg-white rounded-lg shadow-2xl py-3 px-4 w-[calc(100vw-2rem)] max-w-[380px] z-50 border border-gray-200">
                       {/* Price per Desk */}
                       <div className="flex items-center justify-between py-2.5 border-b border-gray-200">
                         <div className="flex-1">
@@ -540,7 +496,8 @@ export default function SearchSection({ isCommercial = false }) {
                     </div>
                   )}
                 </div>
-              ) : (
+              )}
+              {isCommercial && (selectedFilter === "Price Per Desk" || selectedFilter === "Price Per Sqft" || selectedFilter === "No. Of Seats") && (
                 /* Single Preferences Dropdown for other filters */
                 <div className="flex-[1] w-full border-t md:border-t-0">
                   <div className="relative">
@@ -569,7 +526,7 @@ export default function SearchSection({ isCommercial = false }) {
               <button
                 onClick={handleSearch}
                 style={{ backgroundColor: '#fdc700' }}
-                className="hover:opacity-90 text-white px-3 py-2.5 rounded-full transition-all duration-300 flex items-center justify-center gap-2 font-medium text-sm overflow-hidden w-full md:w-auto mt-2 md:mt-0 cursor-pointer"
+                className="hover:opacity-90 text-white px-3 py-2.5 rounded-full transition-all duration-300 flex items-center justify-center gap-2 font-medium text-sm overflow-hidden w-full md:w-auto mt-2 md:mt-0 cursor-pointer ml-2"
               >
                 <svg className="w-4 h-4 flex-shrink-0 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
