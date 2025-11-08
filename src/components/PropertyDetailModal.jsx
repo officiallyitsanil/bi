@@ -15,7 +15,8 @@ import {
     ChevronRight,
     Star,
     ThumbsUp,
-    ThumbsDown
+    ThumbsDown,
+    Check
 } from "lucide-react";
 import Image from "next/image";
 
@@ -171,7 +172,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                         <div className="mb-3 flex w-full items-center justify-between text-left lg:mb-2">
                             <div className="flex items-center gap-1.5">
                                 <div className="text-lg font-semibold text-gray-800 lg:text-xl">{name}</div>
-                                {is_verified && <BadgeCheck width="18" height="18" className="text-blue-500 fill-current" />}
+                                {is_verified && <BadgeCheck width="18" height="18" className="text-white fill-blue-500" />}
                             </div>
                         </div>
                         <div className="flex flex-col gap-1">
@@ -462,7 +463,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                         <div className="space-y-2">
                             <div>
                                 <span className="flex items-center gap-2">
-                                    <BadgeCheck className="text-blue-500 fill-current" />
+                                    <BadgeCheck className="text-white fill-blue-500" />
                                     <span className="text-sm font-normal text-gray-600">Preliminary verification done.</span>
                                 </span>
                             </div>

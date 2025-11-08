@@ -212,31 +212,46 @@ export default function SearchSection({ isCommercial = false }) {
 
   const getPricePerDeskOptions = () => {
     return [
-      { value: "any", label: "Any" },
-      { value: "< 5000", label: "< ₹5,000" },
-      { value: "5000-8000", label: "₹5,000 - ₹8,000" },
-      { value: "8000-11000", label: "₹8,000 - ₹11,000" },
-      { value: "11000+", label: "₹11,000+" }
+      { value: "2000-4000", label: "₹2000-4000" },
+      { value: "4000-6000", label: "₹4000-6000" },
+      { value: "6000-8000", label: "₹6000-8000" },
+      { value: "8000-10000", label: "₹8000-10000" },
+      { value: "10000-12000", label: "₹10000-12000" },
+      { value: "12000-14000", label: "₹12000-14000" },
+      { value: "14000-16000", label: "₹14000-16000" },
+      { value: "16000-18000", label: "₹16000-18000" },
+      { value: "18000-20000", label: "₹18000-20000" }
     ];
   };
 
   const getPricePerSqftOptions = () => {
     return [
-      { value: "any", label: "Any" },
-      { value: "< 50", label: "< ₹50" },
-      { value: "50-100", label: "₹50 - ₹100" },
-      { value: "100-150", label: "₹100 - ₹150" },
-      { value: "150+", label: "₹150+" }
+      { value: "N/A", label: "N/A" },
+      { value: "10-30", label: "₹10-30" },
+      { value: "30-50", label: "₹30-50" },
+      { value: "50-70", label: "₹50-70" },
+      { value: "70-90", label: "₹70-90" },
+      { value: "90-110", label: "₹90-110" },
+      { value: "110-130", label: "₹110-130" },
+      { value: "130-150", label: "₹130-150" }
     ];
   };
 
   const getNoOfSeatsOptions = () => {
     return [
-      { value: "any", label: "Any" },
-      { value: "1-10", label: "1-10" },
-      { value: "11-50", label: "11-50" },
-      { value: "51-100", label: "51-100" },
-      { value: "100+", label: "100+" }
+      { value: "< 10", label: "less than 10" },
+      { value: "10-30", label: "10 - 30" },
+      { value: "30-50", label: "30 - 50" },
+      { value: "50-70", label: "50 - 70" },
+      { value: "70-90", label: "70 - 90" },
+      { value: "90-110", label: "90 - 110" },
+      { value: "110-150", label: "110 - 150" },
+      { value: "150-200", label: "150 - 200" },
+      { value: "200-250", label: "200 - 250" },
+      { value: "250-300", label: "250 - 300" },
+      { value: "300-350", label: "300 - 350" },
+      { value: "350-450", label: "350 - 450" },
+      { value: "450+", label: "450 +++" }
     ];
   };
 
