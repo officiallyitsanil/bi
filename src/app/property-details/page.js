@@ -209,6 +209,23 @@ function PropertyDetailsContent() {
                     console.log('Raw ratings from API:', data.property.ratings);
                     console.log('Raw breakdown:', data.property.ratings?.breakdown);
 
+                    // Helper function to format location from address object
+                    const formatLocation = (address) => {
+                        if (!address || typeof address === 'string') return address || 'Address not available';
+
+                        const parts = [];
+                        if (address.flat) parts.push(address.flat);
+                        if (address.street) parts.push(address.street);
+                        if (address.locality) parts.push(address.locality);
+                        if (address.city) parts.push(address.city);
+                        if (address.district) parts.push(address.district);
+                        if (address.state) parts.push(address.state);
+                        if (address.pincode) parts.push(address.pincode);
+                        if (address.country) parts.push(address.country);
+
+                        return parts.length > 0 ? parts.join(', ') : 'Address not available';
+                    };
+
                     const formattedProperty = {
                         ...data.property,
                         id: data.property._id || data.property.id,
@@ -230,6 +247,7 @@ function PropertyDetailsContent() {
                         reviews: data.property.reviews || [],
                         name: data.property.name || 'Property Name',
                         address: data.property.address || 'Address not available',
+                        location: data.property.location || formatLocation(data.property.address),
                         originalPrice: data.property.originalPrice || '₹XX',
                         discountedPrice: data.property.discountedPrice || '₹XX',
                         additionalPrice: data.property.additionalPrice || '₹XX',
@@ -267,7 +285,7 @@ function PropertyDetailsContent() {
         { id: 'amenities', label: 'Amenities' },
         { id: 'location', label: 'Location & Landmark' },
         { id: 'reviews', label: 'Rating & Reviews' },
-        { id: 'layout', label: 'Property Layout' }
+        ...(property?.propertyType === 'commercial' ? [{ id: 'layout', label: 'Property Layout' }] : [])
     ];
 
     const nextImage = () => {
@@ -545,6 +563,53 @@ function PropertyDetailsContent() {
                         )}
                     </div>
 
+                    {/* Opening Hours - Only for commercial properties */}
+                    {property.propertyType === 'commercial' && property.openingHours && (
+                        <div className="mb-5 scroll-animate" data-animation="animate-slide-top">
+                            <AnimatedText className="text-base font-bold mb-3 text-green-600 inline-block" delay={700} lineColor="#f8c02f">
+                                <h3>Opening Hours</h3>
+                            </AnimatedText>
+                            <div className="space-y-2">
+                                {property.openingHours.mondayFriday && (
+                                    <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                                        <span className="text-sm font-semibold text-gray-800">Monday - Friday</span>
+                                        <span className={`text-sm font-medium ${property.openingHours.mondayFriday.enabled ? 'text-green-600' : 'text-red-600'}`}>
+                                            {property.openingHours.mondayFriday.enabled
+                                                ? (property.openingHours.mondayFriday.open === 'Open' && property.openingHours.mondayFriday.close === 'Close'
+                                                    ? 'Open All Day'
+                                                    : `${property.openingHours.mondayFriday.open} - ${property.openingHours.mondayFriday.close}`)
+                                                : 'Closed'}
+                                        </span>
+                                    </div>
+                                )}
+                                {property.openingHours.saturday && (
+                                    <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                                        <span className="text-sm font-semibold text-gray-800">Saturday</span>
+                                        <span className={`text-sm font-medium ${property.openingHours.saturday.enabled ? 'text-green-600' : 'text-red-600'}`}>
+                                            {property.openingHours.saturday.enabled
+                                                ? (property.openingHours.saturday.open === 'Open' && property.openingHours.saturday.close === 'Close'
+                                                    ? 'Open All Day'
+                                                    : `${property.openingHours.saturday.open} - ${property.openingHours.saturday.close}`)
+                                                : 'Closed'}
+                                        </span>
+                                    </div>
+                                )}
+                                {property.openingHours.sunday && (
+                                    <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                                        <span className="text-sm font-semibold text-gray-800">Sunday</span>
+                                        <span className={`text-sm font-medium ${property.openingHours.sunday.enabled ? 'text-green-600' : 'text-red-600'}`}>
+                                            {property.openingHours.sunday.enabled
+                                                ? (property.openingHours.sunday.open === 'Open' && property.openingHours.sunday.close === 'Close'
+                                                    ? 'Open All Day'
+                                                    : `${property.openingHours.sunday.open} - ${property.openingHours.sunday.close}`)
+                                                : 'Closed'}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Location & Landmark */}
                     <div className="mb-5 scroll-animate" data-animation="animate-slide-top">
                         <AnimatedText className="text-base font-bold mb-3 text-blue-600 inline-block" delay={1000} lineColor="#f8c02f">
@@ -753,62 +818,90 @@ function PropertyDetailsContent() {
                         </div>
                     </div>
 
-                    {/* Property Layout */}
-                    <div className="mb-5 scroll-animate" data-animation="animate-slide-top">
-                        <AnimatedText className="text-base font-bold mb-3 inline-block" delay={2000} lineColor="#f8c02f">
-                            <h3>Property Layout</h3>
-                        </AnimatedText>
-
-                        <div className="flex my-3 gap-2 justify-center scroll-animate" data-animation="animate-fade-up">
-                            {['6-15 Seats', '16-30 Seats', '31-60 Seats'].map((option) => (
-                                <button
-                                    key={option}
-                                    onClick={() => setSelectedCapacity(option)}
-                                    className={`px-3 py-2 rounded-full text-xs font-medium cursor-pointer transition-colors ${selectedCapacity === option
-                                        ? 'bg-black text-white'
-                                        : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-                                        }`}
-                                >
-                                    {option}
-                                </button>
-                            ))}
+                    {/* Property Videos */}
+                    {property.propertyVideos && property.propertyVideos.length > 0 && (
+                        <div className="mb-5 scroll-animate" data-animation="animate-slide-top">
+                            <AnimatedText className="text-base font-bold mb-3 text-purple-600 inline-block" delay={1700} lineColor="#f8c02f">
+                                <h3>Property Videos</h3>
+                            </AnimatedText>
+                            <div className="grid grid-cols-1 gap-3">
+                                {property.propertyVideos.map((video, i) => (
+                                    <div key={i} className="relative rounded-lg overflow-hidden bg-black scroll-animate" data-animation="animate-fade-up" style={{ animationDelay: `${i * 100}ms` }}>
+                                        <video
+                                            controls
+                                            className="w-full h-48 object-contain"
+                                            poster={video.thumbnail}
+                                        >
+                                            <source src={video.url} type={video.contentType || 'video/mp4'} />
+                                            Your browser does not support the video tag.
+                                        </video>
+                                        {video.originalName && (
+                                            <p className="text-xs text-gray-600 mt-1 px-2">{video.originalName}</p>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
+                    )}
 
-                        {/* Floor Plans */}
-                        <div className="grid grid-cols-2 gap-2 mt-5 scroll-animate" data-animation="animate-fade-up">
-                            {property.floorPlans && property.floorPlans[selectedCapacity] ? (
-                                property.floorPlans[selectedCapacity].map((floorPlan, index) => (
-                                    <div key={index} className="overflow-hidden rounded-lg">
-                                        <img
-                                            src={floorPlan}
-                                            alt={`Floor Plan ${index + 1}`}
-                                            className="w-full h-full object-cover rounded-lg transition-transform duration-300 hover:scale-110 cursor-pointer"
-                                            onClick={() => setFullScreenImage(floorPlan)}
-                                        />
-                                    </div>
-                                ))
-                            ) : (
-                                <>
-                                    <div className="overflow-hidden rounded-lg">
-                                        <img
-                                            src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600"
-                                            alt="Floor Plan 1"
-                                            className="w-full h-full object-cover rounded-lg transition-transform duration-300 hover:scale-110 cursor-pointer"
-                                            onClick={() => setFullScreenImage("https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600")}
-                                        />
-                                    </div>
-                                    <div className="overflow-hidden rounded-lg">
-                                        <img
-                                            src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600"
-                                            alt="Floor Plan 2"
-                                            className="w-full h-full object-cover rounded-lg transition-transform duration-300 hover:scale-110 cursor-pointer"
-                                            onClick={() => setFullScreenImage("https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600")}
-                                        />
-                                    </div>
-                                </>
-                            )}
+                    {/* Property Layout - Only show for commercial properties */}
+                    {property.propertyType === 'commercial' && (
+                        <div className="mb-5 scroll-animate" data-animation="animate-slide-top">
+                            <AnimatedText className="text-base font-bold mb-3 inline-block" delay={2000} lineColor="#f8c02f">
+                                <h3>Property Layout</h3>
+                            </AnimatedText>
+
+                            <div className="flex my-3 gap-2 justify-center scroll-animate" data-animation="animate-fade-up">
+                                {['6-15 Seats', '16-30 Seats', '31-60 Seats'].map((option) => (
+                                    <button
+                                        key={option}
+                                        onClick={() => setSelectedCapacity(option)}
+                                        className={`px-3 py-2 rounded-full text-xs font-medium cursor-pointer transition-colors ${selectedCapacity === option
+                                            ? 'bg-black text-white'
+                                            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                                            }`}
+                                    >
+                                        {option}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Floor Plans */}
+                            <div className="grid grid-cols-2 gap-2 mt-5 scroll-animate" data-animation="animate-fade-up">
+                                {property.floorPlans && property.floorPlans[selectedCapacity] ? (
+                                    property.floorPlans[selectedCapacity].map((floorPlan, index) => (
+                                        <div key={index} className="overflow-hidden rounded-lg">
+                                            <img
+                                                src={floorPlan}
+                                                alt={`Floor Plan ${index + 1}`}
+                                                className="w-full h-full object-cover rounded-lg transition-transform duration-300 hover:scale-110 cursor-pointer"
+                                                onClick={() => setFullScreenImage(floorPlan)}
+                                            />
+                                        </div>
+                                    ))
+                                ) : (
+                                    <>
+                                        <div className="overflow-hidden rounded-lg">
+                                            <img
+                                                src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600"
+                                                alt="Floor Plan 1"
+                                                className="w-full h-full object-cover rounded-lg transition-transform duration-300 hover:scale-110 cursor-pointer"
+                                                onClick={() => setFullScreenImage("https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600")}
+                                            />
+                                        </div>
+                                        <div className="overflow-hidden rounded-lg">
+                                            <img
+                                                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600"
+                                                alt="Floor Plan 2"
+                                                className="w-full h-full object-cover rounded-lg transition-transform duration-300 hover:scale-110 cursor-pointer"
+                                                onClick={() => setFullScreenImage("https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600")}
+                                            />
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Promotional Banner Section - Mobile */}
@@ -1373,6 +1466,53 @@ function PropertyDetailsContent() {
                                         }) || <p className="text-gray-500 col-span-6">No amenities available</p>}
                                     </div>
                                 </div>
+
+                                {/* Opening Hours - Only for commercial properties */}
+                                {property.propertyType === 'commercial' && property.openingHours && (
+                                    <div className="mb-10">
+                                        <AnimatedText className="text-lg font-bold mb-3 inline-block" delay={700} lineColor="#f8c02f">
+                                            <h3>Opening Hours</h3>
+                                        </AnimatedText>
+                                        <div className="space-y-3 mt-5">
+                                            {property.openingHours.mondayFriday && (
+                                                <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
+                                                    <span className="text-base font-semibold text-gray-800">Monday - Friday</span>
+                                                    <span className={`text-base font-semibold ${property.openingHours.mondayFriday.enabled ? 'text-green-600' : 'text-red-600'}`}>
+                                                        {property.openingHours.mondayFriday.enabled
+                                                            ? (property.openingHours.mondayFriday.open === 'Open' && property.openingHours.mondayFriday.close === 'Close'
+                                                                ? 'Open All Day'
+                                                                : `${property.openingHours.mondayFriday.open} - ${property.openingHours.mondayFriday.close}`)
+                                                            : 'Closed'}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {property.openingHours.saturday && (
+                                                <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
+                                                    <span className="text-base font-semibold text-gray-800">Saturday</span>
+                                                    <span className={`text-base font-semibold ${property.openingHours.saturday.enabled ? 'text-green-600' : 'text-red-600'}`}>
+                                                        {property.openingHours.saturday.enabled
+                                                            ? (property.openingHours.saturday.open === 'Open' && property.openingHours.saturday.close === 'Close'
+                                                                ? 'Open All Day'
+                                                                : `${property.openingHours.saturday.open} - ${property.openingHours.saturday.close}`)
+                                                            : 'Closed'}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {property.openingHours.sunday && (
+                                                <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
+                                                    <span className="text-base font-semibold text-gray-800">Sunday</span>
+                                                    <span className={`text-base font-semibold ${property.openingHours.sunday.enabled ? 'text-green-600' : 'text-red-600'}`}>
+                                                        {property.openingHours.sunday.enabled
+                                                            ? (property.openingHours.sunday.open === 'Open' && property.openingHours.sunday.close === 'Close'
+                                                                ? 'Open All Day'
+                                                                : `${property.openingHours.sunday.open} - ${property.openingHours.sunday.close}`)
+                                                            : 'Closed'}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -1690,9 +1830,37 @@ function PropertyDetailsContent() {
                                     )) || <span className="text-gray-500 text-xs">No negative reviews</span>}
                                 </div>
                             </div>
+                        </div>
 
-                            {/* Property Layout Section - Full Width */}
-                            <div ref={layoutRef} className="bg-white mt-6 rounded-2xl p-5 mb-6 scroll-animate" data-animation="animate-slide-top">
+                        {/* Property Videos Section - Full Width */}
+                        {property.propertyVideos && property.propertyVideos.length > 0 && (
+                            <div className="bg-white rounded-2xl p-5 mb-6 scroll-animate" data-animation="animate-slide-top">
+                                <AnimatedText className="text-lg font-bold mb-3 inline-block" delay={1700} lineColor="#f8c02f">
+                                    <h3>Property Videos</h3>
+                                </AnimatedText>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
+                                    {property.propertyVideos.map((video, i) => (
+                                        <div key={i} className="relative rounded-lg overflow-hidden bg-black scroll-animate" data-animation="animate-fade-up" style={{ animationDelay: `${i * 100}ms` }}>
+                                            <video
+                                                controls
+                                                className="w-full h-64 object-contain"
+                                                poster={video.thumbnail}
+                                            >
+                                                <source src={video.url} type={video.contentType || 'video/mp4'} />
+                                                Your browser does not support the video tag.
+                                            </video>
+                                            {video.originalName && (
+                                                <p className="text-sm text-gray-700 mt-2 px-2 font-medium">{video.originalName}</p>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Property Layout Section - Full Width - Only show for commercial properties */}
+                        {property.propertyType === 'commercial' && (
+                            <div ref={layoutRef} className="bg-white rounded-2xl p-5 mb-6 scroll-animate" data-animation="animate-slide-top">
                                 <div className="flex items-center justify-between mb-5">
                                     <AnimatedText className="text-lg font-bold inline-block" delay={2000} lineColor="#f8c02f">
                                         <h3>Property Layout</h3>
@@ -1749,10 +1917,7 @@ function PropertyDetailsContent() {
                                     )}
                                 </div>
                             </div>
-
-
-                        </div>
-
+                        )}
                     </div>
                 </div>
 

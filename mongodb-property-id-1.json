@@ -1,368 +1,424 @@
 {
   "_id": {
-    "$oid": "690956881f32787e946737f2"
+    "$oid": "6910236506b5ad89350cc430"
   },
-  "propertyType": "commercial",
-  "state_name": "Telangana",
-  "city": "Mumbai",
-  "coordinates": {
-    "lat": 17.4065,
-    "lng": 78.4772
-  },
-  "name": "Premium Business Hub",
-  "originalPrice": "₹95,00,000",
-  "discountedPrice": "₹90,00,000",
-  "additionalPrice": "₹5,00,000",
-  "images": [
-    "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1497366412874-3415097a27e7?w=800&h=600&fit=crop",
-    "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800&h=600&fit=crop"
+  "propertyType": "techpark",
+  "isUnderManagement": "yes",
+  "selectedFloors": [
+    "10th",
+    "9th"
   ],
-  "featuredImageUrl": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=300&fit=crop",
-  "date_added": "10 December 2024",
-  "is_verified": true,
-  "sellerPhoneNumber": "+91 8884886822",
-  "layer_location": "Madhapur",
-  "location_district": "Hyderabad",
-  "address": "Madhapur, Hyderabad, Telangana 500081, India",
+  "facilities": [
+    {
+      "name": "SEZ",
+      "image": "/property-details/amenties/sez.png",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc431"
+      }
+    },
+    {
+      "name": "OC",
+      "image": "/property-details/amenties/oc.png",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc432"
+      }
+    },
+    {
+      "name": "FIRE NOC",
+      "image": "/property-details/amenties/fire-noc.png",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc433"
+      }
+    },
+    {
+      "name": "WATER",
+      "image": "/property-details/amenties/water-supply.png",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc434"
+      }
+    }
+  ],
+  "propertyName": "Vijay",
+  "category": "Unmanaged Space",
+  "Category": "commercial",
+  "address": {
+    "country": "India",
+    "flat": "",
+    "street": "",
+    "city": "West Godavari",
+    "locality": "Chinnamiram",
+    "state": "Andhra Pradesh",
+    "pincode": "534204"
+  },
+  "coordinates": {
+    "latitude": 16.541795498848337,
+    "longitude": 81.49774521996609
+  },
+  "openingHours": {
+    "mondayFriday": {
+      "enabled": true,
+      "open": "Open",
+      "close": "Close"
+    },
+    "saturday": {
+      "enabled": false,
+      "open": "Open",
+      "close": "Close"
+    },
+    "sunday": {
+      "enabled": false,
+      "open": "Open",
+      "close": "Close"
+    }
+  },
+  "floorConfigurations": [
+    {
+      "floor": "10th",
+      "dedicatedCabin": {
+        "enabled": false,
+        "readyToMove": false,
+        "readyForFitOut": false,
+        "availableFrom": null,
+        "timeline": "",
+        "seats": "",
+        "pricePerSeat": "",
+        "pricePerSqft": "",
+        "billableUnits": ""
+      },
+      "dedicatedFloor": {
+        "enabled": false,
+        "readyToMove": false,
+        "readyForFitOut": false,
+        "availableFrom": null,
+        "timeline": "",
+        "seats": "",
+        "pricePerSeat": "",
+        "pricePerSqft": "",
+        "billableUnits": ""
+      },
+      "_id": {
+        "$oid": "6910236506b5ad89350cc435"
+      }
+    },
+    {
+      "floor": "9th",
+      "dedicatedCabin": {
+        "enabled": false,
+        "readyToMove": false,
+        "readyForFitOut": false,
+        "availableFrom": null,
+        "timeline": "",
+        "seats": "",
+        "pricePerSeat": "",
+        "pricePerSqft": "",
+        "billableUnits": ""
+      },
+      "dedicatedFloor": {
+        "enabled": false,
+        "readyToMove": false,
+        "readyForFitOut": false,
+        "availableFrom": null,
+        "timeline": "",
+        "seats": "",
+        "pricePerSeat": "",
+        "pricePerSqft": "",
+        "billableUnits": ""
+      },
+      "_id": {
+        "$oid": "6910236506b5ad89350cc436"
+      }
+    }
+  ],
   "amenities": [
     {
-      "name": "OC Certificate",
-      "image": "/property-details/amenties/oc.png"
+      "name": "Guest check-in / registration",
+      "image": "/property-details/amenties/guest-checkin.png",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc437"
+      }
     },
     {
-      "name": "SEZ Approved",
-      "image": "/property-details/amenties/sez.png"
-    },
-    {
-      "name": "Fire NOC",
-      "image": "/property-details/amenties/fire-noc.png"
-    },
-    {
-      "name": "Water Supply",
-      "image": "/property-details/amenties/water-supply.png"
-    },
-    {
-      "name": "HVAC",
-      "image": "/property-details/amenties/hvac.png"
-    },
-    {
-      "name": "Electricity",
-      "image": "/property-details/amenties/electricity.png"
-    },
-    {
-      "name": "Elevators",
-      "image": "/property-details/amenties/elevator.png"
-    },
-    {
-      "name": "Sewage System",
-      "image": "/property-details/amenties/sewage-system.png"
-    },
-    {
-      "name": "Property Insurance",
-      "image": "/property-details/amenties/property-insurance.png"
-    },
-    {
-      "name": "Power Supply 24/7",
-      "image": "/property-details/amenties/power-supply.png"
-    },
-    {
-      "name": "Fire Alarm",
-      "image": "/property-details/amenties/fire-alarm.png"
-    },
-    {
-      "name": "Smoke Detector",
-      "image": "/property-details/amenties/smoke-detector.png"
-    },
-    {
-      "name": "2W Parking",
-      "image": "/property-details/amenties/2wparking.png"
-    },
-    {
-      "name": "4W Parking",
-      "image": "/property-details/amenties/4wparking.png"
-    },
-    {
-      "name": "Visitor Parking",
-      "image": "/property-details/amenties/visitor-parking.png"
-    },
-    {
-      "name": "Building Security",
-      "image": "/property-details/amenties/building-security.png"
-    },
-    {
-      "name": "First Aid Kit",
-      "image": "/property-details/amenties/first-aidkit.png"
-    },
-    {
-      "name": "DG Backup",
-      "image": "/property-details/amenties/dg-backup.png"
-    },
-    {
-      "name": "Extinguisher",
-      "image": "/property-details/amenties/fire-extinguisher.png"
-    },
-    {
-      "name": "EV Charging Space",
-      "image": "/property-details/amenties/ev-charging-space.png"
-    },
-    {
-      "name": "Accessible To Persons with Disabilities",
-      "image": "/property-details/amenties/accessable.png"
-    },
-    {
-      "name": "Building Permit",
-      "image": "/property-details/amenties/permit.png"
-    },
-    {
-      "name": "Guest check-in/ Registration",
-      "image": "/property-details/amenties/guest-checkin.png"
-    },
-    {
-      "name": "Waste Disposal",
-      "image": "/property-details/amenties/nighty-trash.png"
-    },
-    {
-      "name": "Delivery acceptance/notification",
-      "image": "/property-details/amenties/delivery-acceptance.png"
-    },
-    {
-      "name": "CCTV",
-      "image": "/property-details/amenties/security-guard.png"
+      "name": "Delivery acceptance/n...",
+      "image": "/property-details/amenties/delivery-acceptance.png",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc438"
+      }
     },
     {
       "name": "Package notification",
-      "image": "/property-details/amenties/package-notification.png"
+      "image": "/property-details/amenties/package-notification.png",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc439"
+      }
     },
     {
-      "name": "Intercom",
-      "image": "/property-details/amenties/guest-management.png"
+      "name": "Guest management ...",
+      "image": "/property-details/amenties/guest-management.png",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc43a"
+      }
     },
     {
-      "name": "Guest management / keycard access",
-      "image": "/property-details/amenties/guest-management.png"
-    },
-    {
-      "name": "Security guards and video surveillance",
-      "image": "/property-details/amenties/security-guard.png"
-    },
-    {
-      "name": "Tea",
-      "image": "/property-details/amenties/tea.png"
-    },
-    {
-      "name": "Coffee",
-      "image": "/property-details/amenties/coffee.png"
-    },
-    {
-      "name": "Water",
-      "image": "/property-details/amenties/water.png"
+      "name": "Security guards and video...",
+      "image": "/property-details/amenties/security-guard.png",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc43b"
+      }
     },
     {
       "name": "Milk / Sweeteners",
-      "image": "/property-details/amenties/milk.png"
+      "image": "/property-details/amenties/milk.png",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc43c"
+      }
     },
     {
-      "name": "Cups, mugs, and more",
-      "image": "/property-details/amenties/cups-mugs.png"
+      "name": "Coffee",
+      "image": "/property-details/amenties/coffee.png",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc43d"
+      }
+    },
+    {
+      "name": "Water",
+      "image": "/property-details/amenties/water.png",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc43e"
+      }
+    },
+    {
+      "name": "Pantry available 24/7",
+      "image": "/property-details/amenties/food-vendor.png",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc43f"
+      }
+    },
+    {
+      "name": "Cafeteria",
+      "image": "/property-details/amenties/food-vendor.png",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc440"
+      }
     },
     {
       "name": "Food Vendor",
-      "image": "/property-details/amenties/food-vendor.png"
-    },
-    {
-      "name": "Daily upkeep of bathrooms, pantries, conference rooms, and common areas",
-      "image": "/property-details/amenties/daily-upkeep.png"
-    },
-    {
-      "name": "Nightly trash removal from offices, conference rooms, and common areas ",
-      "image": "/property-details/amenties/nighty-trash.png"
-    },
-    {
-      "name": "Deep - cleaning of offices on a weekly basis",
-      "image": "/property-details/amenties/deep-cleaning.png"
-    },
-    {
-      "name": "Pest extermination",
-      "image": "/property-details/amenties/pest-extermination.png"
-    },
-    {
-      "name": "24 / 7 general cleaning ",
-      "image": "/property-details/amenties/general-cleaning.png"
-    },
-    {
-      "name": "High - speed wi-fi 24/7",
-      "image": "/property-details/amenties/wifi.png"
-    },
-    {
-      "name": "Tape and paper clips",
-      "image": "/property-details/amenties/tape-paper.png"
-    },
-    {
-      "name": "Sticky notes",
-      "image": "/property-details/amenties/sticky-notes.png"
-    },
-    {
-      "name": "Printers and copiers",
-      "image": "/property-details/amenties/printers.png"
-    },
-    {
-      "name": "Paper shredding",
-      "image": "/property-details/amenties/paper-shreding.png"
-    },
-    {
-      "name": "Envelopes",
-      "image": "/property-details/amenties/enevelopes.png"
-    },
-    {
-      "name": "Open desk",
-      "image": "/property-details/amenties/open-desk.png"
+      "image": "/property-details/amenties/food-vendor.png",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc441"
+      }
     }
   ],
+  "seatLayoutOptions": [
+    "Open Plan",
+    "Cubicle",
+    "Hybrid"
+  ],
+  "originalPrice": "₹95,00,000",
+  "discountedPrice": "₹90,00,000",
+  "additionalPrice": "₹5,00,000",
+  "badge": "New",
+  "date_added": "9 November 2025",
+  "verificationStatus": "confirmed",
   "nearbyPlaces": {
     "school": [
       {
         "name": "International School of Hyderabad",
         "location": "Madhapur",
-        "distance": "1.2 km >"
+        "distance": "1.2 km >",
+        "_id": {
+          "$oid": "6910236506b5ad89350cc442"
+        }
       },
       {
         "name": "Oakridge International School",
         "location": "Gachibowli",
-        "distance": "2.5 km >"
+        "distance": "2.5 km >",
+        "_id": {
+          "$oid": "6910236506b5ad89350cc443"
+        }
       },
       {
         "name": "Chirec International School",
         "location": "Kondapur",
-        "distance": "3.1 km >"
+        "distance": "3.1 km >",
+        "_id": {
+          "$oid": "6910236506b5ad89350cc444"
+        }
       },
       {
         "name": "Delhi Public School",
         "location": "Nacharam",
-        "distance": "4.8 km >"
+        "distance": "4.8 km >",
+        "_id": {
+          "$oid": "6910236506b5ad89350cc445"
+        }
       },
       {
         "name": "Bharatiya Vidya Bhavan",
         "location": "Jubilee Hills",
-        "distance": "5.2 km >"
+        "distance": "5.2 km >",
+        "_id": {
+          "$oid": "6910236506b5ad89350cc446"
+        }
       },
       {
         "name": "Meridian School",
         "location": "Banjara Hills",
-        "distance": "6.1 km >"
+        "distance": "6.1 km >",
+        "_id": {
+          "$oid": "6910236506b5ad89350cc447"
+        }
       }
     ],
     "hospital": [
       {
         "name": "Apollo Hospitals",
         "location": "Jubilee Hills",
-        "distance": "4.2 km >"
+        "distance": "4.2 km >",
+        "_id": {
+          "$oid": "6910236506b5ad89350cc448"
+        }
       },
       {
         "name": "KIMS Hospital",
         "location": "Kondapur",
-        "distance": "2.8 km >"
+        "distance": "2.8 km >",
+        "_id": {
+          "$oid": "6910236506b5ad89350cc449"
+        }
       },
       {
         "name": "Continental Hospitals",
         "location": "Gachibowli",
-        "distance": "3.5 km >"
+        "distance": "3.5 km >",
+        "_id": {
+          "$oid": "6910236506b5ad89350cc44a"
+        }
       },
       {
         "name": "Yashoda Hospitals",
         "location": "Somajiguda",
-        "distance": "7.3 km >"
+        "distance": "7.3 km >",
+        "_id": {
+          "$oid": "6910236506b5ad89350cc44b"
+        }
       },
       {
         "name": "Care Hospitals",
         "location": "Banjara Hills",
-        "distance": "6.8 km >"
+        "distance": "6.8 km >",
+        "_id": {
+          "$oid": "6910236506b5ad89350cc44c"
+        }
       },
       {
         "name": "Rainbow Children Hospital",
         "location": "Madhapur",
-        "distance": "1.8 km >"
+        "distance": "1.8 km >",
+        "_id": {
+          "$oid": "6910236506b5ad89350cc44d"
+        }
       }
     ],
     "hotel": [
       {
         "name": "Hyatt Hyderabad Gachibowli",
         "location": "Gachibowli",
-        "distance": "2.0 km >"
+        "distance": "2.0 km >",
+        "_id": {
+          "$oid": "6910236506b5ad89350cc44e"
+        }
       },
       {
         "name": "Marriott Hyderabad",
         "location": "Gachibowli",
-        "distance": "2.3 km >"
+        "distance": "2.3 km >",
+        "_id": {
+          "$oid": "6910236506b5ad89350cc44f"
+        }
       },
       {
         "name": "Westin Hyderabad Mindspace",
         "location": "Madhapur",
-        "distance": "1.5 km >"
+        "distance": "1.5 km >",
+        "_id": {
+          "$oid": "6910236506b5ad89350cc450"
+        }
       },
       {
         "name": "Radisson Blu Plaza",
         "location": "Banjara Hills",
-        "distance": "5.9 km >"
+        "distance": "5.9 km >",
+        "_id": {
+          "$oid": "6910236506b5ad89350cc451"
+        }
       },
       {
         "name": "Park Hyatt Hyderabad",
         "location": "Banjara Hills",
-        "distance": "6.2 km >"
+        "distance": "6.2 km >",
+        "_id": {
+          "$oid": "6910236506b5ad89350cc452"
+        }
       },
       {
         "name": "Sheraton Hyderabad Hotel",
         "location": "Gachibowli",
-        "distance": "2.7 km >"
+        "distance": "2.7 km >",
+        "_id": {
+          "$oid": "6910236506b5ad89350cc453"
+        }
       }
     ],
     "business": [
       {
         "name": "HITEC City",
         "location": "Madhapur",
-        "distance": "0.8 km >"
+        "distance": "0.8 km >",
+        "_id": {
+          "$oid": "6910236506b5ad89350cc454"
+        }
       },
       {
         "name": "Mindspace IT Park",
         "location": "Madhapur",
-        "distance": "1.0 km >"
+        "distance": "1.0 km >",
+        "_id": {
+          "$oid": "6910236506b5ad89350cc455"
+        }
       },
       {
         "name": "DLF Cyber City",
         "location": "Gachibowli",
-        "distance": "2.2 km >"
+        "distance": "2.2 km >",
+        "_id": {
+          "$oid": "6910236506b5ad89350cc456"
+        }
       },
       {
         "name": "Raheja Mindspace",
         "location": "Madhapur",
-        "distance": "1.3 km >"
+        "distance": "1.3 km >",
+        "_id": {
+          "$oid": "6910236506b5ad89350cc457"
+        }
       },
       {
         "name": "Cyber Towers",
         "location": "Madhapur",
-        "distance": "1.1 km >"
+        "distance": "1.1 km >",
+        "_id": {
+          "$oid": "6910236506b5ad89350cc458"
+        }
       },
       {
         "name": "Salarpuria Sattva Knowledge City",
         "location": "Raidurg",
-        "distance": "3.4 km >"
+        "distance": "3.4 km >",
+        "_id": {
+          "$oid": "6910236506b5ad89350cc459"
+        }
       }
-    ]
-  },
-  "floorPlans": {
-    "6-15 Seats": [
-      "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&h=400&fit=crop"
-    ],
-    "16-30 Seats": [
-      "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=600&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1497366412874-3415097a27e7?w=600&h=400&fit=crop"
-    ],
-    "31-60 Seats": [
-      "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=600&h=400&fit=crop",
-      "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&h=400&fit=crop"
     ]
   },
   "ratings": {
@@ -392,76 +448,291 @@
       "user": "Zxscdvfbng",
       "rating": 4,
       "date": "Nov 4, 2025",
-      "comment": "XACSDVBF"
+      "comment": "XACSDVBF",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc45a"
+      }
     },
     {
       "user": "Great",
       "rating": 5,
       "date": "Nov 4, 2025",
-      "comment": "Good"
+      "comment": "Good",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc45b"
+      }
     },
     {
       "user": "demo",
       "rating": 5,
       "date": "Nov 4, 2025",
-      "comment": "demo"
+      "comment": "demo",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc45c"
+      }
     },
     {
       "user": "A",
       "rating": 4,
       "date": "Nov 4, 2025",
-      "comment": "A"
+      "comment": "A",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc45d"
+      }
     },
     {
       "user": "User",
       "rating": 5,
       "date": "Jul 24, 2025",
-      "comment": "Near Metro of Good Public Transport. Near Metross of Good Public Transport."
+      "comment": "Near Metro of Good Public Transport. Near Metross of Good Public Transport.",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc45e"
+      }
     },
     {
       "user": "User",
       "rating": 5,
       "date": "Jul 24, 2025",
-      "comment": "Good review"
+      "comment": "Good review",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc45f"
+      }
     },
     {
       "user": "User",
       "rating": 4,
       "date": "Jul 24, 2025",
-      "comment": "Best review"
+      "comment": "Best review",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc460"
+      }
     },
     {
       "user": "User",
       "rating": 3,
       "date": "Jul 24, 2025",
-      "comment": "Best review"
+      "comment": "Best review",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc461"
+      }
     },
     {
       "user": "User",
       "rating": 2,
       "date": "Jul 20, 2025",
-      "comment": "Excellent property with modern amenities. Highly recommended for businesses."
+      "comment": "Excellent property with modern amenities. Highly recommended for businesses.",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc462"
+      }
     },
     {
       "user": "User",
       "rating": 3,
       "date": "Jul 18, 2025",
-      "comment": "Good location but parking can be challenging during peak hours."
+      "comment": "Good location but parking can be challenging during peak hours.",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc463"
+      }
     },
     {
       "user": "User",
       "rating": 1,
       "date": "Jul 15, 2025",
-      "comment": "Perfect office space with all necessary facilities. Great connectivity to metro."
+      "comment": "Perfect office space with all necessary facilities. Great connectivity to metro.",
+      "_id": {
+        "$oid": "6910236506b5ad89350cc464"
+      }
     }
   ],
-  "price_per_desk": 6000,
-  "price_per_sqft": 70,
-  "no_of_seats": 56,
-  "category": "rent",
-  "badge": "new",
-  "__v": 5,
+  "status": "published",
+  "createdBy": {
+    "$oid": "68e48df3527a56a93e36005c"
+  },
+  "views": 0,
+  "inquiries": 0,
+  "location": "Vijay",
+  "sellerPhoneNumber": "+91 8884886822",
+  "interiorImages": [
+    {
+      "fileId": {
+        "$oid": "6910236506b5ad89350cc49e"
+      },
+      "filename": "interior-1762665317596-474558745-step1.png",
+      "originalName": "step1.png",
+      "contentType": "image/jpeg",
+      "size": 60010,
+      "uploadDate": {
+        "$date": "2025-11-09T05:15:18.012Z"
+      },
+      "url": "https://admin.buildersinfo.in/api/upload/file/6910236506b5ad89350cc49e",
+      "tags": []
+    },
+    {
+      "fileId": {
+        "$oid": "6910236506b5ad89350cc49f"
+      },
+      "filename": "interior-1762665317596-736154316-step2.png",
+      "originalName": "step2.png",
+      "contentType": "image/jpeg",
+      "size": 42899,
+      "uploadDate": {
+        "$date": "2025-11-09T05:15:18.013Z"
+      },
+      "url": "https://admin.buildersinfo.in/api/upload/file/6910236506b5ad89350cc49f",
+      "tags": []
+    },
+    {
+      "fileId": {
+        "$oid": "6910236506b5ad89350cc4a0"
+      },
+      "filename": "interior-1762665317596-704580121-step3.png",
+      "originalName": "step3.png",
+      "contentType": "image/jpeg",
+      "size": 56510,
+      "uploadDate": {
+        "$date": "2025-11-09T05:15:18.013Z"
+      },
+      "url": "https://admin.buildersinfo.in/api/upload/file/6910236506b5ad89350cc4a0",
+      "tags": []
+    },
+    {
+      "fileId": {
+        "$oid": "6910236506b5ad89350cc4a1"
+      },
+      "filename": "interior-1762665317596-364362518-step1.png",
+      "originalName": "step1.png",
+      "contentType": "image/jpeg",
+      "size": 60010,
+      "uploadDate": {
+        "$date": "2025-11-09T05:15:18.013Z"
+      },
+      "url": "https://admin.buildersinfo.in/api/upload/file/6910236506b5ad89350cc4a1",
+      "tags": []
+    },
+    {
+      "fileId": {
+        "$oid": "6910236506b5ad89350cc4a2"
+      },
+      "filename": "interior-1762665317597-391476578-step2.png",
+      "originalName": "step2.png",
+      "contentType": "image/jpeg",
+      "size": 42899,
+      "uploadDate": {
+        "$date": "2025-11-09T05:15:18.013Z"
+      },
+      "url": "https://admin.buildersinfo.in/api/upload/file/6910236506b5ad89350cc4a2",
+      "tags": []
+    }
+  ],
+  "seatLayoutImages": [
+    {
+      "fileId": {
+        "$oid": "6910236506b5ad89350cc4d7"
+      },
+      "filename": "seat-layout-1762665317655-257150110-step1.png",
+      "originalName": "step1.png",
+      "contentType": "image/jpeg",
+      "size": 60010,
+      "uploadDate": {
+        "$date": "2025-11-09T05:15:17.996Z"
+      },
+      "url": "https://admin.buildersinfo.in/api/upload/file/6910236506b5ad89350cc4d7",
+      "tags": [
+        "6-15 Seats"
+      ]
+    },
+    {
+      "fileId": {
+        "$oid": "6910236506b5ad89350cc4d8"
+      },
+      "filename": "seat-layout-1762665317656-513839322-step2.png",
+      "originalName": "step2.png",
+      "contentType": "image/jpeg",
+      "size": 42899,
+      "uploadDate": {
+        "$date": "2025-11-09T05:15:17.999Z"
+      },
+      "url": "https://admin.buildersinfo.in/api/upload/file/6910236506b5ad89350cc4d8",
+      "tags": [
+        "6-15 Seats"
+      ]
+    },
+    {
+      "fileId": {
+        "$oid": "6910236506b5ad89350cc4d9"
+      },
+      "filename": "seat-layout-1762665317656-574983039-step3.png",
+      "originalName": "step3.png",
+      "contentType": "image/jpeg",
+      "size": 56510,
+      "uploadDate": {
+        "$date": "2025-11-09T05:15:17.999Z"
+      },
+      "url": "https://admin.buildersinfo.in/api/upload/file/6910236506b5ad89350cc4d9",
+      "tags": [
+        "6-15 Seats"
+      ]
+    },
+    {
+      "fileId": {
+        "$oid": "6910236506b5ad89350cc4da"
+      },
+      "filename": "seat-layout-1762665317656-297190352-step1.png",
+      "originalName": "step1.png",
+      "contentType": "image/jpeg",
+      "size": 60010,
+      "uploadDate": {
+        "$date": "2025-11-09T05:15:18.000Z"
+      },
+      "url": "https://admin.buildersinfo.in/api/upload/file/6910236506b5ad89350cc4da",
+      "tags": [
+        "6-15 Seats"
+      ]
+    },
+    {
+      "fileId": {
+        "$oid": "6910236506b5ad89350cc4db"
+      },
+      "filename": "seat-layout-1762665317656-357062640-step2.png",
+      "originalName": "step2.png",
+      "contentType": "image/jpeg",
+      "size": 42899,
+      "uploadDate": {
+        "$date": "2025-11-09T05:15:18.000Z"
+      },
+      "url": "https://admin.buildersinfo.in/api/upload/file/6910236506b5ad89350cc4db",
+      "tags": [
+        "6-15 Seats"
+      ]
+    }
+  ],
+  "seatLayoutPDFs": [],
+  "propertyVideos": [],
+  "publishedAt": {
+    "$date": "2025-11-09T05:15:17.149Z"
+  },
+  "createdAt": {
+    "$date": "2025-11-09T05:15:17.154Z"
+  },
   "updatedAt": {
-    "$date": "2025-11-04T17:19:28.042Z"
+    "$date": "2025-11-09T05:48:13.831Z"
+  },
+  "__v": 2,
+  "featuredImage": {
+    "fileId": {
+      "$oid": "6910236506b5ad89350cc49e"
+    },
+    "filename": "interior-1762665317596-474558745-step1.png",
+    "originalName": "step1.png",
+    "contentType": "image/jpeg",
+    "size": 60010,
+    "uploadDate": {
+      "$date": "2025-11-09T05:15:18.013Z"
+    },
+    "url": "https://admin.buildersinfo.in/api/upload/file/6910236506b5ad89350cc49e",
+    "tags": []
+  },
+  "updatedBy": {
+    "$oid": "6904d1cb8aaae5f41f1e4643"
   }
 }

@@ -133,30 +133,47 @@ export default function HomePage() {
         const result = await response.json();
 
         if (result.success && result.data) {
-          const properties = result.data.map(property => ({
-            ...property,
-            id: property._id || 'XX',
-            name: property.name || 'Property Name',
-            propertyType: property.propertyType || 'residential',
-            state_name: property.state_name || 'Location',
-            layer_location: property.layer_location || 'Area',
-            location_district: property.location_district || 'District',
-            position: property.position || property.coordinates || { lat: 17.4200, lng: 78.4867 },
-            coordinates: property.coordinates || property.position || { lat: 17.4200, lng: 78.4867 },
-            images: property.images || ['/placeholder.png'],
-            featuredImageUrl: property.featuredImageUrl || '/placeholder.png',
-            originalPrice: property.originalPrice || '₹XX',
-            discountedPrice: property.discountedPrice || '₹XX',
-            date_added: property.date_added || 'N/A',
-            is_verified: property.is_verified || false,
-            sellerPhoneNumber: property.sellerPhoneNumber || '+91 XXXXXXXXXX',
-            address: property.address || 'Address not available',
-            amenities: property.amenities || [],
-            nearbyPlaces: property.nearbyPlaces || { school: [], hospital: [], hotel: [], business: [] },
-            floorPlans: property.floorPlans || {},
-            ratings: property.ratings || { overall: 0, totalRatings: 0, breakdown: {}, whatsGood: [], whatsBad: [] },
-            reviews: property.reviews || []
-          }));
+          const properties = result.data.map(property => {
+            // Ensure coordinates are in the correct format
+            let position = property.position || property.coordinates;
+
+            // Handle different coordinate formats from database
+            if (position && (position.latitude || position.lat)) {
+              position = {
+                lat: position.lat || position.latitude,
+                lng: position.lng || position.longitude
+              };
+            } else {
+              position = { lat: 17.4200, lng: 78.4867 }; // Default fallback
+            }
+
+            console.log('Property:', property.name || property.propertyName, 'Position:', position);
+
+            return {
+              ...property,
+              id: property._id || 'XX',
+              name: property.name || property.propertyName || 'Property Name',
+              propertyType: property.propertyType || property.Category?.toLowerCase() || 'residential',
+              state_name: property.state_name || property.address?.state || 'Location',
+              layer_location: property.layer_location || property.address?.locality || 'Area',
+              location_district: property.location_district || property.address?.district || property.address?.city || 'District',
+              position: position,
+              coordinates: position,
+              images: property.images || ['/placeholder.png'],
+              featuredImageUrl: property.featuredImageUrl || property.featuredImage?.url || '/placeholder.png',
+              originalPrice: property.originalPrice || '₹XX',
+              discountedPrice: property.discountedPrice || '₹XX',
+              date_added: property.date_added || 'N/A',
+              is_verified: property.is_verified || property.verificationStatus === 'confirmed' || false,
+              sellerPhoneNumber: property.sellerPhoneNumber || '+91 XXXXXXXXXX',
+              address: typeof property.address === 'string' ? property.address : 'Address not available',
+              amenities: property.amenities || [],
+              nearbyPlaces: property.nearbyPlaces || { school: [], hospital: [], hotel: [], business: [] },
+              floorPlans: property.floorPlans || {},
+              ratings: property.ratings || { overall: 0, totalRatings: 0, breakdown: {}, whatsGood: [], whatsBad: [] },
+              reviews: property.reviews || []
+            };
+          });
 
           console.log('Loading properties from API:', properties.length);
           setMarkers(properties);

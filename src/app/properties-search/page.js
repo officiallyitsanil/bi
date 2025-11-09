@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 
 // Skeleton Loader Component
@@ -66,7 +66,8 @@ function SearchPageSkeleton() {
 
 function PropertiesSearchContent() {
   const searchParams = useSearchParams();
-  const cityParam = searchParams.get('city') || '';
+  const cityParam = useMemo(() => searchParams.get('city') || '', [searchParams]);
+  const typeParam = useMemo(() => searchParams.get('type') || '', [searchParams]);
 
   // State for filters
   const [selectedBadge, setSelectedBadge] = useState('');
@@ -94,155 +95,72 @@ function PropertiesSearchContent() {
     return city.charAt(0).toUpperCase() + city.slice(1).toLowerCase();
   };
 
-  // Fetch property from MongoDB and replicate
+  // Fetch properties from MongoDB API
   useEffect(() => {
     const fetchProperties = async () => {
       setIsLoading(true);
+      console.log('🔍 Fetching properties with cityParam:', cityParam);
       try {
-        // Simulate loading delay for better UX
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Fetch ALL properties (both commercial and residential) - using direct endpoint
+        const timestamp = new Date().getTime();
+        const response = await fetch(`/api/properties-direct?_t=${timestamp}`);
+        console.log('📡 API Response status:', response.status);
 
-        // Base property from MongoDB
-        const baseProperty = {
-          "_id": "690956881f32787e946737f2",
-          "propertyType": "commercial",
-          "state_name": "Telangana",
-          "city": "Mumbai",
-          "coordinates": { "lat": 17.4065, "lng": 78.4772 },
-          "name": "Premium Business Hub",
-          "originalPrice": "₹95,00,000",
-          "discountedPrice": "₹90,00,000",
-          "additionalPrice": "₹5,00,000",
-          "images": [
-            "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=600&fit=crop",
-            "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=600&fit=crop",
-            "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800&h=600&fit=crop"
-          ],
-          "featuredImageUrl": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=300&fit=crop",
-          "date_added": "10 December 2024",
-          "is_verified": true,
-          "sellerPhoneNumber": "+91 8884886822",
-          "layer_location": "Madhapur",
-          "location_district": "Hyderabad",
-          "address": "Madhapur, Hyderabad, Telangana 500081, India",
-          "amenities": [
-            { "name": "OC Certificate", "image": "/property-details/amenties/oc.png" },
-            { "name": "SEZ Approved", "image": "/property-details/amenties/sez.png" },
-            { "name": "Fire NOC", "image": "/property-details/amenties/fire-noc.png" },
-            { "name": "Water Supply", "image": "/property-details/amenties/water-supply.png" },
-            { "name": "HVAC", "image": "/property-details/amenties/hvac.png" },
-            { "name": "Electricity", "image": "/property-details/amenties/electricity.png" },
-            { "name": "Elevators", "image": "/property-details/amenties/elevator.png" },
-            { "name": "Parking", "image": "/property-details/amenties/parking.png" }
-          ],
-          "facilities": ["Parking", "Conference Room", "Elevator", "Gym"],
-          "floors_available": ["First Floor", "Second Floor", "Top Floor"],
-          "ratings": { "overall": 3.7, "totalRatings": 11 },
-          "price_per_desk": 6000,
-          "price_per_sqft": 70,
-          "no_of_seats": 56,
-          "category": "rent",
-          "badge": "new"
-        };
+        const result = await response.json();
+        console.log('📦 API Result:', result);
+        console.log('✅ Success:', result.success);
+        console.log('📊 Data length:', result.data?.length);
 
-        // Store the MongoDB ID
-        setMongodbId(baseProperty._id);
+        if (result.success && result.data) {
+          console.log('🏢 Total properties fetched:', result.data.length);
 
-        // Replicate the property 7 times with different values
-        const replicatedProperties = [
-          {
-            ...baseProperty,
-            badge: "new",
-            propertyType: "commercial",
-            facilities: ["Parking", "Conference Room"],
-            floors_available: ["First Floor", "Second Floor"],
-            name: "Premium Business Hub",
-            discountedPrice: "₹90,00,000",
-            date_added: "10 December 2024",
-          },
-          {
-            ...baseProperty,
-            badge: "premium",
-            propertyType: "residential",
-            facilities: ["Gym", "Elevator"],
-            floors_available: ["Ground Floor", "First Floor"],
-            name: "Luxury Apartment Complex",
-            discountedPrice: "₹1,20,00,000",
-            date_added: "5 November 2024",
-          },
-          {
-            ...baseProperty,
-            badge: "new",
-            propertyType: "commercial",
-            facilities: ["Parking", "Cafeteria"],
-            floors_available: ["Second Floor", "Third Floor"],
-            name: "Modern Office Space",
-            discountedPrice: "₹75,00,000",
-            date_added: "20 October 2024",
-          },
-          {
-            ...baseProperty,
-            badge: "premium",
-            propertyType: "commercial",
-            facilities: ["Conference Room", "Elevator"],
-            floors_available: ["Top Floor"],
-            name: "Executive Business Center",
-            discountedPrice: "₹1,50,00,000",
-            date_added: "15 September 2024",
-          },
-          {
-            ...baseProperty,
-            badge: "new",
-            propertyType: "residential",
-            facilities: ["Parking", "Gym"],
-            floors_available: ["First Floor"],
-            name: "Cozy Family Home",
-            discountedPrice: "₹85,00,000",
-            date_added: "1 December 2024",
-          },
-          {
-            ...baseProperty,
-            badge: "premium",
-            propertyType: "commercial",
-            facilities: ["Parking", "Conference Room", "Elevator"],
-            floors_available: ["Ground Floor", "First Floor", "Second Floor"],
-            name: "Corporate Tower",
-            discountedPrice: "₹2,00,00,000",
-            date_added: "25 August 2024",
-          },
-          {
-            ...baseProperty,
-            badge: "new",
-            propertyType: "residential",
-            facilities: ["Elevator", "Gym"],
-            floors_available: ["Second Floor", "Top Floor"],
-            name: "Skyline Residency",
-            discountedPrice: "₹95,00,000",
-            date_added: "18 November 2024",
-          },
-          {
-            ...baseProperty,
-            badge: "premium",
-            propertyType: "commercial",
-            facilities: ["Parking", "Cafeteria", "Conference Room"],
-            floors_available: ["First Floor", "Second Floor", "Third Floor"],
-            name: "Tech Park Plaza",
-            discountedPrice: "₹1,80,00,000",
-            date_added: "12 July 2024",
+          const properties = result.data.map(property => ({
+            ...property,
+            _id: property._id || property.id,
+            id: property._id || property.id,
+          }));
+
+          console.log('🔄 Mapped properties:', properties.length);
+
+          // DISABLED: Filter by city - showing ALL properties for now
+          let filtered = properties;
+          // if (cityParam) {
+          //   const cityLower = cityParam.toLowerCase();
+          //   console.log('🔎 Filtering by city:', cityLower);
+          //   filtered = properties.filter(prop =>
+          //     prop.city?.toLowerCase().includes(cityLower) ||
+          //     prop.state_name?.toLowerCase().includes(cityLower) ||
+          //     prop.location_district?.toLowerCase().includes(cityLower) ||
+          //     prop.layer_location?.toLowerCase().includes(cityLower)
+          //   );
+          //   console.log('✅ Filtered properties:', filtered.length);
+          // }
+
+          console.log('💾 Setting ALL properties (no filters):', filtered.length);
+          setAllProperties(filtered);
+          setFilteredProperties(filtered);
+
+          // Store first property ID if available
+          if (filtered.length > 0) {
+            setMongodbId(filtered[0]._id);
+            console.log('🆔 First property ID:', filtered[0]._id);
           }
-        ];
-
-        setAllProperties(replicatedProperties);
-        setFilteredProperties(replicatedProperties);
+        } else {
+          console.error('❌ API returned no data or failed:', result);
+        }
       } catch (error) {
-        console.error('Error fetching properties:', error);
+        console.error('💥 Error fetching properties:', error);
+        console.error('Error details:', error.message);
+        setAllProperties([]);
+        setFilteredProperties([]);
       } finally {
         setIsLoading(false);
+        console.log('✅ Loading complete');
       }
     };
 
     fetchProperties();
-  }, []);
+  }, [cityParam]); // Removed typeParam dependency - loading all properties
 
   // Filter options
   const badges = ["new", "premium"];
@@ -272,42 +190,42 @@ function PropertiesSearchContent() {
   ];
   const sortByOptions = ["Price: Low to High", "Price: High to Low", "Newest First", "Oldest First"];
 
-  // Apply filters and sorting
+  // Apply filters and sorting - ALL FILTERS DISABLED FOR NOW
   useEffect(() => {
     let filtered = [...allProperties];
 
-    // Badge filter
-    if (selectedBadge) {
-      filtered = filtered.filter(prop => prop.badge === selectedBadge);
-    }
+    // DISABLED: Badge filter
+    // if (selectedBadge) {
+    //   filtered = filtered.filter(prop => prop.badge === selectedBadge);
+    // }
 
-    // Property type filter
-    if (selectedPropertyType) {
-      filtered = filtered.filter(prop => prop.propertyType === selectedPropertyType);
-    }
+    // DISABLED: Property type filter
+    // if (selectedPropertyType) {
+    //   filtered = filtered.filter(prop => prop.propertyType === selectedPropertyType);
+    // }
 
-    // Facilities filter
-    if (selectedFacilities) {
-      filtered = filtered.filter(prop =>
-        Array.isArray(prop.facilities) && prop.facilities.includes(selectedFacilities)
-      );
-    }
+    // DISABLED: Facilities filter
+    // if (selectedFacilities) {
+    //   filtered = filtered.filter(prop =>
+    //     Array.isArray(prop.facilities) && prop.facilities.includes(selectedFacilities)
+    //   );
+    // }
 
-    // Floors offered filter
-    if (selectedFloorsOffered) {
-      filtered = filtered.filter(prop =>
-        Array.isArray(prop.floors_available) && prop.floors_available.includes(selectedFloorsOffered)
-      );
-    }
+    // DISABLED: Floors offered filter
+    // if (selectedFloorsOffered) {
+    //   filtered = filtered.filter(prop =>
+    //     Array.isArray(prop.floors_available) && prop.floors_available.includes(selectedFloorsOffered)
+    //   );
+    // }
 
-    // Amenities filter
-    if (selectedAmenities.length > 0) {
-      filtered = filtered.filter(prop =>
-        Array.isArray(prop.amenities) && selectedAmenities.every(amenity =>
-          prop.amenities.some(a => a.name && a.name.toLowerCase().includes(amenity.toLowerCase()))
-        )
-      );
-    }
+    // DISABLED: Amenities filter
+    // if (selectedAmenities.length > 0) {
+    //   filtered = filtered.filter(prop =>
+    //     Array.isArray(prop.amenities) && selectedAmenities.every(amenity =>
+    //       prop.amenities.some(a => a.name && a.name.toLowerCase().includes(amenity.toLowerCase()))
+    //     )
+    //   );
+    // }
 
     // Sorting
     if (selectedSortBy) {
@@ -566,7 +484,7 @@ function PropertiesSearchContent() {
           {filteredProperties.map((property, index) => (
             <div
               key={index}
-              onClick={() => window.open(`/property-details?id=${mongodbId}&type=commercial`, '_blank')}
+              onClick={() => window.open(`/property-details?id=${property._id || property.id}&type=${property.propertyType || typeParam || 'commercial'}`, '_blank')}
               className="bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl hover:-translate-y-1 sm:hover:-translate-y-2 transition-all duration-300 relative cursor-pointer"
             >
               {/* Badge */}

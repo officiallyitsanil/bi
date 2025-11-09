@@ -7,55 +7,44 @@ import { useEffect, useState } from 'react';
 export default function BuildersPage() {
   const router = useRouter();
   const [isVisible, setIsVisible] = useState(false);
+  const [builders, setBuilders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setIsVisible(true);
+    fetchBuilders();
   }, []);
 
-  const builders = [
-    {
-      id: 'prestige-group',
-      name: 'Prestige Group',
-      tagline: 'Building Dreams, Creating Landmarks',
-      founded: '1986',
-      headquarters: 'Bangalore',
-      projectsCompleted: '280+',
-      ongoingProjects: '45',
-      upcomingProjects: '25',
-      experience: '37+',
-      cities: '12',
-      gradient: 'from-emerald-500 via-teal-500 to-cyan-600',
-      accentColor: 'emerald',
-    },
-    {
-      id: 'brigade-group',
-      name: 'Brigade Group',
-      tagline: 'Excellence in Real Estate',
-      founded: '1986',
-      headquarters: 'Bangalore',
-      projectsCompleted: '200+',
-      ongoingProjects: '35',
-      upcomingProjects: '20',
-      experience: '37+',
-      cities: '8',
-      gradient: 'from-blue-500 via-indigo-500 to-purple-600',
-      accentColor: 'blue',
-    },
-    {
-      id: 'sobha-limited',
-      name: 'Sobha Limited',
-      tagline: 'Passion at Work',
-      founded: '1995',
-      headquarters: 'Bangalore',
-      projectsCompleted: '150+',
-      ongoingProjects: '30',
-      upcomingProjects: '15',
-      experience: '28+',
-      cities: '10',
-      gradient: 'from-orange-500 via-red-500 to-pink-600',
-      accentColor: 'orange',
-    },
-  ];
+  const fetchBuilders = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/builders');
+      const data = await response.json();
+
+      if (data.success) {
+        // Transform MongoDB data to match UI structure
+        const transformedBuilders = data.data.map((builder, index) => ({
+          id: builder._id,
+          name: builder.builderName || 'N/A',
+          tagline: builder.tagline || '',
+          founded: builder.foundedYear || 'N/A',
+          headquarters: builder.headquarters || 'N/A',
+          projectsCompleted: builder.projectsCompleted?.toString() || '0',
+          ongoingProjects: builder.ongoingProjects?.toString() || '0',
+          upcomingProjects: builder.upcomingProjects?.toString() || '0',
+          experience: builder.yearsOfExperience ? `${builder.yearsOfExperience}+` : 'N/A',
+          cities: builder.citiesPresence || 'N/A',
+          gradient: ['from-emerald-500 via-teal-500 to-cyan-600', 'from-blue-500 via-indigo-500 to-purple-600', 'from-orange-500 via-red-500 to-pink-600'][index % 3],
+          accentColor: ['emerald', 'blue', 'orange'][index % 3],
+        }));
+        setBuilders(transformedBuilders);
+      }
+    } catch (err) {
+      console.error('Error fetching builders:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getAccentColors = (color) => {
     const colors = {
@@ -81,12 +70,29 @@ export default function BuildersPage() {
     return colors[color];
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading builders...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100">
       {/* Builders Grid with Staggered Animation */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 py-8 sm:py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-          {builders.map((builder, index) => {
+        {builders.length === 0 ? (
+          <div className="text-center py-12">
+            <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600 text-lg">No builders found</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            {builders.map((builder, index) => {
             const colors = getAccentColors(builder.accentColor);
             return (
               <div
@@ -159,8 +165,9 @@ export default function BuildersPage() {
                 </div>
               </div>
             );
-          })}
-        </div>
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

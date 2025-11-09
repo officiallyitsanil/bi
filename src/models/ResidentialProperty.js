@@ -1,209 +1,170 @@
 import mongoose from 'mongoose';
 
-const AmenitySchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-  },
-  image: {
-    type: String,
-    required: true,
-  },
+const FileSchema = new mongoose.Schema({
+  fileId: mongoose.Schema.Types.ObjectId,
+  filename: String,
+  originalName: String,
+  contentType: String,
+  size: Number,
+  uploadDate: Date,
+  url: String,
+  description: String,
+  tags: [String],
 }, { _id: false });
+
+const AmenitySchema = new mongoose.Schema({
+  name: String,
+  image: String,
+}, { _id: true });
 
 const NearbyPlaceSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-  },
-  location: {
-    type: String,
-    required: true,
-  },
-  distance: {
-    type: String,
-    required: true,
-  },
-}, { _id: false });
+  name: String,
+  location: String,
+  distance: String,
+}, { _id: true });
 
 const ReviewSchema = new mongoose.Schema({
-  user: {
-    type: String,
-    required: true,
-  },
+  user: String,
   rating: {
     type: Number,
-    required: true,
     min: 1,
     max: 5,
   },
-  date: {
-    type: String,
-    required: true,
+  date: String,
+  comment: String,
+}, { _id: true });
+
+const FloorConfigurationSchema = new mongoose.Schema({
+  floor: String,
+  dedicatedCabin: {
+    enabled: Boolean,
+    readyToMove: Boolean,
+    readyForFitOut: Boolean,
+    availableFrom: Date,
+    timeline: String,
+    seats: String,
+    pricePerSeat: String,
+    pricePerSqft: String,
+    billableUnits: String,
   },
-  comment: {
-    type: String,
-    required: true,
+  dedicatedFloor: {
+    enabled: Boolean,
+    readyToMove: Boolean,
+    readyForFitOut: Boolean,
+    availableFrom: Date,
+    timeline: String,
+    seats: String,
+    pricePerSeat: String,
+    pricePerSqft: String,
+    billableUnits: String,
   },
 }, { _id: false });
 
 const ResidentialPropertySchema = new mongoose.Schema({
-  propertyType: {
-    type: String,
-    required: true,
-    enum: ['commercial', 'residential'],
-    default: 'residential',
-  },
-  state_name: {
-    type: String,
-    required: true,
-  },
-  city: {
-    type: String,
-    required: true,
+  selectedType: String,
+  apartmentType: String,
+  bhkType: String,
+  propertySize: String,
+  carpetArea: String,
+  floor: String,
+  totalFloors: String,
+  facing: String,
+  propertyAge: String,
+  availableFor: String,
+  expectedRent: String,
+  isNegotiable: Boolean,
+  expectedDeposit: String,
+  monthlyMaintenance: String,
+  originalPrice: String,
+  discountedPrice: String,
+  additionalPrice: String,
+  availableFrom: String,
+  furnishing: String,
+  parking: String,
+  propertyName: String,
+  category: String,
+  Category: String,
+  address: {
+    country: String,
+    state: String,
+    district: String,
+    city: String,
+    locality: String,
+    street: String,
+    pincode: String,
+    landmark: String,
   },
   coordinates: {
-    lat: {
-      type: Number,
-      required: true,
-    },
-    lng: {
-      type: Number,
-      required: true,
-    },
+    latitude: Number,
+    longitude: Number,
+    lat: Number,
+    lng: Number,
   },
-  name: {
-    type: String,
-    required: true,
-  },
-  originalPrice: {
-    type: String,
-    required: true,
-  },
-  discountedPrice: {
-    type: String,
-    required: true,
-  },
-  additionalPrice: {
-    type: String,
-    required: true,
-  },
-  images: {
-    type: [String],
-    required: true,
-  },
-  featuredImageUrl: {
-    type: String,
-    required: true,
-  },
-  date_added: {
-    type: String,
-    required: true,
-  },
-  is_verified: {
-    type: Boolean,
-    default: false,
-  },
-  sellerPhoneNumber: {
-    type: String,
-    required: true,
-  },
-  layer_location: {
-    type: String,
-    required: true,
-  },
-  location_district: {
-    type: String,
-    required: true,
-  },
-  address: {
-    type: String,
-    required: true,
-  },
-  amenities: {
-    type: [AmenitySchema],
-    default: [],
-  },
-  facilities: {
-    type: [String],
-    default: [],
-  },
-  floors_available: {
-    type: [String],
-    default: [],
-  },
+  bathrooms: Number,
+  balconies: Number,
+  whoWillShow: String,
+  nonVegAllowed: Boolean,
+  gatedSecurity: Boolean,
+  gym: Boolean,
+  directionsTip: String,
+  currentSituation: String,
+  waterSupply: String,
+  amenities: [AmenitySchema],
+  selectedFloors: [String],
+  status: String,
+  createdBy: mongoose.Schema.Types.ObjectId,
+  views: Number,
+  inquiries: Number,
+  verificationStatus: String,
+  badge: String,
+  date_added: String,
   nearbyPlaces: {
-    school: {
-      type: [NearbyPlaceSchema],
-      default: [],
-    },
-    hospital: {
-      type: [NearbyPlaceSchema],
-      default: [],
-    },
-    hotel: {
-      type: [NearbyPlaceSchema],
-      default: [],
-    },
-    business: {
-      type: [NearbyPlaceSchema],
-      default: [],
-    },
+    school: [NearbyPlaceSchema],
+    hospital: [NearbyPlaceSchema],
+    hotel: [NearbyPlaceSchema],
+    business: [NearbyPlaceSchema],
   },
+  ratings: {
+    overall: Number,
+    totalRatings: Number,
+    breakdown: Object,
+    whatsGood: [String],
+    whatsBad: [String],
+  },
+  reviews: [ReviewSchema],
+  propertyType: String,
+  location: String,
+  sellerPhoneNumber: String,
+  isUnderManagement: String,
+  facilities: [String],
+  floorConfigurations: [FloorConfigurationSchema],
+  interiorImages: [FileSchema],
+  propertyVideos: [FileSchema],
+  featuredImage: FileSchema,
+  publishedAt: Date,
+  updatedBy: mongoose.Schema.Types.ObjectId,
+  
+  // Legacy fields for backward compatibility
+  state_name: String,
+  city: String,
+  name: String,
+  images: [String],
+  featuredImageUrl: String,
+  is_verified: Boolean,
+  layer_location: String,
+  location_district: String,
+  floors_available: [String],
   floorPlans: {
     type: Map,
     of: [String],
-    default: {},
   },
-  ratings: {
-    overall: {
-      type: Number,
-      required: true,
-      min: 0,
-      max: 5,
-    },
-    totalRatings: {
-      type: Number,
-      required: true,
-      default: 0,
-    },
-    breakdown: {
-      type: Object,
-      default: { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 },
-    },
-    whatsGood: {
-      type: [String],
-      default: [],
-    },
-    whatsBad: {
-      type: [String],
-      default: [],
-    },
-  },
-  reviews: {
-    type: [ReviewSchema],
-    default: [],
-  },
-  price_per_desk: {
-    type: Number,
-  },
-  price_per_sqft: {
-    type: Number,
-  },
-  no_of_seats: {
-    type: Number,
-  },
-  category: {
-    type: String,
-    enum: ['rent', 'sale', 'lease'],
-  },
-  badge: {
-    type: String,
-    enum: ['new', 'featured', 'hot', 'trending'],
-  },
+  price_per_desk: Number,
+  price_per_sqft: Number,
+  no_of_seats: Number,
 }, {
   timestamps: true,
   strict: false,
+  collection: 'residentialproperties',  // Changed to match actual MongoDB collection name (lowercase)
 });
 
 export default mongoose.models.ResidentialProperty || mongoose.model('ResidentialProperty', ResidentialPropertySchema);
