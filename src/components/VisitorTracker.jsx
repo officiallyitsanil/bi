@@ -1,9 +1,14 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 
-const VisitorTracker = () => {
-  const [locationPermission, setLocationPermission] = useState(null);
-  const [isTracking, setIsTracking] = useState(false);
+const VisitorTracker = ({ onLocationUpdate }) => {
+  const [trackingStatus, setTrackingStatus] = useState('idle');
+  const hasTracked = useRef(false);
+  const pathname = usePathname();
+
+  // Check if this is the homepage
+  const isHomepage = pathname === '/';
 
   // Get device information
   const getDeviceInfo = () => {
@@ -11,33 +16,29 @@ const VisitorTracker = () => {
     const platform = navigator.platform;
     const language = navigator.language;
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    
-    // Detect browser
+
     let browser = 'Unknown';
     if (userAgent.includes('Chrome')) browser = 'Chrome';
     else if (userAgent.includes('Firefox')) browser = 'Firefox';
     else if (userAgent.includes('Safari')) browser = 'Safari';
     else if (userAgent.includes('Edge')) browser = 'Edge';
     else if (userAgent.includes('Opera')) browser = 'Opera';
-    
-    // Detect device type
+
     let deviceType = 'desktop';
     if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)) {
       deviceType = 'mobile';
     } else if (/iPad|Android(?=.*Tablet)|Kindle|Silk/i.test(userAgent)) {
       deviceType = 'tablet';
     }
-    
-    // Get screen resolution
+
     const screenResolution = {
       width: window.screen.width,
       height: window.screen.height
     };
-    
-    // Get connection type if available
+
     const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
     const connectionType = connection ? connection.effectiveType : 'unknown';
-    
+
     return {
       userAgent,
       platform,
@@ -50,75 +51,219 @@ const VisitorTracker = () => {
     };
   };
 
-  // Get current location with high accuracy
-  const getCurrentLocation = () => {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error('Geolocation is not supported by this browser.'));
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          resolve({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy
-          });
-        },
-        (error) => {
-          const geoError = new Error(`Geolocation error: ${error.message}`);
-          geoError.code = error.code;
-          geoError.originalError = error;
-          reject(geoError);
-        },
-        {
-          enableHighAccuracy: true, // Enable high accuracy for exact location
-          timeout: 10000, // 10 seconds timeout
-          maximumAge: 0 // Don't use cached position
-        }
-      );
-    });
-  };
-
-  // Reverse geocoding to get address
-  const getAddressFromCoords = async (lat, lng) => {
+  // Get detailed location information from coordinates
+  const getDetailedLocation = async (lat, lng) => {
     try {
+      console.log(`🔍 Fetching location details for coordinates: ${lat}, ${lng}`);
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
       );
       const data = await response.json();
-      
+
       if (data.status === 'OK' && data.results.length > 0) {
-        return data.results[0].formatted_address;
+        // Log all results for debugging
+        console.log('📋 All geocoding results:', data.results.map(r => r.formatted_address));
+
+        const result = data.results[0];
+        const addressComponents = result.address_components;
+
+        // Extract detailed location components with priority order
+        const locationDetails = {
+          location: result.formatted_address,
+          locality: '',
+          sublocality: '',
+          district: '',
+          state: '',
+          country: '',
+          postal: ''
+        };
+
+        // First pass: collect all available data
+        const tempData = {
+          locality: [],
+          sublocality: [],
+          sublocality_level_1: [],
+          administrative_area_level_2: [],
+          administrative_area_level_3: []
+        };
+
+        addressComponents.forEach(component => {
+          const types = component.types;
+
+          if (types.includes('locality')) {
+            tempData.locality.push(component.long_name);
+          }
+          if (types.includes('sublocality') || types.includes('sublocality_level_1')) {
+            tempData.sublocality.push(component.long_name);
+          }
+          if (types.includes('administrative_area_level_3')) {
+            tempData.administrative_area_level_3.push(component.long_name);
+          }
+          if (types.includes('administrative_area_level_2')) {
+            tempData.administrative_area_level_2.push(component.long_name);
+          }
+          if (types.includes('administrative_area_level_1')) {
+            locationDetails.state = component.long_name;
+          }
+          if (types.includes('country')) {
+            locationDetails.country = component.long_name;
+          }
+          if (types.includes('postal_code')) {
+            locationDetails.postal = component.long_name;
+          }
+        });
+
+        // Priority order for locality (city/town):
+        // 1. locality (most accurate city name)
+        // 2. sublocality (neighborhood/area within city)
+        // 3. administrative_area_level_3 (tehsil/taluka)
+        locationDetails.locality = tempData.locality[0] ||
+          tempData.sublocality[0] ||
+          tempData.administrative_area_level_3[0] ||
+          '';
+
+        // Sublocality for more specific area
+        locationDetails.sublocality = tempData.sublocality[0] || '';
+
+        // District is administrative_area_level_2
+        locationDetails.district = tempData.administrative_area_level_2[0] || '';
+
+        console.log('📍 Parsed location details:', locationDetails);
+        console.log('🏙️ City/Locality:', locationDetails.locality);
+        console.log('🏘️ Area/Sublocality:', locationDetails.sublocality);
+        console.log('🗺️ District:', locationDetails.district);
+
+        return locationDetails;
       }
       return null;
     } catch (error) {
-      console.error('Error getting address:', error);
+      console.error('Error getting detailed location:', error);
       return null;
     }
   };
 
-  // Save visitor data to database
-  const saveVisitorData = async (locationData, deviceInfo) => {
+  // Get IP-based location (no permission needed)
+  const getIPLocation = async () => {
     try {
-      let address = null;
-      
-      // Get address if we have location data
-      if (locationData && locationData.latitude && locationData.longitude) {
-        address = await getAddressFromCoords(locationData.latitude, locationData.longitude);
+      console.log('🌐 Fetching IP-based location...');
+      const response = await fetch('https://ipapi.co/json/');
+      const data = await response.json();
+
+      console.log('📡 IP API Response:', {
+        city: data.city,
+        region: data.region,
+        country: data.country_name,
+        lat: data.latitude,
+        lng: data.longitude
+      });
+
+      if (data.latitude && data.longitude) {
+        // Get detailed location from Google Maps API
+        const detailedLocation = await getDetailedLocation(data.latitude, data.longitude);
+
+        const ipLocation = {
+          latitude: data.latitude,
+          longitude: data.longitude,
+          city: data.city,
+          region: data.region,
+          country: data.country_name,
+          postal: data.postal,
+          timezone: data.timezone,
+          org: data.org,
+          ...(detailedLocation || {})
+        };
+        console.log('✅ IP location obtained with details:', ipLocation);
+        console.log('🎯 Final City/Locality:', ipLocation.locality || ipLocation.city);
+        return ipLocation;
       }
-      
+      return null;
+    } catch (error) {
+      console.error('❌ Error getting IP location:', error);
+      return null;
+    }
+  };
+
+  // Get GPS location (requires permission)
+  const getGPSLocation = (retries = 1) => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation not supported'));
+        return;
+      }
+
+      console.log(`📍 Requesting GPS location permission... (Retries left: ${retries})`);
+
+      const options = {
+        enableHighAccuracy: true,
+        timeout: 30000, // Increased to 30 seconds
+        maximumAge: 0
+      };
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const gpsLocation = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            timestamp: new Date()
+          };
+          console.log('✅ GPS location obtained:', gpsLocation);
+          console.log('📍 GPS Coordinates:', `${gpsLocation.latitude}, ${gpsLocation.longitude}`);
+          console.log('🎯 GPS Accuracy:', `${gpsLocation.accuracy} meters`);
+          resolve(gpsLocation);
+        },
+        (error) => {
+          console.log('❌ GPS location denied or failed:', error.message);
+          // Retry on timeout (code 3) or position unavailable (code 2) if retries left
+          if (retries > 0 && (error.code === 3 || error.code === 2)) {
+            console.log('🔄 Retrying GPS location...');
+            // Add a small delay before retrying
+            setTimeout(() => {
+              getGPSLocation(retries - 1).then(resolve).catch(reject);
+            }, 1000);
+          } else {
+            reject(error);
+          }
+        },
+        options
+      );
+    });
+  };
+
+  // Save visitor data to database
+  const saveVisitorData = async (ipLocation, gpsLocation, deviceInfo, locationPermission, isUpdate = false, existingVisitorId = null) => {
+    try {
+      const sessionId = sessionStorage.getItem('sessionId') || Date.now().toString();
+      const hasVisited = localStorage.getItem('hasVisitedHomepage');
+      const visitCount = parseInt(localStorage.getItem('visitCount') || '0') + 1;
+
+      // Get detailed location for GPS coordinates if available
+      let gpsLocationWithDetails = null;
+      if (gpsLocation && gpsLocation.latitude && gpsLocation.longitude) {
+        const detailedLocation = await getDetailedLocation(gpsLocation.latitude, gpsLocation.longitude);
+        gpsLocationWithDetails = {
+          ...gpsLocation,
+          ...(detailedLocation || {})
+        };
+      }
+
       const visitorData = {
-        ...(locationData || {}), // Spread location data only if it exists
-        address, // Include address in the data
+        visitorId: existingVisitorId, // Pass the ID if we have it
+        ipLocation,
+        gpsLocation: gpsLocationWithDetails,
         ...deviceInfo,
-        sessionId: sessionStorage.getItem('sessionId') || Date.now().toString(),
+        sessionId,
         referrer: document.referrer,
         pageUrl: window.location.href,
-        isFirstVisit: !localStorage.getItem('hasVisited'),
-        visitCount: parseInt(localStorage.getItem('visitCount') || '0') + 1
+        isFirstVisit: !hasVisited,
+        visitCount,
+        locationPermission,
+        isHomepageVisit: isHomepage
       };
+
+      console.log(isUpdate ? '🔄 Updating visitor data with GPS location:' : '💾 Creating new visitor record:', visitorData);
+      console.log('🔑 SessionId:', sessionId);
+      if (existingVisitorId) console.log('🆔 VisitorId:', existingVisitorId);
 
       const response = await fetch('/api/visitor', {
         method: 'POST',
@@ -133,80 +278,105 @@ const VisitorTracker = () => {
       }
 
       const result = await response.json();
-      
+
       if (result.success) {
-        // Mark as visited and update visit count
-        localStorage.setItem('hasVisited', 'true');
-        localStorage.setItem('visitCount', visitorData.visitCount.toString());
-        sessionStorage.setItem('sessionId', visitorData.sessionId);
-        return true;
-      } else {
-        return false;
+        localStorage.setItem('hasVisitedHomepage', 'true');
+        localStorage.setItem('visitCount', visitCount.toString());
+        sessionStorage.setItem('sessionId', sessionId);
+        console.log(result.updated ? '✅ Visitor record updated successfully!' : '✅ Visitor record created successfully!');
+        console.log('📋 Visitor ID:', result.visitorId);
+        return result.visitorId; // Return the ID for future updates
       }
+      return null;
     } catch (error) {
-      return false;
+      console.error('❌ Error saving visitor data:', error);
+      return null;
     }
   };
-
   // Main tracking function
   const trackVisitor = async () => {
-    if (isTracking) return;
-    
-    setIsTracking(true);
-    console.log('📍 Tracking visitor - getting device info...');
-    
-    // Get device information
+    if (trackingStatus !== 'idle') return;
+
+    setTrackingStatus('tracking');
+    console.log('🚀 Starting visitor tracking...');
+
     const deviceInfo = getDeviceInfo();
-    let locationData = null;
-    
-    // FORCE location request - browser WILL show permission popup
+    let ipLocation = null;
+    let gpsLocation = null;
+    let locationPermission = 'not_requested';
+
+    // Step 1: Get IP-based location first (no permission needed)
+    ipLocation = await getIPLocation();
+
+    // Notify parent component about IP location for map zoom
+    if (ipLocation && onLocationUpdate) {
+      onLocationUpdate({
+        lat: ipLocation.latitude,
+        lng: ipLocation.longitude,
+        zoom: 10, // City-level zoom for IP location
+        source: 'ip'
+      });
+    }
+
+    // Step 2: Save initial data with IP location (creates new visitor record)
+    const initialVisitorId = await saveVisitorData(ipLocation, null, deviceInfo, 'not_requested', false);
+
+    // Step 3: Request GPS location permission
     try {
-      console.log('🔍 Requesting location permission from browser...');
-      locationData = await getCurrentLocation();
-      console.log('✅ Location obtained successfully:', locationData);
-      setLocationPermission('granted');
+      gpsLocation = await getGPSLocation();
+      locationPermission = 'granted';
+
+      // Notify parent component about GPS location for map zoom
+      if (gpsLocation && onLocationUpdate) {
+        onLocationUpdate({
+          lat: gpsLocation.latitude,
+          lng: gpsLocation.longitude,
+          zoom: 11, // Reduced zoom level as requested (was 12)
+          source: 'gps'
+        });
+      }
+
+      // Step 4: Update SAME visitor record with GPS location
+      await saveVisitorData(ipLocation, gpsLocation, deviceInfo, locationPermission, true, initialVisitorId);
+
     } catch (error) {
-      console.error('❌ Location access FAILED:', error);
-      console.error('Error code:', error.code);
-      console.error('Error message:', error.message);
-      // Silently handle location errors - no alerts
+      // User denied or error occurred
       if (error.code === 1) {
-        console.log('User DENIED location permission');
-        setLocationPermission('denied');
-      } else if (error.code === 2) {
-        console.log('Location UNAVAILABLE');
-      } else if (error.code === 3) {
-        console.log('Location request TIMEOUT');
+        locationPermission = 'denied';
       }
-      // Continue without location data
+      // Update record with final status even if GPS failed
+      await saveVisitorData(ipLocation, null, deviceInfo, locationPermission, true, initialVisitorId);
     }
-    
-    // Save to database (with or without location)
-    try {
-      console.log('💾 Saving visitor data to database...', locationData ? 'WITH location' : 'WITHOUT location');
-      const saved = await saveVisitorData(locationData, deviceInfo);
-      if (saved) {
-        console.log('✅✅✅ Visitor data SAVED to database successfully!');
-      } else {
-        console.log('❌❌❌ FAILED to save visitor data to database');
-      }
-    } catch (error) {
-      console.error('💥 Error during visitor tracking:', error);
-    } finally {
-      setIsTracking(false);
-    }
+
+    setTrackingStatus('completed');
+    console.log('✅ Visitor tracking completed!');
   };
 
-  // Initialize tracking on component mount
   useEffect(() => {
-    console.log('🚀 Starting visitor tracking - requesting location...');
-    // Request location immediately on every page load
-    setTimeout(() => {
-      trackVisitor();
-    }, 500);
-  }, []);
+    // Only track on homepage and only once per session
+    if (!isHomepage || hasTracked.current) {
+      return;
+    }
 
-  // This component doesn't render anything visible
+    // Check if user has already visited homepage in this browser
+    const hasVisitedHomepage = localStorage.getItem('hasVisitedHomepage');
+
+    // Only track first-time visitors OR if you want to track every visit, remove this check
+    if (hasVisitedHomepage) {
+      console.log('⏭️ User has already visited homepage, skipping tracking');
+      return;
+    }
+
+    hasTracked.current = true;
+
+    // Start tracking after a short delay
+    const timer = setTimeout(() => {
+      trackVisitor();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [isHomepage]);
+
   return null;
 };
 

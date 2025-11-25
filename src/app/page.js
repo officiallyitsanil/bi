@@ -73,7 +73,20 @@ export default function HomePage() {
 
   const [sizeUnit, setSizeUnit] = useState('Square Yards');
 
-  // Fetch user's location on initial load
+  // Handle location updates from VisitorTracker
+  const handleLocationUpdate = (locationData) => {
+    console.log('📍 Location update received:', locationData);
+    setMapCenter({ lat: locationData.lat, lng: locationData.lng });
+    setZoomLevel(locationData.zoom);
+    setUserLocationInfo({
+      lat: locationData.lat,
+      lng: locationData.lng,
+      source: locationData.source
+    });
+    setIsLoadingLocation(false);
+  };
+
+  // Fetch user's location on initial load (fallback)
   useEffect(() => {
     const initializeLocation = async () => {
       try {
@@ -516,7 +529,7 @@ export default function HomePage() {
 
   return (
     <div className="h-[90vh] md:h-[87vh] bg-[#1f2229] flex flex-col">
-      <VisitorTracker />
+      <VisitorTracker onLocationUpdate={handleLocationUpdate} />
       <main className="flex-1 relative flex">
         {isPropertyListVisible && (
           <div className="hidden md:block w-[380px] bg-white shadow-lg overflow-y-auto">

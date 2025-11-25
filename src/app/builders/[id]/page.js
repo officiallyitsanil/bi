@@ -133,33 +133,7 @@ export default function BuilderDetailPage() {
 
             {/* Right: Stats Cards */}
             <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto overflow-x-auto">
-              {/* Active Leads Card */}
-              <div className="bg-white border border-gray-200 rounded-lg sm:rounded-xl px-3 py-2 sm:px-6 sm:py-4 shadow-sm flex-shrink-0">
-                <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
-                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-orange-400 rounded-full"></div>
-                  <span className="text-xs sm:text-sm text-gray-600">Active Leads</span>
-                </div>
-                <div className="flex items-end gap-1.5 sm:gap-2">
-                  <span className="text-xl sm:text-3xl font-semibold text-gray-900">120</span>
-                  <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded mb-0.5 sm:mb-1">
-                    +12%
-                  </span>
-                </div>
-              </div>
-
-              {/* Total Closed Card */}
-              <div className="bg-white border border-gray-200 rounded-lg sm:rounded-xl px-3 py-2 sm:px-6 sm:py-4 shadow-sm flex-shrink-0">
-                <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
-                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-orange-400 rounded-full"></div>
-                  <span className="text-xs sm:text-sm text-gray-600">Total Closed</span>
-                </div>
-                <div className="flex items-end gap-1.5 sm:gap-2">
-                  <span className="text-xl sm:text-3xl font-semibold text-gray-900">42</span>
-                  <span className="text-xs text-green-600 bg-green-50 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded mb-0.5 sm:mb-1">
-                    +12%
-                  </span>
-                </div>
-              </div>
+              {/* Stats removed as per request */}
             </div>
           </div>
         </div>

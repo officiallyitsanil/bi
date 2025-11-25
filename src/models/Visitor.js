@@ -1,7 +1,39 @@
 import mongoose from 'mongoose';
 
 const VisitorSchema = new mongoose.Schema({
-  // Location data
+  // IP-based location (approximate)
+  ipLocation: {
+    latitude: Number,
+    longitude: Number,
+    city: String,
+    region: String,
+    country: String,
+    postal: String,
+    timezone: String,
+    org: String, // ISP/Organization
+    location: String, // Full formatted location
+    locality: String, // City/Town name
+    sublocality: String, // Area/Neighborhood
+    district: String,
+    state: String
+  },
+  
+  // GPS-based location (accurate - requires permission)
+  gpsLocation: {
+    latitude: Number,
+    longitude: Number,
+    accuracy: Number,
+    location: String, // Full formatted location
+    locality: String, // City/Town name
+    sublocality: String, // Area/Neighborhood
+    district: String,
+    state: String,
+    country: String,
+    postal: String,
+    timestamp: Date
+  },
+  
+  // Legacy fields for backward compatibility
   latitude: {
     type: Number,
     required: false
@@ -14,6 +46,9 @@ const VisitorSchema = new mongoose.Schema({
     type: Number
   },
   address: {
+    type: String
+  },
+  location: {
     type: String
   },
   
@@ -75,6 +110,19 @@ const VisitorSchema = new mongoose.Schema({
   visitCount: {
     type: Number,
     default: 1
+  },
+  
+  // Location permission status
+  locationPermission: {
+    type: String,
+    enum: ['granted', 'denied', 'prompt', 'not_requested'],
+    default: 'not_requested'
+  },
+  
+  // Track if this is homepage visit
+  isHomepageVisit: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true
