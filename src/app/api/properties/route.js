@@ -211,14 +211,11 @@ function normalizeProperty(propertyObj) {
 export async function GET(request) {
     try {
         await dbConnect();
-        console.log('✅ Database connected successfully');
 
         // Get query parameters
         const url = new URL(request.url);
         const id = url.searchParams.get('id');
         const type = url.searchParams.get('type');
-        
-        console.log('📥 Request params - ID:', id, 'Type:', type);
 
         // If ID is provided, fetch single property
         if (id) {
@@ -230,22 +227,17 @@ export async function GET(request) {
                 );
             }
 
-            console.log('🔍 Fetching single property - ID:', id, 'Type:', type);
-
             const db = mongoose.connection.db;
             const ObjectId = mongoose.Types.ObjectId;
             let property = null;
 
             // Search in the correct collection based on type parameter
             if (type === 'commercial') {
-                console.log('🏢 Searching in commercialProperties collection');
                 property = await db.collection('commercialProperties').findOne({ _id: new ObjectId(id) });
             } else if (type === 'residential') {
-                console.log('🏠 Searching in residentialproperties collection');
                 property = await db.collection('residentialproperties').findOne({ _id: new ObjectId(id) });
             } else {
                 // If no type specified, search both
-                console.log('🔍 Searching in both collections');
                 property = await db.collection('residentialproperties').findOne({ _id: new ObjectId(id) });
 
                 if (!property) {
@@ -261,8 +253,6 @@ export async function GET(request) {
                 );
             }
 
-            console.log('✅ Property found:', property.propertyName || property.name);
-
             // Convert ObjectId to string
             property._id = property._id.toString();
 
@@ -277,31 +267,23 @@ export async function GET(request) {
 
         // If no ID, fetch all properties based on type filter
         let allProperties = [];
-        
-        console.log('🔍 Fetching properties with type filter:', type || 'ALL');
-        
+
         const db = mongoose.connection.db;
-        
+
         if (type === 'commercial') {
             const commercialProperties = await db.collection('commercialProperties').find({}).toArray();
-            console.log('🏢 Commercial properties found:', commercialProperties.length);
             allProperties = commercialProperties;
         } else if (type === 'residential') {
             const residentialProperties = await db.collection('residentialproperties').find({}).toArray();
-            console.log('🏠 Residential properties found:', residentialProperties.length);
             allProperties = residentialProperties;
         } else {
             // If no type specified, fetch both
             const commercialProperties = await db.collection('commercialProperties').find({}).toArray();
             const residentialProperties = await db.collection('residentialproperties').find({}).toArray();
-            console.log('🏢 Commercial properties found:', commercialProperties.length);
-            console.log('🏠 Residential properties found:', residentialProperties.length);
-            
+
             allProperties = [...commercialProperties, ...residentialProperties];
         }
-        
-        console.log('📊 Total properties to return:', allProperties.length);
-        
+
         // Convert ObjectIds to strings
         allProperties = allProperties.map(prop => ({
             ...prop,

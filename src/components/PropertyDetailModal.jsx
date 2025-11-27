@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { loginUser } from "@/utils/auth";
+import { mapAmenitiesToObjects } from "@/utils/amenityMapping";
 import {
     BadgeCheck,
     MapPin,
@@ -154,7 +155,9 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
         propertyType = "N/A"
     } = property;
 
-    const displayedAmenities = amenities.slice(0, 8);
+    // Map amenities (handles both string arrays and object arrays)
+    const mappedAmenities = mapAmenitiesToObjects(amenities);
+    const displayedAmenities = mappedAmenities.slice(0, 8);
     const displayedReviews = reviews.slice(0, 3);
     const whatsGood = ratings?.whatsGood || [];
     const whatsBad = ratings?.whatsBad || [];
@@ -282,7 +285,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                         </div>
                     </section>
 
-                    {amenities.length > 0 && (
+                    {mappedAmenities.length > 0 && (
                         <section className="my-4">
                             <div className="shrink-0 h-[1px] w-full mb-4 bg-gray-200"></div>
                             <h3 className="text-base font-semibold text-gray-800 mb-3">Amenities</h3>
@@ -296,20 +299,21 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                                 width={24}
                                                 height={24}
                                                 className="object-contain"
+                                                unoptimized
                                             />
                                         </div>
                                         <span className="text-[10px] text-center text-gray-600 leading-tight">{amenity.name}</span>
                                     </div>
                                 ))}
                             </div>
-                            {amenities.length > 8 && (
+                            {mappedAmenities.length > 8 && (
                                 <a
                                     href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-xs text-blue-600 hover:underline mt-3 inline-block"
                                 >
-                                    +{amenities.length - 8} more amenities
+                                    +{mappedAmenities.length - 8} more amenities
                                 </a>
                             )}
                         </section>

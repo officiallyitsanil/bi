@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Home, Building2, Calendar, Star } from 'lucide-react';
+import { ArrowLeft, Home, Building2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function BuilderDetailPage() {
@@ -12,6 +12,8 @@ export default function BuilderDetailPage() {
   const [builderData, setBuilderData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     setIsVisible(true);
@@ -38,6 +40,24 @@ export default function BuilderDetailPage() {
       setLoading(false);
     }
   };
+
+  const openImageModal = (imageUrl) => {
+    setSelectedImage(imageUrl);
+    setIsModalOpen(true);
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closeImageModal = () => {
+    setIsModalOpen(false);
+    setSelectedImage(null);
+    document.body.style.overflow = 'unset';
+  };
+
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
 
   if (loading) {
     return (
@@ -78,11 +98,11 @@ export default function BuilderDetailPage() {
     experience: builderData.yearsOfExperience ? `${builderData.yearsOfExperience}+` : 'N/A',
     cities: builderData.citiesPresence || 'N/A',
     ceoName: builderData.directorName || 'N/A',
-    ceoTitle: builderData.directorPosition || 'Director',
+    ceoTitle: builderData.directorPosition || '',
     ceoQuote: builderData.directorQuote || builderData.description || '',
-    about: builderData.description ? [builderData.description] : ['No description available'],
-    mission: builderData.missionStatement || 'No mission statement available',
-    vision: builderData.visionStatement || 'No vision statement available',
+    about: builderData.description ? [builderData.description] : [],
+    mission: builderData.missionStatement || '',
+    vision: builderData.visionStatement || '',
     logo: builderData.builderLogo?.url || null,
     galleryImages: builderData.galleryImages || [],
     awards: builderData.awards || [],
@@ -94,24 +114,36 @@ export default function BuilderDetailPage() {
     category: builderData.builderCategory || '',
     testimonial: builderData.clientTestimonial || '',
     videoUrl: builderData.promotionalVideoUrl || '',
-    keyPeople: builderData.keyPeople || [],
-    featuredProject: {
-      name: 'The Prestige City Hyderabad',
-      type: 'Villa, Apartment',
-      totalUnits: '405',
-      projectSize: '4 Acre',
-      launchDate: 'Aug 2024',
-      possession: 'Sep 2028',
-      plotSize: '1,200 - 3,000 sqft',
-      priceRange: '₹1.18 Cr - ₹2.91 Cr',
-      closedDeals: '42',
-      inProgress: '132',
-      bhkTypes: ['3 BHK', '4 BHK', '5 BHK']
-    }
+    keyPeople: builderData.keyPeople || []
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Image Modal */}
+      {isModalOpen && selectedImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center p-1 sm:p-4"
+          onClick={closeImageModal}
+        >
+          <button
+            onClick={closeImageModal}
+            className="absolute top-1 right-1 sm:top-4 sm:right-4 text-white hover:bg-white hover:text-black rounded-full p-1.5 sm:p-2 transition-colors z-10"
+            aria-label="Close modal"
+          >
+            <X className="w-5 h-5 sm:w-8 sm:h-8" />
+          </button>
+          <div
+            className="max-w-full max-h-full w-full h-full flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={selectedImage}
+              alt="Full size view"
+              className="max-w-full max-h-full object-contain"
+            />
+          </div>
+        </div>
+      )}
       {/* Header Section */}
       <div
         className={`bg-white border-b transition-all duration-700 ${isVisible ? 'translate-y-0 opacity-100' : '-translate-y-10 opacity-0'
@@ -127,7 +159,7 @@ export default function BuilderDetailPage() {
                 <ArrowLeft className="w-5 h-5 text-gray-600" />
               </button>
               <h1 className="text-xl sm:text-4xl font-semibold text-gray-900">
-                Estate Management
+                {builderData?.builderName || 'Builder Details'}
               </h1>
             </div>
 
@@ -140,8 +172,8 @@ export default function BuilderDetailPage() {
       </div>
 
       {/* Content Area */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
+      <div className="max-w-7xl mx-auto px-2.5 sm:px-6 py-3 sm:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-6">
           {/* Left Column - Company Info */}
           <div
             className={`lg:col-span-5 space-y-4 sm:space-y-6 transition-all duration-700 ${isVisible ? 'translate-y-0 opacity-100' : '-translate-y-20 opacity-0'
@@ -149,12 +181,12 @@ export default function BuilderDetailPage() {
             style={{ transitionDelay: '100ms' }}
           >
             {/* Builder Logo */}
-            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-8 shadow-sm">
+            <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-8 shadow-sm">
               <div className="flex items-center justify-center">
                 <div className="text-center">
-                  <div className="mb-3 sm:mb-4">
+                  <div className="mb-2.5 sm:mb-4">
                     {transformedData.logo ? (
-                      <div className="w-20 h-20 sm:w-32 sm:h-32 mx-auto rounded-full overflow-hidden">
+                      <div className="w-16 h-16 sm:w-32 sm:h-32 mx-auto rounded-full overflow-hidden cursor-pointer hover:opacity-80 transition-opacity" onClick={() => openImageModal(transformedData.logo)}>
                         <img
                           src={transformedData.logo}
                           alt={transformedData.name}
@@ -162,14 +194,14 @@ export default function BuilderDetailPage() {
                         />
                       </div>
                     ) : (
-                      <div className="w-20 h-20 sm:w-32 sm:h-32 mx-auto bg-gradient-to-br from-amber-600 to-amber-800 rounded-full flex items-center justify-center">
-                        <Building2 className="w-10 h-10 sm:w-16 sm:h-16 text-white" />
+                      <div className="w-16 h-16 sm:w-32 sm:h-32 mx-auto bg-gradient-to-br from-amber-600 to-amber-800 rounded-full flex items-center justify-center">
+                        <Building2 className="w-8 h-8 sm:w-16 sm:h-16 text-white" />
                       </div>
                     )}
                   </div>
-                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{transformedData.name.split(' ')[0]}</h2>
+                  <h2 className="text-xl sm:text-3xl font-bold text-gray-900 mb-0.5 sm:mb-1">{transformedData.name.split(' ')[0]}</h2>
                   {transformedData.name.split(' ')[1] && (
-                    <h3 className="text-xl sm:text-2xl font-semibold text-gray-700 mb-2">{transformedData.name.split(' ')[1]}</h3>
+                    <h3 className="text-lg sm:text-2xl font-semibold text-gray-700 mb-1.5 sm:mb-2">{transformedData.name.split(' ')[1]}</h3>
                   )}
                   <p className="text-xs sm:text-sm text-gray-500 italic">{transformedData.tagline}</p>
                 </div>
@@ -177,210 +209,147 @@ export default function BuilderDetailPage() {
             </div>
 
             {/* Stats Cards Row */}
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
               {/* Projects Completed */}
-              <div className="bg-blue-500 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-white shadow-lg">
-                <div className="flex items-center justify-center mb-1.5 sm:mb-2">
-                  <Home className="w-5 h-5 sm:w-6 sm:h-6" />
+              <div className="bg-blue-500 rounded-xl sm:rounded-2xl p-3 sm:p-6 text-white shadow-lg">
+                <div className="flex items-center justify-center mb-1 sm:mb-2">
+                  <Home className="w-4 h-4 sm:w-6 sm:h-6" />
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl sm:text-4xl font-bold mb-0.5 sm:mb-1">{transformedData.projectsCompleted}</div>
-                  <div className="text-xs sm:text-sm opacity-90">Projects Completed</div>
+                  <div className="text-xl sm:text-4xl font-bold mb-0.5 sm:mb-1">{transformedData.projectsCompleted}</div>
+                  <div className="text-[10px] sm:text-sm opacity-90 leading-tight">Projects Completed</div>
                 </div>
               </div>
 
               {/* Ongoing Projects */}
-              <div className="bg-orange-500 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-white shadow-lg">
-                <div className="flex items-center justify-center mb-1.5 sm:mb-2">
-                  <Building2 className="w-5 h-5 sm:w-6 sm:h-6" />
+              <div className="bg-orange-500 rounded-xl sm:rounded-2xl p-3 sm:p-6 text-white shadow-lg">
+                <div className="flex items-center justify-center mb-1 sm:mb-2">
+                  <Building2 className="w-4 h-4 sm:w-6 sm:h-6" />
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl sm:text-4xl font-bold mb-0.5 sm:mb-1">{transformedData.ongoingProjects}</div>
-                  <div className="text-xs sm:text-sm opacity-90">Ongoing Projects</div>
+                  <div className="text-xl sm:text-4xl font-bold mb-0.5 sm:mb-1">{transformedData.ongoingProjects}</div>
+                  <div className="text-[10px] sm:text-sm opacity-90 leading-tight">Ongoing Projects</div>
                 </div>
               </div>
             </div>
 
             {/* Upcoming Projects */}
-            <div className="bg-green-500 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-white shadow-lg">
+            <div className="bg-green-500 rounded-xl sm:rounded-2xl p-3 sm:p-6 text-white shadow-lg">
               <div className="flex items-center justify-between">
-                <div className="text-3xl sm:text-5xl font-bold">{transformedData.upcomingProjects}</div>
-                <div className="text-base sm:text-xl font-medium">Upcoming Projects</div>
+                <div className="text-2xl sm:text-5xl font-bold">{transformedData.upcomingProjects}</div>
+                <div className="text-sm sm:text-xl font-medium">Upcoming Projects</div>
               </div>
             </div>
 
             {/* Experience and Cities */}
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
               {/* Years of Experience */}
-              <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm text-center">
-                <div className="text-3xl sm:text-5xl font-bold text-purple-500 mb-1 sm:mb-2">{transformedData.experience}</div>
-                <div className="text-xs sm:text-sm text-gray-500">Years of Experience</div>
+              <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-sm text-center">
+                <div className="text-2xl sm:text-5xl font-bold text-purple-500 mb-0.5 sm:mb-2">{transformedData.experience}</div>
+                <div className="text-[10px] sm:text-sm text-gray-500 leading-tight">Years of Experience</div>
               </div>
 
               {/* Cities Presence */}
-              <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm text-center">
-                <div className="text-3xl sm:text-5xl font-bold text-blue-500 mb-1 sm:mb-2">{transformedData.cities}</div>
-                <div className="text-xs sm:text-sm text-gray-500">Cities Presence</div>
+              <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-sm text-center">
+                <div className="text-2xl sm:text-5xl font-bold text-blue-500 mb-0.5 sm:mb-2">{transformedData.cities}</div>
+                <div className="text-[10px] sm:text-sm text-gray-500 leading-tight">Cities Presence</div>
               </div>
             </div>
 
             {/* Mission */}
-            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3 text-center">Our Mission</h3>
-              <p className="text-xs sm:text-sm text-gray-600 text-center leading-relaxed">
-                {transformedData.mission}
-              </p>
-            </div>
+            {transformedData.mission && (
+              <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-sm">
+                <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-1.5 sm:mb-3 text-center">Our Mission</h3>
+                <p className="text-xs sm:text-sm text-gray-600 text-center leading-relaxed">
+                  {transformedData.mission}
+                </p>
+              </div>
+            )}
 
             {/* Vision */}
-            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3 text-center">Our Vision</h3>
-              <p className="text-xs sm:text-sm text-gray-600 text-center leading-relaxed">
-                {transformedData.vision}
-              </p>
-            </div>
+            {transformedData.vision && (
+              <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-sm">
+                <h3 className="text-sm sm:text-lg font-semibold text-gray-900 mb-1.5 sm:mb-3 text-center">Our Vision</h3>
+                <p className="text-xs sm:text-sm text-gray-600 text-center leading-relaxed">
+                  {transformedData.vision}
+                </p>
+              </div>
+            )}
           </div>
 
-          {/* Right Column - Property Card */}
-          <div
-            className={`lg:col-span-7 transition-all duration-700 ${isVisible ? 'translate-y-0 opacity-100' : '-translate-y-20 opacity-0'
-              }`}
-            style={{ transitionDelay: '250ms' }}
-          >
-            <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm overflow-hidden">
-              {/* Property Images */}
-              <div className="relative">
-                <div className="grid grid-cols-4 gap-1.5 sm:gap-2 p-1.5 sm:p-2">
-                  {/* Main large image */}
-                  <div className="col-span-3 row-span-2">
-                    <div className="relative h-full rounded-lg sm:rounded-xl overflow-hidden min-h-[180px] sm:min-h-[250px]">
-                      <img
-                        src={transformedData.galleryImages[0]?.url || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&h=600&fit=crop"}
-                        alt={transformedData.featuredProject.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Small images on right */}
-                  <div className="col-span-1">
-                    <div className="rounded-lg sm:rounded-xl h-full overflow-hidden">
-                      <img
-                        src={transformedData.galleryImages[1]?.url || "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&h=300&fit=crop"}
-                        alt="Property view 2"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </div>
-                  <div className="col-span-1 relative">
-                    <div className="rounded-lg sm:rounded-xl h-full overflow-hidden relative">
-                      <img
-                        src={transformedData.galleryImages[2]?.url || "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=300&fit=crop"}
-                        alt="Property view 3"
-                        className="w-full h-full object-cover"
-                      />
-                      {transformedData.galleryImages.length > 3 && (
-                        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                          <span className="text-xl sm:text-3xl font-bold text-white">+{transformedData.galleryImages.length - 3}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Property Details */}
-              <div className="p-4 sm:p-6">
-                <div className="flex items-start justify-between mb-3 sm:mb-4">
-                  <div>
-                    <h3 className="text-lg sm:text-2xl font-bold text-gray-900 mb-1">{transformedData.featuredProject.name}</h3>
-                    <p className="text-xs sm:text-sm text-gray-500">{transformedData.featuredProject.type}</p>
-                  </div>
-                </div>
-
-                {/* Property Stats */}
-                <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
-                  <div className="text-center p-2 sm:p-4 bg-gray-50 rounded-lg sm:rounded-xl">
-                    <Home className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 mx-auto mb-1 sm:mb-2" />
-                    <div className="text-xs sm:text-sm text-gray-500 mb-0.5 sm:mb-1">Total Units</div>
-                    <div className="text-base sm:text-xl font-semibold text-gray-900">{transformedData.featuredProject.totalUnits}</div>
-                  </div>
-                  <div className="text-center p-2 sm:p-4 bg-gray-50 rounded-lg sm:rounded-xl">
-                    <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 mx-auto mb-1 sm:mb-2" />
-                    <div className="text-xs sm:text-sm text-gray-500 mb-0.5 sm:mb-1">Project Size</div>
-                    <div className="text-base sm:text-xl font-semibold text-gray-900">{transformedData.featuredProject.projectSize}</div>
-                  </div>
-                  <div className="text-center p-2 sm:p-4 bg-gray-50 rounded-lg sm:rounded-xl">
-                    <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 mx-auto mb-1 sm:mb-2" />
-                    <div className="text-xs sm:text-sm text-gray-500 mb-0.5 sm:mb-1">Launch Date</div>
-                    <div className="text-base sm:text-xl font-semibold text-gray-900">{transformedData.featuredProject.launchDate}</div>
-                  </div>
-                </div>
-
-                {/* Tags */}
-                <div className="flex gap-1.5 sm:gap-2 mb-4 sm:mb-6">
-                  {transformedData.featuredProject.bhkTypes.map((type) => (
-                    <span key={type} className="px-2 sm:px-3 py-0.5 sm:py-1 bg-gray-100 text-gray-600 text-xs rounded-full">{type}</span>
-                  ))}
-                </div>
-
-                {/* Deals Section */}
-                <div className="border-t pt-4 sm:pt-6">
-                  <div className="flex items-center justify-between mb-3 sm:mb-4">
-                    <h4 className="text-base sm:text-lg font-semibold text-gray-900">Deals</h4>
-                  </div>
-
-                  <div className="flex items-center justify-between mb-3 sm:mb-4">
-                    <div className="flex-1">
-                      <div className="bg-green-500 text-white rounded-lg sm:rounded-xl p-3 sm:p-4 text-center">
-                        <div className="text-2xl sm:text-3xl font-bold mb-0.5 sm:mb-1">{transformedData.featuredProject.closedDeals}</div>
-                        <div className="text-xs sm:text-sm opacity-90">Closed Deals</div>
-                      </div>
-                    </div>
-                    <div className="flex-1 text-right px-2 sm:px-4">
-                      <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-0.5 sm:mb-1">{transformedData.featuredProject.inProgress}</div>
-                      <div className="text-xs sm:text-sm text-gray-500">In Progress</div>
-                    </div>
-                  </div>
-
-                  {/* Additional Info */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 text-sm mb-3 sm:mb-4">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                      <div>
-                        <div className="text-gray-500 text-xs">Possession</div>
-                        <div className="font-medium text-gray-900 text-xs sm:text-sm">{transformedData.featuredProject.possession}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Home className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                      <div>
-                        <div className="text-gray-500 text-xs">Plot</div>
-                        <div className="font-medium text-gray-900 text-xs sm:text-sm">{transformedData.featuredProject.plotSize}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Star className="w-4 h-4 text-orange-400 fill-orange-400 flex-shrink-0" />
-                      <div>
-                        <div className="text-gray-500 text-xs">Propscope</div>
-                        <div className="flex gap-0.5">
-                          {[1, 2, 3, 4, 5].map((i) => (
-                            <Star key={i} className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-orange-400 fill-orange-400" />
-                          ))}
+          {/* Right Column - Gallery */}
+          {transformedData.galleryImages.length > 0 && (
+            <div
+              className={`lg:col-span-7 transition-all duration-700 ${isVisible ? 'translate-y-0 opacity-100' : '-translate-y-20 opacity-0'
+                }`}
+              style={{ transitionDelay: '250ms' }}
+            >
+              <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm overflow-hidden">
+                {/* Gallery Images */}
+                <div className="relative">
+                  <div className="grid grid-cols-4 gap-1 sm:gap-2 p-1 sm:p-2">
+                    {/* Main large image */}
+                    {transformedData.galleryImages[0] && (
+                      <div className="col-span-4 sm:col-span-3 row-span-1 sm:row-span-2">
+                        <div className="relative h-full rounded-lg sm:rounded-xl overflow-hidden min-h-[150px] sm:min-h-[250px] cursor-pointer hover:opacity-90 transition-opacity" onClick={() => openImageModal(transformedData.galleryImages[0].url)}>
+                          <img
+                            src={transformedData.galleryImages[0].url}
+                            alt="Gallery image 1"
+                            className="w-full h-full object-cover"
+                          />
                         </div>
                       </div>
-                    </div>
-                  </div>
+                    )}
 
-                  {/* Price Range */}
-                  <div className="bg-gray-50 rounded-lg sm:rounded-xl p-3 sm:p-4">
-                    <div className="text-xs sm:text-sm text-gray-500 mb-0.5 sm:mb-1">Total Range</div>
-                    <div className="text-lg sm:text-2xl font-bold text-gray-900">{transformedData.featuredProject.priceRange}</div>
+                    {/* Small images on right */}
+                    {transformedData.galleryImages[1] && (
+                      <div className="col-span-2 sm:col-span-1">
+                        <div className="rounded-lg sm:rounded-xl h-full overflow-hidden cursor-pointer hover:opacity-90 transition-opacity min-h-[75px] sm:min-h-[90px]" onClick={() => openImageModal(transformedData.galleryImages[1].url)}>
+                          <img
+                            src={transformedData.galleryImages[1].url}
+                            alt="Gallery image 2"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {transformedData.galleryImages[2] && (
+                      <div className="col-span-2 sm:col-span-1 relative">
+                        <div className="rounded-lg sm:rounded-xl h-full overflow-hidden relative cursor-pointer hover:opacity-90 transition-opacity min-h-[75px] sm:min-h-[90px]" onClick={() => openImageModal(transformedData.galleryImages[2].url)}>
+                          <img
+                            src={transformedData.galleryImages[2].url}
+                            alt="Gallery image 3"
+                            className="w-full h-full object-cover"
+                          />
+                          {transformedData.galleryImages.length > 3 && (
+                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center pointer-events-none">
+                              <span className="text-base sm:text-3xl font-bold text-white">+{transformedData.galleryImages.length - 3}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Gallery Details */}
+                <div className="p-3 sm:p-4 sm:p-6">
+                  <h3 className="text-base sm:text-lg sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4 sm:mb-6">Gallery</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-2 sm:gap-4">
+                    {transformedData.galleryImages.map((image, index) => (
+                      <div key={index} className="relative aspect-square rounded-lg overflow-hidden group cursor-pointer hover:opacity-90 transition-opacity" onClick={() => openImageModal(image.url)}>
+                        <img
+                          src={image.url}
+                          alt={`Gallery image ${index + 1}`}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* About the Builder Section */}
@@ -390,10 +359,10 @@ export default function BuilderDetailPage() {
           style={{ transitionDelay: '400ms' }}
         >
           {/* Purple Header Section */}
-          <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-purple-600 rounded-t-xl sm:rounded-t-2xl p-6 sm:p-12">
-            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8">
+          <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-purple-600 rounded-t-xl sm:rounded-t-2xl p-4 sm:p-12">
+            <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-8">
               {/* Logo */}
-              <div className="w-20 h-20 sm:w-32 sm:h-32 bg-white rounded-full flex items-center justify-center flex-shrink-0 shadow-lg overflow-hidden">
+              <div className="w-16 h-16 sm:w-32 sm:h-32 bg-white rounded-full flex items-center justify-center flex-shrink-0 shadow-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity" onClick={() => transformedData.logo && openImageModal(transformedData.logo)}>
                 {transformedData.logo ? (
                   <img
                     src={transformedData.logo}
@@ -401,22 +370,20 @@ export default function BuilderDetailPage() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <Building2 className="w-10 h-10 sm:w-16 sm:h-16 text-indigo-600" />
+                  <Building2 className="w-8 h-8 sm:w-16 sm:h-16 text-indigo-600" />
                 )}
               </div>
 
               {/* Company Info */}
               <div className="text-white text-center sm:text-left">
-                <h2 className="text-3xl sm:text-5xl font-bold mb-2 sm:mb-3">{transformedData.name}</h2>
-                <p className="text-base sm:text-xl italic mb-4 sm:mb-6 opacity-90">&quot;{transformedData.tagline}&quot;</p>
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-6">
-                  <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg px-4 py-2 sm:px-6 sm:py-3">
-                    <div className="text-xs sm:text-sm opacity-90 mb-0.5 sm:mb-1">Founded</div>
-                    <div className="text-xl sm:text-2xl font-bold">{transformedData.founded}</div>
+                <h2 className="text-xl sm:text-5xl font-bold mb-1.5 sm:mb-3">{transformedData.name}</h2>
+                <p className="text-sm sm:text-xl italic mb-3 sm:mb-6 opacity-90">&quot;{transformedData.tagline}&quot;</p>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 text-xs sm:text-base">
+                  <div>
+                    <span className="font-semibold">Founded:</span> {transformedData.founded}
                   </div>
-                  <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg px-4 py-2 sm:px-6 sm:py-3">
-                    <div className="text-xs sm:text-sm opacity-90 mb-0.5 sm:mb-1">Headquarters</div>
-                    <div className="text-xl sm:text-2xl font-bold">{transformedData.headquarters}</div>
+                  <div>
+                    <span className="font-semibold">Headquarters:</span> {transformedData.headquarters}
                   </div>
                 </div>
               </div>
@@ -428,12 +395,16 @@ export default function BuilderDetailPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-12">
               {/* Left - About Text */}
               <div className="lg:col-span-8">
-                <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-6">About the Builder</h3>
-                <div className="space-y-3 sm:space-y-4 text-sm sm:text-base text-gray-700 leading-relaxed">
-                  {transformedData.about.map((paragraph, index) => (
-                    <p key={index}>{paragraph}</p>
-                  ))}
-                </div>
+                {transformedData.about.length > 0 && (
+                  <>
+                    <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-6">About the Builder</h3>
+                    <div className="space-y-3 sm:space-y-4 text-sm sm:text-base text-gray-700 leading-relaxed">
+                      {transformedData.about.map((paragraph, index) => (
+                        <p key={index}>{paragraph}</p>
+                      ))}
+                    </div>
+                  </>
+                )}
 
                 {/* Awards Section */}
                 {transformedData.awards.length > 0 && (
@@ -568,48 +539,50 @@ export default function BuilderDetailPage() {
               </div>
 
               {/* Right - Profile Card */}
-              <div className="lg:col-span-4">
-                <div className="bg-gray-50 rounded-xl sm:rounded-2xl p-6 sm:p-8 text-center">
-                  <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full mx-auto mb-4 sm:mb-6 flex items-center justify-center overflow-hidden">
-                    {transformedData.keyPeople.length > 0 && transformedData.keyPeople[0].photo?.url ? (
-                      <img
-                        src={transformedData.keyPeople[0].photo.url}
-                        alt={transformedData.ceoName}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <img
-                        src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&h=200&fit=crop"
-                        alt={transformedData.ceoName}
-                        className="w-full h-full object-cover"
-                      />
+              {(transformedData.ceoName || transformedData.ceoTitle || transformedData.ceoQuote || (transformedData.keyPeople.length > 0 && transformedData.keyPeople[0].photo?.url)) && (
+                <div className="lg:col-span-4">
+                  <div className="bg-gray-50 rounded-xl sm:rounded-2xl p-6 sm:p-8 text-center">
+                    {transformedData.keyPeople.length > 0 && transformedData.keyPeople[0].photo?.url && (
+                      <div className="w-20 h-20 sm:w-32 sm:h-32 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full mx-auto mb-4 sm:mb-6 flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-80 transition-opacity" onClick={() => openImageModal(transformedData.keyPeople[0].photo.url)}>
+                        <img
+                          src={transformedData.keyPeople[0].photo.url}
+                          alt={transformedData.ceoName || 'Director'}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    {transformedData.ceoName && (
+                      <h4 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1.5 sm:mb-2">{transformedData.ceoName}</h4>
+                    )}
+                    {transformedData.ceoTitle && (
+                      <p className="text-xs sm:text-sm text-indigo-600 font-medium mb-4 sm:mb-6">{transformedData.ceoTitle}</p>
+                    )}
+                    {transformedData.ceoQuote && (
+                      <p className="text-xs sm:text-sm text-gray-600 italic leading-relaxed">
+                        &quot;{transformedData.ceoQuote}&quot;
+                      </p>
                     )}
                   </div>
-                  <h4 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1.5 sm:mb-2">{transformedData.ceoName}</h4>
-                  <p className="text-xs sm:text-sm text-indigo-600 font-medium mb-4 sm:mb-6">{transformedData.ceoTitle}</p>
-                  <p className="text-xs sm:text-sm text-gray-600 italic leading-relaxed">
-                    &quot;{transformedData.ceoQuote}&quot;
-                  </p>
-                </div>
 
-                {/* Key People Section */}
-                {transformedData.keyPeople.length > 0 && (
-                  <div className="mt-6">
-                    <h4 className="text-lg font-bold text-gray-900 mb-3">Key People</h4>
-                    <div className="space-y-3">
-                      {transformedData.keyPeople.map((person, index) => (
-                        <div key={index} className="bg-white rounded-lg p-4 border border-gray-200">
-                          <h5 className="font-semibold text-gray-900">{person.name}</h5>
-                          <p className="text-sm text-indigo-600 mb-1">{person.designation}</p>
-                          {person.shortBio && (
-                            <p className="text-xs text-gray-600">{person.shortBio}</p>
-                          )}
-                        </div>
-                      ))}
+                  {/* Key People Section */}
+                  {transformedData.keyPeople.length > 0 && (
+                    <div className="mt-6">
+                      <h4 className="text-lg font-bold text-gray-900 mb-3">Key People</h4>
+                      <div className="space-y-3">
+                        {transformedData.keyPeople.map((person, index) => (
+                          <div key={index} className="bg-white rounded-lg p-4 border border-gray-200">
+                            <h5 className="font-semibold text-gray-900">{person.name}</h5>
+                            <p className="text-sm text-indigo-600 mb-1">{person.designation}</p>
+                            {person.shortBio && (
+                              <p className="text-xs text-gray-600">{person.shortBio}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
