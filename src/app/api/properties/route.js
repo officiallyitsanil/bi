@@ -81,8 +81,6 @@ function normalizeProperty(propertyObj) {
         address = propertyObj.address.trim();
     }
 
-    console.log('Property:', propertyObj.propertyName || propertyObj.name, '| Address built:', address);
-
     // Get property name dynamically
     const name = propertyObj.propertyName || propertyObj.name || null;
 
@@ -180,7 +178,6 @@ function normalizeProperty(propertyObj) {
     // OVERRIDE the address field - force it to be a string, not an object
     normalized.address = finalAddress;
 
-    console.log('Final address for', normalized.name, ':', normalized.address);
     if (coordinates.lat && coordinates.lng) {
         normalized.coordinates = coordinates;
         normalized.position = coordinates;

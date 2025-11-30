@@ -54,16 +54,12 @@ const VisitorTracker = ({ onLocationUpdate }) => {
   // Get detailed location information from coordinates
   const getDetailedLocation = async (lat, lng) => {
     try {
-      console.log(`🔍 Fetching location details for coordinates: ${lat}, ${lng}`);
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
       );
       const data = await response.json();
 
       if (data.status === 'OK' && data.results.length > 0) {
-        // Log all results for debugging
-        console.log('📋 All geocoding results:', data.results.map(r => r.formatted_address));
-
         const result = data.results[0];
         const addressComponents = result.address_components;
 
@@ -128,11 +124,6 @@ const VisitorTracker = ({ onLocationUpdate }) => {
         // District is administrative_area_level_2
         locationDetails.district = tempData.administrative_area_level_2[0] || '';
 
-        console.log('📍 Parsed location details:', locationDetails);
-        console.log('🏙️ City/Locality:', locationDetails.locality);
-        console.log('🏘️ Area/Sublocality:', locationDetails.sublocality);
-        console.log('🗺️ District:', locationDetails.district);
-
         return locationDetails;
       }
       return null;
@@ -145,17 +136,8 @@ const VisitorTracker = ({ onLocationUpdate }) => {
   // Get IP-based location (no permission needed)
   const getIPLocation = async () => {
     try {
-      console.log('🌐 Fetching IP-based location...');
       const response = await fetch('https://ipapi.co/json/');
       const data = await response.json();
-
-      console.log('📡 IP API Response:', {
-        city: data.city,
-        region: data.region,
-        country: data.country_name,
-        lat: data.latitude,
-        lng: data.longitude
-      });
 
       if (data.latitude && data.longitude) {
         // Get detailed location from Google Maps API
@@ -172,8 +154,6 @@ const VisitorTracker = ({ onLocationUpdate }) => {
           org: data.org,
           ...(detailedLocation || {})
         };
-        console.log('✅ IP location obtained with details:', ipLocation);
-        console.log('🎯 Final City/Locality:', ipLocation.locality || ipLocation.city);
         return ipLocation;
       }
       return null;
@@ -191,8 +171,6 @@ const VisitorTracker = ({ onLocationUpdate }) => {
         return;
       }
 
-      console.log(`📍 Requesting GPS location permission... (Retries left: ${retries})`);
-
       const options = {
         enableHighAccuracy: true,
         timeout: 30000, // Increased to 30 seconds
@@ -207,16 +185,11 @@ const VisitorTracker = ({ onLocationUpdate }) => {
             accuracy: position.coords.accuracy,
             timestamp: new Date()
           };
-          console.log('✅ GPS location obtained:', gpsLocation);
-          console.log('📍 GPS Coordinates:', `${gpsLocation.latitude}, ${gpsLocation.longitude}`);
-          console.log('🎯 GPS Accuracy:', `${gpsLocation.accuracy} meters`);
           resolve(gpsLocation);
         },
         (error) => {
-          console.log('❌ GPS location denied or failed:', error.message);
           // Retry on timeout (code 3) or position unavailable (code 2) if retries left
           if (retries > 0 && (error.code === 3 || error.code === 2)) {
-            console.log('🔄 Retrying GPS location...');
             // Add a small delay before retrying
             setTimeout(() => {
               getGPSLocation(retries - 1).then(resolve).catch(reject);
@@ -261,10 +234,6 @@ const VisitorTracker = ({ onLocationUpdate }) => {
         isHomepageVisit: isHomepage
       };
 
-      console.log(isUpdate ? '🔄 Updating visitor data with GPS location:' : '💾 Creating new visitor record:', visitorData);
-      console.log('🔑 SessionId:', sessionId);
-      if (existingVisitorId) console.log('🆔 VisitorId:', existingVisitorId);
-
       const response = await fetch('/api/visitor', {
         method: 'POST',
         headers: {
@@ -283,8 +252,6 @@ const VisitorTracker = ({ onLocationUpdate }) => {
         localStorage.setItem('hasVisitedHomepage', 'true');
         localStorage.setItem('visitCount', visitCount.toString());
         sessionStorage.setItem('sessionId', sessionId);
-        console.log(result.updated ? '✅ Visitor record updated successfully!' : '✅ Visitor record created successfully!');
-        console.log('📋 Visitor ID:', result.visitorId);
         return result.visitorId; // Return the ID for future updates
       }
       return null;
@@ -298,7 +265,6 @@ const VisitorTracker = ({ onLocationUpdate }) => {
     if (trackingStatus !== 'idle') return;
 
     setTrackingStatus('tracking');
-    console.log('🚀 Starting visitor tracking...');
 
     const deviceInfo = getDeviceInfo();
     let ipLocation = null;
@@ -349,7 +315,6 @@ const VisitorTracker = ({ onLocationUpdate }) => {
     }
 
     setTrackingStatus('completed');
-    console.log('✅ Visitor tracking completed!');
   };
 
   useEffect(() => {
@@ -363,7 +328,6 @@ const VisitorTracker = ({ onLocationUpdate }) => {
 
     // Only track first-time visitors OR if you want to track every visit, remove this check
     if (hasVisitedHomepage) {
-      console.log('⏭️ User has already visited homepage, skipping tracking');
       return;
     }
 

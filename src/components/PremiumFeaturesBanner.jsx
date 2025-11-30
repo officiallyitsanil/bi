@@ -46,7 +46,6 @@ export const PremiumFeaturesBanner = () => {
       order_id: orderId, 
       handler: function (response) {
         alert(`Payment successful! Payment ID: ${response.razorpay_payment_id}`);
-        console.log("Payment response:", response);
       },
       prefill: {
         name: "Ankit Kumar",

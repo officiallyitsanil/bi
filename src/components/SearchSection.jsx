@@ -148,7 +148,13 @@ export default function SearchSection({ isCommercial = false }) {
 
     if (location) params.append('city', location);
     if (selectedFilter) params.append('type', selectedFilter);
-    if (managedSpace) params.append('propertyType', managedSpace);
+    // Pass Category based on isCommercial prop (instead of propertyType)
+    if (isCommercial) {
+      params.append('Category', 'commercial');
+    } else {
+      params.append('Category', 'residential');
+    }
+    // Note: managedSpace is the selected property type option, not the propertyType parameter
     if (preferences) params.append('preferences', preferences);
     if (pricePerDesk && pricePerDesk !== 'Any') params.append('pricePerDesk', pricePerDesk);
     if (pricePerSqft && pricePerSqft !== 'Any') params.append('pricePerSqft', pricePerSqft);
@@ -412,7 +418,7 @@ export default function SearchSection({ isCommercial = false }) {
                 <div className="hidden md:block h-8 w-px bg-gray-300 mr-2"></div>
               )}
 
-              {/* Preferences Dropdown - Only show for commercial */}
+              {/* Preferences Dropdown - Only show for Managed Space, Unmanaged Space, Coworking Dedicated, Coworking Shared */}
               {isCommercial && (selectedFilter === "Managed Space" || selectedFilter === "Unmanaged Space" || selectedFilter === "Coworking Dedicated" || selectedFilter === "Coworking Shared") && (
                 <div className="flex-[1] w-full relative border-t md:border-t-0" ref={preferencesRef}>
                   <div
@@ -512,17 +518,40 @@ export default function SearchSection({ isCommercial = false }) {
                   )}
                 </div>
               )}
+
+              {/* Select Range Dropdown - For Price Per Desk, Price Per Sqft, No. Of Seats */}
               {isCommercial && (selectedFilter === "Price Per Desk" || selectedFilter === "Price Per Sqft" || selectedFilter === "No. Of Seats") && (
-                /* Single Preferences Dropdown for other filters */
                 <div className="flex-[1] w-full border-t md:border-t-0">
                   <div className="relative">
                     <select
-                      value={preferences}
-                      onChange={(e) => setPreferences(e.target.value)}
+                      value={
+                        selectedFilter === "Price Per Desk" ? pricePerDesk :
+                        selectedFilter === "Price Per Sqft" ? pricePerSqft :
+                        noOfSeats
+                      }
+                      onChange={(e) => {
+                        if (selectedFilter === "Price Per Desk") {
+                          setPricePerDesk(e.target.value);
+                        } else if (selectedFilter === "Price Per Sqft") {
+                          setPricePerSqft(e.target.value);
+                        } else {
+                          setNoOfSeats(e.target.value);
+                        }
+                      }}
                       className="w-full px-3 py-2.5 border-0 focus:outline-none focus:ring-0 text-gray-700 appearance-none bg-white pr-8 text-sm transition-all"
                     >
-                      <option value="">{getPreferencesLabel()}</option>
-                      {getPreferencesOptions().map((option) => (
+                      <option value="">Select Range</option>
+                      {selectedFilter === "Price Per Desk" && getPricePerDeskOptions().map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                      {selectedFilter === "Price Per Sqft" && getPricePerSqftOptions().map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                      {selectedFilter === "No. Of Seats" && getNoOfSeatsOptions().map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
                         </option>

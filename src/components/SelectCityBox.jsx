@@ -45,6 +45,13 @@ export default function SelectCityBox({ title = "Select by City", cities = [], i
       city: selectedCity.name,
       type: category,
     });
+    
+    // Add Category based on isCommercial prop (instead of propertyType)
+    if (isCommercial) {
+      params.append('Category', 'commercial');
+    } else {
+      params.append('Category', 'residential');
+    }
 
     router.push(`/properties-search?${params.toString()}`);
     setIsModalOpen(false);

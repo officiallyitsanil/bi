@@ -32,7 +32,6 @@ export async function getUserLocation() {
             },
             (error) => {
               // User denied or error - use IP location
-              console.log('Exact location denied, using IP-based location:', error.message);
               resolve(ipLocation);
             },
             {

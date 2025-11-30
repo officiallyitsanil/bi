@@ -106,8 +106,97 @@ const amenityIconMap = {
     "playground": "/property-details/amenties/playground.png",
 };
 
+// All available amenity icons from the public folder
+const AVAILABLE_ICONS = [
+    "/property-details/amenties/2wparking.png",
+    "/property-details/amenties/4wparking.png",
+    "/property-details/amenties/accessable.png",
+    "/property-details/amenties/building-security.png",
+    "/property-details/amenties/club.png",
+    "/property-details/amenties/coffee.png",
+    "/property-details/amenties/cups-mugs.png",
+    "/property-details/amenties/daily-upkeep.png",
+    "/property-details/amenties/deep-cleaning.png",
+    "/property-details/amenties/delivery-acceptance.png",
+    "/property-details/amenties/dg-backup.png",
+    "/property-details/amenties/electricity.png",
+    "/property-details/amenties/elevator.png",
+    "/property-details/amenties/enevelopes.png",
+    "/property-details/amenties/ev-charging-space.png",
+    "/property-details/amenties/fire-alarm.png",
+    "/property-details/amenties/fire-extinguisher.png",
+    "/property-details/amenties/fire-noc.png",
+    "/property-details/amenties/first-aidkit.png",
+    "/property-details/amenties/food-vendor.png",
+    "/property-details/amenties/gas.png",
+    "/property-details/amenties/general-cleaning.png",
+    "/property-details/amenties/guest-checkin.png",
+    "/property-details/amenties/guest-management.png",
+    "/property-details/amenties/hvac.png",
+    "/property-details/amenties/milk.png",
+    "/property-details/amenties/nighty-trash.png",
+    "/property-details/amenties/oc.png",
+    "/property-details/amenties/open-desk.png",
+    "/property-details/amenties/package-notification.png",
+    "/property-details/amenties/paper-shreding.png",
+    "/property-details/amenties/permit.png",
+    "/property-details/amenties/pest-extermination.png",
+    "/property-details/amenties/playground.png",
+    "/property-details/amenties/power-supply.png",
+    "/property-details/amenties/printers.png",
+    "/property-details/amenties/property-insurance.png",
+    "/property-details/amenties/security-guard.png",
+    "/property-details/amenties/sewage-system.png",
+    "/property-details/amenties/sez.png",
+    "/property-details/amenties/smoke-detector.png",
+    "/property-details/amenties/sticky-notes.png",
+    "/property-details/amenties/tape-paper.png",
+    "/property-details/amenties/tea.png",
+    "/property-details/amenties/visitor-parking.png",
+    "/property-details/amenties/water-supply.png",
+    "/property-details/amenties/water.png",
+    "/property-details/amenties/wifi.png"
+];
+
 // Default icon for unmapped amenities
 const DEFAULT_ICON = "/property-details/amenties/accessable.png";
+
+/**
+ * Gets a random icon from available icons based on amenity name (deterministic)
+ * This ensures the same amenity name always gets the same icon
+ * @param {string} amenityName - The amenity name to use for selection
+ * @returns {string} - Random icon path
+ */
+function getRandomIcon(amenityName) {
+    if (!amenityName || typeof amenityName !== 'string') {
+        return DEFAULT_ICON;
+    }
+    
+    // Use the amenity name as a seed for deterministic random selection
+    let hash = 0;
+    for (let i = 0; i < amenityName.length; i++) {
+        const char = amenityName.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit integer
+    }
+    
+    // Get a positive index
+    const index = Math.abs(hash) % AVAILABLE_ICONS.length;
+    return AVAILABLE_ICONS[index];
+}
+
+/**
+ * Validates if an icon path is from the available icons list
+ * @param {string} iconPath - The icon path to validate
+ * @returns {boolean} - True if valid, false otherwise
+ */
+function isValidIcon(iconPath) {
+    if (!iconPath || typeof iconPath !== 'string') {
+        return false;
+    }
+    // Check if it's in the available icons list
+    return AVAILABLE_ICONS.includes(iconPath) || iconPath.startsWith('/property-details/amenties/');
+}
 
 /**
  * Maps an amenity string to an object with name and image
@@ -120,7 +209,17 @@ export function mapAmenityToObject(amenityName) {
     }
     
     const normalizedName = amenityName.toLowerCase().trim();
-    const iconPath = amenityIconMap[normalizedName] || DEFAULT_ICON;
+    let iconPath = amenityIconMap[normalizedName];
+    
+    // If no match found, get a random icon
+    if (!iconPath) {
+        iconPath = getRandomIcon(amenityName);
+    }
+    
+    // Validate the icon path, if invalid, get a random one
+    if (!isValidIcon(iconPath)) {
+        iconPath = getRandomIcon(amenityName);
+    }
     
     return {
         name: amenityName,
@@ -140,8 +239,15 @@ export function mapAmenitiesToObjects(amenities) {
     
     return amenities
         .map(amenity => {
-            // If already an object with name and image, return as is
-            if (amenity && typeof amenity === 'object' && amenity.name && amenity.image) {
+            // If already an object with name and image, validate the image
+            if (amenity && typeof amenity === 'object' && amenity.name) {
+                // If image is missing or invalid, get a random one
+                if (!amenity.image || !isValidIcon(amenity.image)) {
+                    return {
+                        name: amenity.name,
+                        image: getRandomIcon(amenity.name)
+                    };
+                }
                 return amenity;
             }
             // If it's a string, map it to an object

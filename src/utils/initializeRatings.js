@@ -43,7 +43,6 @@ export async function initializePropertyRatings() {
         }
         
         await property.save();
-        console.log(`Updated residential property: ${property.name}`);
       }
     }
 
@@ -67,11 +66,9 @@ export async function initializePropertyRatings() {
         }
         
         await property.save();
-        console.log(`Updated commercial property: ${property.name}`);
       }
     }
 
-    console.log('All properties initialized with proper rating structure');
     return { success: true, message: 'Ratings initialized successfully' };
   } catch (error) {
     console.error('Error initializing ratings:', error);

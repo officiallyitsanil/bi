@@ -3,7 +3,7 @@
 import SearchSection from "@/components/SearchSection";
 import SelectCityBox from "@/components/SelectCityBox";
 
-export default function CommercialPage() {
+export default function ResidentialPage() {
   const cities = [
     {
       name: "Mumbai",

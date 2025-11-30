@@ -2,6 +2,23 @@
 
 import { Suspense, useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
+import LoginModal from "../../components/LoginModal";
+import { loginUser } from "../../utils/auth";
+
+// Helper function to safely display database values
+const safeDisplay = (value, fallback = "-") => {
+    if (value === null || value === undefined || value === "") {
+        return fallback;
+    }
+    // Handle arrays and objects
+    if (Array.isArray(value) && value.length === 0) {
+        return fallback;
+    }
+    if (typeof value === "object" && Object.keys(value).length === 0) {
+        return fallback;
+    }
+    return value;
+};
 
 // Skeleton Loader Component
 function PropertyCardSkeleton() {
@@ -68,20 +85,29 @@ function PropertiesSearchContent() {
   const searchParams = useSearchParams();
   const cityParam = useMemo(() => searchParams.get('city') || '', [searchParams]);
   const typeParam = useMemo(() => searchParams.get('type') || '', [searchParams]);
+  const preferencesParam = useMemo(() => searchParams.get('preferences') || '', [searchParams]);
+  const pricePerDeskParam = useMemo(() => searchParams.get('pricePerDesk') || '', [searchParams]);
+  const pricePerSqftParam = useMemo(() => searchParams.get('pricePerSqft') || '', [searchParams]);
+  const noOfSeatsParam = useMemo(() => searchParams.get('noOfSeats') || '', [searchParams]);
+  const categoryParam = useMemo(() => searchParams.get('Category') || '', [searchParams]); // Category: commercial or residential
+  const propertyTypeParam = useMemo(() => searchParams.get('propertyType') || '', [searchParams]); // This will be used for DB filtering (techpark, standalone, villa, rent, sale, etc.)
 
   // State for filters
   const [selectedBadge, setSelectedBadge] = useState('');
   const [selectedPropertyType, setSelectedPropertyType] = useState('');
   const [selectedFacilities, setSelectedFacilities] = useState('');
   const [selectedFloorsOffered, setSelectedFloorsOffered] = useState('');
-  const [selectedAmenities, setSelectedAmenities] = useState([]);
   const [selectedSortBy, setSelectedSortBy] = useState('');
 
   // Dropdown open states
   const [openDropdown, setOpenDropdown] = useState(null);
 
-  // Favorites state
+  // Favorites state - using property IDs
   const [favorites, setFavorites] = useState([]);
+
+  // Login state
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
 
   // Properties state
   const [allProperties, setAllProperties] = useState([]);
@@ -89,64 +115,235 @@ function PropertiesSearchContent() {
   const [mongodbId, setMongodbId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
+  // Check login status
+  useEffect(() => {
+    const syncUser = () => {
+      const userJson = localStorage.getItem('currentUser');
+      setCurrentUser(userJson ? JSON.parse(userJson) : null);
+    };
+
+    syncUser();
+    window.addEventListener('onAuthChange', syncUser);
+
+    return () => {
+      window.removeEventListener('onAuthChange', syncUser);
+    };
+  }, []);
+
+  // Load favorites from localStorage and sync with DB
+  useEffect(() => {
+    const loadFavorites = async () => {
+      try {
+        // Load from localStorage
+        const favoritesLocal = JSON.parse(localStorage.getItem('favorites') || '[]');
+        const favoriteIds = favoritesLocal.map(fav => fav._id || fav.id).filter(Boolean);
+        setFavorites(favoriteIds);
+
+        // If user is logged in, sync with database
+        if (currentUser && currentUser.phoneNumber) {
+          try {
+            const response = await fetch(`/api/favorites?userPhoneNumber=${encodeURIComponent(currentUser.phoneNumber)}`);
+            const data = await response.json();
+            
+            if (data.success) {
+              const dbFavoriteIds = data.data.map(fav => fav.propertyId);
+              setFavorites(dbFavoriteIds);
+              
+              // Update localStorage to match DB
+              const updatedFavorites = dbFavoriteIds.map(id => ({ _id: id, id: id }));
+              localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+            }
+          } catch (error) {
+            console.error('Error loading favorites from DB:', error);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading favorites from localStorage:', error);
+      }
+    };
+
+    loadFavorites();
+  }, [currentUser]);
+
   // Capitalize city name
   const capitalizeCity = (city) => {
     if (!city) return '';
     return city.charAt(0).toUpperCase() + city.slice(1).toLowerCase();
   };
 
-  // Fetch properties from MongoDB API
+  // Determine Category (commercial/residential) from Category parameter or type parameter
+  const determineCategory = () => {
+    if (categoryParam) return categoryParam.toLowerCase();
+    
+    // Fallback: Determine from type parameter
+    if (typeParam) {
+      const commercialTypes = ['Managed Space', 'Unmanaged Space', 'Coworking Dedicated', 'Coworking Shared', 'Price Per Desk', 'Price Per Sqft', 'No. Of Seats'];
+      if (commercialTypes.includes(typeParam)) {
+        return 'commercial';
+      }
+      const residentialTypes = ['Rent', 'Sale', 'PG/Hostel', 'Flatmates'];
+      if (residentialTypes.includes(typeParam)) {
+        return 'residential';
+      }
+    }
+    
+    return '';
+  };
+  
+  // Get Property Type filter options based on Category
+  const getPropertyTypeOptions = () => {
+    const category = determineCategory();
+    if (category === 'commercial') {
+      return ['Techpark', 'Standalone', 'Villa'];
+    } else if (category === 'residential') {
+      return ['Rent', 'Sale', 'PG/Hostel', 'Flatmates'];
+    }
+    return [];
+  };
+
+  // Fetch properties from MongoDB API with filters
   useEffect(() => {
     const fetchProperties = async () => {
       setIsLoading(true);
-      console.log('🔍 Fetching properties with cityParam:', cityParam);
+      // Map selectedPropertyType display names to DB values
+      const mapPropertyTypeToDBValue = (displayName) => {
+        if (!displayName) return '';
+        const lower = displayName.toLowerCase();
+        // Map display names to DB values
+        const mapping = {
+          'techpark': 'techpark',
+          'standalone': 'standalone',
+          'villa': 'villa',
+          'rent': 'rent',
+          'sale': 'sale',
+          'pg/hostel': 'pg',  // DB might store as "pg" or "pg/hostel"
+          'flatmates': 'flatmates'
+        };
+        return mapping[lower] || lower;
+      };
+      
       try {
-        // Fetch ALL properties (both commercial and residential) - using direct endpoint
+        // Build query parameters for filtered API
+        const params = new URLSearchParams();
+        if (cityParam) params.append('city', cityParam);
+        if (typeParam) params.append('type', typeParam);
+        if (preferencesParam) params.append('preferences', preferencesParam);
+        if (pricePerDeskParam) params.append('pricePerDesk', pricePerDeskParam);
+        if (pricePerSqftParam) params.append('pricePerSqft', pricePerSqftParam);
+        if (noOfSeatsParam) params.append('noOfSeats', noOfSeatsParam);
+        
+        // Pass Category (commercial/residential)
+        const category = determineCategory();
+        if (category) params.append('Category', category);
+        
+        // Pass selectedPropertyType as propertyType (for DB filtering: techpark, standalone, villa, rent, sale, etc.)
+        if (selectedPropertyType) {
+          const dbPropertyType = mapPropertyTypeToDBValue(selectedPropertyType);
+          if (dbPropertyType) params.append('propertyType', dbPropertyType);
+        }
+        
+        // Pass selectedFloorsOffered for filtering by selectedFloors array in DB
+        if (selectedFloorsOffered) {
+          params.append('floorsOffered', selectedFloorsOffered);
+        }
+        
+        // Pass selectedFacilities for filtering by facilities array in DB
+        if (selectedFacilities) {
+          params.append('facilities', selectedFacilities);
+        }
+        
         const timestamp = new Date().getTime();
-        const response = await fetch(`/api/properties-direct?_t=${timestamp}`);
-        console.log('📡 API Response status:', response.status);
+        params.append('_t', timestamp);
+        
+        const response = await fetch(`/api/properties-filtered?${params.toString()}`);
 
         const result = await response.json();
-        console.log('📦 API Result:', result);
-        console.log('✅ Success:', result.success);
-        console.log('📊 Data length:', result.data?.length);
 
         if (result.success && result.data) {
-          console.log('🏢 Total properties fetched:', result.data.length);
 
-          const properties = result.data.map(property => ({
-            ...property,
-            _id: property._id || property.id,
-            id: property._id || property.id,
-          }));
+          // Calculate prices based on property category
+          const calculatePrices = (property) => {
+            let originalPriceValue = 0;
+            const category = determineCategory();
+            
+            if (category === 'residential') {
+              // For residential: use expectedRent
+              const expectedRent = property.expectedRent || '0';
+              originalPriceValue = parseFloat(expectedRent.toString().replace(/[₹,]/g, '')) || 0;
+            } else if (category === 'commercial') {
+              // For commercial: calculate from floorConfigurations
+              if (property.floorConfigurations && property.floorConfigurations.length > 0) {
+                const firstFloor = property.floorConfigurations[0];
+                if (firstFloor.dedicatedCabin && firstFloor.dedicatedCabin.seats && firstFloor.dedicatedCabin.pricePerSeat) {
+                  // Extract lower values from ranges like "70 - 90" and "6000-8000"
+                  const seatsStr = firstFloor.dedicatedCabin.seats.toString();
+                  const pricePerSeatStr = firstFloor.dedicatedCabin.pricePerSeat.toString();
+                  
+                  const seatsMatch = seatsStr.match(/(\d+)/);
+                  const pricePerSeatMatch = pricePerSeatStr.match(/(\d+)/);
+                  
+                  if (seatsMatch && pricePerSeatMatch) {
+                    const seatsLower = parseFloat(seatsMatch[1]);
+                    const pricePerSeatLower = parseFloat(pricePerSeatMatch[1]);
+                    originalPriceValue = seatsLower * pricePerSeatLower;
+                  }
+                }
+              }
+            }
+            
+            // Calculate discounted price (5% off = 95% of original)
+            const discountedPriceValue = originalPriceValue * 0.95;
+            
+            // Format prices
+            const formatPrice = (price) => {
+              if (price === 0) return '₹XX';
+              return `₹${Math.round(price).toLocaleString('en-IN')}`;
+            };
+            
+            return {
+              originalPrice: formatPrice(originalPriceValue),
+              discountedPrice: formatPrice(discountedPriceValue)
+            };
+          };
 
-          console.log('🔄 Mapped properties:', properties.length);
+          // Calculate badge based on isPremium and isNew
+          const calculateBadge = (property) => {
+            // First check isPremium
+            if (property.isPremium === true) {
+              return 'premium';
+            }
+            // Then check isNew
+            if (property.isNew === true) {
+              return 'new';
+            }
+            // If both are false, return empty string (no badge)
+            return '';
+          };
 
-          // DISABLED: Filter by city - showing ALL properties for now
-          let filtered = properties;
-          // if (cityParam) {
-          //   const cityLower = cityParam.toLowerCase();
-          //   console.log('🔎 Filtering by city:', cityLower);
-          //   filtered = properties.filter(prop =>
-          //     prop.city?.toLowerCase().includes(cityLower) ||
-          //     prop.state_name?.toLowerCase().includes(cityLower) ||
-          //     prop.location_district?.toLowerCase().includes(cityLower) ||
-          //     prop.layer_location?.toLowerCase().includes(cityLower)
-          //   );
-          //   console.log('✅ Filtered properties:', filtered.length);
-          // }
+          const properties = result.data.map(property => {
+            const prices = calculatePrices(property);
+            const badge = calculateBadge(property);
+            return {
+              ...property,
+              _id: property._id || property.id,
+              id: property._id || property.id,
+              originalPrice: prices.originalPrice,
+              discountedPrice: prices.discountedPrice,
+              badge: badge,
+            };
+          });
 
-          console.log('💾 Setting ALL properties (no filters):', filtered.length);
-          setAllProperties(filtered);
-          setFilteredProperties(filtered);
+          setAllProperties(properties);
+          setFilteredProperties(properties);
 
           // Store first property ID if available
-          if (filtered.length > 0) {
-            setMongodbId(filtered[0]._id);
-            console.log('🆔 First property ID:', filtered[0]._id);
+          if (properties.length > 0) {
+            setMongodbId(properties[0]._id);
           }
         } else {
           console.error('❌ API returned no data or failed:', result);
+          setAllProperties([]);
+          setFilteredProperties([]);
         }
       } catch (error) {
         console.error('💥 Error fetching properties:', error);
@@ -155,82 +352,35 @@ function PropertiesSearchContent() {
         setFilteredProperties([]);
       } finally {
         setIsLoading(false);
-        console.log('✅ Loading complete');
       }
     };
 
     fetchProperties();
-  }, [cityParam]); // Removed typeParam dependency - loading all properties
+  }, [cityParam, typeParam, preferencesParam, pricePerDeskParam, pricePerSqftParam, noOfSeatsParam, categoryParam, selectedPropertyType, selectedFloorsOffered, selectedFacilities]);
 
   // Filter options
   const badges = ["new", "premium"];
-  const propertyTypes = ["commercial", "residential"];
-  const facilities = ["Parking", "Conference Room", "Elevator", "Cafeteria", "Gym"];
-  const floorsOffered = ["Ground Floor", "First Floor", "Second Floor", "Third Floor", "Top Floor"];
-  const amenities = [
-    { value: "guest_checkin", label: "Guest Checkin" },
-    { value: "delivery_notification", label: "Delivery Notification" },
-    { value: "package_notification", label: "Package Notification" },
-    { value: "keycard_access", label: "Keycard Access" },
-    { value: "video_surveillance", label: "Video Surveillance" },
-    { value: "tea", label: "Tea" },
-    { value: "coffee", label: "Coffee" },
-    { value: "water", label: "Water" },
-    { value: "milk_sweeteners", label: "Milk Sweeteners" },
-    { value: "cups_mugs", label: "Cups & Mugs" },
-    { value: "food_vendor", label: "Food Vendor" },
-    { value: "pantry_24x7", label: "Pantry 24x7" },
-    { value: "daily_upkeep", label: "Daily Upkeep" },
-    { value: "nightly_trash", label: "Nightly Trash" },
-    { value: "deep_clean_weekly", label: "Deep Clean Weekly" },
-    { value: "pest_control", label: "Pest Control" },
-    { value: "general_clean_24x7", label: "General Clean 24x7" },
-    { value: "high_speed_wifi", label: "High Speed WiFi" },
-    { value: "tape_paper_clips", label: "Tape & Paper Clips" }
-  ];
-  const sortByOptions = ["Price: Low to High", "Price: High to Low", "Newest First", "Oldest First"];
+  const propertyTypes = getPropertyTypeOptions(); // Dynamic based on Category
+  const facilities = ["Parking", "4W Parking", "2W Parking", "Conference Room", "Elevator", "Cafeteria", "Gym"];
+  // Generate floor options: 1st, 2nd, 3rd, ... 12th
+  const floorsOffered = Array.from({ length: 12 }, (_, i) => {
+    const num = i + 1;
+    if (num === 1) return '1st';
+    if (num === 2) return '2nd';
+    if (num === 3) return '3rd';
+    return `${num}th`;
+  });
+  const sortByOptions = ["Price: Low to High", "Price: High to Low", "Newest First"];
 
-  // Apply filters and sorting - ALL FILTERS DISABLED FOR NOW
+  // Apply sorting only (filtering is done by API)
   useEffect(() => {
     let filtered = [...allProperties];
-
-    // DISABLED: Badge filter
-    // if (selectedBadge) {
-    //   filtered = filtered.filter(prop => prop.badge === selectedBadge);
-    // }
-
-    // DISABLED: Property type filter
-    // if (selectedPropertyType) {
-    //   filtered = filtered.filter(prop => prop.propertyType === selectedPropertyType);
-    // }
-
-    // DISABLED: Facilities filter
-    // if (selectedFacilities) {
-    //   filtered = filtered.filter(prop =>
-    //     Array.isArray(prop.facilities) && prop.facilities.includes(selectedFacilities)
-    //   );
-    // }
-
-    // DISABLED: Floors offered filter
-    // if (selectedFloorsOffered) {
-    //   filtered = filtered.filter(prop =>
-    //     Array.isArray(prop.floors_available) && prop.floors_available.includes(selectedFloorsOffered)
-    //   );
-    // }
-
-    // DISABLED: Amenities filter
-    // if (selectedAmenities.length > 0) {
-    //   filtered = filtered.filter(prop =>
-    //     Array.isArray(prop.amenities) && selectedAmenities.every(amenity =>
-    //       prop.amenities.some(a => a.name && a.name.toLowerCase().includes(amenity.toLowerCase()))
-    //     )
-    //   );
-    // }
 
     // Sorting
     if (selectedSortBy) {
       const parsePrice = (priceStr) => {
-        return parseInt(priceStr.replace(/[₹,]/g, ''));
+        if (!priceStr || priceStr === '₹XX') return 0;
+        return parseInt(priceStr.replace(/[₹,]/g, '')) || 0;
       };
 
       if (selectedSortBy === "Price: Low to High") {
@@ -238,14 +388,16 @@ function PropertiesSearchContent() {
       } else if (selectedSortBy === "Price: High to Low") {
         filtered.sort((a, b) => parsePrice(b.discountedPrice) - parsePrice(a.discountedPrice));
       } else if (selectedSortBy === "Newest First") {
-        filtered.sort((a, b) => new Date(b.date_added) - new Date(a.date_added));
-      } else if (selectedSortBy === "Oldest First") {
-        filtered.sort((a, b) => new Date(a.date_added) - new Date(b.date_added));
+        filtered.sort((a, b) => {
+          const dateA = a.date_added ? new Date(a.date_added) : new Date(0);
+          const dateB = b.date_added ? new Date(b.date_added) : new Date(0);
+          return dateB - dateA;
+        });
       }
     }
 
     setFilteredProperties(filtered);
-  }, [selectedBadge, selectedPropertyType, selectedFacilities, selectedFloorsOffered, selectedAmenities, selectedSortBy, allProperties]);
+  }, [selectedSortBy, allProperties]);
 
   // Toggle dropdown
   const toggleDropdown = (dropdownName) => {
@@ -261,32 +413,99 @@ function PropertiesSearchContent() {
     }
   }, [openDropdown]);
 
-  // Toggle amenity selection
-  const toggleAmenity = (amenityValue) => {
-    setSelectedAmenities(prev =>
-      prev.includes(amenityValue)
-        ? prev.filter(a => a !== amenityValue)
-        : [...prev, amenityValue]
-    );
-  };
-
   // Clear all filters
   const clearAllFilters = () => {
     setSelectedBadge('');
     setSelectedPropertyType('');
     setSelectedFacilities('');
     setSelectedFloorsOffered('');
-    setSelectedAmenities([]);
     setSelectedSortBy('');
   };
 
   // Toggle favorite
-  const toggleFavorite = (propertyId) => {
+  const toggleFavorite = async (e, property) => {
+    e.stopPropagation();
+    
+    if (!currentUser) {
+      setIsLoginOpen(true);
+      return;
+    }
+
+    const propertyId = property._id || property.id;
+    const propertyType = property.propertyType || 'commercial';
+    const isCurrentlyFavorite = favorites.includes(propertyId);
+    const newFavoriteState = !isCurrentlyFavorite;
+
+    // Optimistically update UI
     setFavorites(prev =>
-      prev.includes(propertyId)
+      isCurrentlyFavorite
         ? prev.filter(id => id !== propertyId)
         : [...prev, propertyId]
     );
+
+    // Update localStorage
+    try {
+      const favoritesLocal = JSON.parse(localStorage.getItem('favorites') || '[]');
+      if (newFavoriteState) {
+        // Add to favorites
+        const exists = favoritesLocal.some(fav => (fav._id || fav.id) === propertyId);
+        if (!exists) {
+          favoritesLocal.push({ _id: propertyId, id: propertyId });
+          localStorage.setItem('favorites', JSON.stringify(favoritesLocal));
+        }
+      } else {
+        // Remove from favorites
+        const updatedFavorites = favoritesLocal.filter(fav => (fav._id || fav.id) !== propertyId);
+        localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+      }
+    } catch (error) {
+      console.error('Error updating localStorage:', error);
+    }
+
+    // Sync with database
+    if (currentUser.phoneNumber) {
+      try {
+        const response = await fetch('/api/favorites', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userPhoneNumber: currentUser.phoneNumber,
+            propertyId: propertyId,
+            propertyType: propertyType,
+            action: newFavoriteState ? 'add' : 'remove',
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+          // Revert UI if API call failed
+          setFavorites(prev =>
+            newFavoriteState
+              ? prev.filter(id => id !== propertyId)
+              : [...prev, propertyId]
+          );
+          alert('Failed to update favorite. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error updating favorite:', error);
+        // Revert UI if API call failed
+        setFavorites(prev =>
+          newFavoriteState
+            ? prev.filter(id => id !== propertyId)
+            : [...prev, propertyId]
+        );
+        alert('Failed to update favorite. Please try again.');
+      }
+    }
+  };
+
+  // Handle login success
+  const handleLoginSuccess = (userData) => {
+    loginUser(userData);
+    setIsLoginOpen(false);
   };
 
   // Show loading skeleton while fetching data
@@ -344,28 +563,30 @@ function PropertiesSearchContent() {
               )}
             </div>
 
-            {/* Property Type Dropdown */}
-            <div className="relative">
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleDropdown('propertyType'); }}
-                className={`px-3 py-1.5 sm:px-4 sm:py-2 border rounded-full hover:bg-gray-50 flex items-center gap-1.5 text-xs sm:text-sm whitespace-nowrap ${selectedPropertyType ? 'border-gray-400 bg-gray-100 text-gray-800' : 'border-gray-300 text-gray-600'}`}
-              >
-                {selectedPropertyType || 'Property Type'}
-              </button>
-              {openDropdown === 'propertyType' && (
-                <div className="absolute top-full left-0 mt-2 w-40 sm:w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-                  {propertyTypes.map(type => (
-                    <div
-                      key={type}
-                      onClick={() => { setSelectedPropertyType(type); setOpenDropdown(null); }}
-                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-xs sm:text-sm"
-                    >
-                      {type}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            {/* Property Type Dropdown - Only show if Category is available */}
+            {propertyTypes.length > 0 && (
+              <div className="relative">
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleDropdown('propertyType'); }}
+                  className={`px-3 py-1.5 sm:px-4 sm:py-2 border rounded-full hover:bg-gray-50 flex items-center gap-1.5 text-xs sm:text-sm whitespace-nowrap ${selectedPropertyType ? 'border-gray-400 bg-gray-100 text-gray-800' : 'border-gray-300 text-gray-600'}`}
+                >
+                  {selectedPropertyType || 'Property Type'}
+                </button>
+                {openDropdown === 'propertyType' && (
+                  <div className="absolute top-full left-0 mt-2 w-40 sm:w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                    {propertyTypes.map(type => (
+                      <div
+                        key={type}
+                        onClick={() => { setSelectedPropertyType(type); setOpenDropdown(null); }}
+                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-xs sm:text-sm"
+                      >
+                        {type}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Facilities Dropdown */}
             <div className="relative">
@@ -409,36 +630,6 @@ function PropertiesSearchContent() {
                       {floor}
                     </div>
                   ))}
-                </div>
-              )}
-            </div>
-
-            {/* Amenities Dropdown */}
-            <div className="relative">
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleDropdown('amenities'); }}
-                className={`px-3 py-1.5 sm:px-4 sm:py-2 border rounded-full hover:bg-gray-50 flex items-center gap-1.5 text-xs sm:text-sm whitespace-nowrap ${selectedAmenities.length > 0 ? 'border-gray-400 bg-gray-100 text-gray-800' : 'border-gray-300 text-gray-600'}`}
-              >
-                {selectedAmenities.length > 0 ? `Amenities (${selectedAmenities.length})` : 'Amenities'}
-              </button>
-              {openDropdown === 'amenities' && (
-                <div className="absolute top-full left-0 mt-2 w-56 sm:w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
-                  <div className="p-2">
-                    {amenities.map(amenity => (
-                      <label
-                        key={amenity.value}
-                        className="flex items-center px-2 sm:px-3 py-2 hover:bg-gray-100 cursor-pointer rounded text-xs sm:text-sm"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedAmenities.includes(amenity.value)}
-                          onChange={() => toggleAmenity(amenity.value)}
-                          className="mr-2 sm:mr-3 w-3.5 h-3.5 sm:w-4 sm:h-4"
-                        />
-                        {amenity.label}
-                      </label>
-                    ))}
-                  </div>
                 </div>
               )}
             </div>
@@ -488,27 +679,28 @@ function PropertiesSearchContent() {
               className="bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl hover:-translate-y-1 sm:hover:-translate-y-2 transition-all duration-300 relative cursor-pointer"
             >
               {/* Badge */}
-              <div className="absolute top-2 left-2 sm:top-4 sm:left-4 bg-white px-2 py-1 sm:px-3 sm:py-1.5 rounded-full flex items-center gap-1 sm:gap-2 z-10 shadow-md">
-                <svg className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span className="text-[10px] sm:text-xs font-semibold text-blue-600 uppercase">{property.badge}</span>
-              </div>
+              {property.badge && (
+                <div className="absolute top-2 left-2 sm:top-4 sm:left-4 bg-white px-2 py-1 sm:px-3 sm:py-1.5 rounded-full flex items-center gap-1 sm:gap-2 z-10 shadow-md">
+                  <svg className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-[10px] sm:text-xs font-semibold text-blue-600 uppercase">{property.badge}</span>
+                </div>
+              )}
 
               {/* Favorite Icon */}
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleFavorite(index);
-                }}
+                onClick={(e) => toggleFavorite(e, property)}
                 className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-white p-1.5 sm:p-2 rounded-full shadow-md z-10 hover:bg-gray-50 transition-colors"
               >
                 <svg
-                  className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors ${favorites.includes(index) ? 'text-red-500' : 'text-gray-700'}`}
-                  fill="currentColor"
+                  className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors ${favorites.includes(property._id || property.id) ? 'text-red-500 fill-red-500' : 'text-gray-700'}`}
+                  fill={favorites.includes(property._id || property.id) ? 'currentColor' : 'none'}
                   viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={favorites.includes(property._id || property.id) ? 0 : 2}
                 >
-                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
                 </svg>
               </button>
 
@@ -525,26 +717,28 @@ function PropertiesSearchContent() {
               <div className="p-3 sm:p-4">
                 <div className="flex items-center justify-between mb-2 sm:mb-3">
                   <h3 className="text-sm sm:text-base font-bold text-gray-900">
-                    {property.name}
+                    {safeDisplay(property.name)}
                   </h3>
                   <span className="px-2 py-0.5 bg-green-50 text-green-600 text-[9px] sm:text-[10px] font-medium rounded-md border border-green-200 whitespace-nowrap">
-                    {property.ratings?.overall ? `${property.ratings.overall} ⭐` : 'No ratings yet'}
+                    {property.ratings?.overall ? `${safeDisplay(property.ratings.overall)} ⭐` : 'No ratings yet'}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between mt-3 sm:mt-4">
-                  <span className="text-sm sm:text-base font-bold text-gray-900">{property.discountedPrice}</span>
-                  <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-green-50 text-green-600 text-[10px] sm:text-xs font-semibold rounded-md border border-green-200 uppercase">
-                    {property.badge}
-                  </span>
+                  <span className="text-sm sm:text-base font-bold text-gray-900">{safeDisplay(property.discountedPrice)}</span>
+                  {property.badge && (
+                    <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-green-50 text-green-600 text-[10px] sm:text-xs font-semibold rounded-md border border-green-200 uppercase">
+                      {safeDisplay(property.badge)}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* No Results */}
-        {filteredProperties.length === 0 && (
+        {/* No Results - Only show when not loading and no properties found */}
+        {!isLoading && filteredProperties.length === 0 && (
           <div className="bg-white rounded-lg shadow-md p-6 sm:p-12 text-center">
             <svg className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-gray-400 mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -553,13 +747,21 @@ function PropertiesSearchContent() {
             <p className="text-sm sm:text-base text-gray-500 mb-4">Try adjusting your filters to see more results</p>
             <button
               onClick={clearAllFilters}
-              className="px-4 py-2 sm:px-6 sm:py-2 text-sm sm:text-base bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+              className="px-4 py-2 sm:px-6 sm:py-2 text-sm sm:text-base bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
             >
               Clear All Filters
             </button>
           </div>
         )}
       </div>
+
+      {/* Login Modal */}
+      {isLoginOpen && (
+        <LoginModal
+          onClose={() => setIsLoginOpen(false)}
+          onProceed={handleLoginSuccess}
+        />
+      )}
     </div>
   );
 }

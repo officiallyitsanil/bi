@@ -75,7 +75,6 @@ export default function HomePage() {
 
   // Handle location updates from VisitorTracker
   const handleLocationUpdate = (locationData) => {
-    console.log('📍 Location update received:', locationData);
     setMapCenter({ lat: locationData.lat, lng: locationData.lng });
     setZoomLevel(locationData.zoom);
     setUserLocationInfo({
@@ -146,7 +145,12 @@ export default function HomePage() {
         const result = await response.json();
 
         if (result.success && result.data) {
-          const properties = result.data.map(property => {
+          // Filter only confirmed properties
+          const confirmedProperties = result.data.filter(property => 
+            property.verificationStatus === 'confirmed'
+          );
+
+          const properties = confirmedProperties.map(property => {
             // Ensure coordinates are in the correct format
             let position = property.position || property.coordinates;
 
@@ -159,8 +163,6 @@ export default function HomePage() {
             } else {
               position = { lat: 17.4200, lng: 78.4867 }; // Default fallback
             }
-
-            console.log('Property:', property.name || property.propertyName, 'Position:', position);
 
             return {
               ...property,
@@ -188,7 +190,6 @@ export default function HomePage() {
             };
           });
 
-          console.log('Loading properties from API:', properties.length);
           setMarkers(properties);
         }
       } catch (error) {
@@ -404,8 +405,6 @@ export default function HomePage() {
 
   const getFilteredMarkers = () => {
     let filtered = markers;
-    console.log('Original markers count:', markers.length);
-    console.log('Markers being filtered:', markers.map(m => ({ id: m.id, position: m.position })));
 
     // Check if any filters are applied
     const hasTypeFilters = filters.type.commercial || filters.type.residential;
@@ -491,7 +490,6 @@ export default function HomePage() {
       });
     }
 
-    console.log('Filtered markers count:', filtered.length);
     return filtered;
   };
 

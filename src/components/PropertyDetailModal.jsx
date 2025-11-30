@@ -3,6 +3,21 @@
 import { useState, useEffect } from "react";
 import { loginUser } from "@/utils/auth";
 import { mapAmenitiesToObjects } from "@/utils/amenityMapping";
+
+// Helper function to safely display database values
+const safeDisplay = (value, fallback = "-") => {
+    if (value === null || value === undefined || value === "") {
+        return fallback;
+    }
+    // Handle arrays and objects
+    if (Array.isArray(value) && value.length === 0) {
+        return fallback;
+    }
+    if (typeof value === "object" && Object.keys(value).length === 0) {
+        return fallback;
+    }
+    return value;
+};
 import {
     BadgeCheck,
     MapPin,
@@ -52,19 +67,56 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
     const [reviewSubmitSuccess, setReviewSubmitSuccess] = useState(false);
 
     useEffect(() => {
-        try {
-            const userJson = localStorage.getItem('currentUser');
-            if (userJson) {
-                setCurrentUser(JSON.parse(userJson));
-            }
+        const checkFavoriteStatus = async () => {
+            try {
+                const userJson = localStorage.getItem('currentUser');
+                if (userJson) {
+                    setCurrentUser(JSON.parse(userJson));
+                }
 
-            // Check if property is in favourites
-            const favourites = JSON.parse(localStorage.getItem('favourites') || '[]');
-            setIsFavourite(favourites.some(fav => fav.id === property.id));
-        } catch (error) {
-            console.error("Failed to parse user data from localStorage:", error);
-        }
-    }, [property.id]);
+                const propertyId = property._id || property.id;
+                
+                // Check localStorage first
+                const favourites = JSON.parse(localStorage.getItem('favorites') || '[]');
+                const isFavoritedLocal = favourites.some(fav => (fav._id || fav.id) === propertyId);
+                
+                if (isFavoritedLocal) {
+                    setIsFavourite(true);
+                }
+
+                // If user is logged in, sync with database
+                if (userJson) {
+                    const user = JSON.parse(userJson);
+                    if (user.phoneNumber) {
+                        try {
+                            const response = await fetch(`/api/favorites?userPhoneNumber=${encodeURIComponent(user.phoneNumber)}`);
+                            const data = await response.json();
+                            
+                            if (data.success) {
+                                const isFavoritedDB = data.data.some(fav => fav.propertyId === propertyId);
+                                setIsFavourite(isFavoritedDB);
+                                
+                                // Sync localStorage with DB
+                                if (isFavoritedDB && !isFavoritedLocal) {
+                                    const updatedFavorites = [...favourites, { _id: propertyId, id: propertyId }];
+                                    localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+                                } else if (!isFavoritedDB && isFavoritedLocal) {
+                                    const updatedFavorites = favourites.filter(fav => (fav._id || fav.id) !== propertyId);
+                                    localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+                                }
+                            }
+                        } catch (error) {
+                            console.error('Error checking favorite status:', error);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to parse user data from localStorage:", error);
+            }
+        };
+
+        checkFavoriteStatus();
+    }, [property._id, property.id]);
 
     if (!property) return null;
 
@@ -84,29 +136,68 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
         setShowRatingModal(true);
     };
 
-    const handleFavouriteToggle = () => {
+    const handleFavouriteToggle = async () => {
         // Check if user is logged in
         if (!currentUser) {
             setIsLoginModalOpen(true);
             return;
         }
 
-        try {
-            const favourites = JSON.parse(localStorage.getItem('favourites') || '[]');
+        const propertyId = property._id || property.id;
+        const propertyType = property.propertyType || 'commercial';
+        const newFavoriteState = !isFavourite;
 
-            if (isFavourite) {
-                // Remove from favourites
-                const updatedFavourites = favourites.filter(fav => fav.id !== property.id);
-                localStorage.setItem('favourites', JSON.stringify(updatedFavourites));
-                setIsFavourite(false);
-            } else {
+        // Optimistically update UI
+        setIsFavourite(newFavoriteState);
+
+        // Update localStorage
+        try {
+            const favourites = JSON.parse(localStorage.getItem('favorites') || '[]');
+            if (newFavoriteState) {
                 // Add to favourites
-                favourites.push(property);
-                localStorage.setItem('favourites', JSON.stringify(favourites));
-                setIsFavourite(true);
+                const exists = favourites.some(fav => (fav._id || fav.id) === propertyId);
+                if (!exists) {
+                    favourites.push({ _id: propertyId, id: propertyId });
+                    localStorage.setItem('favorites', JSON.stringify(favourites));
+                }
+            } else {
+                // Remove from favourites
+                const updatedFavourites = favourites.filter(fav => (fav._id || fav.id) !== propertyId);
+                localStorage.setItem('favorites', JSON.stringify(updatedFavourites));
             }
         } catch (error) {
             console.error("Failed to update favourites:", error);
+        }
+
+        // Sync with database
+        if (currentUser.phoneNumber) {
+            try {
+                const response = await fetch('/api/favorites', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userPhoneNumber: currentUser.phoneNumber,
+                        propertyId: propertyId,
+                        propertyType: propertyType,
+                        action: newFavoriteState ? 'add' : 'remove',
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    // Revert UI if API call failed
+                    setIsFavourite(!newFavoriteState);
+                    alert('Failed to update favorite. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error updating favorite:', error);
+                // Revert UI if API call failed
+                setIsFavourite(!newFavoriteState);
+                alert('Failed to update favorite. Please try again.');
+            }
         }
     };
 
@@ -118,8 +209,8 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
         }
 
         const shareData = {
-            title: `${name} in ${location_district}`,
-            text: `Check out this property: ${name} at ${discountedPrice} in ${layer_location}, ${location_district}`,
+            title: `${safeDisplay(name)} in ${safeDisplay(location_district)}`,
+            text: `Check out this property: ${safeDisplay(name)} at ${safeDisplay(discountedPrice)} in ${safeDisplay(layer_location)}, ${safeDisplay(location_district)}`,
             url: `${window.location.origin}/property-details?id=${property.id}`
         };
 
@@ -136,24 +227,70 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
         }
     };
 
+    // Calculate prices based on property type
+    const calculatePrices = (property) => {
+        let originalPriceValue = 0;
+        
+        if (property.propertyType === 'residential') {
+            // For residential: use expectedRent
+            const expectedRent = property.expectedRent || '0';
+            originalPriceValue = parseFloat(expectedRent.toString().replace(/[₹,]/g, '')) || 0;
+        } else if (property.propertyType === 'commercial') {
+            // For commercial: calculate from floorConfigurations
+            if (property.floorConfigurations && property.floorConfigurations.length > 0) {
+                const firstFloor = property.floorConfigurations[0];
+                if (firstFloor.dedicatedCabin && firstFloor.dedicatedCabin.seats && firstFloor.dedicatedCabin.pricePerSeat) {
+                    // Extract lower values from ranges like "70 - 90" and "6000-8000"
+                    const seatsStr = firstFloor.dedicatedCabin.seats.toString();
+                    const pricePerSeatStr = firstFloor.dedicatedCabin.pricePerSeat.toString();
+                    
+                    const seatsMatch = seatsStr.match(/(\d+)/);
+                    const pricePerSeatMatch = pricePerSeatStr.match(/(\d+)/);
+                    
+                    if (seatsMatch && pricePerSeatMatch) {
+                        const seatsLower = parseFloat(seatsMatch[1]);
+                        const pricePerSeatLower = parseFloat(pricePerSeatMatch[1]);
+                        originalPriceValue = seatsLower * pricePerSeatLower;
+                    }
+                }
+            }
+        }
+        
+        // Calculate discounted price (5% off = 95% of original)
+        const discountedPriceValue = originalPriceValue * 0.95;
+        
+        // Format prices
+        const formatPrice = (price) => {
+            if (price === 0) return '₹XX';
+            return `₹${Math.round(price).toLocaleString('en-IN')}`;
+        };
+        
+        return {
+            originalPrice: formatPrice(originalPriceValue),
+            discountedPrice: formatPrice(discountedPriceValue)
+        };
+    };
+
+    const prices = calculatePrices(property);
+
     const {
-        name = "N/A",
-        originalPrice = "N/A",
-        discountedPrice = "N/A",
-        additionalPrice = "N/A",
-        location_district = "N/A",
+        name,
+        location_district,
         images = [],
-        date_added = "N/A",
+        date_added,
         is_verified = false,
-        sellerPhoneNumber = "N/A",
+        sellerPhoneNumber,
         layer_location,
         createdBy,
         amenities = [],
         ratings = {},
         reviews = [],
         floorPlans = {},
-        propertyType = "N/A"
+        propertyType
     } = property;
+
+    const originalPrice = prices.originalPrice;
+    const discountedPrice = prices.discountedPrice;
 
     // Map amenities (handles both string arrays and object arrays)
     const mappedAmenities = mapAmenitiesToObjects(amenities);
@@ -174,7 +311,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                     <div className="flex-1">
                         <div className="mb-3 flex w-full items-center justify-between text-left lg:mb-2">
                             <div className="flex items-center gap-1.5">
-                                <div className="text-lg font-semibold text-gray-800 lg:text-xl">{name}</div>
+                                <div className="text-lg font-semibold text-gray-800 lg:text-xl">{safeDisplay(name)}</div>
                                 {is_verified && <BadgeCheck width="18" height="18" className="text-white fill-blue-500" />}
                             </div>
                         </div>
@@ -182,14 +319,13 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                             <div className="flex items-center gap-1.5">
                                 <MapPin className="shrink-0" height="14" width="14" />
                                 <div className="text-left text-sm font-medium capitalize text-gray-600">
-                                    {layer_location}, {location_district}
+                                    {safeDisplay(layer_location)}{location_district ? `, ${safeDisplay(location_district)}` : ''}
                                 </div>
                             </div>
                             <div className="flex items-center gap-1.5">
                                 <div>
-                                    <span className="text-sm font-semibold text-gray-800">{discountedPrice}</span>
-                                    <span className="text-xs font-medium text-gray-500 line-through ml-2">{originalPrice}</span>
-                                    <span className="text-xs font-medium text-gray-800"> (+{additionalPrice})</span>
+                                    <span className="text-sm font-semibold text-gray-800">{safeDisplay(discountedPrice)}</span>
+                                    <span className="text-xs font-medium text-gray-500 line-through ml-2">{safeDisplay(originalPrice)}</span>
                                 </div>
                             </div>
                         </div>
@@ -280,7 +416,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                     <section>
                         <div className="flex flex-col">
                             <div className="space-y-2">
-                                <div className="flex gap-2"><span className="flex-1 text-sm font-medium text-gray-500">Date Added</span><span className="flex-1 text-sm font-semibold capitalize text-gray-800">{date_added}</span></div>
+                                <div className="flex gap-2"><span className="flex-1 text-sm font-medium text-gray-500">Date Added</span><span className="flex-1 text-sm font-semibold capitalize text-gray-800">{safeDisplay(date_added)}</span></div>
                             </div>
                         </div>
                     </section>
@@ -369,8 +505,8 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                     </button>
                                     <div className="flex items-center gap-1">
                                         <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                        <span className="text-sm font-semibold text-gray-800">{ratings.overall}</span>
-                                        <span className="text-xs text-gray-500">({ratings.totalRatings})</span>
+                                        <span className="text-sm font-semibold text-gray-800">{safeDisplay(ratings.overall)}</span>
+                                        <span className="text-xs text-gray-500">({safeDisplay(ratings.totalRatings)})</span>
                                     </div>
                                 </div>
                             </div>
@@ -437,14 +573,14 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                     {displayedReviews.map((review, index) => (
                                         <div key={index} className="bg-gray-50 rounded-lg p-3">
                                             <div className="flex items-center justify-between mb-1.5">
-                                                <span className="text-xs font-medium text-gray-800">{review.user}</span>
+                                                <span className="text-xs font-medium text-gray-800">{safeDisplay(review.user)}</span>
                                                 <div className="flex items-center gap-1">
                                                     <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                                    <span className="text-xs font-medium text-gray-700">{review.rating}</span>
+                                                    <span className="text-xs font-medium text-gray-700">{safeDisplay(review.rating)}</span>
                                                 </div>
                                             </div>
-                                            <p className="text-xs text-gray-600 mb-1">{review.comment}</p>
-                                            <span className="text-[10px] text-gray-500">{review.date}</span>
+                                            <p className="text-xs text-gray-600 mb-1">{safeDisplay(review.comment)}</p>
+                                            <span className="text-[10px] text-gray-500">{safeDisplay(review.date)}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -494,7 +630,13 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
             <div className="sticky bottom-0 z-20 w-full bg-white p-4 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] max-[375px]:p-2">
                 <div className="flex gap-3 max-[375px]:gap-2">
                     <button
-                        onClick={() => window.open(`https://wa.me/${sellerPhoneNumber.replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${name}`, '_blank')}
+                        onClick={() => {
+                            const phone = safeDisplay(sellerPhoneNumber);
+                            const propName = safeDisplay(name);
+                            if (phone !== "-" && propName !== "-") {
+                                window.open(`https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${propName}`, '_blank');
+                            }
+                        }}
                         className="flex-1 border-2 border-green-500 text-green-500 py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-green-50 cursor-pointer transition-colors"
                     >
                         <img
@@ -505,7 +647,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                         WhatsApp
                     </button>
                     <button
-                        onClick={() => window.location.href = `tel:${sellerPhoneNumber}`}
+                        onClick={() => window.location.href = `tel:${safeDisplay(sellerPhoneNumber)}`}
                         className="flex-1 bg-green-500 text-white py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors"
                     >
                         <img
@@ -539,9 +681,9 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                             </button>
                         </div>
                         <div className="space-y-3">
-                            <p className="text-base"><span className="font-medium text-gray-600">Owner Name:</span> <span className="font-semibold text-gray-900">{createdBy?.name || 'N/A'}</span></p>
+                            <p className="text-base"><span className="font-medium text-gray-600">Owner Name:</span> <span className="font-semibold text-gray-900">{safeDisplay(createdBy?.name)}</span></p>
                             <p className="text-base"><span className="font-medium text-gray-600">Contact:</span>
-                                <a href={`tel:${sellerPhoneNumber}`} className="font-semibold text-blue-600 hover:underline ml-2">{sellerPhoneNumber}</a>
+                                <a href={`tel:${sellerPhoneNumber}`} className="font-semibold text-blue-600 hover:underline ml-2">{safeDisplay(sellerPhoneNumber)}</a>
                             </p>
                         </div>
                     </div>
@@ -740,7 +882,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                     },
                                     body: JSON.stringify({
                                         propertyId: property.id,
-                                        propertyName: name,
+                                        propertyName: safeDisplay(name),
                                         ...reportFormData,
                                     }),
                                 });

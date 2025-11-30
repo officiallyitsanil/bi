@@ -20,6 +20,21 @@ import { mapAmenitiesToObjects } from "../../utils/amenityMapping";
 
 import "./animations.css";
 
+// Helper function to safely display database values
+const safeDisplay = (value, fallback = "-") => {
+    if (value === null || value === undefined || value === "") {
+        return fallback;
+    }
+    // Handle arrays and objects
+    if (Array.isArray(value) && value.length === 0) {
+        return fallback;
+    }
+    if (typeof value === "object" && Object.keys(value).length === 0) {
+        return fallback;
+    }
+    return value;
+};
+
 // Animated Text Component
 const AnimatedText = ({ children, className = "", delay = 0, lineColor = "#f8c02f" }) => {
     const [animationKey, setAnimationKey] = useState(0);
@@ -112,6 +127,53 @@ function PropertyDetailsContent() {
         };
     }, []);
 
+    // Check if property is favorited (from localStorage and DB)
+    useEffect(() => {
+        const checkFavoriteStatus = async () => {
+            if (!property || !property._id) return;
+
+            const propertyId = property._id || property.id;
+            
+            // Check localStorage first
+            try {
+                const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+                const isFavoritedLocal = favorites.some(fav => (fav._id || fav.id) === propertyId);
+                
+                if (isFavoritedLocal) {
+                    setIsLiked(true);
+                }
+
+                // If user is logged in, sync with database
+                if (currentUser && currentUser.phoneNumber) {
+                    try {
+                        const response = await fetch(`/api/favorites?userPhoneNumber=${encodeURIComponent(currentUser.phoneNumber)}`);
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            const isFavoritedDB = data.data.some(fav => fav.propertyId === propertyId);
+                            setIsLiked(isFavoritedDB);
+                            
+                            // Sync localStorage with DB
+                            if (isFavoritedDB && !isFavoritedLocal) {
+                                const updatedFavorites = [...favorites, { _id: propertyId, id: propertyId }];
+                                localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+                            } else if (!isFavoritedDB && isFavoritedLocal) {
+                                const updatedFavorites = favorites.filter(fav => (fav._id || fav.id) !== propertyId);
+                                localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error checking favorite status:', error);
+                    }
+                }
+            } catch (error) {
+                console.error('Error reading favorites from localStorage:', error);
+            }
+        };
+
+        checkFavoriteStatus();
+    }, [property, currentUser]);
+
     // Refs for scroll-to-section functionality
     const amenitiesRef = useRef(null);
     const locationRef = useRef(null);
@@ -190,25 +252,14 @@ function PropertyDetailsContent() {
                 return;
             }
 
-            console.log('Fetching property:', idParam, 'Type:', typeParam);
-
             try {
                 const apiUrl = `/api/properties?id=${idParam}&type=${typeParam || ''}`;
-                console.log('Fetching from:', apiUrl);
 
                 const response = await fetch(apiUrl);
 
-                console.log('API Response status:', response.status);
-
                 const data = await response.json();
-                console.log('API Response data:', JSON.stringify(data, null, 2));
-                console.log('data.success:', data.success);
-                console.log('data.property:', data.property);
 
                 if (data.success && data.property) {
-                    // Log the raw ratings data
-                    console.log('Raw ratings from API:', data.property.ratings);
-                    console.log('Raw breakdown:', data.property.ratings?.breakdown);
 
                     // Helper function to format location from address object
                     const formatLocation = (address) => {
@@ -227,6 +278,52 @@ function PropertyDetailsContent() {
                         return parts.length > 0 ? parts.join(', ') : 'Address not available';
                     };
 
+                    // Calculate prices based on property type
+                    const calculatePrices = (property) => {
+                        let originalPriceValue = 0;
+                        
+                        if (property.propertyType === 'residential') {
+                            // For residential: use expectedRent
+                            const expectedRent = property.expectedRent || '0';
+                            originalPriceValue = parseFloat(expectedRent.toString().replace(/[₹,]/g, '')) || 0;
+                        } else if (property.propertyType === 'commercial') {
+                            // For commercial: calculate from floorConfigurations
+                            if (property.floorConfigurations && property.floorConfigurations.length > 0) {
+                                const firstFloor = property.floorConfigurations[0];
+                                if (firstFloor.dedicatedCabin && firstFloor.dedicatedCabin.seats && firstFloor.dedicatedCabin.pricePerSeat) {
+                                    // Extract lower values from ranges like "70 - 90" and "6000-8000"
+                                    const seatsStr = firstFloor.dedicatedCabin.seats.toString();
+                                    const pricePerSeatStr = firstFloor.dedicatedCabin.pricePerSeat.toString();
+                                    
+                                    const seatsMatch = seatsStr.match(/(\d+)/);
+                                    const pricePerSeatMatch = pricePerSeatStr.match(/(\d+)/);
+                                    
+                                    if (seatsMatch && pricePerSeatMatch) {
+                                        const seatsLower = parseFloat(seatsMatch[1]);
+                                        const pricePerSeatLower = parseFloat(pricePerSeatMatch[1]);
+                                        originalPriceValue = seatsLower * pricePerSeatLower;
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Calculate discounted price (5% off = 95% of original)
+                        const discountedPriceValue = originalPriceValue * 0.95;
+                        
+                        // Format prices
+                        const formatPrice = (price) => {
+                            if (price === 0) return '₹XX';
+                            return `₹${Math.round(price).toLocaleString('en-IN')}`;
+                        };
+                        
+                        return {
+                            originalPrice: formatPrice(originalPriceValue),
+                            discountedPrice: formatPrice(discountedPriceValue)
+                        };
+                    };
+
+                    const calculatedPrices = calculatePrices(data.property);
+
                     const formattedProperty = {
                         ...data.property,
                         id: data.property._id || data.property.id,
@@ -238,6 +335,8 @@ function PropertyDetailsContent() {
                         amenities: mapAmenitiesToObjects(data.property.amenities || []),
                         nearbyPlaces: data.property.nearbyPlaces || { school: [], hospital: [], hotel: [], business: [] },
                         floorPlans: data.property.floorPlans || {},
+                        propertyVideos: data.property.propertyVideos || [],
+                        seatLayoutPDFs: data.property.seatLayoutPDFs || [],
                         ratings: data.property.ratings || {
                             overall: 0,
                             totalRatings: 0,
@@ -246,18 +345,14 @@ function PropertyDetailsContent() {
                             whatsBad: []
                         },
                         reviews: data.property.reviews || [],
-                        name: data.property.name || 'Property Name',
-                        address: data.property.address || 'Address not available',
+                        name: safeDisplay(data.property.name, 'Property Name'),
+                        address: safeDisplay(data.property.address, 'Address not available'),
                         location: data.property.location || formatLocation(data.property.address),
-                        originalPrice: data.property.originalPrice || '₹XX',
-                        discountedPrice: data.property.discountedPrice || '₹XX',
-                        additionalPrice: data.property.additionalPrice || '₹XX',
+                        originalPrice: calculatedPrices.originalPrice,
+                        discountedPrice: calculatedPrices.discountedPrice,
                         sellerPhoneNumber: data.property.sellerPhoneNumber || '+91 XXXXXXXXXX'
                     };
 
-                    console.log('Property loaded successfully:', formattedProperty.name);
-                    console.log('Formatted ratings:', formattedProperty.ratings);
-                    console.log('Formatted breakdown:', formattedProperty.ratings?.breakdown);
                     setProperty(formattedProperty);
                 } else {
                     console.error('❌ Property not found in database');
@@ -343,12 +438,70 @@ function PropertyDetailsContent() {
         }
     };
 
-    const handleLike = () => {
+    const handleLike = async () => {
         if (!currentUser) {
             setIsLoginOpen(true);
             return;
         }
-        setIsLiked(!isLiked);
+
+        if (!property || !property._id) return;
+
+        const propertyId = property._id || property.id;
+        const propertyType = property.propertyType || 'commercial';
+        const newFavoriteState = !isLiked;
+
+        // Optimistically update UI
+        setIsLiked(newFavoriteState);
+
+        // Update localStorage
+        try {
+            const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+            if (newFavoriteState) {
+                // Add to favorites
+                const exists = favorites.some(fav => (fav._id || fav.id) === propertyId);
+                if (!exists) {
+                    favorites.push({ _id: propertyId, id: propertyId });
+                    localStorage.setItem('favorites', JSON.stringify(favorites));
+                }
+            } else {
+                // Remove from favorites
+                const updatedFavorites = favorites.filter(fav => (fav._id || fav.id) !== propertyId);
+                localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+            }
+        } catch (error) {
+            console.error('Error updating localStorage:', error);
+        }
+
+        // Sync with database
+        if (currentUser.phoneNumber) {
+            try {
+                const response = await fetch('/api/favorites', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userPhoneNumber: currentUser.phoneNumber,
+                        propertyId: propertyId,
+                        propertyType: propertyType,
+                        action: newFavoriteState ? 'add' : 'remove',
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    // Revert UI if API call failed
+                    setIsLiked(!newFavoriteState);
+                    alert('Failed to update favorite. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error updating favorite:', error);
+                // Revert UI if API call failed
+                setIsLiked(!newFavoriteState);
+                alert('Failed to update favorite. Please try again.');
+            }
+        }
     };
 
     const handleMessage = () => {
@@ -502,28 +655,18 @@ function PropertyDetailsContent() {
 
                 {/* Mobile Property Info */}
                 <div className="w-full px-4 py-5 max-[425px]:px-3 min-[426px]:w-3/4 min-[426px]:mx-auto">
-                    <h2 className="text-xl font-bold mb-2 scroll-animate" data-animation="animate-pop">{property.name}</h2>
-                    <p className="text-xs text-gray-600 mb-3 scroll-animate" data-animation="animate-fade-up">{property.address}</p>
+                    <h2 className="text-xl font-bold mb-2 scroll-animate" data-animation="animate-pop">{safeDisplay(property.name)}</h2>
+                    <p className="text-xs text-gray-600 mb-3 scroll-animate" data-animation="animate-fade-up">{safeDisplay(property.address)}</p>
 
                     {/* Price */}
-                    <div className="flex items-center gap-2 mb-3 scroll-animate" data-animation="animate-slide-top">
-                        <span className="text-base text-red-500 line-through">{property.originalPrice}</span>
+                    <div className="flex items-center gap-2 mb-5 scroll-animate" data-animation="animate-slide-top">
+                        <span className="text-base text-red-500 line-through">{safeDisplay(property.originalPrice)}</span>
                         <img
                             src="/property-details/right-arrow.png"
                             alt="Arrow"
                             className="w-8 h-8 object-contain"
                         />
-                        <span className="text-xl font-bold">{property.discountedPrice}</span>
-                    </div>
-
-                    {/* Limited Offer Badge */}
-                    <div className="flex items-center gap-2 mb-5 scroll-animate" data-animation="animate-slide-top">
-                        <img
-                            src="/property-details/limited-offer.png"
-                            alt="Limited Offer"
-                            className="h-8 object-contain"
-                        />
-                        <span className="text-base">{property.additionalPrice}</span>
+                        <span className="text-xl font-bold">{safeDisplay(property.discountedPrice)}</span>
                     </div>
 
 
@@ -576,9 +719,9 @@ function PropertyDetailsContent() {
                                         <span className="text-sm font-semibold text-gray-800">Monday - Friday</span>
                                         <span className={`text-sm font-medium ${property.openingHours.mondayFriday.enabled ? 'text-green-600' : 'text-red-600'}`}>
                                             {property.openingHours.mondayFriday.enabled
-                                                ? (property.openingHours.mondayFriday.open === 'Open' && property.openingHours.mondayFriday.close === 'Close'
+                                                ? (safeDisplay(property.openingHours.mondayFriday.open) === 'Open' && safeDisplay(property.openingHours.mondayFriday.close) === 'Close'
                                                     ? 'Open All Day'
-                                                    : `${property.openingHours.mondayFriday.open} - ${property.openingHours.mondayFriday.close}`)
+                                                    : `${safeDisplay(property.openingHours.mondayFriday.open)} - ${safeDisplay(property.openingHours.mondayFriday.close)}`)
                                                 : 'Closed'}
                                         </span>
                                     </div>
@@ -588,9 +731,9 @@ function PropertyDetailsContent() {
                                         <span className="text-sm font-semibold text-gray-800">Saturday</span>
                                         <span className={`text-sm font-medium ${property.openingHours.saturday.enabled ? 'text-green-600' : 'text-red-600'}`}>
                                             {property.openingHours.saturday.enabled
-                                                ? (property.openingHours.saturday.open === 'Open' && property.openingHours.saturday.close === 'Close'
+                                                ? (safeDisplay(property.openingHours.saturday.open) === 'Open' && safeDisplay(property.openingHours.saturday.close) === 'Close'
                                                     ? 'Open All Day'
-                                                    : `${property.openingHours.saturday.open} - ${property.openingHours.saturday.close}`)
+                                                    : `${safeDisplay(property.openingHours.saturday.open)} - ${safeDisplay(property.openingHours.saturday.close)}`)
                                                 : 'Closed'}
                                         </span>
                                     </div>
@@ -600,9 +743,9 @@ function PropertyDetailsContent() {
                                         <span className="text-sm font-semibold text-gray-800">Sunday</span>
                                         <span className={`text-sm font-medium ${property.openingHours.sunday.enabled ? 'text-green-600' : 'text-red-600'}`}>
                                             {property.openingHours.sunday.enabled
-                                                ? (property.openingHours.sunday.open === 'Open' && property.openingHours.sunday.close === 'Close'
+                                                ? (safeDisplay(property.openingHours.sunday.open) === 'Open' && safeDisplay(property.openingHours.sunday.close) === 'Close'
                                                     ? 'Open All Day'
-                                                    : `${property.openingHours.sunday.open} - ${property.openingHours.sunday.close}`)
+                                                    : `${safeDisplay(property.openingHours.sunday.open)} - ${safeDisplay(property.openingHours.sunday.close)}`)
                                                 : 'Closed'}
                                         </span>
                                     </div>
@@ -621,81 +764,81 @@ function PropertyDetailsContent() {
                                 {property.bhkType && (
                                     <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
                                         <span className="text-xs font-medium text-gray-500">BHK Type</span>
-                                        <span className="text-sm font-semibold text-gray-800 uppercase">{property.bhkType}</span>
+                                        <span className="text-sm font-semibold text-gray-800 uppercase">{safeDisplay(property.bhkType)}</span>
                                     </div>
                                 )}
                                 {property.apartmentType && (
                                     <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
                                         <span className="text-xs font-medium text-gray-500">Apartment Type</span>
-                                        <span className="text-sm font-semibold text-gray-800 capitalize">{property.apartmentType.replace(/-/g, ' ')}</span>
+                                        <span className="text-sm font-semibold text-gray-800 capitalize">{safeDisplay(property.apartmentType) !== "-" ? safeDisplay(property.apartmentType).replace(/-/g, ' ') : "-"}</span>
                                     </div>
                                 )}
                                 {property.facing && (
                                     <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
                                         <span className="text-xs font-medium text-gray-500">Facing</span>
-                                        <span className="text-sm font-semibold text-gray-800 capitalize">{property.facing.replace(/-/g, ' ')}</span>
+                                        <span className="text-sm font-semibold text-gray-800 capitalize">{safeDisplay(property.facing) !== "-" ? safeDisplay(property.facing).replace(/-/g, ' ') : "-"}</span>
                                     </div>
                                 )}
                                 {property.propertyAge && (
                                     <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
                                         <span className="text-xs font-medium text-gray-500">Property Age</span>
-                                        <span className="text-sm font-semibold text-gray-800">{property.propertyAge} Years</span>
+                                        <span className="text-sm font-semibold text-gray-800">{safeDisplay(property.propertyAge) !== "-" ? `${safeDisplay(property.propertyAge)} Years` : "-"}</span>
                                     </div>
                                 )}
                                 {property.propertySize && (
                                     <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
                                         <span className="text-xs font-medium text-gray-500">Property Size</span>
-                                        <span className="text-sm font-semibold text-gray-800">{property.propertySize} sq.ft</span>
+                                        <span className="text-sm font-semibold text-gray-800">{safeDisplay(property.propertySize) !== "-" ? `${safeDisplay(property.propertySize)} sq.ft` : "-"}</span>
                                     </div>
                                 )}
                                 {property.carpetArea && (
                                     <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
                                         <span className="text-xs font-medium text-gray-500">Carpet Area</span>
-                                        <span className="text-sm font-semibold text-gray-800">{property.carpetArea} sq.ft</span>
+                                        <span className="text-sm font-semibold text-gray-800">{safeDisplay(property.carpetArea) !== "-" ? `${safeDisplay(property.carpetArea)} sq.ft` : "-"}</span>
                                     </div>
                                 )}
                                 {(property.floor || property.totalFloors) && (
                                     <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
                                         <span className="text-xs font-medium text-gray-500">Floor</span>
                                         <span className="text-sm font-semibold text-gray-800">
-                                            {property.floor ? `${property.floor}` : ''}{property.totalFloors ? ` of ${property.totalFloors}` : ''}
+                                            {safeDisplay(property.floor) !== "-" ? safeDisplay(property.floor) : ''}{safeDisplay(property.totalFloors) !== "-" ? ` of ${safeDisplay(property.totalFloors)}` : ''}
                                         </span>
                                     </div>
                                 )}
                                 {property.furnishing && (
                                     <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
                                         <span className="text-xs font-medium text-gray-500">Furnishing</span>
-                                        <span className="text-sm font-semibold text-gray-800">{property.furnishing}</span>
+                                        <span className="text-sm font-semibold text-gray-800">{safeDisplay(property.furnishing)}</span>
                                     </div>
                                 )}
                                 {property.parking && (
                                     <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
                                         <span className="text-xs font-medium text-gray-500">Parking</span>
-                                        <span className="text-sm font-semibold text-gray-800">{property.parking}</span>
+                                        <span className="text-sm font-semibold text-gray-800">{safeDisplay(property.parking)}</span>
                                     </div>
                                 )}
                                 {property.bathrooms !== undefined && property.bathrooms !== null && (
                                     <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
                                         <span className="text-xs font-medium text-gray-500">Bathrooms</span>
-                                        <span className="text-sm font-semibold text-gray-800">{property.bathrooms}</span>
+                                        <span className="text-sm font-semibold text-gray-800">{safeDisplay(property.bathrooms)}</span>
                                     </div>
                                 )}
                                 {property.balconies !== undefined && property.balconies !== null && (
                                     <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
                                         <span className="text-xs font-medium text-gray-500">Balconies</span>
-                                        <span className="text-sm font-semibold text-gray-800">{property.balconies}</span>
+                                        <span className="text-sm font-semibold text-gray-800">{safeDisplay(property.balconies)}</span>
                                     </div>
                                 )}
                                 {property.availableFrom && (
                                     <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
                                         <span className="text-xs font-medium text-gray-500">Available From</span>
-                                        <span className="text-sm font-semibold text-gray-800">{new Date(property.availableFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                        <span className="text-sm font-semibold text-gray-800">{safeDisplay(property.availableFrom) !== "-" ? new Date(property.availableFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : "-"}</span>
                                     </div>
                                 )}
                                 {property.monthlyMaintenance && (
                                     <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm col-span-2">
                                         <span className="text-xs font-medium text-gray-500">Maintenance</span>
-                                        <span className="text-sm font-semibold text-gray-800">{property.monthlyMaintenance}</span>
+                                        <span className="text-sm font-semibold text-gray-800">{safeDisplay(property.monthlyMaintenance)}</span>
                                     </div>
                                 )}
                             </div>
@@ -763,10 +906,10 @@ function PropertyDetailsContent() {
                                 property.nearbyPlaces[activeCategory].slice(0, showMoreNearby ? 6 : 4).map((place, i) => (
                                     <div key={i} className="flex items-center justify-between py-2 border-b">
                                         <div>
-                                            <h4 className="font-medium text-sm text-gray-900">{place.name}</h4>
-                                            <p className="text-xs text-gray-500">{place.location}</p>
+                                            <h4 className="font-medium text-sm text-gray-900">{safeDisplay(place.name)}</h4>
+                                            <p className="text-xs text-gray-500">{safeDisplay(place.location)}</p>
                                         </div>
-                                        <span className="text-xs text-gray-500">{place.distance}</span>
+                                        <span className="text-xs text-gray-500">{safeDisplay(place.distance)}</span>
                                     </div>
                                 ))
                                 : <p className="text-gray-500 text-xs">No nearby places available</p>
@@ -818,20 +961,12 @@ function PropertyDetailsContent() {
                                 ))}
                             </div>
                             <span className="font-medium text-sm">
-                                {property.ratings?.overall || 'N/A'} – {property.ratings?.totalRatings || 0} Rating
+                                {safeDisplay(property.ratings?.overall, 'N/A')} – {safeDisplay(property.ratings?.totalRatings, 0)} Rating
                             </span>
                         </div>
 
                         {/* Rating Bars */}
                         <div className="space-y-1.5 mb-5 scroll-animate" data-animation="animate-fade-up">
-                            {(() => {
-                                if (property.ratings?.breakdown) {
-                                    console.log('Breakdown keys:', Object.keys(property.ratings.breakdown));
-                                    console.log('Breakdown values:', Object.values(property.ratings.breakdown));
-                                    console.log('Full breakdown:', property.ratings.breakdown);
-                                }
-                                return null;
-                            })()}
                             {[5, 4, 3, 2, 1].map((star) => {
                                 const getBreakdownCount = (star) => {
                                     if (!property.ratings?.breakdown) return 0;
@@ -930,6 +1065,48 @@ function PropertyDetailsContent() {
                                         {video.originalName && (
                                             <p className="text-xs text-gray-600 mt-1 px-2">{video.originalName}</p>
                                         )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Property PDFs - Only for commercial properties */}
+                    {property.propertyType === 'commercial' && property.seatLayoutPDFs && property.seatLayoutPDFs.length > 0 && (
+                        <div className="mb-5 scroll-animate" data-animation="animate-slide-top">
+                            <AnimatedText className="text-base font-bold mb-3 text-indigo-600 inline-block" delay={1800} lineColor="#f8c02f">
+                                <h3>Property Documents</h3>
+                            </AnimatedText>
+                            <div className="grid grid-cols-1 gap-3">
+                                {property.seatLayoutPDFs.map((pdf, i) => (
+                                    <div key={i} className="bg-white border border-gray-200 rounded-lg p-4 scroll-animate" data-animation="animate-fade-up" style={{ animationDelay: `${i * 100}ms` }}>
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3 flex-1">
+                                                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                                                    <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                    </svg>
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-medium text-gray-900 truncate">
+                                                        {pdf.originalName || pdf.filename || `Document ${i + 1}`}
+                                                    </p>
+                                                    {pdf.size && (
+                                                        <p className="text-xs text-gray-500">
+                                                            {(pdf.size / 1024 / 1024).toFixed(2)} MB
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <a
+                                                href={pdf.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="ml-3 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
+                                            >
+                                                View PDF
+                                            </a>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -1171,19 +1348,19 @@ function PropertyDetailsContent() {
                                         <div key={index} className="border-b pb-5 last:border-b-0">
                                             <div className="flex items-start justify-between mb-2">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="font-medium text-gray-900">{review.user}</span>
+                                                    <span className="font-medium text-gray-900">{safeDisplay(review.user)}</span>
                                                     <div className="flex">
                                                         {[1, 2, 3, 4, 5].map((star) => (
                                                             <Star
                                                                 key={star}
-                                                                className={`w-4 h-4 ${star <= review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                                                                className={`w-4 h-4 ${star <= (review.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
                                                             />
                                                         ))}
                                                     </div>
                                                 </div>
-                                                <span className="text-sm text-gray-500">{review.date}</span>
+                                                <span className="text-sm text-gray-500">{safeDisplay(review.date)}</span>
                                             </div>
-                                            <p className="text-gray-700 text-sm leading-relaxed">{review.comment}</p>
+                                            <p className="text-gray-700 text-sm leading-relaxed">{safeDisplay(review.comment)}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -1288,7 +1465,6 @@ function PropertyDetailsContent() {
                                     try {
                                         const propertyId = property._id || property.id;
                                         const propertyType = property.propertyType;
-                                        console.log('Submitting review for:', propertyId, 'Type:', propertyType);
                                         const response = await fetch('/api/reviews', {
                                             method: 'POST',
                                             headers: {
@@ -1348,7 +1524,7 @@ function PropertyDetailsContent() {
                 <div className="w-full px-12 py-6">
                     <div className="mb-6 scroll-animate" data-animation="animate-pop">
                         <AnimatedText className="text-lg font-bold inline-block" lineColor="#f8c02f">
-                            <h1>Showing Spaces in {property.city || property.address?.split(',').pop()?.trim() || 'Delhi'}</h1>
+                            <h1>Showing Spaces in {safeDisplay(property.city) !== "-" ? safeDisplay(property.city) : (safeDisplay(property.address) !== "-" ? property.address?.split(',').pop()?.trim() : 'Delhi')}</h1>
                         </AnimatedText>
                     </div>
 
@@ -1466,24 +1642,18 @@ function PropertyDetailsContent() {
                         <div className="lg:col-span-2 space-y-5">
                             {/* Property Info */}
                             <div className="bg-white rounded-2xl p-5 scroll-animate" data-animation="animate-slide-top">
-                                <h2 className="text-xl font-bold mb-2 scroll-animate" data-animation="animate-pop">{property.name}</h2>
-                                <p className="text-sm text-gray-600 mb-3 scroll-animate" data-animation="animate-fade-up">{property.address}</p>
+                                <h2 className="text-xl font-bold mb-2 scroll-animate" data-animation="animate-pop">{safeDisplay(property.name)}</h2>
+                                <p className="text-sm text-gray-600 mb-3 scroll-animate" data-animation="animate-fade-up">{safeDisplay(property.address)}</p>
 
                                 {/* Price */}
                                 <div className="flex items-center gap-3 mb-5 scroll-animate" data-animation="animate-fade-up">
-                                    <span className="text-lg text-red-500 line-through">{property.originalPrice}</span>
+                                    <span className="text-lg text-red-500 line-through">{safeDisplay(property.originalPrice)}</span>
                                     <img
                                         src="/property-details/right-arrow.png"
                                         alt="Arrow"
                                         className="w-8 h-8 object-contain"
                                     />
-                                    <span className="text-xl font-bold">{property.discountedPrice}</span>
-                                    <img
-                                        src="/property-details/limited-offer.png"
-                                        alt="Limited Offer"
-                                        className="h-8 object-contain"
-                                    />
-                                    <span className="text-lg">{property.additionalPrice}</span>
+                                    <span className="text-xl font-bold">{safeDisplay(property.discountedPrice)}</span>
                                 </div>
 
                                 {/* Buttons */}
@@ -1571,9 +1741,9 @@ function PropertyDetailsContent() {
                                                     <span className="text-base font-semibold text-gray-800">Monday - Friday</span>
                                                     <span className={`text-base font-semibold ${property.openingHours.mondayFriday.enabled ? 'text-green-600' : 'text-red-600'}`}>
                                                         {property.openingHours.mondayFriday.enabled
-                                                            ? (property.openingHours.mondayFriday.open === 'Open' && property.openingHours.mondayFriday.close === 'Close'
+                                                            ? (safeDisplay(property.openingHours.mondayFriday.open) === 'Open' && safeDisplay(property.openingHours.mondayFriday.close) === 'Close'
                                                                 ? 'Open All Day'
-                                                                : `${property.openingHours.mondayFriday.open} - ${property.openingHours.mondayFriday.close}`)
+                                                                : `${safeDisplay(property.openingHours.mondayFriday.open)} - ${safeDisplay(property.openingHours.mondayFriday.close)}`)
                                                             : 'Closed'}
                                                     </span>
                                                 </div>
@@ -1583,9 +1753,9 @@ function PropertyDetailsContent() {
                                                     <span className="text-base font-semibold text-gray-800">Saturday</span>
                                                     <span className={`text-base font-semibold ${property.openingHours.saturday.enabled ? 'text-green-600' : 'text-red-600'}`}>
                                                         {property.openingHours.saturday.enabled
-                                                            ? (property.openingHours.saturday.open === 'Open' && property.openingHours.saturday.close === 'Close'
+                                                            ? (safeDisplay(property.openingHours.saturday.open) === 'Open' && safeDisplay(property.openingHours.saturday.close) === 'Close'
                                                                 ? 'Open All Day'
-                                                                : `${property.openingHours.saturday.open} - ${property.openingHours.saturday.close}`)
+                                                                : `${safeDisplay(property.openingHours.saturday.open)} - ${safeDisplay(property.openingHours.saturday.close)}`)
                                                             : 'Closed'}
                                                     </span>
                                                 </div>
@@ -1595,9 +1765,9 @@ function PropertyDetailsContent() {
                                                     <span className="text-base font-semibold text-gray-800">Sunday</span>
                                                     <span className={`text-base font-semibold ${property.openingHours.sunday.enabled ? 'text-green-600' : 'text-red-600'}`}>
                                                         {property.openingHours.sunday.enabled
-                                                            ? (property.openingHours.sunday.open === 'Open' && property.openingHours.sunday.close === 'Close'
+                                                            ? (safeDisplay(property.openingHours.sunday.open) === 'Open' && safeDisplay(property.openingHours.sunday.close) === 'Close'
                                                                 ? 'Open All Day'
-                                                                : `${property.openingHours.sunday.open} - ${property.openingHours.sunday.close}`)
+                                                                : `${safeDisplay(property.openingHours.sunday.open)} - ${safeDisplay(property.openingHours.sunday.close)}`)
                                                             : 'Closed'}
                                                     </span>
                                                 </div>
@@ -1721,87 +1891,87 @@ function PropertyDetailsContent() {
                                     {property.bhkType && (
                                         <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
                                             <span className="text-sm font-medium text-gray-500 block mb-1">BHK Type</span>
-                                            <span className="text-base font-semibold text-gray-800 uppercase">{property.bhkType}</span>
+                                            <span className="text-base font-semibold text-gray-800 uppercase">{safeDisplay(property.bhkType)}</span>
                                         </div>
                                     )}
                                     {property.apartmentType && (
                                         <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
                                             <span className="text-sm font-medium text-gray-500 block mb-1">Apartment Type</span>
-                                            <span className="text-base font-semibold text-gray-800 capitalize">{property.apartmentType.replace(/-/g, ' ')}</span>
+                                            <span className="text-base font-semibold text-gray-800 capitalize">{safeDisplay(property.apartmentType) !== "-" ? safeDisplay(property.apartmentType).replace(/-/g, ' ') : "-"}</span>
                                         </div>
                                     )}
                                     {property.facing && (
                                         <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
                                             <span className="text-sm font-medium text-gray-500 block mb-1">Facing</span>
-                                            <span className="text-base font-semibold text-gray-800 capitalize">{property.facing.replace(/-/g, ' ')}</span>
+                                            <span className="text-base font-semibold text-gray-800 capitalize">{safeDisplay(property.facing) !== "-" ? safeDisplay(property.facing).replace(/-/g, ' ') : "-"}</span>
                                         </div>
                                     )}
                                     {property.propertyAge && (
                                         <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
                                             <span className="text-sm font-medium text-gray-500 block mb-1">Property Age</span>
-                                            <span className="text-base font-semibold text-gray-800">{property.propertyAge} Years</span>
+                                            <span className="text-base font-semibold text-gray-800">{safeDisplay(property.propertyAge) !== "-" ? `${safeDisplay(property.propertyAge)} Years` : "-"}</span>
                                         </div>
                                     )}
                                     {property.propertySize && (
                                         <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
                                             <span className="text-sm font-medium text-gray-500 block mb-1">Property Size</span>
-                                            <span className="text-base font-semibold text-gray-800">{property.propertySize} sq.ft</span>
+                                            <span className="text-base font-semibold text-gray-800">{safeDisplay(property.propertySize) !== "-" ? `${safeDisplay(property.propertySize)} sq.ft` : "-"}</span>
                                         </div>
                                     )}
                                     {property.carpetArea && (
                                         <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
                                             <span className="text-sm font-medium text-gray-500 block mb-1">Carpet Area</span>
-                                            <span className="text-base font-semibold text-gray-800">{property.carpetArea} sq.ft</span>
+                                            <span className="text-base font-semibold text-gray-800">{safeDisplay(property.carpetArea) !== "-" ? `${safeDisplay(property.carpetArea)} sq.ft` : "-"}</span>
                                         </div>
                                     )}
                                     {(property.floor || property.totalFloors) && (
                                         <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
                                             <span className="text-sm font-medium text-gray-500 block mb-1">Floor</span>
                                             <span className="text-base font-semibold text-gray-800">
-                                                {property.floor ? `${property.floor}` : ''}{property.totalFloors ? ` of ${property.totalFloors}` : ''}
+                                                {safeDisplay(property.floor) !== "-" ? safeDisplay(property.floor) : ''}{safeDisplay(property.totalFloors) !== "-" ? ` of ${safeDisplay(property.totalFloors)}` : ''}
                                             </span>
                                         </div>
                                     )}
                                     {property.furnishing && (
                                         <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
                                             <span className="text-sm font-medium text-gray-500 block mb-1">Furnishing</span>
-                                            <span className="text-base font-semibold text-gray-800">{property.furnishing}</span>
+                                            <span className="text-base font-semibold text-gray-800">{safeDisplay(property.furnishing)}</span>
                                         </div>
                                     )}
                                     {property.parking && (
                                         <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
                                             <span className="text-sm font-medium text-gray-500 block mb-1">Parking</span>
-                                            <span className="text-base font-semibold text-gray-800">{property.parking}</span>
+                                            <span className="text-base font-semibold text-gray-800">{safeDisplay(property.parking)}</span>
                                         </div>
                                     )}
                                     {property.bathrooms !== undefined && property.bathrooms !== null && (
                                         <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
                                             <span className="text-sm font-medium text-gray-500 block mb-1">Bathrooms</span>
-                                            <span className="text-base font-semibold text-gray-800">{property.bathrooms}</span>
+                                            <span className="text-base font-semibold text-gray-800">{safeDisplay(property.bathrooms)}</span>
                                         </div>
                                     )}
                                     {property.balconies !== undefined && property.balconies !== null && (
                                         <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
                                             <span className="text-sm font-medium text-gray-500 block mb-1">Balconies</span>
-                                            <span className="text-base font-semibold text-gray-800">{property.balconies}</span>
+                                            <span className="text-base font-semibold text-gray-800">{safeDisplay(property.balconies)}</span>
                                         </div>
                                     )}
                                     {property.availableFrom && (
                                         <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
                                             <span className="text-sm font-medium text-gray-500 block mb-1">Available From</span>
-                                            <span className="text-base font-semibold text-gray-800">{new Date(property.availableFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                            <span className="text-base font-semibold text-gray-800">{safeDisplay(property.availableFrom) !== "-" ? new Date(property.availableFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : "-"}</span>
                                         </div>
                                     )}
                                     {property.monthlyMaintenance && (
                                         <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
                                             <span className="text-sm font-medium text-gray-500 block mb-1">Maintenance</span>
-                                            <span className="text-base font-semibold text-gray-800">{property.monthlyMaintenance}</span>
+                                            <span className="text-base font-semibold text-gray-800">{safeDisplay(property.monthlyMaintenance)}</span>
                                         </div>
                                     )}
                                     {property.expectedDeposit && (
                                         <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
                                             <span className="text-sm font-medium text-gray-500 block mb-1">Security Deposit</span>
-                                            <span className="text-base font-semibold text-gray-800">₹{Number(property.expectedDeposit).toLocaleString('en-IN')}</span>
+                                            <span className="text-base font-semibold text-gray-800">{safeDisplay(property.expectedDeposit) !== "-" ? `₹${Number(property.expectedDeposit).toLocaleString('en-IN')}` : "-"}</span>
                                         </div>
                                     )}
                                     {property.isNegotiable !== undefined && property.isNegotiable !== null && (
@@ -1915,10 +2085,10 @@ function PropertyDetailsContent() {
                                     property.nearbyPlaces[activeCategory].slice(0, showMoreNearby ? 6 : 4).map((place, i) => (
                                         <div key={i} className="flex items-center justify-between py-2.5 border-b">
                                             <div>
-                                                <h4 className="font-medium text-sm text-gray-900">{place.name}</h4>
-                                                <p className="text-xs text-gray-500">{place.location}</p>
+                                                <h4 className="font-medium text-sm text-gray-900">{safeDisplay(place.name)}</h4>
+                                                <p className="text-xs text-gray-500">{safeDisplay(place.location)}</p>
                                             </div>
-                                            <span className="text-xs text-gray-500">{place.distance}</span>
+                                            <span className="text-xs text-gray-500">{safeDisplay(place.distance)}</span>
                                         </div>
                                     ))
                                     : <p className="text-gray-500">No nearby places available</p>
@@ -2080,6 +2250,48 @@ function PropertyDetailsContent() {
                             </div>
                         )}
 
+                        {/* Property PDFs Section - Full Width - Only for commercial properties */}
+                        {property.propertyType === 'commercial' && property.seatLayoutPDFs && property.seatLayoutPDFs.length > 0 && (
+                            <div className="bg-white rounded-2xl p-5 mb-6 scroll-animate" data-animation="animate-slide-top">
+                                <AnimatedText className="text-lg font-bold mb-3 inline-block" delay={1800} lineColor="#f8c02f">
+                                    <h3>Property Documents</h3>
+                                </AnimatedText>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
+                                    {property.seatLayoutPDFs.map((pdf, i) => (
+                                        <div key={i} className="bg-gray-50 border border-gray-200 rounded-lg p-5 scroll-animate" data-animation="animate-fade-up" style={{ animationDelay: `${i * 100}ms` }}>
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-4 flex-1">
+                                                    <div className="w-16 h-16 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                        <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                        </svg>
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-base font-semibold text-gray-900 truncate">
+                                                            {pdf.originalName || pdf.filename || `Document ${i + 1}`}
+                                                        </p>
+                                                        {pdf.size && (
+                                                            <p className="text-sm text-gray-500 mt-1">
+                                                                {(pdf.size / 1024 / 1024).toFixed(2)} MB
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <a
+                                                    href={pdf.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="ml-4 px-5 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer whitespace-nowrap"
+                                                >
+                                                    View PDF
+                                                </a>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Property Layout Section - Full Width - Only show for commercial properties */}
                         {property.propertyType === 'commercial' && (
                             <div ref={layoutRef} className="bg-white rounded-2xl p-5 mb-6 scroll-animate" data-animation="animate-slide-top">
@@ -2233,19 +2445,19 @@ function PropertyDetailsContent() {
                                             <div key={index} className="border-b pb-6 last:border-b-0">
                                                 <div className="flex items-start justify-between mb-3">
                                                     <div className="flex items-center gap-3">
-                                                        <span className="font-semibold text-gray-900 text-base">{review.user}</span>
+                                                        <span className="font-semibold text-gray-900 text-base">{safeDisplay(review.user)}</span>
                                                         <div className="flex">
                                                             {[1, 2, 3, 4, 5].map((star) => (
                                                                 <Star
                                                                     key={star}
-                                                                    className={`w-5 h-5 ${star <= review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                                                                    className={`w-5 h-5 ${star <= (review.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
                                                                 />
                                                             ))}
                                                         </div>
                                                     </div>
-                                                    <span className="text-sm text-gray-500">{review.date}</span>
+                                                    <span className="text-sm text-gray-500">{safeDisplay(review.date)}</span>
                                                 </div>
-                                                <p className="text-gray-700 text-base leading-relaxed">{review.comment}</p>
+                                                <p className="text-gray-700 text-base leading-relaxed">{safeDisplay(review.comment)}</p>
                                             </div>
                                         ))}
                                     </div>
@@ -2350,7 +2562,6 @@ function PropertyDetailsContent() {
                                         try {
                                             const propertyId = property._id || property.id;
                                             const propertyType = property.propertyType;
-                                            console.log('Submitting review for:', propertyId, 'Type:', propertyType);
                                             const response = await fetch('/api/reviews', {
                                                 method: 'POST',
                                                 headers: {

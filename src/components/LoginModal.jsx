@@ -13,19 +13,79 @@ export default function LoginModal({ onClose, onProceed }) {
   const [resendAvailable, setResendAvailable] = useState(false);
   const [loading, setLoading] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState(null);
+  const [recaptchaVerifier, setRecaptchaVerifier] = useState(null);
 
   useEffect(() => {
-    window.recaptchaVerifier = new RecaptchaVerifier(
+    // Cleanup function to clear recaptcha verifier when component unmounts
+    return () => {
+      if (window.recaptchaVerifier) {
+        try {
+          window.recaptchaVerifier.clear();
+        } catch (e) {
+          // Error clearing recaptcha
+        }
+        window.recaptchaVerifier = null;
+      }
+    };
+  }, []);
+
+  const initializeRecaptcha = async () => {
+    // Ensure container exists
+    let container = document.getElementById("recaptcha-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "recaptcha-container";
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      document.body.appendChild(container);
+    }
+
+    // Clear any existing verifier
+    if (window.recaptchaVerifier) {
+      try {
+        window.recaptchaVerifier.clear();
+      } catch (e) {
+        // Error clearing old recaptcha
+      }
+    }
+
+    // Create a new verifier
+    const verifier = new RecaptchaVerifier(
       auth,
       "recaptcha-container",
       {
         size: "invisible",
         callback: (response) => {
-          console.log("reCAPTCHA verified");
+          // reCAPTCHA verified
         },
+        "expired-callback": () => {
+          // reCAPTCHA expired
+        }
       }
     );
-  }, []);
+
+    window.recaptchaVerifier = verifier;
+    setRecaptchaVerifier(verifier);
+
+    // Render the verifier and wait for it to be ready
+    try {
+      const widgetId = await verifier.render();
+      
+      // Wait briefly to ensure reCAPTCHA is fully initialized
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      return verifier;
+    } catch (error) {
+      console.error("Error rendering reCAPTCHA:", error);
+      // Clean up on error
+      try {
+        verifier.clear();
+      } catch (e) {
+        // Error clearing verifier
+      }
+      throw error;
+    }
+  };
 
   const handleSendOTP = async () => {
     if (!phoneNumber || phoneNumber.length < 10) {
@@ -37,9 +97,25 @@ export default function LoginModal({ onClose, onProceed }) {
     setOtpError(false);
 
     try {
-      const formattedPhoneNumber = `+${phoneNumber}`;
-      const appVerifier = window.recaptchaVerifier;
+      // Always reinitialize recaptcha for a fresh token
+      let appVerifier = recaptchaVerifier || window.recaptchaVerifier;
+      
+      // Clear existing verifier and create a new one
+      if (appVerifier) {
+        try {
+          appVerifier.clear();
+        } catch (e) {
+          // Error clearing existing recaptcha
+        }
+      }
 
+      // Initialize and wait for reCAPTCHA to be verified
+      appVerifier = await initializeRecaptcha();
+      
+      // Small delay to ensure token is ready
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const formattedPhoneNumber = `+${phoneNumber}`;
       const result = await signInWithPhoneNumber(
         auth,
         formattedPhoneNumber,
@@ -52,10 +128,62 @@ export default function LoginModal({ onClose, onProceed }) {
       setTimeout(() => setResendAvailable(true), 30000);
     } catch (error) {
       console.error("Error sending OTP:", error);
-      alert("Failed to send OTP. Please check the console for details.");
-      window.recaptchaVerifier.render().then((widgetId) => {
-        grecaptcha.reset(widgetId);
+      
+      // Clear recaptcha on error
+      if (window.recaptchaVerifier) {
+        try {
+          window.recaptchaVerifier.clear();
+        } catch (e) {
+          // Error clearing recaptcha
+        }
+        window.recaptchaVerifier = null;
+        setRecaptchaVerifier(null);
+      }
+
+      let errorMessage = "Failed to send OTP.\n\n";
+      
+      // Log full error details for debugging
+      console.error("Full error details:", {
+        code: error.code,
+        message: error.message,
+        stack: error.stack,
+        response: error.customData?.serverResponse,
+        customData: error.customData
       });
+      
+      // Log the current origin/hostname
+      console.error("Current origin:", window.location.origin);
+      console.error("Current hostname:", window.location.hostname);
+      
+      if (error.code === "auth/invalid-app-credential") {
+        errorMessage += "⚠️ LOCALHOST CONFIGURATION ISSUE ⚠️\n\n";
+        errorMessage += "reCAPTCHA is working, but Firebase is rejecting the request.\n\n";
+        errorMessage += "IMMEDIATE FIXES:\n\n";
+        errorMessage += "1. Add Authorized Domains in Firebase:\n";
+        errorMessage += "   → Firebase Console → Authentication → Settings\n";
+        errorMessage += "   → Click 'Authorized domains'\n";
+        errorMessage += "   → Add: 'localhost' and '127.0.0.1'\n\n";
+        errorMessage += "2. TRY ACCESSING VIA 127.0.0.1:\n";
+        errorMessage += "   → Instead of: http://localhost:3000\n";
+        errorMessage += "   → Use: http://127.0.0.1:3000\n\n";
+        errorMessage += "3. Check Google Cloud API Key:\n";
+        errorMessage += "   → https://console.cloud.google.com/apis/credentials\n";
+        errorMessage += "   → Find API key: AIzaSyBAEqha-T9VRWdg5Ia3EkUn1bxubc3iVO8\n";
+        errorMessage += "   → Ensure 'HTTP referrers' includes:\n";
+        errorMessage += "     - localhost/*\n";
+        errorMessage += "     - 127.0.0.1/*\n";
+        errorMessage += "   → OR remove restrictions temporarily for testing\n";
+      } else if (error.code === "auth/invalid-phone-number") {
+        errorMessage += "Invalid phone number format. Please check the number.";
+      } else if (error.code === "auth/quota-exceeded") {
+        errorMessage += "Too many requests. Please try again later.";
+      } else if (error.code === "auth/too-many-requests") {
+        errorMessage += "Too many attempts. Please wait a few minutes.";
+      } else {
+        errorMessage += `Error: ${error.message || error.code || "Unknown error"}`;
+      }
+      
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -86,7 +214,6 @@ export default function LoginModal({ onClose, onProceed }) {
 
     try {
       const userCredential = await confirmationResult.confirm(otp);
-      console.log("Firebase OTP Verified. User:", userCredential.user);
 
       const response = await fetch('/api/login', {
         method: 'POST',
@@ -102,7 +229,6 @@ export default function LoginModal({ onClose, onProceed }) {
       }
 
       const backendData = await response.json();
-      console.log("Backend API login successful:", backendData);
       
       onProceed(userCredential.user); 
 
@@ -118,6 +244,16 @@ export default function LoginModal({ onClose, onProceed }) {
   const handleResend = () => {
     setOtpValues(Array(6).fill(""));
     setOtpError(false);
+    // Clear existing verifier and reinitialize
+    if (window.recaptchaVerifier) {
+      try {
+        window.recaptchaVerifier.clear();
+      } catch (e) {
+        // Error clearing recaptcha
+      }
+      window.recaptchaVerifier = null;
+      setRecaptchaVerifier(null);
+    }
     handleSendOTP();
   };
 
@@ -133,7 +269,7 @@ export default function LoginModal({ onClose, onProceed }) {
       style={{ background: "rgba(0,0,0,0.7)" }}
       className="fixed inset-0 flex items-center justify-center z-50"
     >
-      <div id="recaptcha-container"></div>
+      <div id="recaptcha-container" style={{ position: 'absolute', left: '-9999px' }}></div>
 
       <div
         onClick={(e) => e.stopPropagation()}

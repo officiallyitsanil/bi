@@ -5,16 +5,12 @@ import mongoose from 'mongoose';
 export async function GET() {
     try {
         await dbConnect();
-        console.log('✅ Connected to database');
         
         const db = mongoose.connection.db;
         
         // Fetch directly from collections
         const commercial = await db.collection('commercialProperties').find({}).toArray();
         const residential = await db.collection('residentialproperties').find({}).toArray();
-        
-        console.log('🏢 Commercial found:', commercial.length);
-        console.log('🏠 Residential found:', residential.length);
         
         const allProperties = [...commercial, ...residential];
         

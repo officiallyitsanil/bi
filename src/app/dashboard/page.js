@@ -8,6 +8,8 @@ export default function DashboardPage() {
     const [user, setUser] = useState(null);
     const [activeTab, setActiveTab] = useState('uploaded');
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [favoriteProperties, setFavoriteProperties] = useState([]);
+    const [isLoadingFavorites, setIsLoadingFavorites] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -23,6 +25,97 @@ export default function DashboardPage() {
             router.push('/');
         }
     }, [router]);
+
+    // Fetch favorite properties
+    useEffect(() => {
+        const fetchFavoriteProperties = async () => {
+            if (!user || !user.phoneNumber || activeTab !== 'shortlisted') return;
+
+            setIsLoadingFavorites(true);
+            try {
+                // Fetch favorites from API
+                const favoritesResponse = await fetch(`/api/favorites?userPhoneNumber=${encodeURIComponent(user.phoneNumber)}`);
+                const favoritesData = await favoritesResponse.json();
+
+                if (favoritesData.success && favoritesData.data.length > 0) {
+                    // Fetch property details for each favorite
+                    const propertyPromises = favoritesData.data.map(async (favorite) => {
+                        try {
+                            const propertyResponse = await fetch(`/api/properties?id=${favorite.propertyId}&type=${favorite.propertyType || ''}`);
+                            const propertyData = await propertyResponse.json();
+
+                            if (propertyData.success && propertyData.property) {
+                                // Calculate prices
+                                const calculatePrices = (property) => {
+                                    let originalPriceValue = 0;
+                                    
+                                    if (property.propertyType === 'residential') {
+                                        const expectedRent = property.expectedRent || '0';
+                                        originalPriceValue = parseFloat(expectedRent.toString().replace(/[₹,]/g, '')) || 0;
+                                    } else if (property.propertyType === 'commercial') {
+                                        if (property.floorConfigurations && property.floorConfigurations.length > 0) {
+                                            const firstFloor = property.floorConfigurations[0];
+                                            if (firstFloor.dedicatedCabin && firstFloor.dedicatedCabin.seats && firstFloor.dedicatedCabin.pricePerSeat) {
+                                                const seatsStr = firstFloor.dedicatedCabin.seats.toString();
+                                                const pricePerSeatStr = firstFloor.dedicatedCabin.pricePerSeat.toString();
+                                                
+                                                const seatsMatch = seatsStr.match(/(\d+)/);
+                                                const pricePerSeatMatch = pricePerSeatStr.match(/(\d+)/);
+                                                
+                                                if (seatsMatch && pricePerSeatMatch) {
+                                                    const seatsLower = parseFloat(seatsMatch[1]);
+                                                    const pricePerSeatLower = parseFloat(pricePerSeatMatch[1]);
+                                                    originalPriceValue = seatsLower * pricePerSeatLower;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    
+                                    const discountedPriceValue = originalPriceValue * 0.95;
+                                    
+                                    const formatPrice = (price) => {
+                                        if (price === 0) return '₹XX';
+                                        return `₹${Math.round(price).toLocaleString('en-IN')}`;
+                                    };
+                                    
+                                    return {
+                                        originalPrice: formatPrice(originalPriceValue),
+                                        discountedPrice: formatPrice(discountedPriceValue)
+                                    };
+                                };
+
+                                const prices = calculatePrices(propertyData.property);
+                                
+                                return {
+                                    ...propertyData.property,
+                                    _id: propertyData.property._id || propertyData.property.id,
+                                    id: propertyData.property._id || propertyData.property.id,
+                                    originalPrice: prices.originalPrice,
+                                    discountedPrice: prices.discountedPrice,
+                                };
+                            }
+                            return null;
+                        } catch (error) {
+                            console.error(`Error fetching property ${favorite.propertyId}:`, error);
+                            return null;
+                        }
+                    });
+
+                    const properties = await Promise.all(propertyPromises);
+                    setFavoriteProperties(properties.filter(p => p !== null));
+                } else {
+                    setFavoriteProperties([]);
+                }
+            } catch (error) {
+                console.error('Error fetching favorite properties:', error);
+                setFavoriteProperties([]);
+            } finally {
+                setIsLoadingFavorites(false);
+            }
+        };
+
+        fetchFavoriteProperties();
+    }, [user, activeTab]);
 
     const handleSignOut = () => {
         logoutUser(); 
@@ -123,8 +216,55 @@ export default function DashboardPage() {
                             </div>
                         )}
                         {activeTab === 'shortlisted' && (
-                            <div className="text-center p-10 rounded-lg bg-gray-100">
-                                <p className="text-gray-600">You have no shortlisted properties.</p>
+                            <div>
+                                {isLoadingFavorites ? (
+                                    <div className="text-center p-10 rounded-lg bg-gray-100">
+                                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                                        <p className="text-gray-600">Loading your favorites...</p>
+                                    </div>
+                                ) : favoriteProperties.length > 0 ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                                        {favoriteProperties.map((property) => (
+                                            <div
+                                                key={property._id || property.id}
+                                                onClick={() => window.open(`/property-details?id=${property._id || property.id}&type=${property.propertyType || 'commercial'}`, '_blank')}
+                                                className="bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl hover:-translate-y-1 sm:hover:-translate-y-2 transition-all duration-300 relative cursor-pointer"
+                                            >
+                                                {/* Property Image */}
+                                                <div className="h-48 sm:h-56 md:h-64 bg-gradient-to-br from-blue-300 to-blue-500 relative overflow-hidden">
+                                                    <img
+                                                        src={property.featuredImageUrl || property.images?.[0] || '/property-icon.svg'}
+                                                        alt={property.name}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                </div>
+
+                                                {/* Property Details */}
+                                                <div className="p-3 sm:p-4">
+                                                    <div className="flex items-center justify-between mb-2 sm:mb-3">
+                                                        <h3 className="text-sm sm:text-base font-bold text-gray-900">
+                                                            {property.name}
+                                                        </h3>
+                                                        <span className="px-2 py-0.5 bg-green-50 text-green-600 text-[9px] sm:text-[10px] font-medium rounded-md border border-green-200 whitespace-nowrap">
+                                                            {property.ratings?.overall ? `${property.ratings.overall} ⭐` : 'No ratings yet'}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between mt-3 sm:mt-4">
+                                                        <span className="text-sm sm:text-base font-bold text-gray-900">{property.discountedPrice}</span>
+                                                        {property.originalPrice && property.originalPrice !== '₹XX' && (
+                                                            <span className="text-xs text-gray-500 line-through">{property.originalPrice}</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center p-10 rounded-lg bg-gray-100">
+                                        <p className="text-gray-600">You have no shortlisted properties.</p>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
