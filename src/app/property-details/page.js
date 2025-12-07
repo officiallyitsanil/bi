@@ -845,6 +845,18 @@ function PropertyDetailsContent() {
                         </div>
                     )}
 
+                    {/* Builder Name */}
+                    {property.builder && (
+                        <div className="mb-5 scroll-animate" data-animation="animate-slide-top">
+                            <AnimatedText className="text-base font-bold mb-3 text-purple-600 inline-block" delay={900} lineColor="#f8c02f">
+                                <h3>Builder Name</h3>
+                            </AnimatedText>
+                            <div className="bg-white p-4 rounded-lg shadow-sm scroll-animate" data-animation="animate-fade-up">
+                                <p className="text-base font-semibold text-gray-800">{safeDisplay(property.builder)}</p>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Location & Landmark */}
                     <div className="mb-5 scroll-animate" data-animation="animate-slide-top">
                         <AnimatedText className="text-base font-bold mb-3 text-blue-600 inline-block" delay={1000} lineColor="#f8c02f">
@@ -2010,6 +2022,18 @@ function PropertyDetailsContent() {
                             </div>
                         )}
 
+                        {/* Builder Name Section - Full Width */}
+                        {property.builder && (
+                            <div className="bg-white rounded-2xl p-5 mb-6 scroll-animate" data-animation="animate-slide-top">
+                                <AnimatedText className="text-lg font-bold mb-3 inline-block" delay={900} lineColor="#f8c02f">
+                                    <h3>Builder Name</h3>
+                                </AnimatedText>
+                                <div className="bg-gray-50 p-4 rounded-lg mt-5 scroll-animate" data-animation="animate-fade-up">
+                                    <p className="text-base font-semibold text-gray-800">{safeDisplay(property.builder)}</p>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Location & Landmark Section - Full Width */}
                         <div ref={locationRef} className="bg-white rounded-2xl p-5 mb-6 scroll-animate" data-animation="animate-slide-top">
                             <AnimatedText className="text-lg font-bold mb-3 inline-block" delay={1000} lineColor="#f8c02f">
@@ -2182,10 +2206,11 @@ function PropertyDetailsContent() {
                                         <span
                                             key={i}
                                             onClick={() => {
-                                                if (!currentUser) {
-                                                    setIsLoginOpen(true);
-                                                    return;
-                                                }
+                                                // Temporarily disabled login requirement
+                                                // if (!currentUser) {
+                                                //     setIsLoginOpen(true);
+                                                //     return;
+                                                // }
                                                 setReviewText(item);
                                                 setShowRatingModal(true);
                                             }}
@@ -2208,10 +2233,11 @@ function PropertyDetailsContent() {
                                         <span
                                             key={i}
                                             onClick={() => {
-                                                if (!currentUser) {
-                                                    setIsLoginOpen(true);
-                                                    return;
-                                                }
+                                                // Temporarily disabled login requirement
+                                                // if (!currentUser) {
+                                                //     setIsLoginOpen(true);
+                                                //     return;
+                                                // }
                                                 setReviewText(item);
                                                 setShowRatingModal(true);
                                             }}

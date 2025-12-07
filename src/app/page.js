@@ -144,36 +144,47 @@ export default function HomePage() {
         const response = await fetch('/api/properties');
         const result = await response.json();
 
+        console.log("API Response:", result);
+
         if (result.success && result.data) {
+          console.log("Total properties fetched:", result.data.length);
+
           // Filter only confirmed properties
-          const confirmedProperties = result.data.filter(property => 
+          const confirmedProperties = result.data.filter(property =>
             property.verificationStatus === 'confirmed'
           );
 
-          const properties = confirmedProperties.map(property => {
+          console.log("Confirmed properties:", confirmedProperties.length);
+
+          const properties = confirmedProperties.map((property, index) => {
             // Ensure coordinates are in the correct format
             let position = property.position || property.coordinates;
+            let parsedPosition = null;
 
             // Handle different coordinate formats from database
             if (position && (position.latitude || position.lat)) {
-              position = {
-                lat: position.lat || position.latitude,
-                lng: position.lng || position.longitude
-              };
-            } else {
-              position = { lat: 17.4200, lng: 78.4867 }; // Default fallback
+              const lat = parseFloat(position.lat || position.latitude);
+              const lng = parseFloat(position.lng || position.longitude);
+
+              if (!isNaN(lat) && !isNaN(lng)) {
+                parsedPosition = { lat, lng };
+              }
+            }
+
+            if (!parsedPosition) {
+              console.warn(`Property ${property.name || property._id} (Index: ${index}) has no valid coordinates.`);
             }
 
             return {
               ...property,
-              id: property._id || 'XX',
+              id: property._id || `temp-id-${index}-${Date.now()}`,
               name: property.name || property.propertyName || 'Property Name',
               propertyType: property.propertyType || property.Category?.toLowerCase() || 'residential',
               state_name: property.state_name || property.address?.state || 'Location',
               layer_location: property.layer_location || property.address?.locality || 'Area',
               location_district: property.location_district || property.address?.district || property.address?.city || 'District',
-              position: position,
-              coordinates: position,
+              position: parsedPosition,
+              coordinates: parsedPosition,
               images: property.images || ['/placeholder.png'],
               featuredImageUrl: property.featuredImageUrl || property.featuredImage?.url || '/placeholder.png',
               originalPrice: property.originalPrice || '₹XX',

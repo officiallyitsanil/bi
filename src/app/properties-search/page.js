@@ -308,12 +308,12 @@ function PropertiesSearchContent() {
 
           // Calculate badge based on isPremium and isNew
           const calculateBadge = (property) => {
-            // First check isPremium
+            // Premium badge: if isPremium is true, show premium regardless of isNew
             if (property.isPremium === true) {
               return 'premium';
             }
-            // Then check isNew
-            if (property.isNew === true) {
+            // New badge: only show if isNew is true AND isPremium is false
+            if (property.isNew === true && property.isPremium === false) {
               return 'new';
             }
             // If both are false, return empty string (no badge)
@@ -372,9 +372,23 @@ function PropertiesSearchContent() {
   });
   const sortByOptions = ["Price: Low to High", "Price: High to Low", "Newest First"];
 
-  // Apply sorting only (filtering is done by API)
+  // Apply badge filtering and sorting
   useEffect(() => {
     let filtered = [...allProperties];
+
+    // Badge filtering
+    if (selectedBadge) {
+      filtered = filtered.filter(property => {
+        if (selectedBadge === 'premium') {
+          // Show properties where isPremium is true (regardless of isNew)
+          return property.isPremium === true;
+        } else if (selectedBadge === 'new') {
+          // Show properties where isNew is true AND isPremium is false
+          return property.isNew === true && property.isPremium === false;
+        }
+        return true;
+      });
+    }
 
     // Sorting
     if (selectedSortBy) {
@@ -397,7 +411,7 @@ function PropertiesSearchContent() {
     }
 
     setFilteredProperties(filtered);
-  }, [selectedSortBy, allProperties]);
+  }, [selectedSortBy, selectedBadge, allProperties]);
 
   // Toggle dropdown
   const toggleDropdown = (dropdownName) => {

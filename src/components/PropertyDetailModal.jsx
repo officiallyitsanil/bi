@@ -491,113 +491,119 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                         </section>
                     )}
 
-                    {ratings?.overall && (
-                        <section className="my-4">
-                            <div className="shrink-0 h-[1px] w-full mb-4 bg-gray-200"></div>
-                            <div className="flex items-center justify-between mb-3">
-                                <h3 className="text-base font-semibold text-gray-800">Ratings & Reviews</h3>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={handleAddReview}
-                                        className="bg-[#f8c02f] text-gray-800 px-3 py-1 rounded-lg font-medium text-xs hover:bg-[#e0ad2a] cursor-pointer transition-colors"
-                                    >
-                                        Add Review
-                                    </button>
-                                    <div className="flex items-center gap-1">
-                                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                        <span className="text-sm font-semibold text-gray-800">{safeDisplay(ratings.overall)}</span>
-                                        <span className="text-xs text-gray-500">({safeDisplay(ratings.totalRatings)})</span>
-                                    </div>
+                    <section className="my-4">
+                        <div className="shrink-0 h-[1px] w-full mb-4 bg-gray-200"></div>
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-base font-semibold text-gray-800">Ratings & Reviews</h3>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={handleAddReview}
+                                    className="bg-[#f8c02f] text-gray-800 px-3 py-1 rounded-lg font-medium text-xs hover:bg-[#e0ad2a] cursor-pointer transition-colors"
+                                >
+                                    Add Review
+                                </button>
+                                <div className="flex items-center gap-1">
+                                    <Star className={`w-4 h-4 ${ratings?.overall > 0 ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
+                                    <span className="text-sm font-semibold text-gray-800">
+                                        {ratings?.overall > 0 ? safeDisplay(ratings.overall) : '0'}
+                                    </span>
+                                    <span className="text-xs text-gray-500">
+                                        ({ratings?.totalRatings > 0 ? safeDisplay(ratings.totalRatings) : '0'})
+                                    </span>
                                 </div>
                             </div>
+                        </div>
 
-                            {(whatsGood.length > 0 || whatsBad.length > 0) && (
-                                <div className="mb-4 space-y-3">
-                                    {whatsGood.length > 0 && (
-                                        <div className="bg-green-50 rounded-lg p-3">
-                                            <div className="flex items-center gap-1.5 mb-2">
-                                                <ThumbsUp className="w-4 h-4 text-green-600" />
-                                                <span className="text-xs font-semibold text-green-800">What's Good</span>
-                                            </div>
-                                            <div className="flex flex-wrap gap-1.5">
-                                                {whatsGood.slice(0, 3).map((item, index) => (
-                                                    <span
-                                                        key={index}
-                                                        onClick={() => {
-                                                            if (!currentUser) {
-                                                                setIsLoginModalOpen(true);
-                                                                return;
-                                                            }
-                                                            setReviewText(item);
-                                                            setShowRatingModal(true);
-                                                        }}
-                                                        className="text-[10px] bg-white px-2 py-1 rounded-full text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
-                                                    >
-                                                        {item}
-                                                    </span>
-                                                ))}
+                        {(whatsGood.length > 0 || whatsBad.length > 0) && (
+                            <div className="mb-4 space-y-3">
+                                {whatsGood.length > 0 && (
+                                    <div className="bg-green-50 rounded-lg p-3">
+                                        <div className="flex items-center gap-1.5 mb-2">
+                                            <ThumbsUp className="w-4 h-4 text-green-600" />
+                                            <span className="text-xs font-semibold text-green-800">What's Good</span>
+                                        </div>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {whatsGood.slice(0, 3).map((item, index) => (
+                                                <span
+                                                    key={index}
+                                                    onClick={() => {
+                                                        if (!currentUser) {
+                                                            setIsLoginModalOpen(true);
+                                                            return;
+                                                        }
+                                                        setReviewText(item);
+                                                        setShowRatingModal(true);
+                                                    }}
+                                                    className="text-[10px] bg-white px-2 py-1 rounded-full text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                                                >
+                                                    {item}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                {whatsBad.length > 0 && (
+                                    <div className="bg-red-50 rounded-lg p-3">
+                                        <div className="flex items-center gap-1.5 mb-2">
+                                            <ThumbsDown className="w-4 h-4 text-red-600" />
+                                            <span className="text-xs font-semibold text-red-800">What's Bad</span>
+                                        </div>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {whatsBad.slice(0, 2).map((item, index) => (
+                                                <span
+                                                    key={index}
+                                                    onClick={() => {
+                                                        if (!currentUser) {
+                                                            setIsLoginModalOpen(true);
+                                                            return;
+                                                        }
+                                                        setReviewText(item);
+                                                        setShowRatingModal(true);
+                                                    }}
+                                                    className="text-[10px] bg-white px-2 py-1 rounded-full text-gray-700 cursor-pointer hover:bg-red-100 transition-colors"
+                                                >
+                                                    {item}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {displayedReviews.length > 0 ? (
+                            <div className="space-y-3">
+                                {displayedReviews.map((review, index) => (
+                                    <div key={index} className="bg-gray-50 rounded-lg p-3">
+                                        <div className="flex items-center justify-between mb-1.5">
+                                            <span className="text-xs font-medium text-gray-800">{safeDisplay(review.user)}</span>
+                                            <div className="flex items-center gap-1">
+                                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                                <span className="text-xs font-medium text-gray-700">{safeDisplay(review.rating)}</span>
                                             </div>
                                         </div>
-                                    )}
-                                    {whatsBad.length > 0 && (
-                                        <div className="bg-red-50 rounded-lg p-3">
-                                            <div className="flex items-center gap-1.5 mb-2">
-                                                <ThumbsDown className="w-4 h-4 text-red-600" />
-                                                <span className="text-xs font-semibold text-red-800">What's Bad</span>
-                                            </div>
-                                            <div className="flex flex-wrap gap-1.5">
-                                                {whatsBad.slice(0, 2).map((item, index) => (
-                                                    <span
-                                                        key={index}
-                                                        onClick={() => {
-                                                            if (!currentUser) {
-                                                                setIsLoginModalOpen(true);
-                                                                return;
-                                                            }
-                                                            setReviewText(item);
-                                                            setShowRatingModal(true);
-                                                        }}
-                                                        className="text-[10px] bg-white px-2 py-1 rounded-full text-gray-700 cursor-pointer hover:bg-red-100 transition-colors"
-                                                    >
-                                                        {item}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+                                        <p className="text-xs text-gray-600 mb-1">{safeDisplay(review.comment)}</p>
+                                        <span className="text-[10px] text-gray-500">{safeDisplay(review.date)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-4">
+                                <p className="text-sm text-gray-500">No reviews yet</p>
+                            </div>
+                        )}
 
-                            {displayedReviews.length > 0 && (
-                                <div className="space-y-3">
-                                    {displayedReviews.map((review, index) => (
-                                        <div key={index} className="bg-gray-50 rounded-lg p-3">
-                                            <div className="flex items-center justify-between mb-1.5">
-                                                <span className="text-xs font-medium text-gray-800">{safeDisplay(review.user)}</span>
-                                                <div className="flex items-center gap-1">
-                                                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                                    <span className="text-xs font-medium text-gray-700">{safeDisplay(review.rating)}</span>
-                                                </div>
-                                            </div>
-                                            <p className="text-xs text-gray-600 mb-1">{safeDisplay(review.comment)}</p>
-                                            <span className="text-[10px] text-gray-500">{safeDisplay(review.date)}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            {reviews.length > 3 && (
-                                <a
-                                    href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-xs text-blue-600 hover:underline mt-3 inline-block"
-                                >
-                                    View all {reviews.length} reviews
-                                </a>
-                            )}
-                        </section>
-                    )}
+                        {reviews.length > 3 && (
+                            <a
+                                href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-600 hover:underline mt-3 inline-block"
+                            >
+                                View all {reviews.length} reviews
+                            </a>
+                        )}
+                    </section>
 
                     <div className="border bg-card text-card-foreground shadow-sm my-4 rounded-2xl border-gray-200 p-4">
                         <div className="space-y-2">
