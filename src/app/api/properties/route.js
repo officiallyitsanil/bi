@@ -100,13 +100,19 @@ function normalizeProperty(propertyObj) {
         propertyObj.is_verified === true ||
         false;
 
-    // Normalize property type - check all possible sources
+    // Normalize property type - use Category for logic (commercial/residential), preserve original propertyType for display
     let propertyType = null;
+    // Use Category for logic checks (commercial/residential) to ensure code works correctly
     if (propertyObj.Category) {
         propertyType = propertyObj.Category.toLowerCase();
     } else if (propertyObj.propertyType) {
+        // If no Category, fall back to propertyType
         propertyType = propertyObj.propertyType.toLowerCase();
     }
+    
+    // Preserve original propertyType value for display (e.g., "techpark", "coworking", etc.)
+    // This will be used in the UI to show the specific property type
+    const originalPropertyType = propertyObj.propertyType ? propertyObj.propertyType.toLowerCase() : null;
 
     // Build floor plans from seat layout images dynamically
     const floorPlans = {};
@@ -156,6 +162,10 @@ function normalizeProperty(propertyObj) {
 
     // Add/override normalized fields for UI compatibility
     if (name) normalized.name = name;
+    // Store original propertyType for display before overriding
+    if (originalPropertyType && originalPropertyType !== propertyType) {
+        normalized.displayPropertyType = originalPropertyType;
+    }
     if (propertyType) normalized.propertyType = propertyType;
 
     // Set location fields - only if they exist

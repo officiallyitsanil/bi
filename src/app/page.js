@@ -197,7 +197,10 @@ export default function HomePage() {
               nearbyPlaces: property.nearbyPlaces || { school: [], hospital: [], hotel: [], business: [] },
               floorPlans: property.floorPlans || {},
               ratings: property.ratings || { overall: 0, totalRatings: 0, breakdown: {}, whatsGood: [], whatsBad: [] },
-              reviews: property.reviews || []
+              reviews: property.reviews || [],
+              size: property.size || property.propertySize || property.carpetArea || 'N/A',
+              price_per_acre: property.price_per_acre || property.price_per_sqft || 'N/A',
+              total_price: property.total_price || property.originalPrice || property.discountedPrice || 'N/A'
             };
           });
 
@@ -544,25 +547,51 @@ export default function HomePage() {
           <div className="hidden md:block w-[380px] bg-white shadow-lg overflow-y-auto">
             <div className="p-4 sticky top-0 bg-white z-10 border-b">
               <h2 className="text-xl font-bold text-gray-800">Properties</h2>
-              <p className="text-sm text-gray-500">{markers.length} lands found</p>
+              <p className="text-sm text-gray-500">{getFilteredMarkers().length} {getFilteredMarkers().length === 1 ? 'property' : 'properties'} found</p>
             </div>
             <ul className="divide-y divide-gray-200">
-              {markers.map(marker => (
+              {getFilteredMarkers().map(marker => (
                 <li key={marker.id} className="p-4 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => handleMarkerClick(marker)}>
                   <div className="flex gap-4">
                     <Image
-                      src={marker.images[0] || '/placeholder.png'}
-                      alt="Property Image"
+                      src={marker.featuredImageUrl || marker.images?.[0] || '/placeholder.png'}
+                      alt={marker.name || "Property Image"}
                       width={100}
                       height={80}
-                      className="rounded-md object-cover w-28 h-20"
+                      className="rounded-md object-cover w-28 h-20 flex-shrink-0"
                       unoptimized
                     />
-                    <div className="flex-1">
-                      <p className="font-semibold text-gray-800">{marker.size} in {marker.state_name}</p>
-                      <p className="text-sm text-gray-600">{marker.price_per_acre} / Acre</p>
-                      <p className="text-sm text-gray-600">Total: {marker.total_price}</p>
-                      <p className="text-xs text-gray-400 mt-1">Added on: {marker.date_added}</p>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-800 text-base mb-1 truncate">{marker.name || 'Property Name'}</h3>
+                      <p className="text-sm text-gray-600 mb-1">
+                        <span className="font-medium">in {marker.layer_location || marker.location_district || marker.state_name}</span>
+                        {marker.location_district && marker.layer_location && marker.location_district !== marker.layer_location && (
+                          <span className="text-gray-500">, {marker.location_district}</span>
+                        )}
+                        {marker.state_name && (
+                          <span className="text-gray-500">, {marker.state_name}</span>
+                        )}
+                      </p>
+                      {marker.size && marker.size !== 'N/A' && (
+                        <p className="text-sm text-gray-600 mb-1">
+                          <span className="font-medium">Size:</span> {marker.size}
+                        </p>
+                      )}
+                      {(marker.discountedPrice && marker.discountedPrice !== '₹XX' && marker.discountedPrice !== 'N/A') ? (
+                        <p className="text-sm text-gray-800 mb-1">
+                          <span className="font-semibold">{marker.discountedPrice}</span>
+                          {marker.originalPrice && marker.originalPrice !== '₹XX' && marker.originalPrice !== marker.discountedPrice && (
+                            <span className="text-gray-500 line-through ml-2 text-xs">{marker.originalPrice}</span>
+                          )}
+                        </p>
+                      ) : marker.originalPrice && marker.originalPrice !== '₹XX' && marker.originalPrice !== 'N/A' ? (
+                        <p className="text-sm text-gray-800 mb-1">
+                          <span className="font-semibold">{marker.originalPrice}</span>
+                        </p>
+                      ) : null}
+                      {marker.date_added && marker.date_added !== 'N/A' && (
+                        <p className="text-xs text-gray-400 mt-1">Added on: {marker.date_added}</p>
+                      )}
                     </div>
                   </div>
                 </li>

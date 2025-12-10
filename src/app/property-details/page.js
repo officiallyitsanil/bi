@@ -13,6 +13,7 @@ import {
     MessageCircle,
     Heart
 } from "lucide-react";
+import PDFViewer from "../../components/PDFViewer";
 import GoogleMap from "../../components/GoogleMap";
 import LoginModal from "../../components/LoginModal";
 import { loginUser } from "../../utils/auth";
@@ -33,6 +34,24 @@ const safeDisplay = (value, fallback = "-") => {
         return fallback;
     }
     return value;
+};
+
+// Helper function to get video MIME type from URL or contentType
+const getVideoMimeType = (url, contentType) => {
+    if (contentType) return contentType;
+    
+    const urlLower = url.toLowerCase();
+    if (urlLower.endsWith('.mp4')) return 'video/mp4';
+    if (urlLower.endsWith('.mov')) return 'video/quicktime';
+    if (urlLower.endsWith('.mpeg') || urlLower.endsWith('.mpg')) return 'video/mpeg';
+    if (urlLower.endsWith('.avi')) return 'video/x-msvideo';
+    if (urlLower.endsWith('.webm')) return 'video/webm';
+    if (urlLower.endsWith('.mkv')) return 'video/x-matroska';
+    if (urlLower.endsWith('.flv')) return 'video/x-flv';
+    if (urlLower.endsWith('.wmv')) return 'video/x-ms-wmv';
+    
+    // Default to mp4 if unknown
+    return 'video/mp4';
 };
 
 // Animated Text Component
@@ -108,6 +127,7 @@ function PropertyDetailsContent() {
     const [fullScreenImage, setFullScreenImage] = useState(null);
     const [isLoginOpen, setIsLoginOpen] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
+    const [selectedPDF, setSelectedPDF] = useState(null);
 
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -239,6 +259,7 @@ function PropertyDetailsContent() {
 
         return () => clearTimeout(timer);
     }, [property]);
+
 
     // Fetch property data from MongoDB based on ID and type
     useEffect(() => {
@@ -754,13 +775,31 @@ function PropertyDetailsContent() {
                         </div>
                     )}
 
-                    {/* Property Details - Only for residential properties */}
+                    {/* Property Details - Residential */}
                     {property.propertyType === 'residential' && (
                         <div className="mb-5 scroll-animate" data-animation="animate-slide-top">
                             <AnimatedText className="text-base font-bold mb-3 text-purple-600 inline-block" delay={700} lineColor="#f8c02f">
                                 <h3>Property Details</h3>
                             </AnimatedText>
                             <div className="grid grid-cols-2 gap-2">
+                                {(property.category || property.Category) && (
+                                    <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                                        <span className="text-xs font-medium text-gray-500">Category</span>
+                                        <span className="text-sm font-semibold text-gray-800 capitalize">{safeDisplay(property.category || property.Category)}</span>
+                                    </div>
+                                )}
+                                {property.selectedType && (
+                                    <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                                        <span className="text-xs font-medium text-gray-500">Type</span>
+                                        <span className="text-sm font-semibold text-gray-800 capitalize">{safeDisplay(property.selectedType)}</span>
+                                    </div>
+                                )}
+                                {property.availableFor && (
+                                    <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                                        <span className="text-xs font-medium text-gray-500">Available For</span>
+                                        <span className="text-sm font-semibold text-gray-800 capitalize">{safeDisplay(property.availableFor)}</span>
+                                    </div>
+                                )}
                                 {property.bhkType && (
                                     <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
                                         <span className="text-xs font-medium text-gray-500">BHK Type</span>
@@ -832,27 +871,150 @@ function PropertyDetailsContent() {
                                 {property.availableFrom && (
                                     <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
                                         <span className="text-xs font-medium text-gray-500">Available From</span>
-                                        <span className="text-sm font-semibold text-gray-800">{safeDisplay(property.availableFrom) !== "-" ? new Date(property.availableFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : "-"}</span>
+                                        <span className="text-sm font-semibold text-gray-800">{safeDisplay(property.availableFrom) !== "-" ? (typeof property.availableFrom === 'string' ? property.availableFrom : new Date(property.availableFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })) : "-"}</span>
                                     </div>
                                 )}
                                 {property.monthlyMaintenance && (
-                                    <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm col-span-2">
+                                    <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
                                         <span className="text-xs font-medium text-gray-500">Maintenance</span>
                                         <span className="text-sm font-semibold text-gray-800">{safeDisplay(property.monthlyMaintenance)}</span>
+                                    </div>
+                                )}
+                                {property.expectedDeposit && (
+                                    <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                                        <span className="text-xs font-medium text-gray-500">Security Deposit</span>
+                                        <span className="text-sm font-semibold text-gray-800">{safeDisplay(property.expectedDeposit) !== "-" ? `₹${Number(property.expectedDeposit).toLocaleString('en-IN')}` : "-"}</span>
+                                    </div>
+                                )}
+                                {property.isNegotiable !== undefined && property.isNegotiable !== null && (
+                                    <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                                        <span className="text-xs font-medium text-gray-500">Negotiable</span>
+                                        <span className={`text-sm font-semibold ${property.isNegotiable ? 'text-green-600' : 'text-red-600'}`}>
+                                            {property.isNegotiable ? 'Yes' : 'No'}
+                                        </span>
+                                    </div>
+                                )}
+                                {property.gatedSecurity !== undefined && property.gatedSecurity !== null && (
+                                    <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                                        <span className="text-xs font-medium text-gray-500">Gated Security</span>
+                                        <span className={`text-sm font-semibold ${property.gatedSecurity ? 'text-green-600' : 'text-red-600'}`}>
+                                            {property.gatedSecurity ? 'Yes' : 'No'}
+                                        </span>
+                                    </div>
+                                )}
+                                {property.gym !== undefined && property.gym !== null && (
+                                    <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                                        <span className="text-xs font-medium text-gray-500">Gym</span>
+                                        <span className={`text-sm font-semibold ${property.gym ? 'text-green-600' : 'text-red-600'}`}>
+                                            {property.gym ? 'Available' : 'Not Available'}
+                                        </span>
+                                    </div>
+                                )}
+                                {property.nonVegAllowed !== undefined && property.nonVegAllowed !== null && (
+                                    <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                                        <span className="text-xs font-medium text-gray-500">Non-Veg Allowed</span>
+                                        <span className={`text-sm font-semibold ${property.nonVegAllowed ? 'text-green-600' : 'text-red-600'}`}>
+                                            {property.nonVegAllowed ? 'Yes' : 'No'}
+                                        </span>
+                                    </div>
+                                )}
+                                {property.waterSupply && (
+                                    <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                                        <span className="text-xs font-medium text-gray-500">Water Supply</span>
+                                        <span className="text-sm font-semibold text-gray-800">{safeDisplay(property.waterSupply)}</span>
+                                    </div>
+                                )}
+                                {property.currentSituation && (
+                                    <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                                        <span className="text-xs font-medium text-gray-500">Current Situation</span>
+                                        <span className="text-sm font-semibold text-gray-800">{safeDisplay(property.currentSituation)}</span>
+                                    </div>
+                                )}
+                                {property.directionsTip && (
+                                    <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm col-span-2">
+                                        <span className="text-xs font-medium text-gray-500">Directions Tip</span>
+                                        <span className="text-sm font-semibold text-gray-800">{safeDisplay(property.directionsTip)}</span>
+                                    </div>
+                                )}
+                                {property.whoWillShow && (
+                                    <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                                        <span className="text-xs font-medium text-gray-500">Who Will Show</span>
+                                        <span className="text-sm font-semibold text-gray-800">{safeDisplay(property.whoWillShow)}</span>
+                                    </div>
+                                )}
+                                {property.builder && (
+                                    <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                                        <span className="text-xs font-medium text-gray-500">Builder Name</span>
+                                        <span className="text-sm font-semibold text-gray-800">{safeDisplay(property.builder)}</span>
                                     </div>
                                 )}
                             </div>
                         </div>
                     )}
 
-                    {/* Builder Name */}
-                    {property.builder && (
+                    {/* Property Details - Commercial */}
+                    {property.propertyType === 'commercial' && (
                         <div className="mb-5 scroll-animate" data-animation="animate-slide-top">
-                            <AnimatedText className="text-base font-bold mb-3 text-purple-600 inline-block" delay={900} lineColor="#f8c02f">
-                                <h3>Builder Name</h3>
+                            <AnimatedText className="text-base font-bold mb-3 text-purple-600 inline-block" delay={700} lineColor="#f8c02f">
+                                <h3>Property Details</h3>
                             </AnimatedText>
-                            <div className="bg-white p-4 rounded-lg shadow-sm scroll-animate" data-animation="animate-fade-up">
-                                <p className="text-base font-semibold text-gray-800">{safeDisplay(property.builder)}</p>
+                            <div className="grid grid-cols-2 gap-2">
+                                {(property.category || property.Category) && (
+                                    <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                                        <span className="text-xs font-medium text-gray-500">Category</span>
+                                        <span className="text-sm font-semibold text-gray-800 capitalize">{safeDisplay(property.category || property.Category)}</span>
+                                    </div>
+                                )}
+                                {(property.displayPropertyType || property.propertyType) && (
+                                    <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                                        <span className="text-xs font-medium text-gray-500">Property Type</span>
+                                        <span className="text-sm font-semibold text-gray-800 capitalize">{safeDisplay(property.displayPropertyType || property.propertyType)}</span>
+                                    </div>
+                                )}
+                                {property.isUnderManagement && (
+                                    <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                                        <span className="text-xs font-medium text-gray-500">Under Management</span>
+                                        <span className={`text-sm font-semibold ${property.isUnderManagement === 'yes' ? 'text-green-600' : 'text-red-600'}`}>
+                                            {property.isUnderManagement === 'yes' ? 'Yes' : 'No'}
+                                        </span>
+                                    </div>
+                                )}
+                                {property.selectedFloors && property.selectedFloors.length > 0 && (
+                                    <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm col-span-2">
+                                        <span className="text-xs font-medium text-gray-500">Available Floors</span>
+                                        <span className="text-sm font-semibold text-gray-800">{property.selectedFloors.join(', ')}</span>
+                                    </div>
+                                )}
+                                {property.floorConfigurations && property.floorConfigurations.length > 0 && (
+                                    <div className="flex flex-col bg-white p-3 rounded-lg shadow-sm col-span-2">
+                                        <span className="text-xs font-medium text-gray-500 mb-2">Office Space Solutions</span>
+                                        <div className="space-y-2">
+                                            {property.floorConfigurations.map((config, idx) => (
+                                                <div key={idx} className="text-xs">
+                                                    {config.floor && <span className="font-semibold text-gray-800">Floor {config.floor}: </span>}
+                                                    {config.dedicatedCabin?.enabled && (
+                                                        <span className="text-gray-700">Dedicated Cabin ({config.dedicatedCabin.seats || 'N/A'} seats, {config.dedicatedCabin.pricePerSeat || 'N/A'}/seat)</span>
+                                                    )}
+                                                    {config.dedicatedFloor?.enabled && (
+                                                        <span className="text-gray-700 ml-2">Dedicated Floor ({config.dedicatedFloor.seats || 'N/A'} seats, {config.dedicatedFloor.pricePerSeat || 'N/A'}/seat)</span>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                {property.facilities && property.facilities.length > 0 && (
+                                    <div className="flex flex-col bg-white p-3 rounded-lg shadow-sm col-span-2">
+                                        <span className="text-xs font-medium text-gray-500 mb-2">Facilities</span>
+                                        <span className="text-sm font-semibold text-gray-800">{property.facilities.join(', ')}</span>
+                                    </div>
+                                )}
+                                {property.builder && (
+                                    <div className="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                                        <span className="text-xs font-medium text-gray-500">Builder Name</span>
+                                        <span className="text-sm font-semibold text-gray-800">{safeDisplay(property.builder)}</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
@@ -1064,21 +1226,27 @@ function PropertyDetailsContent() {
                                 <h3>Property Videos</h3>
                             </AnimatedText>
                             <div className="grid grid-cols-1 gap-3">
-                                {property.propertyVideos.map((video, i) => (
-                                    <div key={i} className="relative rounded-lg overflow-hidden bg-black scroll-animate" data-animation="animate-fade-up" style={{ animationDelay: `${i * 100}ms` }}>
-                                        <video
-                                            controls
-                                            className="w-full h-48 object-contain"
-                                            poster={video.thumbnail}
-                                        >
-                                            <source src={video.url} type={video.contentType || 'video/mp4'} />
-                                            Your browser does not support the video tag.
-                                        </video>
-                                        {video.originalName && (
-                                            <p className="text-xs text-gray-600 mt-1 px-2">{video.originalName}</p>
-                                        )}
-                                    </div>
-                                ))}
+                                {property.propertyVideos.map((video, i) => {
+                                    const mimeType = getVideoMimeType(video.url, video.contentType);
+                                    return (
+                                        <div key={i} className="relative rounded-lg overflow-hidden bg-black scroll-animate" data-animation="animate-fade-up" style={{ animationDelay: `${i * 100}ms` }}>
+                                            <video
+                                                controls
+                                                preload="metadata"
+                                                className="w-full h-48 object-contain"
+                                                poster={video.thumbnail}
+                                            >
+                                                <source src={video.url} type={mimeType} />
+                                                <source src={video.url} type="video/mp4" />
+                                                <source src={video.url} type="video/webm" />
+                                                Your browser does not support the video tag.
+                                            </video>
+                                            {video.originalName && (
+                                                <p className="text-xs text-gray-600 mt-1 px-2">{video.originalName}</p>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
@@ -1110,14 +1278,12 @@ function PropertyDetailsContent() {
                                                     )}
                                                 </div>
                                             </div>
-                                            <a
-                                                href={pdf.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
+                                            <button
+                                                onClick={() => setSelectedPDF(pdf)}
                                                 className="ml-3 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
                                             >
                                                 View PDF
-                                            </a>
+                                            </button>
                                         </div>
                                     </div>
                                 ))}
@@ -1893,13 +2059,31 @@ function PropertyDetailsContent() {
                     {/* Full Width Sections - Location, Reviews, Layout, and Info */}
                     <div className="mt-6 space-y-6">
 
-                        {/* Property Details - Only for residential properties - Full Width */}
+                        {/* Property Details - Residential - Full Width */}
                         {property.propertyType === 'residential' && (
                             <div className="bg-white rounded-2xl p-5 mb-6 scroll-animate" data-animation="animate-slide-top">
                                 <AnimatedText className="text-lg font-bold mb-3 inline-block" delay={700} lineColor="#f8c02f">
                                     <h3>Property Details</h3>
                                 </AnimatedText>
                                 <div className="grid grid-cols-3 gap-4 mt-5">
+                                    {(property.category || property.Category) && (
+                                        <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
+                                            <span className="text-sm font-medium text-gray-500 block mb-1">Category</span>
+                                            <span className="text-base font-semibold text-gray-800 capitalize">{safeDisplay(property.category || property.Category)}</span>
+                                        </div>
+                                    )}
+                                    {property.selectedType && (
+                                        <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
+                                            <span className="text-sm font-medium text-gray-500 block mb-1">Type</span>
+                                            <span className="text-base font-semibold text-gray-800 capitalize">{safeDisplay(property.selectedType)}</span>
+                                        </div>
+                                    )}
+                                    {property.availableFor && (
+                                        <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
+                                            <span className="text-sm font-medium text-gray-500 block mb-1">Available For</span>
+                                            <span className="text-base font-semibold text-gray-800 capitalize">{safeDisplay(property.availableFor)}</span>
+                                        </div>
+                                    )}
                                     {property.bhkType && (
                                         <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
                                             <span className="text-sm font-medium text-gray-500 block mb-1">BHK Type</span>
@@ -1971,7 +2155,7 @@ function PropertyDetailsContent() {
                                     {property.availableFrom && (
                                         <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
                                             <span className="text-sm font-medium text-gray-500 block mb-1">Available From</span>
-                                            <span className="text-base font-semibold text-gray-800">{safeDisplay(property.availableFrom) !== "-" ? new Date(property.availableFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : "-"}</span>
+                                            <span className="text-base font-semibold text-gray-800">{safeDisplay(property.availableFrom) !== "-" ? (typeof property.availableFrom === 'string' ? property.availableFrom : new Date(property.availableFrom).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })) : "-"}</span>
                                         </div>
                                     )}
                                     {property.monthlyMaintenance && (
@@ -2018,18 +2202,103 @@ function PropertyDetailsContent() {
                                             </span>
                                         </div>
                                     )}
+                                    {property.waterSupply && (
+                                        <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
+                                            <span className="text-sm font-medium text-gray-500 block mb-1">Water Supply</span>
+                                            <span className="text-base font-semibold text-gray-800">{safeDisplay(property.waterSupply)}</span>
+                                        </div>
+                                    )}
+                                    {property.currentSituation && (
+                                        <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
+                                            <span className="text-sm font-medium text-gray-500 block mb-1">Current Situation</span>
+                                            <span className="text-base font-semibold text-gray-800">{safeDisplay(property.currentSituation)}</span>
+                                        </div>
+                                    )}
+                                    {property.directionsTip && (
+                                        <div className="bg-gray-50 p-4 rounded-lg scroll-animate col-span-3" data-animation="animate-fade-up">
+                                            <span className="text-sm font-medium text-gray-500 block mb-1">Directions Tip</span>
+                                            <span className="text-base font-semibold text-gray-800">{safeDisplay(property.directionsTip)}</span>
+                                        </div>
+                                    )}
+                                    {property.whoWillShow && (
+                                        <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
+                                            <span className="text-sm font-medium text-gray-500 block mb-1">Who Will Show</span>
+                                            <span className="text-base font-semibold text-gray-800">{safeDisplay(property.whoWillShow)}</span>
+                                        </div>
+                                    )}
+                                    {property.builder && (
+                                        <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
+                                            <span className="text-sm font-medium text-gray-500 block mb-1">Builder Name</span>
+                                            <span className="text-base font-semibold text-gray-800">{safeDisplay(property.builder)}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
 
-                        {/* Builder Name Section - Full Width */}
-                        {property.builder && (
+                        {/* Property Details - Commercial - Full Width */}
+                        {property.propertyType === 'commercial' && (
                             <div className="bg-white rounded-2xl p-5 mb-6 scroll-animate" data-animation="animate-slide-top">
-                                <AnimatedText className="text-lg font-bold mb-3 inline-block" delay={900} lineColor="#f8c02f">
-                                    <h3>Builder Name</h3>
+                                <AnimatedText className="text-lg font-bold mb-3 inline-block" delay={700} lineColor="#f8c02f">
+                                    <h3>Property Details</h3>
                                 </AnimatedText>
-                                <div className="bg-gray-50 p-4 rounded-lg mt-5 scroll-animate" data-animation="animate-fade-up">
-                                    <p className="text-base font-semibold text-gray-800">{safeDisplay(property.builder)}</p>
+                                <div className="grid grid-cols-3 gap-4 mt-5">
+                                    {(property.category || property.Category) && (
+                                        <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
+                                            <span className="text-sm font-medium text-gray-500 block mb-1">Category</span>
+                                            <span className="text-base font-semibold text-gray-800 capitalize">{safeDisplay(property.category || property.Category)}</span>
+                                        </div>
+                                    )}
+                                    {(property.displayPropertyType || property.propertyType) && (
+                                        <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
+                                            <span className="text-sm font-medium text-gray-500 block mb-1">Property Type</span>
+                                            <span className="text-base font-semibold text-gray-800 capitalize">{safeDisplay(property.displayPropertyType || property.propertyType)}</span>
+                                        </div>
+                                    )}
+                                    {property.isUnderManagement && (
+                                        <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
+                                            <span className="text-sm font-medium text-gray-500 block mb-1">Under Management</span>
+                                            <span className={`text-base font-semibold ${property.isUnderManagement === 'yes' ? 'text-green-600' : 'text-red-600'}`}>
+                                                {property.isUnderManagement === 'yes' ? 'Yes' : 'No'}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {property.selectedFloors && property.selectedFloors.length > 0 && (
+                                        <div className="bg-gray-50 p-4 rounded-lg scroll-animate col-span-3" data-animation="animate-fade-up">
+                                            <span className="text-sm font-medium text-gray-500 block mb-1">Available Floors</span>
+                                            <span className="text-base font-semibold text-gray-800">{property.selectedFloors.join(', ')}</span>
+                                        </div>
+                                    )}
+                                    {property.floorConfigurations && property.floorConfigurations.length > 0 && (
+                                        <div className="bg-gray-50 p-4 rounded-lg scroll-animate col-span-3" data-animation="animate-fade-up">
+                                            <span className="text-sm font-medium text-gray-500 block mb-2">Office Space Solutions</span>
+                                            <div className="space-y-2">
+                                                {property.floorConfigurations.map((config, idx) => (
+                                                    <div key={idx} className="text-sm">
+                                                        {config.floor && <span className="font-semibold text-gray-800">Floor {config.floor}: </span>}
+                                                        {config.dedicatedCabin?.enabled && (
+                                                            <span className="text-gray-700">Dedicated Cabin ({config.dedicatedCabin.seats || 'N/A'} seats, {config.dedicatedCabin.pricePerSeat || 'N/A'}/seat)</span>
+                                                        )}
+                                                        {config.dedicatedFloor?.enabled && (
+                                                            <span className="text-gray-700 ml-2">Dedicated Floor ({config.dedicatedFloor.seats || 'N/A'} seats, {config.dedicatedFloor.pricePerSeat || 'N/A'}/seat)</span>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                    {property.facilities && property.facilities.length > 0 && (
+                                        <div className="bg-gray-50 p-4 rounded-lg scroll-animate col-span-3" data-animation="animate-fade-up">
+                                            <span className="text-sm font-medium text-gray-500 block mb-1">Facilities</span>
+                                            <span className="text-base font-semibold text-gray-800">{property.facilities.join(', ')}</span>
+                                        </div>
+                                    )}
+                                    {property.builder && (
+                                        <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
+                                            <span className="text-sm font-medium text-gray-500 block mb-1">Builder Name</span>
+                                            <span className="text-base font-semibold text-gray-800">{safeDisplay(property.builder)}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -2131,7 +2400,7 @@ function PropertyDetailsContent() {
                         </div>
 
                         {/* Rating & Reviews Section - Full Width */}
-                        <div ref={reviewsRef} className="bg-white rounded-2xl p-5 mb- scroll-animate" data-animation="animate-slide-top6">
+                        <div ref={reviewsRef} className="bg-white rounded-2xl p-5 mb-6 scroll-animate" data-animation="animate-slide-top">
                             <div className="flex items-center justify-between mb-5">
                                 <AnimatedText className="text-lg font-bold inline-block" delay={1500} lineColor="#f8c02f">
                                     <h3>Rating & Reviews</h3>
@@ -2257,21 +2526,27 @@ function PropertyDetailsContent() {
                                     <h3>Property Videos</h3>
                                 </AnimatedText>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
-                                    {property.propertyVideos.map((video, i) => (
-                                        <div key={i} className="relative rounded-lg overflow-hidden bg-black scroll-animate" data-animation="animate-fade-up" style={{ animationDelay: `${i * 100}ms` }}>
-                                            <video
-                                                controls
-                                                className="w-full h-64 object-contain"
-                                                poster={video.thumbnail}
-                                            >
-                                                <source src={video.url} type={video.contentType || 'video/mp4'} />
-                                                Your browser does not support the video tag.
-                                            </video>
-                                            {video.originalName && (
-                                                <p className="text-sm text-gray-700 mt-2 px-2 font-medium">{video.originalName}</p>
-                                            )}
-                                        </div>
-                                    ))}
+                                    {property.propertyVideos.map((video, i) => {
+                                        const mimeType = getVideoMimeType(video.url, video.contentType);
+                                        return (
+                                            <div key={i} className="relative rounded-lg overflow-hidden bg-black scroll-animate" data-animation="animate-fade-up" style={{ animationDelay: `${i * 100}ms` }}>
+                                                <video
+                                                    controls
+                                                    preload="metadata"
+                                                    className="w-full h-64 object-contain"
+                                                    poster={video.thumbnail}
+                                                >
+                                                    <source src={video.url} type={mimeType} />
+                                                    <source src={video.url} type="video/mp4" />
+                                                    <source src={video.url} type="video/webm" />
+                                                    Your browser does not support the video tag.
+                                                </video>
+                                                {video.originalName && (
+                                                    <p className="text-sm text-gray-700 mt-2 px-2 font-medium">{video.originalName}</p>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -2303,14 +2578,12 @@ function PropertyDetailsContent() {
                                                         )}
                                                     </div>
                                                 </div>
-                                                <a
-                                                    href={pdf.url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
+                                                <button
+                                                    onClick={() => setSelectedPDF(pdf)}
                                                     className="ml-4 px-5 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer whitespace-nowrap"
                                                 >
                                                     View PDF
-                                                </a>
+                                                </button>
                                             </div>
                                         </div>
                                     ))}
@@ -2661,6 +2934,14 @@ function PropertyDetailsContent() {
                         onClick={(e) => e.stopPropagation()}
                     />
                 </div>
+            )}
+
+            {/* PDF Viewer Modal */}
+            {selectedPDF && (
+                <PDFViewer
+                    pdf={selectedPDF}
+                    onClose={() => setSelectedPDF(null)}
+                />
             )}
 
             {/* Login Modal */}
