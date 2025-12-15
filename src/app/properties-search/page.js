@@ -171,6 +171,35 @@ function PropertiesSearchContent() {
     return city.charAt(0).toUpperCase() + city.slice(1).toLowerCase();
   };
 
+  // Helper function to check if property is new (published within last 30 days)
+  const isPropertyNew = (property) => {
+    if (!property.publishedAt) return false;
+    
+    try {
+      // Handle MongoDB date format: {"$date": "2025-11-11T01:12:01.989Z"}
+      let publishedDate;
+      if (typeof property.publishedAt === 'object' && property.publishedAt.$date) {
+        publishedDate = new Date(property.publishedAt.$date);
+      } else {
+        publishedDate = new Date(property.publishedAt);
+      }
+      
+      // Check if date is valid
+      if (isNaN(publishedDate.getTime())) return false;
+      
+      // Calculate difference in days
+      const now = new Date();
+      const diffTime = Math.abs(now - publishedDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      // Property is new if published within last 30 days
+      return diffDays <= 30;
+    } catch (error) {
+      console.error('Error checking publishedAt date:', error);
+      return false;
+    }
+  };
+
   // Determine Category (commercial/residential) from Category parameter or type parameter
   const determineCategory = () => {
     if (categoryParam) return categoryParam.toLowerCase();
@@ -260,6 +289,10 @@ function PropertiesSearchContent() {
         const result = await response.json();
 
         if (result.success && result.data) {
+          // Filter only confirmed properties
+          const confirmedProperties = result.data.filter(property =>
+            property.verificationStatus === 'confirmed'
+          );
 
           // Calculate prices based on property category
           const calculatePrices = (property) => {
@@ -306,21 +339,21 @@ function PropertiesSearchContent() {
             };
           };
 
-          // Calculate badge based on isPremium and isNew
+          // Calculate badge based on isPremium and publishedAt
           const calculateBadge = (property) => {
-            // Premium badge: if isPremium is true, show premium regardless of isNew
+            // Premium badge: if isPremium is true, show premium regardless of anything else
             if (property.isPremium === true) {
               return 'premium';
             }
-            // New badge: only show if isNew is true AND isPremium is false
-            if (property.isNew === true && property.isPremium === false) {
+            // New badge: only show if published within last 30 days AND isPremium is false
+            if (isPropertyNew(property) && property.isPremium === false) {
               return 'new';
             }
-            // If both are false, return empty string (no badge)
+            // If both conditions are false, return empty string (no badge)
             return '';
           };
 
-          const properties = result.data.map(property => {
+          const properties = confirmedProperties.map(property => {
             const prices = calculatePrices(property);
             const badge = calculateBadge(property);
             return {
@@ -380,11 +413,11 @@ function PropertiesSearchContent() {
     if (selectedBadge) {
       filtered = filtered.filter(property => {
         if (selectedBadge === 'premium') {
-          // Show properties where isPremium is true (regardless of isNew)
+          // Show properties where isPremium is true (regardless of anything else)
           return property.isPremium === true;
         } else if (selectedBadge === 'new') {
-          // Show properties where isNew is true AND isPremium is false
-          return property.isNew === true && property.isPremium === false;
+          // Show properties where published within last 30 days AND isPremium is false
+          return isPropertyNew(property) && property.isPremium === false;
         }
         return true;
       });

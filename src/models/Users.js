@@ -7,6 +7,19 @@ const UserSchema = new mongoose.Schema({
     unique: true,
     match: [/^\+[1-9]\d{1,14}$/, 'Please fill a valid phone number'],
   },
+  name: {
+    type: String,
+    default: '',
+  },
+  email: {
+    type: String,
+    default: '',
+    match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Please fill a valid email'],
+  },
+  address: {
+    type: String,
+    default: '',
+  },
 }, {
   timestamps: true,
 });

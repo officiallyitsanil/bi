@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 
 export default function PDFViewerContent({ pdf, onClose }) {
@@ -9,6 +9,8 @@ export default function PDFViewerContent({ pdf, onClose }) {
     const [pdfLoading, setPdfLoading] = useState(true);
     const [pdfError, setPdfError] = useState(null);
     const [useIframe, setUseIframe] = useState(true); // Default to iframe for reliability
+    const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
+    const blobUrlRef = useRef(null);
 
     // Set up PDF.js worker on component mount
     useEffect(() => {
@@ -23,11 +25,82 @@ export default function PDFViewerContent({ pdf, onClose }) {
         }
     }, []);
 
+    // Fetch PDF as blob and create blob URL to handle CORS issues
+    useEffect(() => {
+        if (!pdf || !pdf.url) return;
+
+        const fetchPdfAsBlob = async () => {
+            // Cleanup previous blob URL if it exists
+            if (blobUrlRef.current && blobUrlRef.current.startsWith('blob:')) {
+                URL.revokeObjectURL(blobUrlRef.current);
+                blobUrlRef.current = null;
+            }
+
+            try {
+                setPdfLoading(true);
+                setPdfError(null);
+
+                // Check if URL is a local file path (starts with /) or external URL
+                const isLocalFile = pdf.url.startsWith('/') || pdf.url.startsWith('http://localhost') || pdf.url.startsWith('http://127.0.0.1');
+                
+                if (isLocalFile) {
+                    // For local files, use the URL directly
+                    blobUrlRef.current = null;
+                    setPdfBlobUrl(pdf.url);
+                    setPdfLoading(false);
+                    return;
+                }
+
+                // For external URLs, use proxy API to handle CORS
+                const proxyUrl = `/api/pdf-proxy?url=${encodeURIComponent(pdf.url)}`;
+                const response = await fetch(proxyUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/pdf, */*',
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
+                }
+
+                const blob = await response.blob();
+                
+                // Verify it's actually a PDF
+                if (blob.type !== 'application/pdf' && !pdf.url.toLowerCase().endsWith('.pdf')) {
+                    console.warn('Response is not a PDF, but proceeding anyway');
+                }
+
+                // Create blob URL
+                const blobUrl = URL.createObjectURL(blob);
+                blobUrlRef.current = blobUrl;
+                setPdfBlobUrl(blobUrl);
+                setPdfLoading(false);
+            } catch (error) {
+                console.error('Error fetching PDF:', error);
+                setPdfError(error.message || 'Failed to load PDF');
+                setPdfLoading(false);
+                // Fallback to direct URL
+                blobUrlRef.current = null;
+                setPdfBlobUrl(pdf.url);
+            }
+        };
+
+        fetchPdfAsBlob();
+
+        // Cleanup blob URL on unmount or when pdf changes
+        return () => {
+            if (blobUrlRef.current && blobUrlRef.current.startsWith('blob:')) {
+                URL.revokeObjectURL(blobUrlRef.current);
+                blobUrlRef.current = null;
+            }
+        };
+    }, [pdf]);
+
     useEffect(() => {
         if (pdf) {
             setPageNumber(1);
             setNumPages(null);
-            setPdfLoading(true);
             setPdfError(null);
         }
     }, [pdf]);
@@ -112,10 +185,10 @@ export default function PDFViewerContent({ pdf, onClose }) {
                             </a>
                         </div>
                     )}
-                    {!pdfError && !useIframe && (
+                    {!pdfError && !useIframe && pdfBlobUrl && (
                         <div className="max-w-full w-full flex justify-center">
                             <Document
-                                file={pdf.url}
+                                file={pdfBlobUrl}
                                 onLoadSuccess={({ numPages }) => {
                                     setNumPages(numPages);
                                     setPdfLoading(false);
@@ -162,16 +235,22 @@ export default function PDFViewerContent({ pdf, onClose }) {
                             </Document>
                         </div>
                     )}
-                    {!pdfError && useIframe && (
+                    {!pdfError && useIframe && pdfBlobUrl && (
                         <div className="w-full h-full">
                             <iframe
-                                src={`${pdf.url}#toolbar=1&navpanes=1&scrollbar=1`}
+                                src={`${pdfBlobUrl}#toolbar=1&navpanes=1&scrollbar=1`}
                                 className="w-full h-full border-0"
                                 title="PDF Viewer"
                                 onLoad={() => {
                                     setPdfLoading(false);
                                 }}
                             />
+                        </div>
+                    )}
+                    {!pdfBlobUrl && pdfLoading && (
+                        <div className="text-center p-8">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                            <p className="text-gray-600">Preparing PDF...</p>
                         </div>
                     )}
                 </div>

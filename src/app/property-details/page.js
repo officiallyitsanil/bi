@@ -667,10 +667,25 @@ function PropertyDetailsContent() {
                     </div>
 
                     {/* More Images Button */}
-                    <div className="absolute bottom-4 right-4 hover:cursor-pointer" onClick={openGallery}>
-                        <div className="bg-gray-800/80 text-white px-4 py-2 rounded-lg text-sm hover:cursor-pointer">
-                            +{property.images.length - 1} more
-                        </div>
+                    <div className="absolute bottom-4 right-4 cursor-pointer">
+                        <button
+                            onClick={openGallery}
+                            className="bg-black/30 backdrop-blur-sm text-white rounded-xl border-2 border-white/80 w-12 h-12 flex flex-col items-center justify-center hover:bg-black/40 transition-all duration-200 shadow-lg cursor-pointer rotate-12"
+                        >
+                            <span className="text-sm font-bold leading-none cursor-pointer">+{property.images.length - 1}</span>
+                            <span className="text-xs font-medium leading-none mt-0.5 cursor-pointer">More</span>
+                        </button>
+                    </div>
+
+                    {/* More Images Button Overlay - Shifted Right Side */}
+                    <div className="absolute bottom-4 right-6 cursor-pointer">
+                        <button
+                            onClick={openGallery}
+                            className="bg-black/30 backdrop-blur-sm text-white rounded-xl border-2 border-white/80 w-12 h-12 flex flex-col items-center justify-center hover:bg-black/40 transition-all duration-200 shadow-lg cursor-pointer"
+                        >
+                            <span className="text-sm font-bold leading-none cursor-pointer">+{property.images.length - 1}</span>
+                            <span className="text-xs font-medium leading-none mt-0.5 cursor-pointer">More</span>
+                        </button>
                     </div>
                 </div>
 
@@ -688,13 +703,18 @@ function PropertyDetailsContent() {
                             className="w-8 h-8 object-contain"
                         />
                         <span className="text-xl font-bold">{safeDisplay(property.discountedPrice)}</span>
+                        <img
+                            src="/property-details/limited-offer.png"
+                            alt="Limited Time Offer"
+                            className="h-8 object-contain"
+                        />
                     </div>
 
 
 
                     {/* Amenities */}
                     <div className="mb-5 scroll-animate" data-animation="animate-slide-top">
-                        <AnimatedText className="text-base font-bold mb-3 text-red-600 inline-block" delay={500} lineColor="#f8c02f">
+                        <AnimatedText className="text-base font-bold mb-3 text-black inline-block" delay={500} lineColor="#f8c02f">
                             <h3>Amenities</h3>
                         </AnimatedText>
                         <div className="grid grid-cols-5 gap-2">
@@ -731,7 +751,7 @@ function PropertyDetailsContent() {
                     {/* Opening Hours - Only for commercial properties */}
                     {property.propertyType === 'commercial' && property.openingHours && (
                         <div className="mb-5 scroll-animate" data-animation="animate-slide-top">
-                            <AnimatedText className="text-base font-bold mb-3 text-green-600 inline-block" delay={700} lineColor="#f8c02f">
+                            <AnimatedText className="text-base font-bold mb-3 text-black inline-block" delay={700} lineColor="#f8c02f">
                                 <h3>Opening Hours</h3>
                             </AnimatedText>
                             <div className="space-y-2">
@@ -778,7 +798,7 @@ function PropertyDetailsContent() {
                     {/* Property Details - Residential */}
                     {property.propertyType === 'residential' && (
                         <div className="mb-5 scroll-animate" data-animation="animate-slide-top">
-                            <AnimatedText className="text-base font-bold mb-3 text-purple-600 inline-block" delay={700} lineColor="#f8c02f">
+                            <AnimatedText className="text-base font-bold mb-3 text-black inline-block" delay={700} lineColor="#f8c02f">
                                 <h3>Property Details</h3>
                             </AnimatedText>
                             <div className="grid grid-cols-2 gap-2">
@@ -955,7 +975,7 @@ function PropertyDetailsContent() {
                     {/* Property Details - Commercial */}
                     {property.propertyType === 'commercial' && (
                         <div className="mb-5 scroll-animate" data-animation="animate-slide-top">
-                            <AnimatedText className="text-base font-bold mb-3 text-purple-600 inline-block" delay={700} lineColor="#f8c02f">
+                            <AnimatedText className="text-base font-bold mb-3 text-black inline-block" delay={700} lineColor="#f8c02f">
                                 <h3>Property Details</h3>
                             </AnimatedText>
                             <div className="grid grid-cols-2 gap-2">
@@ -1021,7 +1041,7 @@ function PropertyDetailsContent() {
 
                     {/* Location & Landmark */}
                     <div className="mb-5 scroll-animate" data-animation="animate-slide-top">
-                        <AnimatedText className="text-base font-bold mb-3 text-blue-600 inline-block" delay={1000} lineColor="#f8c02f">
+                        <AnimatedText className="text-base font-bold mb-3 text-black inline-block" delay={1000} lineColor="#f8c02f">
                             <h3>Location & Landmark</h3>
                         </AnimatedText>
 
@@ -1222,7 +1242,7 @@ function PropertyDetailsContent() {
                     {/* Property Videos */}
                     {property.propertyVideos && property.propertyVideos.length > 0 && (
                         <div className="mb-5 scroll-animate" data-animation="animate-slide-top">
-                            <AnimatedText className="text-base font-bold mb-3 text-purple-600 inline-block" delay={1700} lineColor="#f8c02f">
+                            <AnimatedText className="text-base font-bold mb-3 text-black inline-block" delay={1700} lineColor="#f8c02f">
                                 <h3>Property Videos</h3>
                             </AnimatedText>
                             <div className="grid grid-cols-1 gap-3">
@@ -1254,7 +1274,7 @@ function PropertyDetailsContent() {
                     {/* Property PDFs - Only for commercial properties */}
                     {property.propertyType === 'commercial' && property.seatLayoutPDFs && property.seatLayoutPDFs.length > 0 && (
                         <div className="mb-5 scroll-animate" data-animation="animate-slide-top">
-                            <AnimatedText className="text-base font-bold mb-3 text-indigo-600 inline-block" delay={1800} lineColor="#f8c02f">
+                            <AnimatedText className="text-base font-bold mb-3 text-black inline-block" delay={1800} lineColor="#f8c02f">
                                 <h3>Property Documents</h3>
                             </AnimatedText>
                             <div className="grid grid-cols-1 gap-3">
@@ -1757,6 +1777,17 @@ function PropertyDetailsContent() {
                                 <div className="absolute bottom-4 right-4 cursor-pointer">
                                     <button
                                         onClick={openGallery}
+                                        className="bg-black/30 backdrop-blur-sm text-white rounded-xl border-2 border-white/80 w-16 h-16 flex flex-col items-center justify-center hover:bg-black/40 transition-all duration-200 shadow-lg cursor-pointer rotate-12"
+                                    >
+                                        <span className="text-lg font-bold leading-none cursor-pointer">+{property.images.length - 1}</span>
+                                        <span className="text-sm font-medium leading-none mt-0.5 cursor-pointer">More</span>
+                                    </button>
+                                </div>
+
+                                {/* Bottom Right Counter Overlay - Shifted Right Side */}
+                                <div className="absolute bottom-4 right-6 cursor-pointer">
+                                    <button
+                                        onClick={openGallery}
                                         className="bg-black/30 backdrop-blur-sm text-white rounded-xl border-2 border-white/80 w-16 h-16 flex flex-col items-center justify-center hover:bg-black/40 transition-all duration-200 shadow-lg cursor-pointer"
                                     >
                                         <span className="text-lg font-bold leading-none cursor-pointer">+{property.images.length - 1}</span>
@@ -1832,6 +1863,11 @@ function PropertyDetailsContent() {
                                         className="w-8 h-8 object-contain"
                                     />
                                     <span className="text-xl font-bold">{safeDisplay(property.discountedPrice)}</span>
+                                    <img
+                                        src="/property-details/limited-offer.png"
+                                        alt="Limited Time Offer"
+                                        className="h-8 object-contain"
+                                    />
                                 </div>
 
                                 {/* Buttons */}
