@@ -32,7 +32,9 @@ import {
     Star,
     ThumbsUp,
     ThumbsDown,
-    Check
+    Check,
+    Edit,
+    Trash2
 } from "lucide-react";
 import Image from "next/image";
 
@@ -65,6 +67,9 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
     const [userName, setUserName] = useState('');
     const [isSubmittingReview, setIsSubmittingReview] = useState(false);
     const [reviewSubmitSuccess, setReviewSubmitSuccess] = useState(false);
+    const [hasUserSubmittedReview, setHasUserSubmittedReview] = useState(false);
+    const [userReview, setUserReview] = useState(null);
+    const [isEditingReview, setIsEditingReview] = useState(false);
 
     useEffect(() => {
         const checkFavoriteStatus = async () => {
@@ -118,6 +123,27 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
         checkFavoriteStatus();
     }, [property._id, property.id]);
 
+    // Check if user has submitted a review for this property
+    useEffect(() => {
+        if (!property || !property.reviews || !currentUser || !currentUser.phoneNumber) {
+            setHasUserSubmittedReview(false);
+            setUserReview(null);
+            return;
+        }
+
+        const userReviewFound = property.reviews.find(review => 
+            review.userPhoneNumber === currentUser.phoneNumber
+        );
+
+        if (userReviewFound) {
+            setHasUserSubmittedReview(true);
+            setUserReview(userReviewFound);
+        } else {
+            setHasUserSubmittedReview(false);
+            setUserReview(null);
+        }
+    }, [property, currentUser]);
+
     if (!property) return null;
 
     const handleLoginSuccess = (userData) => {
@@ -128,12 +154,58 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
     };
 
     const handleAddReview = () => {
+        // Temporarily removed login requirement
         // Check if user is logged in
-        if (!currentUser) {
-            setIsLoginModalOpen(true);
+        // if (!currentUser) {
+        //     setIsLoginModalOpen(true);
+        //     return;
+        // }
+        setIsEditingReview(false);
+        setSelectedRating(0);
+        setReviewText('');
+        setUserName('');
+        setShowRatingModal(true);
+    };
+
+    const handleEditReview = () => {
+        if (!userReview) return;
+        setIsEditingReview(true);
+        setSelectedRating(userReview.rating || 0);
+        setReviewText(userReview.comment || '');
+        setUserName(userReview.user || '');
+        setShowRatingModal(true);
+    };
+
+    const handleDeleteReview = async () => {
+        if (!userReview || !currentUser) return;
+        
+        if (!confirm('Are you sure you want to delete your review?')) {
             return;
         }
-        setShowRatingModal(true);
+
+        try {
+            const propertyId = property._id || property.id;
+            const propertyType = property.propertyType || 'commercial';
+            const reviewId = userReview._id || userReview.id;
+
+            const response = await fetch(`/api/reviews?propertyId=${propertyId}&propertyType=${propertyType}&reviewId=${reviewId}&userPhoneNumber=${encodeURIComponent(currentUser.phoneNumber)}`, {
+                method: 'DELETE',
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setHasUserSubmittedReview(false);
+                setUserReview(null);
+                // Reload the page to refresh property data
+                window.location.reload();
+            } else {
+                alert(data.message || 'Failed to delete review. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error deleting review:', error);
+            alert('An error occurred. Please try again.');
+        }
     };
 
     const handleFavouriteToggle = async () => {
@@ -496,12 +568,14 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                         <div className="flex items-center justify-between mb-3">
                             <h3 className="text-base font-semibold text-gray-800">Ratings & Reviews</h3>
                             <div className="flex items-center gap-2">
-                                <button
-                                    onClick={handleAddReview}
-                                    className="bg-[#f8c02f] text-gray-800 px-3 py-1 rounded-lg font-medium text-xs hover:bg-[#e0ad2a] cursor-pointer transition-colors"
-                                >
-                                    Add Review
-                                </button>
+                                {!hasUserSubmittedReview && (
+                                    <button
+                                        onClick={handleAddReview}
+                                        className="bg-[#f8c02f] text-gray-800 px-3 py-1 rounded-lg font-medium text-xs hover:bg-[#e0ad2a] cursor-pointer transition-colors"
+                                    >
+                                        Add Review
+                                    </button>
+                                )}
                                 <div className="flex items-center gap-1">
                                     <Star className={`w-4 h-4 ${ratings?.overall > 0 ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
                                     <span className="text-sm font-semibold text-gray-800">
@@ -573,19 +647,42 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
 
                         {displayedReviews.length > 0 ? (
                             <div className="space-y-3">
-                                {displayedReviews.map((review, index) => (
-                                    <div key={index} className="bg-gray-50 rounded-lg p-3">
-                                        <div className="flex items-center justify-between mb-1.5">
-                                            <span className="text-xs font-medium text-gray-800">{safeDisplay(review.user)}</span>
-                                            <div className="flex items-center gap-1">
-                                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                                <span className="text-xs font-medium text-gray-700">{safeDisplay(review.rating)}</span>
+                                {displayedReviews.map((review, index) => {
+                                    const isUserReview = currentUser && currentUser.phoneNumber && review.userPhoneNumber === currentUser.phoneNumber;
+                                    return (
+                                        <div key={index} className="bg-gray-50 rounded-lg p-3">
+                                            <div className="flex items-center justify-between mb-1.5">
+                                                <span className="text-xs font-medium text-gray-800">{safeDisplay(review.user)}</span>
+                                                <div className="flex items-center gap-1.5">
+                                                    {isUserReview && (
+                                                        <>
+                                                            <button
+                                                                onClick={handleEditReview}
+                                                                className="text-blue-600 hover:text-blue-800 cursor-pointer"
+                                                                title="Edit review"
+                                                            >
+                                                                <Edit className="w-3 h-3" />
+                                                            </button>
+                                                            <button
+                                                                onClick={handleDeleteReview}
+                                                                className="text-red-600 hover:text-red-800 cursor-pointer"
+                                                                title="Delete review"
+                                                            >
+                                                                <Trash2 className="w-3 h-3" />
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                    <div className="flex items-center gap-1">
+                                                        <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                                        <span className="text-xs font-medium text-gray-700">{safeDisplay(review.rating)}</span>
+                                                    </div>
+                                                </div>
                                             </div>
+                                            <p className="text-xs text-gray-600 mb-1">{safeDisplay(review.comment)}</p>
+                                            <span className="text-[10px] text-gray-500">{safeDisplay(review.date)}</span>
                                         </div>
-                                        <p className="text-xs text-gray-600 mb-1">{safeDisplay(review.comment)}</p>
-                                        <span className="text-[10px] text-gray-500">{safeDisplay(review.date)}</span>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         ) : (
                             <div className="text-center py-4">
@@ -712,13 +809,13 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                         className="bg-white rounded-xl w-full max-w-sm p-5"
                     >
                         <div className="text-center mb-5">
-                            <h3 className="text-lg font-bold text-gray-800 mb-1.5">Rate Your Experience</h3>
+                            <h3 className="text-lg font-bold text-gray-800 mb-1.5">{isEditingReview ? 'Edit Your Review' : 'Rate Your Experience'}</h3>
                             <div className="w-24 h-0.5 bg-yellow-400 mx-auto"></div>
                         </div>
 
                         {reviewSubmitSuccess && (
                             <div className="mb-3 bg-green-100 border border-green-400 text-green-700 px-3 py-2 rounded-lg text-center text-sm">
-                                Review submitted successfully!
+                                {isEditingReview ? 'Review updated successfully!' : 'Review submitted successfully!'}
                             </div>
                         )}
 
@@ -760,6 +857,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                 rows={3}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                                 placeholder="Share your experience..."
+                                required
                             />
                         </div>
 
@@ -767,6 +865,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                             <button
                                 onClick={() => {
                                     setShowRatingModal(false);
+                                    setIsEditingReview(false);
                                     setSelectedRating(0);
                                     setReviewText('');
                                     setUserName('');
@@ -787,26 +886,54 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                         alert('Please enter your name');
                                         return;
                                     }
+                                    if (!reviewText.trim()) {
+                                        alert('Please enter your review comment');
+                                        return;
+                                    }
 
                                     setIsSubmittingReview(true);
                                     setReviewSubmitSuccess(false);
 
                                     try {
                                         const propertyId = property._id || property.id;
-                                        const propertyType = property.propertyType;
-                                        const response = await fetch('/api/reviews', {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json',
-                                            },
-                                            body: JSON.stringify({
-                                                propertyId,
-                                                propertyType,
-                                                user: userName.trim(),
-                                                rating: selectedRating,
-                                                comment: reviewText.trim()
-                                            }),
-                                        });
+                                        const propertyType = property.propertyType || 'commercial';
+                                        const userPhoneNumber = currentUser?.phoneNumber || null;
+
+                                        let response;
+                                        if (isEditingReview && userReview) {
+                                            // Edit existing review
+                                            response = await fetch('/api/reviews', {
+                                                method: 'PUT',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                },
+                                                body: JSON.stringify({
+                                                    propertyId,
+                                                    propertyType,
+                                                    reviewId: userReview._id || userReview.id,
+                                                    user: userName.trim(),
+                                                    rating: selectedRating,
+                                                    comment: reviewText.trim(),
+                                                    userPhoneNumber
+                                                }),
+                                            });
+                                        } else {
+                                            // Create new review
+                                            response = await fetch('/api/reviews', {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                },
+                                                body: JSON.stringify({
+                                                    propertyId,
+                                                    propertyType,
+                                                    user: userName.trim(),
+                                                    rating: selectedRating,
+                                                    comment: reviewText.trim(),
+                                                    userPhoneNumber
+                                                }),
+                                            });
+                                        }
 
                                         const data = await response.json();
 
@@ -814,10 +941,13 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                             setReviewSubmitSuccess(true);
                                             setTimeout(() => {
                                                 setShowRatingModal(false);
+                                                setIsEditingReview(false);
                                                 setSelectedRating(0);
                                                 setReviewText('');
                                                 setUserName('');
                                                 setReviewSubmitSuccess(false);
+                                                // Reload the page to refresh property data
+                                                window.location.reload();
                                             }, 1500);
                                         } else {
                                             alert(data.message || 'Failed to submit review. Please try again.');
@@ -830,9 +960,9 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                     }
                                 }}
                                 className="flex-1 bg-[#f8c02f] text-gray-800 py-3 rounded-lg font-semibold text-base hover:bg-[#e0ad2a] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                disabled={isSubmittingReview || !selectedRating || !userName.trim()}
+                                disabled={isSubmittingReview || !selectedRating || !userName.trim() || !reviewText.trim()}
                             >
-                                {isSubmittingReview ? 'Submitting...' : 'Submit Rating'}
+                                {isSubmittingReview ? (isEditingReview ? 'Updating...' : 'Submitting...') : (isEditingReview ? 'Update Rating' : 'Submit Rating')}
                             </button>
                         </div>
                     </div>

@@ -11,7 +11,9 @@ import {
     ChevronLeft,
     ChevronRight,
     MessageCircle,
-    Heart
+    Heart,
+    Edit,
+    Trash2
 } from "lucide-react";
 import PDFViewer from "../../components/PDFViewer";
 import GoogleMap from "../../components/GoogleMap";
@@ -128,6 +130,9 @@ function PropertyDetailsContent() {
     const [isLoginOpen, setIsLoginOpen] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
     const [selectedPDF, setSelectedPDF] = useState(null);
+    const [hasUserSubmittedReview, setHasUserSubmittedReview] = useState(false);
+    const [userReview, setUserReview] = useState(null);
+    const [isEditingReview, setIsEditingReview] = useState(false);
 
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -192,6 +197,27 @@ function PropertyDetailsContent() {
         };
 
         checkFavoriteStatus();
+    }, [property, currentUser]);
+
+    // Check if user has submitted a review for this property
+    useEffect(() => {
+        if (!property || !property.reviews || !currentUser || !currentUser.phoneNumber) {
+            setHasUserSubmittedReview(false);
+            setUserReview(null);
+            return;
+        }
+
+        const userReviewFound = property.reviews.find(review => 
+            review.userPhoneNumber === currentUser.phoneNumber
+        );
+
+        if (userReviewFound) {
+            setHasUserSubmittedReview(true);
+            setUserReview(userReviewFound);
+        } else {
+            setHasUserSubmittedReview(false);
+            setUserReview(null);
+        }
     }, [property, currentUser]);
 
     // Refs for scroll-to-section functionality
@@ -562,7 +588,158 @@ function PropertyDetailsContent() {
             setIsLoginOpen(true);
             return;
         }
+        setIsEditingReview(false);
+        setSelectedRating(0);
+        setReviewText('');
+        setUserName('');
         setShowRatingModal(true);
+    };
+
+    const handleEditReview = () => {
+        if (!userReview) return;
+        setIsEditingReview(true);
+        setSelectedRating(userReview.rating || 0);
+        setReviewText(userReview.comment || '');
+        setUserName(userReview.user || '');
+        setShowRatingModal(true);
+    };
+
+    const handleDeleteReview = async () => {
+        if (!userReview || !currentUser) return;
+        
+        if (!confirm('Are you sure you want to delete your review?')) {
+            return;
+        }
+
+        try {
+            const propertyId = property._id || property.id;
+            const propertyType = property.propertyType;
+            const reviewId = userReview._id || userReview.id;
+
+            const response = await fetch(`/api/reviews?propertyId=${propertyId}&propertyType=${propertyType}&reviewId=${reviewId}&userPhoneNumber=${encodeURIComponent(currentUser.phoneNumber)}`, {
+                method: 'DELETE',
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Refresh property data
+                const apiUrl = `/api/properties?id=${propertyId}&type=${propertyType}`;
+                const propResponse = await fetch(apiUrl);
+                const propData = await propResponse.json();
+
+                if (propData.success && propData.property) {
+                    setProperty(prev => ({
+                        ...prev,
+                        ratings: propData.property.ratings || prev.ratings,
+                        reviews: propData.property.reviews || prev.reviews
+                    }));
+                }
+
+                setHasUserSubmittedReview(false);
+                setUserReview(null);
+                alert('Review deleted successfully');
+            } else {
+                alert(data.message || 'Failed to delete review. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error deleting review:', error);
+            alert('An error occurred. Please try again.');
+        }
+    };
+
+    const refreshPropertyData = async () => {
+        if (!property) return;
+        
+        try {
+            const propertyId = property._id || property.id;
+            const typeParam = searchParams.get('type');
+            const apiUrl = `/api/properties?id=${propertyId}&type=${typeParam || ''}`;
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+
+            if (data.success && data.property) {
+                const formatLocation = (address) => {
+                    if (!address || typeof address === 'string') return address || 'Address not available';
+                    const parts = [];
+                    if (address.flat) parts.push(address.flat);
+                    if (address.street) parts.push(address.street);
+                    if (address.locality) parts.push(address.locality);
+                    if (address.city) parts.push(address.city);
+                    if (address.district) parts.push(address.district);
+                    if (address.state) parts.push(address.state);
+                    if (address.pincode) parts.push(address.pincode);
+                    if (address.country) parts.push(address.country);
+                    return parts.length > 0 ? parts.join(', ') : 'Address not available';
+                };
+
+                const calculatePrices = (property) => {
+                    let originalPriceValue = 0;
+                    if (property.propertyType === 'residential') {
+                        const expectedRent = property.expectedRent || '0';
+                        originalPriceValue = parseFloat(expectedRent.toString().replace(/[₹,]/g, '')) || 0;
+                    } else if (property.propertyType === 'commercial') {
+                        if (property.floorConfigurations && property.floorConfigurations.length > 0) {
+                            const firstFloor = property.floorConfigurations[0];
+                            if (firstFloor.dedicatedCabin && firstFloor.dedicatedCabin.seats && firstFloor.dedicatedCabin.pricePerSeat) {
+                                const seatsStr = firstFloor.dedicatedCabin.seats.toString();
+                                const pricePerSeatStr = firstFloor.dedicatedCabin.pricePerSeat.toString();
+                                const seatsMatch = seatsStr.match(/(\d+)/);
+                                const pricePerSeatMatch = pricePerSeatStr.match(/(\d+)/);
+                                if (seatsMatch && pricePerSeatMatch) {
+                                    const seatsLower = parseFloat(seatsMatch[1]);
+                                    const pricePerSeatLower = parseFloat(pricePerSeatMatch[1]);
+                                    originalPriceValue = seatsLower * pricePerSeatLower;
+                                }
+                            }
+                        }
+                    }
+                    const discountedPriceValue = originalPriceValue * 0.95;
+                    const formatPrice = (price) => {
+                        if (price === 0) return '₹XX';
+                        return `₹${Math.round(price).toLocaleString('en-IN')}`;
+                    };
+                    return {
+                        originalPrice: formatPrice(originalPriceValue),
+                        discountedPrice: formatPrice(discountedPriceValue)
+                    };
+                };
+
+                const calculatedPrices = calculatePrices(data.property);
+                const formattedProperty = {
+                    ...data.property,
+                    id: data.property._id || data.property.id,
+                    _id: data.property._id || data.property.id,
+                    position: data.property.position || data.property.coordinates || { lat: 28.6139, lng: 77.2090 },
+                    coordinates: data.property.coordinates || data.property.position || { lat: 28.6139, lng: 77.2090 },
+                    images: data.property.images && data.property.images.length > 0 ? data.property.images : ['/placeholder.png'],
+                    featuredImageUrl: data.property.featuredImageUrl || data.property.images?.[0] || '/placeholder.png',
+                    amenities: mapAmenitiesToObjects(data.property.amenities || []),
+                    nearbyPlaces: data.property.nearbyPlaces || { school: [], hospital: [], hotel: [], business: [] },
+                    floorPlans: data.property.floorPlans || {},
+                    propertyVideos: data.property.propertyVideos || [],
+                    seatLayoutPDFs: data.property.seatLayoutPDFs || [],
+                    ratings: data.property.ratings || {
+                        overall: 0,
+                        totalRatings: 0,
+                        breakdown: { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 },
+                        whatsGood: [],
+                        whatsBad: []
+                    },
+                    reviews: data.property.reviews || [],
+                    name: safeDisplay(data.property.name, 'Property Name'),
+                    address: safeDisplay(data.property.address, 'Address not available'),
+                    location: data.property.location || formatLocation(data.property.address),
+                    originalPrice: calculatedPrices.originalPrice,
+                    discountedPrice: calculatedPrices.discountedPrice,
+                    sellerPhoneNumber: data.property.sellerPhoneNumber || '+91 XXXXXXXXXX'
+                };
+
+                setProperty(formattedProperty);
+            }
+        } catch (error) {
+            console.error('Error refreshing property data:', error);
+        }
     };
 
     const handleLoginSuccess = (userData) => {
@@ -1128,12 +1305,14 @@ function PropertyDetailsContent() {
                                 <h3>Rating & Reviews</h3>
                             </AnimatedText>
                             <div className="flex gap-2">
-                                <button
-                                    onClick={handleAddReview}
-                                    className="bg-[#f8c02f] text-gray-800 px-3 py-1.5 rounded-lg font-medium text-xs hover:bg-[#e0ad2a] cursor-pointer transition-colors"
-                                >
-                                    Add Review
-                                </button>
+                                {!hasUserSubmittedReview && (
+                                    <button
+                                        onClick={handleAddReview}
+                                        className="bg-[#f8c02f] text-gray-800 px-3 py-1.5 rounded-lg font-medium text-xs hover:bg-[#e0ad2a] cursor-pointer transition-colors"
+                                    >
+                                        Add Review
+                                    </button>
+                                )}
                                 <button
                                     onClick={() => setShowReviewsModal(true)}
                                     className="text-blue-600 font-medium text-xs hover:underline cursor-pointer"
@@ -1542,25 +1721,48 @@ function PropertyDetailsContent() {
                         <div className="overflow-y-auto p-5 flex-1">
                             {property.reviews && property.reviews.length > 0 ? (
                                 <div className="space-y-5">
-                                    {property.reviews.map((review, index) => (
-                                        <div key={index} className="border-b pb-5 last:border-b-0">
-                                            <div className="flex items-start justify-between mb-2">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-medium text-gray-900">{safeDisplay(review.user)}</span>
-                                                    <div className="flex">
-                                                        {[1, 2, 3, 4, 5].map((star) => (
-                                                            <Star
-                                                                key={star}
-                                                                className={`w-4 h-4 ${star <= (review.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
-                                                            />
-                                                        ))}
+                                    {property.reviews.map((review, index) => {
+                                        const isUserReview = currentUser && currentUser.phoneNumber && review.userPhoneNumber === currentUser.phoneNumber;
+                                        return (
+                                            <div key={index} className="border-b pb-5 last:border-b-0">
+                                                <div className="flex items-start justify-between mb-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-medium text-gray-900">{safeDisplay(review.user)}</span>
+                                                        <div className="flex">
+                                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                                <Star
+                                                                    key={star}
+                                                                    className={`w-4 h-4 ${star <= (review.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        {isUserReview && (
+                                                            <>
+                                                                <button
+                                                                    onClick={handleEditReview}
+                                                                    className="text-blue-600 hover:text-blue-800 cursor-pointer"
+                                                                    title="Edit review"
+                                                                >
+                                                                    <Edit className="w-4 h-4" />
+                                                                </button>
+                                                                <button
+                                                                    onClick={handleDeleteReview}
+                                                                    className="text-red-600 hover:text-red-800 cursor-pointer"
+                                                                    title="Delete review"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                        <span className="text-sm text-gray-500">{safeDisplay(review.date)}</span>
                                                     </div>
                                                 </div>
-                                                <span className="text-sm text-gray-500">{safeDisplay(review.date)}</span>
+                                                <p className="text-gray-700 text-sm leading-relaxed">{safeDisplay(review.comment)}</p>
                                             </div>
-                                            <p className="text-gray-700 text-sm leading-relaxed">{safeDisplay(review.comment)}</p>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             ) : (
                                 <p className="text-gray-500 text-center py-10">No reviews available</p>
@@ -1576,14 +1778,14 @@ function PropertyDetailsContent() {
                     <div className="bg-white rounded-xl w-full max-w-sm p-5">
                         {/* Title with underline */}
                         <div className="text-center mb-5">
-                            <h3 className="text-lg font-bold text-gray-800 mb-1.5">Rate Your Experience</h3>
+                            <h3 className="text-lg font-bold text-gray-800 mb-1.5">{isEditingReview ? 'Edit Your Review' : 'Rate Your Experience'}</h3>
                             <div className="w-24 h-0.5 bg-yellow-400 mx-auto"></div>
                         </div>
 
                         {/* Success Message */}
                         {reviewSubmitSuccess && (
                             <div className="mb-3 bg-green-100 border border-green-400 text-green-700 px-3 py-2 rounded-lg text-center text-sm">
-                                Review submitted successfully!
+                                {isEditingReview ? 'Review updated successfully!' : 'Review submitted successfully!'}
                             </div>
                         )}
 
@@ -1628,6 +1830,7 @@ function PropertyDetailsContent() {
                                 rows={3}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                                 placeholder="Share your experience..."
+                                required
                             />
                         </div>
 
@@ -1636,6 +1839,7 @@ function PropertyDetailsContent() {
                             <button
                                 onClick={() => {
                                     setShowRatingModal(false);
+                                    setIsEditingReview(false);
                                     setSelectedRating(0);
                                     setReviewText('');
                                     setUserName('');
@@ -1656,6 +1860,10 @@ function PropertyDetailsContent() {
                                         alert('Please enter your name');
                                         return;
                                     }
+                                    if (!reviewText.trim()) {
+                                        alert('Please enter your review comment');
+                                        return;
+                                    }
 
                                     setIsSubmittingReview(true);
                                     setReviewSubmitSuccess(false);
@@ -1663,34 +1871,56 @@ function PropertyDetailsContent() {
                                     try {
                                         const propertyId = property._id || property.id;
                                         const propertyType = property.propertyType;
-                                        const response = await fetch('/api/reviews', {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json',
-                                            },
-                                            body: JSON.stringify({
-                                                propertyId,
-                                                propertyType,
-                                                user: userName.trim(),
-                                                rating: selectedRating, comment: reviewText.trim()
-                                            }),
-                                        });
+                                        const userPhoneNumber = currentUser?.phoneNumber || null;
+
+                                        let response;
+                                        if (isEditingReview && userReview) {
+                                            // Edit existing review
+                                            response = await fetch('/api/reviews', {
+                                                method: 'PUT',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                },
+                                                body: JSON.stringify({
+                                                    propertyId,
+                                                    propertyType,
+                                                    reviewId: userReview._id || userReview.id,
+                                                    user: userName.trim(),
+                                                    rating: selectedRating,
+                                                    comment: reviewText.trim(),
+                                                    userPhoneNumber
+                                                }),
+                                            });
+                                        } else {
+                                            // Create new review
+                                            response = await fetch('/api/reviews', {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                },
+                                                body: JSON.stringify({
+                                                    propertyId,
+                                                    propertyType,
+                                                    user: userName.trim(),
+                                                    rating: selectedRating,
+                                                    comment: reviewText.trim(),
+                                                    userPhoneNumber
+                                                }),
+                                            });
+                                        }
 
                                         const data = await response.json();
 
                                         if (data.success) {
-                                            // Update local state with new data
-                                            setProperty(prev => ({
-                                                ...prev,
-                                                ratings: data.ratings,
-                                                reviews: [data.review, ...(prev.reviews || [])]
-                                            }));
+                                            // Refresh property data
+                                            await refreshPropertyData();
 
                                             setReviewSubmitSuccess(true);
 
                                             // Close modal after showing success
                                             setTimeout(() => {
                                                 setShowRatingModal(false);
+                                                setIsEditingReview(false);
                                                 setSelectedRating(0);
                                                 setReviewText('');
                                                 setUserName('');
@@ -1707,9 +1937,9 @@ function PropertyDetailsContent() {
                                     }
                                 }}
                                 className="flex-1 bg-[#f8c02f] text-gray-800 py-3 rounded-lg font-semibold text-base hover:bg-[#e0ad2a] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                disabled={isSubmittingReview || !selectedRating || !userName.trim()}
+                                disabled={isSubmittingReview || !selectedRating || !userName.trim() || !reviewText.trim()}
                             >
-                                {isSubmittingReview ? 'Submitting...' : 'Submit Rating'}
+                                {isSubmittingReview ? (isEditingReview ? 'Updating...' : 'Submitting...') : (isEditingReview ? 'Update Rating' : 'Submit Rating')}
                             </button>
                         </div>
                     </div>
@@ -2442,12 +2672,14 @@ function PropertyDetailsContent() {
                                     <h3>Rating & Reviews</h3>
                                 </AnimatedText>
                                 <div className="flex gap-3">
-                                    <button
-                                        onClick={handleAddReview}
-                                        className="bg-[#f8c02f] text-gray-800 px-4 py-2 rounded-lg font-medium text-sm hover:bg-[#e0ad2a] cursor-pointer transition-colors"
-                                    >
-                                        Add Review
-                                    </button>
+                                    {!hasUserSubmittedReview && (
+                                        <button
+                                            onClick={handleAddReview}
+                                            className="bg-[#f8c02f] text-gray-800 px-4 py-2 rounded-lg font-medium text-sm hover:bg-[#e0ad2a] cursor-pointer transition-colors"
+                                        >
+                                            Add Review
+                                        </button>
+                                    )}
                                     <button
                                         onClick={() => setShowReviewsModal(true)}
                                         className="text-blue-600 font-medium text-sm hover:underline cursor-pointer"
@@ -2511,11 +2743,10 @@ function PropertyDetailsContent() {
                                         <span
                                             key={i}
                                             onClick={() => {
-                                                // Temporarily disabled login requirement
-                                                // if (!currentUser) {
-                                                //     setIsLoginOpen(true);
-                                                //     return;
-                                                // }
+                                                if (!currentUser) {
+                                                    setIsLoginOpen(true);
+                                                    return;
+                                                }
                                                 setReviewText(item);
                                                 setShowRatingModal(true);
                                             }}
@@ -2538,11 +2769,10 @@ function PropertyDetailsContent() {
                                         <span
                                             key={i}
                                             onClick={() => {
-                                                // Temporarily disabled login requirement
-                                                // if (!currentUser) {
-                                                //     setIsLoginOpen(true);
-                                                //     return;
-                                                // }
+                                                if (!currentUser) {
+                                                    setIsLoginOpen(true);
+                                                    return;
+                                                }
                                                 setReviewText(item);
                                                 setShowRatingModal(true);
                                             }}
@@ -2776,25 +3006,48 @@ function PropertyDetailsContent() {
                             <div className="overflow-y-auto p-6 flex-1">
                                 {property.reviews && property.reviews.length > 0 ? (
                                     <div className="space-y-6">
-                                        {property.reviews.map((review, index) => (
-                                            <div key={index} className="border-b pb-6 last:border-b-0">
-                                                <div className="flex items-start justify-between mb-3">
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="font-semibold text-gray-900 text-base">{safeDisplay(review.user)}</span>
-                                                        <div className="flex">
-                                                            {[1, 2, 3, 4, 5].map((star) => (
-                                                                <Star
-                                                                    key={star}
-                                                                    className={`w-5 h-5 ${star <= (review.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
-                                                                />
-                                                            ))}
+                                        {property.reviews.map((review, index) => {
+                                            const isUserReview = currentUser && currentUser.phoneNumber && review.userPhoneNumber === currentUser.phoneNumber;
+                                            return (
+                                                <div key={index} className="border-b pb-6 last:border-b-0">
+                                                    <div className="flex items-start justify-between mb-3">
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="font-semibold text-gray-900 text-base">{safeDisplay(review.user)}</span>
+                                                            <div className="flex">
+                                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                                    <Star
+                                                                        key={star}
+                                                                        className={`w-5 h-5 ${star <= (review.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                                                                    />
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-3">
+                                                            {isUserReview && (
+                                                                <>
+                                                                    <button
+                                                                        onClick={handleEditReview}
+                                                                        className="text-blue-600 hover:text-blue-800 cursor-pointer"
+                                                                        title="Edit review"
+                                                                    >
+                                                                        <Edit className="w-5 h-5" />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={handleDeleteReview}
+                                                                        className="text-red-600 hover:text-red-800 cursor-pointer"
+                                                                        title="Delete review"
+                                                                    >
+                                                                        <Trash2 className="w-5 h-5" />
+                                                                    </button>
+                                                                </>
+                                                            )}
+                                                            <span className="text-sm text-gray-500">{safeDisplay(review.date)}</span>
                                                         </div>
                                                     </div>
-                                                    <span className="text-sm text-gray-500">{safeDisplay(review.date)}</span>
+                                                    <p className="text-gray-700 text-base leading-relaxed">{safeDisplay(review.comment)}</p>
                                                 </div>
-                                                <p className="text-gray-700 text-base leading-relaxed">{safeDisplay(review.comment)}</p>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 ) : (
                                     <p className="text-gray-500 text-center py-10">No reviews available</p>
@@ -2810,14 +3063,14 @@ function PropertyDetailsContent() {
                         <div className="bg-white rounded-xl w-full max-w-sm p-5">
                             {/* Title with underline */}
                             <div className="text-center mb-5">
-                                <h3 className="text-lg font-bold text-gray-800 mb-1.5">Rate Your Experience</h3>
+                                <h3 className="text-lg font-bold text-gray-800 mb-1.5">{isEditingReview ? 'Edit Your Review' : 'Rate Your Experience'}</h3>
                                 <div className="w-24 h-0.5 bg-yellow-400 mx-auto"></div>
                             </div>
 
                             {/* Success Message */}
                             {reviewSubmitSuccess && (
                                 <div className="mb-3 bg-green-100 border border-green-400 text-green-700 px-3 py-2 rounded-lg text-center text-sm">
-                                    Review submitted successfully!
+                                    {isEditingReview ? 'Review updated successfully!' : 'Review submitted successfully!'}
                                 </div>
                             )}
 
@@ -2862,6 +3115,7 @@ function PropertyDetailsContent() {
                                     rows={3}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                                     placeholder="Share your experience..."
+                                    required
                                 />
                             </div>
 
@@ -2870,6 +3124,7 @@ function PropertyDetailsContent() {
                                 <button
                                     onClick={() => {
                                         setShowRatingModal(false);
+                                        setIsEditingReview(false);
                                         setSelectedRating(0);
                                         setReviewText('');
                                         setUserName('');
@@ -2890,6 +3145,10 @@ function PropertyDetailsContent() {
                                             alert('Please enter your name');
                                             return;
                                         }
+                                        if (!reviewText.trim()) {
+                                            alert('Please enter your review comment');
+                                            return;
+                                        }
 
                                         setIsSubmittingReview(true);
                                         setReviewSubmitSuccess(false);
@@ -2897,34 +3156,56 @@ function PropertyDetailsContent() {
                                         try {
                                             const propertyId = property._id || property.id;
                                             const propertyType = property.propertyType;
-                                            const response = await fetch('/api/reviews', {
-                                                method: 'POST',
-                                                headers: {
-                                                    'Content-Type': 'application/json',
-                                                },
-                                                body: JSON.stringify({
-                                                    propertyId,
-                                                    propertyType,
-                                                    user: userName.trim(),
-                                                    rating: selectedRating, comment: reviewText.trim()
-                                                }),
-                                            });
+                                            const userPhoneNumber = currentUser?.phoneNumber || null;
+
+                                            let response;
+                                            if (isEditingReview && userReview) {
+                                                // Edit existing review
+                                                response = await fetch('/api/reviews', {
+                                                    method: 'PUT',
+                                                    headers: {
+                                                        'Content-Type': 'application/json',
+                                                    },
+                                                    body: JSON.stringify({
+                                                        propertyId,
+                                                        propertyType,
+                                                        reviewId: userReview._id || userReview.id,
+                                                        user: userName.trim(),
+                                                        rating: selectedRating,
+                                                        comment: reviewText.trim(),
+                                                        userPhoneNumber
+                                                    }),
+                                                });
+                                            } else {
+                                                // Create new review
+                                                response = await fetch('/api/reviews', {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'Content-Type': 'application/json',
+                                                    },
+                                                    body: JSON.stringify({
+                                                        propertyId,
+                                                        propertyType,
+                                                        user: userName.trim(),
+                                                        rating: selectedRating,
+                                                        comment: reviewText.trim(),
+                                                        userPhoneNumber
+                                                    }),
+                                                });
+                                            }
 
                                             const data = await response.json();
 
                                             if (data.success) {
-                                                // Update local state with new data
-                                                setProperty(prev => ({
-                                                    ...prev,
-                                                    ratings: data.ratings,
-                                                    reviews: [data.review, ...(prev.reviews || [])]
-                                                }));
+                                                // Refresh property data
+                                                await refreshPropertyData();
 
                                                 setReviewSubmitSuccess(true);
 
                                                 // Close modal after showing success
                                                 setTimeout(() => {
                                                     setShowRatingModal(false);
+                                                    setIsEditingReview(false);
                                                     setSelectedRating(0);
                                                     setReviewText('');
                                                     setUserName('');
@@ -2941,9 +3222,9 @@ function PropertyDetailsContent() {
                                         }
                                     }}
                                     className="flex-1 bg-[#f8c02f] text-gray-800 py-2 rounded-lg font-medium text-sm hover:bg-[#e0ad2a] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                    disabled={isSubmittingReview || !selectedRating || !userName.trim()}
+                                    disabled={isSubmittingReview || !selectedRating || !userName.trim() || !reviewText.trim()}
                                 >
-                                    {isSubmittingReview ? 'Submitting...' : 'Submit Rating'}
+                                    {isSubmittingReview ? (isEditingReview ? 'Updating...' : 'Submitting...') : (isEditingReview ? 'Update Rating' : 'Submit Rating')}
                                 </button>
                             </div>
                         </div>
