@@ -199,17 +199,37 @@ function PropertyDetailsContent() {
         checkFavoriteStatus();
     }, [property, currentUser]);
 
+    // Helper function to normalize phone numbers for comparison
+    const normalizePhone = (phone) => {
+        if (!phone) return '';
+        return phone.toString().replace(/[\s\-\(\)\+]/g, '');
+    };
+
     // Check if user has submitted a review for this property
     useEffect(() => {
-        if (!property || !property.reviews || !currentUser || !currentUser.phoneNumber) {
+        if (!property || !property.reviews || !currentUser) {
             setHasUserSubmittedReview(false);
             setUserReview(null);
             return;
         }
 
-        const userReviewFound = property.reviews.find(review => 
-            review.userPhoneNumber === currentUser.phoneNumber
-        );
+        // Get user phone number - handle different possible field names
+        const userPhone = currentUser.phoneNumber || currentUser.phone || currentUser.userPhoneNumber;
+        
+        if (!userPhone) {
+            setHasUserSubmittedReview(false);
+            setUserReview(null);
+            return;
+        }
+
+        const normalizedUserPhone = normalizePhone(userPhone);
+
+        // Check reviews - handle different possible field names in review schema
+        const userReviewFound = property.reviews.find(review => {
+            const reviewPhone = review.userPhoneNumber || review.userPhone || review.phoneNumber || review.phone;
+            if (!reviewPhone) return false;
+            return normalizePhone(reviewPhone) === normalizedUserPhone;
+        });
 
         if (userReviewFound) {
             setHasUserSubmittedReview(true);
@@ -218,7 +238,7 @@ function PropertyDetailsContent() {
             setHasUserSubmittedReview(false);
             setUserReview(null);
         }
-    }, [property, currentUser]);
+    }, [property, property?.reviews, currentUser]);
 
     // Refs for scroll-to-section functionality
     const amenitiesRef = useRef(null);
@@ -595,17 +615,20 @@ function PropertyDetailsContent() {
         setShowRatingModal(true);
     };
 
-    const handleEditReview = () => {
-        if (!userReview) return;
+    const handleEditReview = (reviewToEdit = null) => {
+        const review = reviewToEdit || userReview;
+        if (!review) return;
+        setUserReview(review);
         setIsEditingReview(true);
-        setSelectedRating(userReview.rating || 0);
-        setReviewText(userReview.comment || '');
-        setUserName(userReview.user || '');
+        setSelectedRating(review.rating || 0);
+        setReviewText(review.comment || '');
+        setUserName(review.user || '');
         setShowRatingModal(true);
     };
 
-    const handleDeleteReview = async () => {
-        if (!userReview || !currentUser) return;
+    const handleDeleteReview = async (reviewToDelete = null) => {
+        const review = reviewToDelete || userReview;
+        if (!review || !currentUser) return;
         
         if (!confirm('Are you sure you want to delete your review?')) {
             return;
@@ -614,7 +637,7 @@ function PropertyDetailsContent() {
         try {
             const propertyId = property._id || property.id;
             const propertyType = property.propertyType;
-            const reviewId = userReview._id || userReview.id;
+            const reviewId = review._id || review.id;
 
             const response = await fetch(`/api/reviews?propertyId=${propertyId}&propertyType=${propertyType}&reviewId=${reviewId}&userPhoneNumber=${encodeURIComponent(currentUser.phoneNumber)}`, {
                 method: 'DELETE',
@@ -649,7 +672,7 @@ function PropertyDetailsContent() {
     };
 
     const refreshPropertyData = async () => {
-        if (!property) return;
+        if (!property) return null;
         
         try {
             const propertyId = property._id || property.id;
@@ -736,10 +759,12 @@ function PropertyDetailsContent() {
                 };
 
                 setProperty(formattedProperty);
+                return formattedProperty;
             }
         } catch (error) {
             console.error('Error refreshing property data:', error);
         }
+        return null;
     };
 
     const handleLoginSuccess = (userData) => {
@@ -1722,7 +1747,12 @@ function PropertyDetailsContent() {
                             {property.reviews && property.reviews.length > 0 ? (
                                 <div className="space-y-5">
                                     {property.reviews.map((review, index) => {
-                                        const isUserReview = currentUser && currentUser.phoneNumber && review.userPhoneNumber === currentUser.phoneNumber;
+                                        // Check if this is the user's review - handle different phone field names
+                                        const userPhone = currentUser?.phoneNumber || currentUser?.phone || currentUser?.userPhoneNumber;
+                                        const reviewPhone = review.userPhoneNumber || review.userPhone || review.phoneNumber || review.phone;
+                                        
+                                        const isUserReview = userPhone && reviewPhone && normalizePhone(userPhone) === normalizePhone(reviewPhone);
+                                        
                                         return (
                                             <div key={index} className="border-b pb-5 last:border-b-0">
                                                 <div className="flex items-start justify-between mb-2">
@@ -1741,14 +1771,14 @@ function PropertyDetailsContent() {
                                                         {isUserReview && (
                                                             <>
                                                                 <button
-                                                                    onClick={handleEditReview}
+                                                                    onClick={() => handleEditReview(review)}
                                                                     className="text-blue-600 hover:text-blue-800 cursor-pointer"
                                                                     title="Edit review"
                                                                 >
                                                                     <Edit className="w-4 h-4" />
                                                                 </button>
                                                                 <button
-                                                                    onClick={handleDeleteReview}
+                                                                    onClick={() => handleDeleteReview(review)}
                                                                     className="text-red-600 hover:text-red-800 cursor-pointer"
                                                                     title="Delete review"
                                                                 >
@@ -1912,8 +1942,26 @@ function PropertyDetailsContent() {
                                         const data = await response.json();
 
                                         if (data.success) {
-                                            // Refresh property data
-                                            await refreshPropertyData();
+                                            // Refresh property data to get updated reviews
+                                            const updatedProperty = await refreshPropertyData();
+                                            
+                                            // Check for user review in the updated property data
+                                            if (updatedProperty && updatedProperty.reviews && currentUser) {
+                                                const userPhone = currentUser.phoneNumber || currentUser.phone || currentUser.userPhoneNumber;
+                                                if (userPhone) {
+                                                    const normalizedUserPhone = normalizePhone(userPhone);
+                                                    const userReviewFound = updatedProperty.reviews.find(review => {
+                                                        const reviewPhone = review.userPhoneNumber || review.userPhone || review.phoneNumber || review.phone;
+                                                        if (!reviewPhone) return false;
+                                                        return normalizePhone(reviewPhone) === normalizedUserPhone;
+                                                    });
+                                                    
+                                                    if (userReviewFound) {
+                                                        setHasUserSubmittedReview(true);
+                                                        setUserReview(userReviewFound);
+                                                    }
+                                                }
+                                            }
 
                                             setReviewSubmitSuccess(true);
 
@@ -3007,7 +3055,12 @@ function PropertyDetailsContent() {
                                 {property.reviews && property.reviews.length > 0 ? (
                                     <div className="space-y-6">
                                         {property.reviews.map((review, index) => {
-                                            const isUserReview = currentUser && currentUser.phoneNumber && review.userPhoneNumber === currentUser.phoneNumber;
+                                            // Check if this is the user's review - handle different phone field names
+                                            const userPhone = currentUser?.phoneNumber || currentUser?.phone || currentUser?.userPhoneNumber;
+                                            const reviewPhone = review.userPhoneNumber || review.userPhone || review.phoneNumber || review.phone;
+                                            
+                                            const isUserReview = userPhone && reviewPhone && normalizePhone(userPhone) === normalizePhone(reviewPhone);
+                                            
                                             return (
                                                 <div key={index} className="border-b pb-6 last:border-b-0">
                                                     <div className="flex items-start justify-between mb-3">
@@ -3026,14 +3079,14 @@ function PropertyDetailsContent() {
                                                             {isUserReview && (
                                                                 <>
                                                                     <button
-                                                                        onClick={handleEditReview}
+                                                                        onClick={() => handleEditReview(review)}
                                                                         className="text-blue-600 hover:text-blue-800 cursor-pointer"
                                                                         title="Edit review"
                                                                     >
                                                                         <Edit className="w-5 h-5" />
                                                                     </button>
                                                                     <button
-                                                                        onClick={handleDeleteReview}
+                                                                        onClick={() => handleDeleteReview(review)}
                                                                         className="text-red-600 hover:text-red-800 cursor-pointer"
                                                                         title="Delete review"
                                                                     >
@@ -3197,8 +3250,26 @@ function PropertyDetailsContent() {
                                             const data = await response.json();
 
                                             if (data.success) {
-                                                // Refresh property data
-                                                await refreshPropertyData();
+                                                // Refresh property data to get updated reviews
+                                                const updatedProperty = await refreshPropertyData();
+                                                
+                                                // Check for user review in the updated property data
+                                                if (updatedProperty && updatedProperty.reviews && currentUser) {
+                                                    const userPhone = currentUser.phoneNumber || currentUser.phone || currentUser.userPhoneNumber;
+                                                    if (userPhone) {
+                                                        const normalizedUserPhone = normalizePhone(userPhone);
+                                                        const userReviewFound = updatedProperty.reviews.find(review => {
+                                                            const reviewPhone = review.userPhoneNumber || review.userPhone || review.phoneNumber || review.phone;
+                                                            if (!reviewPhone) return false;
+                                                            return normalizePhone(reviewPhone) === normalizedUserPhone;
+                                                        });
+                                                        
+                                                        if (userReviewFound) {
+                                                            setHasUserSubmittedReview(true);
+                                                            setUserReview(userReviewFound);
+                                                        }
+                                                    }
+                                                }
 
                                                 setReviewSubmitSuccess(true);
 

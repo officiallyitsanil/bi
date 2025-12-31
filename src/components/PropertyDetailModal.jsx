@@ -76,7 +76,8 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
             try {
                 const userJson = localStorage.getItem('currentUser');
                 if (userJson) {
-                    setCurrentUser(JSON.parse(userJson));
+                    const user = JSON.parse(userJson);
+                    setCurrentUser(user);
                 }
 
                 const propertyId = property._id || property.id;
@@ -125,15 +126,29 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
 
     // Check if user has submitted a review for this property
     useEffect(() => {
-        if (!property || !property.reviews || !currentUser || !currentUser.phoneNumber) {
+        if (!property || !property.reviews || !currentUser) {
             setHasUserSubmittedReview(false);
             setUserReview(null);
             return;
         }
 
-        const userReviewFound = property.reviews.find(review => 
-            review.userPhoneNumber === currentUser.phoneNumber
-        );
+        // Get user phone number - handle different possible field names
+        const userPhone = currentUser.phoneNumber || currentUser.phone || currentUser.userPhoneNumber;
+        
+        if (!userPhone) {
+            setHasUserSubmittedReview(false);
+            setUserReview(null);
+            return;
+        }
+        
+        const normalizedUserPhone = normalizePhone(userPhone);
+
+        // Check reviews - handle different possible field names in review schema
+        const userReviewFound = property.reviews.find(review => {
+            const reviewPhone = review.userPhoneNumber || review.userPhone || review.phoneNumber || review.phone;
+            if (!reviewPhone) return false;
+            return normalizePhone(reviewPhone) === normalizedUserPhone;
+        });
 
         if (userReviewFound) {
             setHasUserSubmittedReview(true);
@@ -142,9 +157,15 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
             setHasUserSubmittedReview(false);
             setUserReview(null);
         }
-    }, [property, currentUser]);
+    }, [property, property.reviews, currentUser]);
 
     if (!property) return null;
+
+    // Helper function to normalize phone numbers for comparison
+    const normalizePhone = (phone) => {
+        if (!phone) return '';
+        return phone.toString().replace(/[\s\-\(\)\+]/g, '');
+    };
 
     const handleLoginSuccess = (userData) => {
         loginUser(userData);
@@ -154,12 +175,11 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
     };
 
     const handleAddReview = () => {
-        // Temporarily removed login requirement
         // Check if user is logged in
-        // if (!currentUser) {
-        //     setIsLoginModalOpen(true);
-        //     return;
-        // }
+        if (!currentUser) {
+            setIsLoginModalOpen(true);
+            return;
+        }
         setIsEditingReview(false);
         setSelectedRating(0);
         setReviewText('');
@@ -167,17 +187,20 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
         setShowRatingModal(true);
     };
 
-    const handleEditReview = () => {
-        if (!userReview) return;
+    const handleEditReview = (reviewToEdit = null) => {
+        const review = reviewToEdit || userReview;
+        if (!review) return;
+        setUserReview(review);
         setIsEditingReview(true);
-        setSelectedRating(userReview.rating || 0);
-        setReviewText(userReview.comment || '');
-        setUserName(userReview.user || '');
+        setSelectedRating(review.rating || 0);
+        setReviewText(review.comment || '');
+        setUserName(review.user || '');
         setShowRatingModal(true);
     };
 
-    const handleDeleteReview = async () => {
-        if (!userReview || !currentUser) return;
+    const handleDeleteReview = async (reviewToDelete = null) => {
+        const review = reviewToDelete || userReview;
+        if (!review || !currentUser) return;
         
         if (!confirm('Are you sure you want to delete your review?')) {
             return;
@@ -186,7 +209,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
         try {
             const propertyId = property._id || property.id;
             const propertyType = property.propertyType || 'commercial';
-            const reviewId = userReview._id || userReview.id;
+            const reviewId = review._id || review.id;
 
             const response = await fetch(`/api/reviews?propertyId=${propertyId}&propertyType=${propertyType}&reviewId=${reviewId}&userPhoneNumber=${encodeURIComponent(currentUser.phoneNumber)}`, {
                 method: 'DELETE',
@@ -648,7 +671,12 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                         {displayedReviews.length > 0 ? (
                             <div className="space-y-3">
                                 {displayedReviews.map((review, index) => {
-                                    const isUserReview = currentUser && currentUser.phoneNumber && review.userPhoneNumber === currentUser.phoneNumber;
+                                    // Check if this is the user's review - handle different phone field names
+                                    const userPhone = currentUser?.phoneNumber || currentUser?.phone || currentUser?.userPhoneNumber;
+                                    const reviewPhone = review.userPhoneNumber || review.userPhone || review.phoneNumber || review.phone;
+                                    
+                                    const isUserReview = userPhone && reviewPhone && normalizePhone(userPhone) === normalizePhone(reviewPhone);
+                                    
                                     return (
                                         <div key={index} className="bg-gray-50 rounded-lg p-3">
                                             <div className="flex items-center justify-between mb-1.5">
@@ -657,14 +685,14 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                                     {isUserReview && (
                                                         <>
                                                             <button
-                                                                onClick={handleEditReview}
+                                                                onClick={() => handleEditReview(review)}
                                                                 className="text-blue-600 hover:text-blue-800 cursor-pointer"
                                                                 title="Edit review"
                                                             >
                                                                 <Edit className="w-3 h-3" />
                                                             </button>
                                                             <button
-                                                                onClick={handleDeleteReview}
+                                                                onClick={() => handleDeleteReview(review)}
                                                                 className="text-red-600 hover:text-red-800 cursor-pointer"
                                                                 title="Delete review"
                                                             >
@@ -939,6 +967,31 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
 
                                         if (data.success) {
                                             setReviewSubmitSuccess(true);
+                                            // Update local state to reflect the new/updated review
+                                            if (isEditingReview) {
+                                                // Update existing review in state
+                                                setHasUserSubmittedReview(true);
+                                                if (userReview) {
+                                                    setUserReview({
+                                                        ...userReview,
+                                                        user: userName.trim(),
+                                                        rating: selectedRating,
+                                                        comment: reviewText.trim()
+                                                    });
+                                                }
+                                            } else {
+                                                // Mark that user has submitted a review
+                                                setHasUserSubmittedReview(true);
+                                                setUserReview({
+                                                    _id: data.review?._id || data.review?.id,
+                                                    user: userName.trim(),
+                                                    rating: selectedRating,
+                                                    comment: reviewText.trim(),
+                                                    userPhoneNumber: userPhoneNumber,
+                                                    date: new Date().toLocaleDateString()
+                                                });
+                                            }
+                                            
                                             setTimeout(() => {
                                                 setShowRatingModal(false);
                                                 setIsEditingReview(false);
