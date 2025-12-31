@@ -205,9 +205,11 @@ function PropertyDetailsContent() {
         return phone.toString().replace(/[\s\-\(\)\+]/g, '');
     };
 
-    // Check if user has submitted a review for this property
-    useEffect(() => {
-        if (!property || !property.reviews || !currentUser) {
+    // Helper function to check if user has submitted a review
+    const checkUserReview = (propertyToCheck = null) => {
+        const propToCheck = propertyToCheck || property;
+        
+        if (!propToCheck || !propToCheck.reviews || !currentUser) {
             setHasUserSubmittedReview(false);
             setUserReview(null);
             return;
@@ -225,7 +227,7 @@ function PropertyDetailsContent() {
         const normalizedUserPhone = normalizePhone(userPhone);
 
         // Check reviews - handle different possible field names in review schema
-        const userReviewFound = property.reviews.find(review => {
+        const userReviewFound = propToCheck.reviews.find(review => {
             const reviewPhone = review.userPhoneNumber || review.userPhone || review.phoneNumber || review.phone;
             if (!reviewPhone) return false;
             return normalizePhone(reviewPhone) === normalizedUserPhone;
@@ -238,6 +240,11 @@ function PropertyDetailsContent() {
             setHasUserSubmittedReview(false);
             setUserReview(null);
         }
+    };
+
+    // Check if user has submitted a review for this property
+    useEffect(() => {
+        checkUserReview();
     }, [property, property?.reviews, currentUser]);
 
     // Refs for scroll-to-section functionality
@@ -1945,23 +1952,15 @@ function PropertyDetailsContent() {
                                             // Refresh property data to get updated reviews
                                             const updatedProperty = await refreshPropertyData();
                                             
-                                            // Check for user review in the updated property data
-                                            if (updatedProperty && updatedProperty.reviews && currentUser) {
-                                                const userPhone = currentUser.phoneNumber || currentUser.phone || currentUser.userPhoneNumber;
-                                                if (userPhone) {
-                                                    const normalizedUserPhone = normalizePhone(userPhone);
-                                                    const userReviewFound = updatedProperty.reviews.find(review => {
-                                                        const reviewPhone = review.userPhoneNumber || review.userPhone || review.phoneNumber || review.phone;
-                                                        if (!reviewPhone) return false;
-                                                        return normalizePhone(reviewPhone) === normalizedUserPhone;
-                                                    });
-                                                    
-                                                    if (userReviewFound) {
-                                                        setHasUserSubmittedReview(true);
-                                                        setUserReview(userReviewFound);
-                                                    }
-                                                }
+                                            // Check for user review immediately with the updated property
+                                            if (updatedProperty) {
+                                                checkUserReview(updatedProperty);
                                             }
+                                            
+                                            // Also check again after a short delay to ensure state is updated
+                                            setTimeout(() => {
+                                                checkUserReview();
+                                            }, 200);
 
                                             setReviewSubmitSuccess(true);
 
@@ -3253,23 +3252,15 @@ function PropertyDetailsContent() {
                                                 // Refresh property data to get updated reviews
                                                 const updatedProperty = await refreshPropertyData();
                                                 
-                                                // Check for user review in the updated property data
-                                                if (updatedProperty && updatedProperty.reviews && currentUser) {
-                                                    const userPhone = currentUser.phoneNumber || currentUser.phone || currentUser.userPhoneNumber;
-                                                    if (userPhone) {
-                                                        const normalizedUserPhone = normalizePhone(userPhone);
-                                                        const userReviewFound = updatedProperty.reviews.find(review => {
-                                                            const reviewPhone = review.userPhoneNumber || review.userPhone || review.phoneNumber || review.phone;
-                                                            if (!reviewPhone) return false;
-                                                            return normalizePhone(reviewPhone) === normalizedUserPhone;
-                                                        });
-                                                        
-                                                        if (userReviewFound) {
-                                                            setHasUserSubmittedReview(true);
-                                                            setUserReview(userReviewFound);
-                                                        }
-                                                    }
+                                                // Check for user review immediately with the updated property
+                                                if (updatedProperty) {
+                                                    checkUserReview(updatedProperty);
                                                 }
+                                                
+                                                // Also check again after a short delay to ensure state is updated
+                                                setTimeout(() => {
+                                                    checkUserReview();
+                                                }, 200);
 
                                                 setReviewSubmitSuccess(true);
 

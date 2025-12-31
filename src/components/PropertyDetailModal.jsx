@@ -124,9 +124,19 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
         checkFavoriteStatus();
     }, [property._id, property.id]);
 
-    // Check if user has submitted a review for this property
-    useEffect(() => {
-        if (!property || !property.reviews || !currentUser) {
+    if (!property) return null;
+
+    // Helper function to normalize phone numbers for comparison
+    const normalizePhone = (phone) => {
+        if (!phone) return '';
+        return phone.toString().replace(/[\s\-\(\)\+]/g, '');
+    };
+
+    // Helper function to check if user has submitted a review
+    const checkUserReview = (propertyToCheck = null) => {
+        const propToCheck = propertyToCheck || property;
+        
+        if (!propToCheck || !propToCheck.reviews || !currentUser) {
             setHasUserSubmittedReview(false);
             setUserReview(null);
             return;
@@ -144,7 +154,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
         const normalizedUserPhone = normalizePhone(userPhone);
 
         // Check reviews - handle different possible field names in review schema
-        const userReviewFound = property.reviews.find(review => {
+        const userReviewFound = propToCheck.reviews.find(review => {
             const reviewPhone = review.userPhoneNumber || review.userPhone || review.phoneNumber || review.phone;
             if (!reviewPhone) return false;
             return normalizePhone(reviewPhone) === normalizedUserPhone;
@@ -157,15 +167,12 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
             setHasUserSubmittedReview(false);
             setUserReview(null);
         }
-    }, [property, property.reviews, currentUser]);
-
-    if (!property) return null;
-
-    // Helper function to normalize phone numbers for comparison
-    const normalizePhone = (phone) => {
-        if (!phone) return '';
-        return phone.toString().replace(/[\s\-\(\)\+]/g, '');
     };
+
+    // Check if user has submitted a review for this property
+    useEffect(() => {
+        checkUserReview();
+    }, [property, property.reviews, currentUser]);
 
     const handleLoginSuccess = (userData) => {
         loginUser(userData);
