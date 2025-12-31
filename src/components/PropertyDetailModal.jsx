@@ -71,15 +71,34 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
     const [userReview, setUserReview] = useState(null);
     const [isEditingReview, setIsEditingReview] = useState(false);
 
+    // Initialize current user from localStorage
     useEffect(() => {
-        const checkFavoriteStatus = async () => {
+        const syncUser = () => {
             try {
                 const userJson = localStorage.getItem('currentUser');
                 if (userJson) {
                     const user = JSON.parse(userJson);
                     setCurrentUser(user);
+                } else {
+                    setCurrentUser(null);
                 }
+            } catch (error) {
+                console.error("Failed to parse user data from localStorage:", error);
+                setCurrentUser(null);
+            }
+        };
 
+        syncUser();
+        window.addEventListener('onAuthChange', syncUser);
+
+        return () => {
+            window.removeEventListener('onAuthChange', syncUser);
+        };
+    }, []);
+
+    useEffect(() => {
+        const checkFavoriteStatus = async () => {
+            try {
                 const propertyId = property._id || property.id;
                 
                 // Check localStorage first
@@ -91,52 +110,55 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                 }
 
                 // If user is logged in, sync with database
-                if (userJson) {
-                    const user = JSON.parse(userJson);
-                    if (user.phoneNumber) {
-                        try {
-                            const response = await fetch(`/api/favorites?userPhoneNumber=${encodeURIComponent(user.phoneNumber)}`);
-                            const data = await response.json();
+                if (currentUser && currentUser.phoneNumber) {
+                    try {
+                        const response = await fetch(`/api/favorites?userPhoneNumber=${encodeURIComponent(currentUser.phoneNumber)}`);
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            const isFavoritedDB = data.data.some(fav => fav.propertyId === propertyId);
+                            setIsFavourite(isFavoritedDB);
                             
-                            if (data.success) {
-                                const isFavoritedDB = data.data.some(fav => fav.propertyId === propertyId);
-                                setIsFavourite(isFavoritedDB);
-                                
-                                // Sync localStorage with DB
-                                if (isFavoritedDB && !isFavoritedLocal) {
-                                    const updatedFavorites = [...favourites, { _id: propertyId, id: propertyId }];
-                                    localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
-                                } else if (!isFavoritedDB && isFavoritedLocal) {
-                                    const updatedFavorites = favourites.filter(fav => (fav._id || fav.id) !== propertyId);
-                                    localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
-                                }
+                            // Sync localStorage with DB
+                            if (isFavoritedDB && !isFavoritedLocal) {
+                                const updatedFavorites = [...favourites, { _id: propertyId, id: propertyId }];
+                                localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+                            } else if (!isFavoritedDB && isFavoritedLocal) {
+                                const updatedFavorites = favourites.filter(fav => (fav._id || fav.id) !== propertyId);
+                                localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
                             }
-                        } catch (error) {
-                            console.error('Error checking favorite status:', error);
                         }
+                    } catch (error) {
+                        console.error('Error checking favorite status:', error);
                     }
                 }
             } catch (error) {
-                console.error("Failed to parse user data from localStorage:", error);
+                console.error("Failed to check favorite status:", error);
             }
         };
 
         checkFavoriteStatus();
-    }, [property._id, property.id]);
+    }, [property._id, property.id, currentUser]);
 
     if (!property) return null;
 
     // Helper function to normalize phone numbers for comparison
     const normalizePhone = (phone) => {
         if (!phone) return '';
-        return phone.toString().replace(/[\s\-\(\)\+]/g, '');
+        // Remove all non-digit characters except leading +
+        let normalized = phone.toString().trim();
+        // Remove spaces, dashes, parentheses
+        normalized = normalized.replace(/[\s\-\(\)]/g, '');
+        // Ensure consistent format - remove + if present, we'll compare digits only
+        normalized = normalized.replace(/^\+/, '');
+        return normalized;
     };
 
     // Helper function to check if user has submitted a review
     const checkUserReview = (propertyToCheck = null) => {
         const propToCheck = propertyToCheck || property;
         
-        if (!propToCheck || !propToCheck.reviews || !currentUser) {
+        if (!propToCheck || !propToCheck.reviews || !Array.isArray(propToCheck.reviews) || !currentUser) {
             setHasUserSubmittedReview(false);
             setUserReview(null);
             return;
@@ -157,7 +179,8 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
         const userReviewFound = propToCheck.reviews.find(review => {
             const reviewPhone = review.userPhoneNumber || review.userPhone || review.phoneNumber || review.phone;
             if (!reviewPhone) return false;
-            return normalizePhone(reviewPhone) === normalizedUserPhone;
+            const normalizedReviewPhone = normalizePhone(reviewPhone);
+            return normalizedReviewPhone === normalizedUserPhone;
         });
 
         if (userReviewFound) {
@@ -171,8 +194,10 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
 
     // Check if user has submitted a review for this property
     useEffect(() => {
-        checkUserReview();
-    }, [property, property.reviews, currentUser]);
+        if (property && property.reviews && Array.isArray(property.reviews)) {
+            checkUserReview();
+        }
+    }, [property, property?.reviews?.length, currentUser?.phoneNumber]);
 
     const handleLoginSuccess = (userData) => {
         loginUser(userData);
@@ -595,10 +620,10 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
 
                     <section className="my-4">
                         <div className="shrink-0 h-[1px] w-full mb-4 bg-gray-200"></div>
-                        <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center justify-between mb-3">
                             <h3 className="text-base font-semibold text-gray-800">Ratings & Reviews</h3>
                             <div className="flex items-center gap-2">
-                                {!hasUserSubmittedReview && (
+                                {currentUser && !hasUserSubmittedReview && (
                                     <button
                                         onClick={handleAddReview}
                                         className="bg-[#f8c02f] text-gray-800 px-3 py-1 rounded-lg font-medium text-xs hover:bg-[#e0ad2a] cursor-pointer transition-colors"
@@ -685,22 +710,28 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                     const isUserReview = userPhone && reviewPhone && normalizePhone(userPhone) === normalizePhone(reviewPhone);
                                     
                                     return (
-                                        <div key={index} className="bg-gray-50 rounded-lg p-3">
+                                        <div key={review._id || review.id || index} className="bg-gray-50 rounded-lg p-3">
                                             <div className="flex items-center justify-between mb-1.5">
                                                 <span className="text-xs font-medium text-gray-800">{safeDisplay(review.user)}</span>
                                                 <div className="flex items-center gap-1.5">
-                                                    {isUserReview && (
+                                                    {currentUser && isUserReview && (
                                                         <>
                                                             <button
-                                                                onClick={() => handleEditReview(review)}
-                                                                className="text-blue-600 hover:text-blue-800 cursor-pointer"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleEditReview(review);
+                                                                }}
+                                                                className="text-blue-600 hover:text-blue-800 cursor-pointer transition-colors"
                                                                 title="Edit review"
                                                             >
                                                                 <Edit className="w-3 h-3" />
                                                             </button>
                                                             <button
-                                                                onClick={() => handleDeleteReview(review)}
-                                                                className="text-red-600 hover:text-red-800 cursor-pointer"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleDeleteReview(review);
+                                                                }}
+                                                                className="text-red-600 hover:text-red-800 cursor-pointer transition-colors"
                                                                 title="Delete review"
                                                             >
                                                                 <Trash2 className="w-3 h-3" />
@@ -1006,6 +1037,10 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                                 setReviewText('');
                                                 setUserName('');
                                                 setReviewSubmitSuccess(false);
+                                                // Trigger check for user review after a brief delay to ensure state is updated
+                                                setTimeout(() => {
+                                                    checkUserReview();
+                                                }, 100);
                                                 // Reload the page to refresh property data
                                                 window.location.reload();
                                             }, 1500);

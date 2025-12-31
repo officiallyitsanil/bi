@@ -202,14 +202,20 @@ function PropertyDetailsContent() {
     // Helper function to normalize phone numbers for comparison
     const normalizePhone = (phone) => {
         if (!phone) return '';
-        return phone.toString().replace(/[\s\-\(\)\+]/g, '');
+        // Remove all non-digit characters except leading +
+        let normalized = phone.toString().trim();
+        // Remove spaces, dashes, parentheses
+        normalized = normalized.replace(/[\s\-\(\)]/g, '');
+        // Ensure consistent format - remove + if present, we'll compare digits only
+        normalized = normalized.replace(/^\+/, '');
+        return normalized;
     };
 
     // Helper function to check if user has submitted a review
     const checkUserReview = (propertyToCheck = null) => {
         const propToCheck = propertyToCheck || property;
         
-        if (!propToCheck || !propToCheck.reviews || !currentUser) {
+        if (!propToCheck || !propToCheck.reviews || !Array.isArray(propToCheck.reviews) || !currentUser) {
             setHasUserSubmittedReview(false);
             setUserReview(null);
             return;
@@ -230,7 +236,8 @@ function PropertyDetailsContent() {
         const userReviewFound = propToCheck.reviews.find(review => {
             const reviewPhone = review.userPhoneNumber || review.userPhone || review.phoneNumber || review.phone;
             if (!reviewPhone) return false;
-            return normalizePhone(reviewPhone) === normalizedUserPhone;
+            const normalizedReviewPhone = normalizePhone(reviewPhone);
+            return normalizedReviewPhone === normalizedUserPhone;
         });
 
         if (userReviewFound) {
@@ -244,8 +251,10 @@ function PropertyDetailsContent() {
 
     // Check if user has submitted a review for this property
     useEffect(() => {
-        checkUserReview();
-    }, [property, property?.reviews, currentUser]);
+        if (property && property.reviews && Array.isArray(property.reviews)) {
+            checkUserReview();
+        }
+    }, [property, property?.reviews?.length, currentUser?.phoneNumber]);
 
     // Refs for scroll-to-section functionality
     const amenitiesRef = useRef(null);
@@ -1332,12 +1341,12 @@ function PropertyDetailsContent() {
 
                     {/* Rating & Reviews */}
                     <div className="mb-5 scroll-animate" data-animation="animate-slide-top">
-                        <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center justify-between mb-3">
                             <AnimatedText className="text-base font-bold inline-block" delay={1500} lineColor="#f8c02f">
                                 <h3>Rating & Reviews</h3>
                             </AnimatedText>
                             <div className="flex gap-2">
-                                {!hasUserSubmittedReview && (
+                                {currentUser && !hasUserSubmittedReview && (
                                     <button
                                         onClick={handleAddReview}
                                         className="bg-[#f8c02f] text-gray-800 px-3 py-1.5 rounded-lg font-medium text-xs hover:bg-[#e0ad2a] cursor-pointer transition-colors"
@@ -1758,10 +1767,10 @@ function PropertyDetailsContent() {
                                         const userPhone = currentUser?.phoneNumber || currentUser?.phone || currentUser?.userPhoneNumber;
                                         const reviewPhone = review.userPhoneNumber || review.userPhone || review.phoneNumber || review.phone;
                                         
-                                        const isUserReview = userPhone && reviewPhone && normalizePhone(userPhone) === normalizePhone(reviewPhone);
+                                        const isUserReview = currentUser && userPhone && reviewPhone && normalizePhone(userPhone) === normalizePhone(reviewPhone);
                                         
                                         return (
-                                            <div key={index} className="border-b pb-5 last:border-b-0">
+                                            <div key={review._id || review.id || index} className="border-b pb-5 last:border-b-0">
                                                 <div className="flex items-start justify-between mb-2">
                                                     <div className="flex items-center gap-2">
                                                         <span className="font-medium text-gray-900">{safeDisplay(review.user)}</span>
@@ -1778,15 +1787,21 @@ function PropertyDetailsContent() {
                                                         {isUserReview && (
                                                             <>
                                                                 <button
-                                                                    onClick={() => handleEditReview(review)}
-                                                                    className="text-blue-600 hover:text-blue-800 cursor-pointer"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleEditReview(review);
+                                                                    }}
+                                                                    className="text-blue-600 hover:text-blue-800 cursor-pointer transition-colors"
                                                                     title="Edit review"
                                                                 >
                                                                     <Edit className="w-4 h-4" />
                                                                 </button>
                                                                 <button
-                                                                    onClick={() => handleDeleteReview(review)}
-                                                                    className="text-red-600 hover:text-red-800 cursor-pointer"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleDeleteReview(review);
+                                                                    }}
+                                                                    className="text-red-600 hover:text-red-800 cursor-pointer transition-colors"
                                                                     title="Delete review"
                                                                 >
                                                                     <Trash2 className="w-4 h-4" />
@@ -2719,7 +2734,7 @@ function PropertyDetailsContent() {
                                     <h3>Rating & Reviews</h3>
                                 </AnimatedText>
                                 <div className="flex gap-3">
-                                    {!hasUserSubmittedReview && (
+                                    {currentUser && !hasUserSubmittedReview && (
                                         <button
                                             onClick={handleAddReview}
                                             className="bg-[#f8c02f] text-gray-800 px-4 py-2 rounded-lg font-medium text-sm hover:bg-[#e0ad2a] cursor-pointer transition-colors"
@@ -3061,7 +3076,7 @@ function PropertyDetailsContent() {
                                             const isUserReview = userPhone && reviewPhone && normalizePhone(userPhone) === normalizePhone(reviewPhone);
                                             
                                             return (
-                                                <div key={index} className="border-b pb-6 last:border-b-0">
+                                                <div key={review._id || review.id || index} className="border-b pb-6 last:border-b-0">
                                                     <div className="flex items-start justify-between mb-3">
                                                         <div className="flex items-center gap-3">
                                                             <span className="font-semibold text-gray-900 text-base">{safeDisplay(review.user)}</span>
@@ -3075,18 +3090,24 @@ function PropertyDetailsContent() {
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-3">
-                                                            {isUserReview && (
+                                                            {currentUser && isUserReview && (
                                                                 <>
                                                                     <button
-                                                                        onClick={() => handleEditReview(review)}
-                                                                        className="text-blue-600 hover:text-blue-800 cursor-pointer"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleEditReview(review);
+                                                                        }}
+                                                                        className="text-blue-600 hover:text-blue-800 cursor-pointer transition-colors"
                                                                         title="Edit review"
                                                                     >
                                                                         <Edit className="w-5 h-5" />
                                                                     </button>
                                                                     <button
-                                                                        onClick={() => handleDeleteReview(review)}
-                                                                        className="text-red-600 hover:text-red-800 cursor-pointer"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleDeleteReview(review);
+                                                                        }}
+                                                                        className="text-red-600 hover:text-red-800 cursor-pointer transition-colors"
                                                                         title="Delete review"
                                                                     >
                                                                         <Trash2 className="w-5 h-5" />
