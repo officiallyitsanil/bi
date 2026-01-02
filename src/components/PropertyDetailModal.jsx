@@ -154,6 +154,23 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
         return normalized;
     };
 
+    // Helper function to check if a review belongs to current user
+    // Uses phoneNumber as primary field (matching dashboard pattern)
+    const isReviewByCurrentUser = (review) => {
+        if (!currentUser || !review) return false;
+        
+        // Primary field is phoneNumber (as used in dashboard)
+        const userPhone = currentUser.phoneNumber || currentUser.phone || currentUser.userPhoneNumber;
+        const reviewPhone = review.userPhoneNumber || review.userPhone || review.phoneNumber || review.phone;
+        
+        if (!userPhone || !reviewPhone) return false;
+        
+        const normalizedUserPhone = normalizePhone(userPhone);
+        const normalizedReviewPhone = normalizePhone(reviewPhone);
+        
+        return normalizedUserPhone === normalizedReviewPhone;
+    };
+
     // Helper function to check if user has submitted a review
     const checkUserReview = (propertyToCheck = null) => {
         const propToCheck = propertyToCheck || property;
@@ -164,7 +181,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
             return;
         }
 
-        // Get user phone number - handle different possible field names
+        // Get user phone number - primary field is phoneNumber (matching dashboard pattern)
         const userPhone = currentUser.phoneNumber || currentUser.phone || currentUser.userPhoneNumber;
         
         if (!userPhone) {
@@ -242,8 +259,15 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
             const propertyId = property._id || property.id;
             const propertyType = property.propertyType || 'commercial';
             const reviewId = review._id || review.id;
+            // Get phone number - primary field is phoneNumber (matching dashboard pattern)
+            const userPhoneNumber = currentUser?.phoneNumber || currentUser?.phone || currentUser?.userPhoneNumber;
 
-            const response = await fetch(`/api/reviews?propertyId=${propertyId}&propertyType=${propertyType}&reviewId=${reviewId}&userPhoneNumber=${encodeURIComponent(currentUser.phoneNumber)}`, {
+            if (!userPhoneNumber) {
+                alert('Unable to get your phone number. Please make sure you are logged in.');
+                return;
+            }
+
+            const response = await fetch(`/api/reviews?propertyId=${propertyId}&propertyType=${propertyType}&reviewId=${reviewId}&userPhoneNumber=${encodeURIComponent(userPhoneNumber)}`, {
                 method: 'DELETE',
             });
 
@@ -252,8 +276,25 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
             if (data.success) {
                 setHasUserSubmittedReview(false);
                 setUserReview(null);
-                // Reload the page to refresh property data
-                window.location.reload();
+                
+                // Refresh property data to update the review list
+                try {
+                    const propResponse = await fetch(`/api/properties?id=${propertyId}&type=${propertyType}`);
+                    const propData = await propResponse.json();
+                    
+                    if (propData.success && propData.property) {
+                        // Update the property object with fresh data
+                        property.reviews = propData.property.reviews || [];
+                        property.ratings = propData.property.ratings || property.ratings;
+                        
+                        // Re-check if user has review (should be false now)
+                        checkUserReview(propData.property);
+                    }
+                } catch (error) {
+                    console.error('Error refreshing property data:', error);
+                    // Still reload as fallback
+                    window.location.reload();
+                }
             } else {
                 alert(data.message || 'Failed to delete review. Please try again.');
             }
@@ -623,7 +664,8 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                             <div className="flex items-center justify-between mb-3">
                             <h3 className="text-base font-semibold text-gray-800">Ratings & Reviews</h3>
                             <div className="flex items-center gap-2">
-                                {currentUser && !hasUserSubmittedReview && (
+                                {/* Show Add Review button if: not logged in OR logged in but no review submitted */}
+                                {(!currentUser || (currentUser && !hasUserSubmittedReview)) && (
                                     <button
                                         onClick={handleAddReview}
                                         className="bg-[#f8c02f] text-gray-800 px-3 py-1 rounded-lg font-medium text-xs hover:bg-[#e0ad2a] cursor-pointer transition-colors"
@@ -703,18 +745,14 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                         {displayedReviews.length > 0 ? (
                             <div className="space-y-3">
                                 {displayedReviews.map((review, index) => {
-                                    // Check if this is the user's review - handle different phone field names
-                                    const userPhone = currentUser?.phoneNumber || currentUser?.phone || currentUser?.userPhoneNumber;
-                                    const reviewPhone = review.userPhoneNumber || review.userPhone || review.phoneNumber || review.phone;
-                                    
-                                    const isUserReview = userPhone && reviewPhone && normalizePhone(userPhone) === normalizePhone(reviewPhone);
+                                    const isUserReview = isReviewByCurrentUser(review);
                                     
                                     return (
                                         <div key={review._id || review.id || index} className="bg-gray-50 rounded-lg p-3">
                                             <div className="flex items-center justify-between mb-1.5">
                                                 <span className="text-xs font-medium text-gray-800">{safeDisplay(review.user)}</span>
                                                 <div className="flex items-center gap-1.5">
-                                                    {currentUser && isUserReview && (
+                                                    {isUserReview && (
                                                         <>
                                                             <button
                                                                 onClick={(e) => {
@@ -963,7 +1001,14 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                     try {
                                         const propertyId = property._id || property.id;
                                         const propertyType = property.propertyType || 'commercial';
-                                        const userPhoneNumber = currentUser?.phoneNumber || null;
+                                        // Get phone number - primary field is phoneNumber (as per dashboard pattern)
+                                        const userPhoneNumber = currentUser?.phoneNumber || currentUser?.phone || currentUser?.userPhoneNumber || null;
+
+                                        if (!userPhoneNumber) {
+                                            alert('Unable to get your phone number. Please make sure you are logged in.');
+                                            setIsSubmittingReview(false);
+                                            return;
+                                        }
 
                                         let response;
                                         if (isEditingReview && userReview) {
@@ -980,7 +1025,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                                     user: userName.trim(),
                                                     rating: selectedRating,
                                                     comment: reviewText.trim(),
-                                                    userPhoneNumber
+                                                    userPhoneNumber: userPhoneNumber
                                                 }),
                                             });
                                         } else {
@@ -996,7 +1041,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                                     user: userName.trim(),
                                                     rating: selectedRating,
                                                     comment: reviewText.trim(),
-                                                    userPhoneNumber
+                                                    userPhoneNumber: userPhoneNumber
                                                 }),
                                             });
                                         }
@@ -1005,29 +1050,22 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
 
                                         if (data.success) {
                                             setReviewSubmitSuccess(true);
-                                            // Update local state to reflect the new/updated review
-                                            if (isEditingReview) {
-                                                // Update existing review in state
-                                                setHasUserSubmittedReview(true);
-                                                if (userReview) {
-                                                    setUserReview({
-                                                        ...userReview,
-                                                        user: userName.trim(),
-                                                        rating: selectedRating,
-                                                        comment: reviewText.trim()
-                                                    });
+                                            
+                                            // Refresh property data to get updated reviews
+                                            try {
+                                                const propResponse = await fetch(`/api/properties?id=${propertyId}&type=${propertyType}`);
+                                                const propData = await propResponse.json();
+                                                
+                                                if (propData.success && propData.property) {
+                                                    // Update the property object with fresh data
+                                                    property.reviews = propData.property.reviews || [];
+                                                    property.ratings = propData.property.ratings || property.ratings;
+                                                    
+                                                    // Check for user review with updated property data
+                                                    checkUserReview(propData.property);
                                                 }
-                                            } else {
-                                                // Mark that user has submitted a review
-                                                setHasUserSubmittedReview(true);
-                                                setUserReview({
-                                                    _id: data.review?._id || data.review?.id,
-                                                    user: userName.trim(),
-                                                    rating: selectedRating,
-                                                    comment: reviewText.trim(),
-                                                    userPhoneNumber: userPhoneNumber,
-                                                    date: new Date().toLocaleDateString()
-                                                });
+                                            } catch (error) {
+                                                console.error('Error refreshing property data:', error);
                                             }
                                             
                                             setTimeout(() => {
@@ -1037,12 +1075,6 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                                 setReviewText('');
                                                 setUserName('');
                                                 setReviewSubmitSuccess(false);
-                                                // Trigger check for user review after a brief delay to ensure state is updated
-                                                setTimeout(() => {
-                                                    checkUserReview();
-                                                }, 100);
-                                                // Reload the page to refresh property data
-                                                window.location.reload();
                                             }, 1500);
                                         } else {
                                             alert(data.message || 'Failed to submit review. Please try again.');

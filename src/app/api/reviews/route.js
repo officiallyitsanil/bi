@@ -3,6 +3,12 @@ import dbConnect from '@/utils/dbConnect';
 import ResidentialProperty from '@/models/ResidentialProperty';
 import CommercialProperty from '@/models/CommercialProperty';
 
+// Helper function to normalize phone numbers for comparison
+function normalizePhone(phone) {
+  if (!phone) return '';
+  return phone.toString().trim().replace(/[\s\-\(\)]/g, '').replace(/^\+/, '');
+}
+
 // Helper function to recalculate ratings
 function recalculateRatings(reviews) {
   const breakdown = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
@@ -78,9 +84,12 @@ export async function POST(request) {
     // Check if user already has a review for this property
     const existingReviews = property.reviews || [];
     if (userPhoneNumber) {
-      const existingUserReview = existingReviews.find(r => 
-        r.userPhoneNumber && r.userPhoneNumber === userPhoneNumber
-      );
+      const normalizedUserPhone = normalizePhone(userPhoneNumber);
+      const existingUserReview = existingReviews.find(r => {
+        if (!r.userPhoneNumber) return false;
+        const normalizedReviewPhone = normalizePhone(r.userPhoneNumber);
+        return normalizedReviewPhone === normalizedUserPhone;
+      });
       
       if (existingUserReview) {
         return NextResponse.json(
@@ -90,12 +99,12 @@ export async function POST(request) {
       }
     }
 
-    // Create new review
+    // Create new review - always save phone number if provided
     const newReview = {
       user,
       rating,
       comment: comment.trim(),
-      userPhoneNumber: userPhoneNumber || null,
+      userPhoneNumber: userPhoneNumber || undefined, // Save phone number from logged-in user
       date: new Date().toLocaleDateString('en-US', { 
         year: 'numeric', 
         month: 'short', 
@@ -222,18 +231,28 @@ export async function PUT(request) {
       );
     }
 
-    // Check if user owns this review
-    if (userPhoneNumber && existingReviews[reviewIndex].userPhoneNumber !== userPhoneNumber) {
-      return NextResponse.json(
-        { success: false, message: 'You can only edit your own reviews' },
-        { status: 403 }
-      );
+    // Check if user owns this review (using normalized phone numbers)
+    if (userPhoneNumber) {
+      const normalizedUserPhone = normalizePhone(userPhoneNumber);
+      const reviewPhone = existingReviews[reviewIndex].userPhoneNumber;
+      const normalizedReviewPhone = normalizePhone(reviewPhone);
+      
+      if (normalizedReviewPhone && normalizedReviewPhone !== normalizedUserPhone) {
+        return NextResponse.json(
+          { success: false, message: 'You can only edit your own reviews' },
+          { status: 403 }
+        );
+      }
     }
 
     // Update the review
     existingReviews[reviewIndex].user = user;
     existingReviews[reviewIndex].rating = rating;
     existingReviews[reviewIndex].comment = comment.trim();
+    // Always update phone number if provided (for logged-in users)
+    if (userPhoneNumber) {
+      existingReviews[reviewIndex].userPhoneNumber = userPhoneNumber;
+    }
     existingReviews[reviewIndex].date = new Date().toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'short', 
@@ -352,12 +371,18 @@ export async function DELETE(request) {
       );
     }
 
-    // Check if user owns this review
-    if (userPhoneNumber && existingReviews[reviewIndex].userPhoneNumber !== userPhoneNumber) {
-      return NextResponse.json(
-        { success: false, message: 'You can only delete your own reviews' },
-        { status: 403 }
-      );
+    // Check if user owns this review (using normalized phone numbers)
+    if (userPhoneNumber) {
+      const normalizedUserPhone = normalizePhone(userPhoneNumber);
+      const reviewPhone = existingReviews[reviewIndex].userPhoneNumber;
+      const normalizedReviewPhone = normalizePhone(reviewPhone);
+      
+      if (normalizedReviewPhone && normalizedReviewPhone !== normalizedUserPhone) {
+        return NextResponse.json(
+          { success: false, message: 'You can only delete your own reviews' },
+          { status: 403 }
+        );
+      }
     }
 
     // Remove the review

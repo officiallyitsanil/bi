@@ -211,6 +211,23 @@ function PropertyDetailsContent() {
         return normalized;
     };
 
+    // Helper function to check if a review belongs to current user
+    // Uses phoneNumber as primary field (matching dashboard pattern)
+    const isReviewByCurrentUser = (review) => {
+        if (!currentUser || !review) return false;
+        
+        // Primary field is phoneNumber (as used in dashboard)
+        const userPhone = currentUser.phoneNumber || currentUser.phone || currentUser.userPhoneNumber;
+        const reviewPhone = review.userPhoneNumber || review.userPhone || review.phoneNumber || review.phone;
+        
+        if (!userPhone || !reviewPhone) return false;
+        
+        const normalizedUserPhone = normalizePhone(userPhone);
+        const normalizedReviewPhone = normalizePhone(reviewPhone);
+        
+        return normalizedUserPhone === normalizedReviewPhone;
+    };
+
     // Helper function to check if user has submitted a review
     const checkUserReview = (propertyToCheck = null) => {
         const propToCheck = propertyToCheck || property;
@@ -221,7 +238,7 @@ function PropertyDetailsContent() {
             return;
         }
 
-        // Get user phone number - handle different possible field names
+        // Get user phone number - primary field is phoneNumber (matching dashboard pattern)
         const userPhone = currentUser.phoneNumber || currentUser.phone || currentUser.userPhoneNumber;
         
         if (!userPhone) {
@@ -654,8 +671,16 @@ function PropertyDetailsContent() {
             const propertyId = property._id || property.id;
             const propertyType = property.propertyType;
             const reviewId = review._id || review.id;
+        // Get phone number - primary field is phoneNumber (as per dashboard pattern)
+        const userPhoneNumber = currentUser?.phoneNumber || currentUser?.phone || currentUser?.userPhoneNumber;
 
-            const response = await fetch(`/api/reviews?propertyId=${propertyId}&propertyType=${propertyType}&reviewId=${reviewId}&userPhoneNumber=${encodeURIComponent(currentUser.phoneNumber)}`, {
+        if (!userPhoneNumber) {
+            alert('Unable to get your phone number. Please make sure you are logged in.');
+            setIsSubmittingReview(false);
+            return;
+        }
+
+            const response = await fetch(`/api/reviews?propertyId=${propertyId}&propertyType=${propertyType}&reviewId=${reviewId}&userPhoneNumber=${encodeURIComponent(userPhoneNumber)}`, {
                 method: 'DELETE',
             });
 
@@ -663,20 +688,24 @@ function PropertyDetailsContent() {
 
             if (data.success) {
                 // Refresh property data
-                const apiUrl = `/api/properties?id=${propertyId}&type=${propertyType}`;
-                const propResponse = await fetch(apiUrl);
-                const propData = await propResponse.json();
-
-                if (propData.success && propData.property) {
+                const updatedProperty = await refreshPropertyData();
+                
+                if (updatedProperty) {
+                    // Update property state
                     setProperty(prev => ({
                         ...prev,
-                        ratings: propData.property.ratings || prev.ratings,
-                        reviews: propData.property.reviews || prev.reviews
+                        reviews: updatedProperty.reviews || [],
+                        ratings: updatedProperty.ratings || prev.ratings
                     }));
+                    
+                    // Check for user review after refresh (should be false now)
+                    checkUserReview(updatedProperty);
                 }
 
                 setHasUserSubmittedReview(false);
                 setUserReview(null);
+                
+                // Show success message
                 alert('Review deleted successfully');
             } else {
                 alert(data.message || 'Failed to delete review. Please try again.');
@@ -1346,7 +1375,8 @@ function PropertyDetailsContent() {
                                 <h3>Rating & Reviews</h3>
                             </AnimatedText>
                             <div className="flex gap-2">
-                                {currentUser && !hasUserSubmittedReview && (
+                                {/* Show Add Review button if: not logged in OR logged in but no review submitted */}
+                                {(!currentUser || (currentUser && !hasUserSubmittedReview)) && (
                                     <button
                                         onClick={handleAddReview}
                                         className="bg-[#f8c02f] text-gray-800 px-3 py-1.5 rounded-lg font-medium text-xs hover:bg-[#e0ad2a] cursor-pointer transition-colors"
@@ -1750,12 +1780,26 @@ function PropertyDetailsContent() {
                         {/* Modal Header */}
                         <div className="flex items-center justify-between p-5 border-b sticky top-0 bg-white">
                             <h3 className="text-xl font-bold">All Ratings & Reviews</h3>
-                            <button
-                                onClick={() => setShowReviewsModal(false)}
-                                className="text-gray-400 hover:text-gray-900 text-2xl w-8 h-8 flex items-center justify-center transition-colors cursor-pointer"
-                            >
-                                ✕
-                            </button>
+                            <div className="flex items-center gap-3">
+                                {/* Show Add Review button if: not logged in OR logged in but no review submitted */}
+                                {(!currentUser || (currentUser && !hasUserSubmittedReview)) && (
+                                    <button
+                                        onClick={() => {
+                                            setShowReviewsModal(false);
+                                            handleAddReview();
+                                        }}
+                                        className="bg-[#f8c02f] text-gray-800 px-3 py-1.5 rounded-lg font-medium text-xs hover:bg-[#e0ad2a] cursor-pointer transition-colors"
+                                    >
+                                        Add Review
+                                    </button>
+                                )}
+                                <button
+                                    onClick={() => setShowReviewsModal(false)}
+                                    className="text-gray-400 hover:text-gray-900 text-2xl w-8 h-8 flex items-center justify-center transition-colors cursor-pointer"
+                                >
+                                    ✕
+                                </button>
+                            </div>
                         </div>
 
                         {/* Modal Content - Scrollable */}
@@ -1763,11 +1807,7 @@ function PropertyDetailsContent() {
                             {property.reviews && property.reviews.length > 0 ? (
                                 <div className="space-y-5">
                                     {property.reviews.map((review, index) => {
-                                        // Check if this is the user's review - handle different phone field names
-                                        const userPhone = currentUser?.phoneNumber || currentUser?.phone || currentUser?.userPhoneNumber;
-                                        const reviewPhone = review.userPhoneNumber || review.userPhone || review.phoneNumber || review.phone;
-                                        
-                                        const isUserReview = currentUser && userPhone && reviewPhone && normalizePhone(userPhone) === normalizePhone(reviewPhone);
+                                        const isUserReview = isReviewByCurrentUser(review);
                                         
                                         return (
                                             <div key={review._id || review.id || index} className="border-b pb-5 last:border-b-0">
@@ -1789,6 +1829,7 @@ function PropertyDetailsContent() {
                                                                 <button
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
+                                                                        setShowReviewsModal(false);
                                                                         handleEditReview(review);
                                                                     }}
                                                                     className="text-blue-600 hover:text-blue-800 cursor-pointer transition-colors"
@@ -1817,7 +1858,20 @@ function PropertyDetailsContent() {
                                     })}
                                 </div>
                             ) : (
-                                <p className="text-gray-500 text-center py-10">No reviews available</p>
+                                <div className="text-center py-10">
+                                    <p className="text-gray-500 mb-4">No reviews available</p>
+                                    {currentUser && !hasUserSubmittedReview && (
+                                        <button
+                                            onClick={() => {
+                                                setShowReviewsModal(false);
+                                                handleAddReview();
+                                            }}
+                                            className="bg-[#f8c02f] text-gray-800 px-4 py-2 rounded-lg font-medium text-sm hover:bg-[#e0ad2a] cursor-pointer transition-colors"
+                                        >
+                                            Be the first to review
+                                        </button>
+                                    )}
+                                </div>
                             )}
                         </div>
                     </div>
@@ -1923,7 +1977,13 @@ function PropertyDetailsContent() {
                                     try {
                                         const propertyId = property._id || property.id;
                                         const propertyType = property.propertyType;
-                                        const userPhoneNumber = currentUser?.phoneNumber || null;
+                                        // Always get phone number from logged-in user - try multiple possible field names
+                                        const userPhoneNumber = currentUser?.phoneNumber || currentUser?.phone || currentUser?.userPhoneNumber || null;
+
+                                        if (!userPhoneNumber) {
+                                            alert('Unable to get your phone number. Please make sure you are logged in.');
+                                            return;
+                                        }
 
                                         let response;
                                         if (isEditingReview && userReview) {
@@ -1940,7 +2000,7 @@ function PropertyDetailsContent() {
                                                     user: userName.trim(),
                                                     rating: selectedRating,
                                                     comment: reviewText.trim(),
-                                                    userPhoneNumber
+                                                    userPhoneNumber: userPhoneNumber
                                                 }),
                                             });
                                         } else {
@@ -1956,7 +2016,7 @@ function PropertyDetailsContent() {
                                                     user: userName.trim(),
                                                     rating: selectedRating,
                                                     comment: reviewText.trim(),
-                                                    userPhoneNumber
+                                                    userPhoneNumber: userPhoneNumber
                                                 }),
                                             });
                                         }
@@ -1967,15 +2027,17 @@ function PropertyDetailsContent() {
                                             // Refresh property data to get updated reviews
                                             const updatedProperty = await refreshPropertyData();
                                             
-                                            // Check for user review immediately with the updated property
                                             if (updatedProperty) {
+                                                // Update property state with fresh data
+                                                setProperty(prev => ({
+                                                    ...prev,
+                                                    reviews: updatedProperty.reviews || [],
+                                                    ratings: updatedProperty.ratings || prev.ratings
+                                                }));
+                                                
+                                                // Check for user review with updated property data
                                                 checkUserReview(updatedProperty);
                                             }
-                                            
-                                            // Also check again after a short delay to ensure state is updated
-                                            setTimeout(() => {
-                                                checkUserReview();
-                                            }, 200);
 
                                             setReviewSubmitSuccess(true);
 
@@ -2734,7 +2796,8 @@ function PropertyDetailsContent() {
                                     <h3>Rating & Reviews</h3>
                                 </AnimatedText>
                                 <div className="flex gap-3">
-                                    {currentUser && !hasUserSubmittedReview && (
+                                    {/* Show Add Review button if: not logged in OR logged in but no review submitted */}
+                                    {(!currentUser || (currentUser && !hasUserSubmittedReview)) && (
                                         <button
                                             onClick={handleAddReview}
                                             className="bg-[#f8c02f] text-gray-800 px-4 py-2 rounded-lg font-medium text-sm hover:bg-[#e0ad2a] cursor-pointer transition-colors"
@@ -3056,12 +3119,26 @@ function PropertyDetailsContent() {
                             {/* Modal Header */}
                             <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white">
                                 <h3 className="text-2xl font-bold">All Ratings & Reviews</h3>
-                                <button
-                                    onClick={() => setShowReviewsModal(false)}
-                                    className="text-gray-400 hover:text-gray-900 text-2xl w-10 h-10 flex items-center justify-center transition-colors cursor-pointer"
-                                >
-                                    ✕
-                                </button>
+                                <div className="flex items-center gap-3">
+                                    {/* Show Add Review button if: not logged in OR logged in but no review submitted */}
+                                    {(!currentUser || (currentUser && !hasUserSubmittedReview)) && (
+                                        <button
+                                            onClick={() => {
+                                                setShowReviewsModal(false);
+                                                handleAddReview();
+                                            }}
+                                            className="bg-[#f8c02f] text-gray-800 px-4 py-2 rounded-lg font-medium text-sm hover:bg-[#e0ad2a] cursor-pointer transition-colors"
+                                        >
+                                            Add Review
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => setShowReviewsModal(false)}
+                                        className="text-gray-400 hover:text-gray-900 text-2xl w-10 h-10 flex items-center justify-center transition-colors cursor-pointer"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Modal Content - Scrollable */}
@@ -3069,11 +3146,7 @@ function PropertyDetailsContent() {
                                 {property.reviews && property.reviews.length > 0 ? (
                                     <div className="space-y-6">
                                         {property.reviews.map((review, index) => {
-                                            // Check if this is the user's review - handle different phone field names
-                                            const userPhone = currentUser?.phoneNumber || currentUser?.phone || currentUser?.userPhoneNumber;
-                                            const reviewPhone = review.userPhoneNumber || review.userPhone || review.phoneNumber || review.phone;
-                                            
-                                            const isUserReview = userPhone && reviewPhone && normalizePhone(userPhone) === normalizePhone(reviewPhone);
+                                            const isUserReview = isReviewByCurrentUser(review);
                                             
                                             return (
                                                 <div key={review._id || review.id || index} className="border-b pb-6 last:border-b-0">
@@ -3090,11 +3163,12 @@ function PropertyDetailsContent() {
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-3">
-                                                            {currentUser && isUserReview && (
+                                                            {isUserReview && (
                                                                 <>
                                                                     <button
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
+                                                                            setShowReviewsModal(false);
                                                                             handleEditReview(review);
                                                                         }}
                                                                         className="text-blue-600 hover:text-blue-800 cursor-pointer transition-colors"
@@ -3123,7 +3197,20 @@ function PropertyDetailsContent() {
                                         })}
                                     </div>
                                 ) : (
-                                    <p className="text-gray-500 text-center py-10">No reviews available</p>
+                                    <div className="text-center py-10">
+                                        <p className="text-gray-500 mb-4">No reviews available</p>
+                                        {currentUser && !hasUserSubmittedReview && (
+                                            <button
+                                                onClick={() => {
+                                                    setShowReviewsModal(false);
+                                                    handleAddReview();
+                                                }}
+                                                className="bg-[#f8c02f] text-gray-800 px-4 py-2 rounded-lg font-medium text-sm hover:bg-[#e0ad2a] cursor-pointer transition-colors"
+                                            >
+                                                Be the first to review
+                                            </button>
+                                        )}
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -3229,7 +3316,13 @@ function PropertyDetailsContent() {
                                         try {
                                             const propertyId = property._id || property.id;
                                             const propertyType = property.propertyType;
-                                            const userPhoneNumber = currentUser?.phoneNumber || null;
+                                            // Always get phone number from logged-in user - try multiple possible field names
+                                            const userPhoneNumber = currentUser?.phoneNumber || currentUser?.phone || currentUser?.userPhoneNumber || null;
+
+                                            if (!userPhoneNumber) {
+                                                alert('Unable to get your phone number. Please make sure you are logged in.');
+                                                return;
+                                            }
 
                                             let response;
                                             if (isEditingReview && userReview) {
@@ -3246,7 +3339,7 @@ function PropertyDetailsContent() {
                                                         user: userName.trim(),
                                                         rating: selectedRating,
                                                         comment: reviewText.trim(),
-                                                        userPhoneNumber
+                                                        userPhoneNumber: userPhoneNumber
                                                     }),
                                                 });
                                             } else {
@@ -3262,7 +3355,7 @@ function PropertyDetailsContent() {
                                                         user: userName.trim(),
                                                         rating: selectedRating,
                                                         comment: reviewText.trim(),
-                                                        userPhoneNumber
+                                                        userPhoneNumber: userPhoneNumber
                                                     }),
                                                 });
                                             }
