@@ -217,8 +217,15 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
     }, [property, property?.reviews?.length, currentUser?.phoneNumber]);
 
     const handleLoginSuccess = (userData) => {
-        loginUser(userData);
-        setCurrentUser(userData);
+        // Ensure phone number is properly extracted from Firebase user object
+        // Firebase user object has phoneNumber property directly
+        const userWithPhone = {
+            ...userData,
+            phoneNumber: userData.phoneNumber || userData.phone || userData.userPhoneNumber || null
+        };
+        
+        loginUser(userWithPhone);
+        setCurrentUser(userWithPhone);
         setIsLoginModalOpen(false);
         setIsContactModalOpen(false);
     };
@@ -1001,11 +1008,32 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                     try {
                                         const propertyId = property._id || property.id;
                                         const propertyType = property.propertyType || 'commercial';
-                                        // Get phone number - primary field is phoneNumber (as per dashboard pattern)
-                                        const userPhoneNumber = currentUser?.phoneNumber || currentUser?.phone || currentUser?.userPhoneNumber || null;
+                                        
+                                        // Always get the latest user data from localStorage to ensure we have the phone number
+                                        let latestUser = currentUser;
+                                        try {
+                                            const userJson = localStorage.getItem('currentUser');
+                                            if (userJson) {
+                                                latestUser = JSON.parse(userJson);
+                                            }
+                                        } catch (e) {
+                                            console.error('Error reading user from localStorage:', e);
+                                        }
+                                        
+                                        // Get phone number - try multiple possible field names and formats
+                                        let userPhoneNumber = latestUser?.phoneNumber || 
+                                                             latestUser?.phone || 
+                                                             latestUser?.userPhoneNumber || 
+                                                             (latestUser?.user && latestUser.user.phoneNumber) ||
+                                                             null;
+
+                                        // If phone number has + prefix, keep it; otherwise ensure it's properly formatted
+                                        if (userPhoneNumber && typeof userPhoneNumber === 'string') {
+                                            userPhoneNumber = userPhoneNumber.trim();
+                                        }
 
                                         if (!userPhoneNumber) {
-                                            alert('Unable to get your phone number. Please make sure you are logged in.');
+                                            alert('Unable to get your phone number from session. Please make sure you are logged in.');
                                             setIsSubmittingReview(false);
                                             return;
                                         }

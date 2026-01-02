@@ -671,11 +671,32 @@ function PropertyDetailsContent() {
             const propertyId = property._id || property.id;
             const propertyType = property.propertyType;
             const reviewId = review._id || review.id;
-        // Get phone number - primary field is phoneNumber (as per dashboard pattern)
-        const userPhoneNumber = currentUser?.phoneNumber || currentUser?.phone || currentUser?.userPhoneNumber;
+        
+        // Always get the latest user data from localStorage to ensure we have the phone number
+        let latestUser = currentUser;
+        try {
+            const userJson = localStorage.getItem('currentUser');
+            if (userJson) {
+                latestUser = JSON.parse(userJson);
+            }
+        } catch (e) {
+            console.error('Error reading user from localStorage:', e);
+        }
+        
+        // Get phone number - try multiple possible field names and formats
+        let userPhoneNumber = latestUser?.phoneNumber || 
+                             latestUser?.phone || 
+                             latestUser?.userPhoneNumber || 
+                             (latestUser?.user && latestUser.user.phoneNumber) ||
+                             null;
+
+        // If phone number has + prefix, keep it; otherwise ensure it's properly formatted
+        if (userPhoneNumber && typeof userPhoneNumber === 'string') {
+            userPhoneNumber = userPhoneNumber.trim();
+        }
 
         if (!userPhoneNumber) {
-            alert('Unable to get your phone number. Please make sure you are logged in.');
+            alert('Unable to get your phone number from session. Please make sure you are logged in.');
             setIsSubmittingReview(false);
             return;
         }
@@ -813,7 +834,14 @@ function PropertyDetailsContent() {
     };
 
     const handleLoginSuccess = (userData) => {
-        loginUser(userData);
+        // Ensure phone number is properly extracted from Firebase user object
+        // Firebase user object has phoneNumber property directly
+        const userWithPhone = {
+            ...userData,
+            phoneNumber: userData.phoneNumber || userData.phone || userData.userPhoneNumber || null
+        };
+        
+        loginUser(userWithPhone);
         setIsLoginOpen(false);
     };
 
@@ -1399,7 +1427,7 @@ function PropertyDetailsContent() {
                                 {[1, 2, 3, 4, 5].map((star) => (
                                     <Star
                                         key={star}
-                                        className={`w-4 h-4 ${star <= (property.ratings?.overall || 4) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
+                                        className={`w-4 h-4 ${(property.ratings?.overall > 0 && star <= property.ratings.overall) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
                                             }`}
                                     />
                                 ))}
@@ -1977,11 +2005,33 @@ function PropertyDetailsContent() {
                                     try {
                                         const propertyId = property._id || property.id;
                                         const propertyType = property.propertyType;
-                                        // Always get phone number from logged-in user - try multiple possible field names
-                                        const userPhoneNumber = currentUser?.phoneNumber || currentUser?.phone || currentUser?.userPhoneNumber || null;
+                                        
+                                        // Always get the latest user data from localStorage to ensure we have the phone number
+                                        let latestUser = currentUser;
+                                        try {
+                                            const userJson = localStorage.getItem('currentUser');
+                                            if (userJson) {
+                                                latestUser = JSON.parse(userJson);
+                                            }
+                                        } catch (e) {
+                                            console.error('Error reading user from localStorage:', e);
+                                        }
+                                        
+                                        // Get phone number - try multiple possible field names and formats
+                                        let userPhoneNumber = latestUser?.phoneNumber || 
+                                                             latestUser?.phone || 
+                                                             latestUser?.userPhoneNumber || 
+                                                             (latestUser?.user && latestUser.user.phoneNumber) ||
+                                                             null;
+
+                                        // If phone number has + prefix, keep it; otherwise ensure it's properly formatted
+                                        if (userPhoneNumber && typeof userPhoneNumber === 'string') {
+                                            userPhoneNumber = userPhoneNumber.trim();
+                                        }
 
                                         if (!userPhoneNumber) {
-                                            alert('Unable to get your phone number. Please make sure you are logged in.');
+                                            alert('Unable to get your phone number from session. Please make sure you are logged in.');
+                                            setIsSubmittingReview(false);
                                             return;
                                         }
 
@@ -2820,7 +2870,7 @@ function PropertyDetailsContent() {
                                     {[1, 2, 3, 4, 5].map((star) => (
                                         <Star
                                             key={star}
-                                            className={`w-5 h-5 ${star <= (property.ratings?.overall || 4) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
+                                            className={`w-5 h-5 ${(property.ratings?.overall > 0 && star <= property.ratings.overall) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
                                                 }`}
                                         />
                                     ))}
@@ -3316,11 +3366,33 @@ function PropertyDetailsContent() {
                                         try {
                                             const propertyId = property._id || property.id;
                                             const propertyType = property.propertyType;
-                                            // Always get phone number from logged-in user - try multiple possible field names
-                                            const userPhoneNumber = currentUser?.phoneNumber || currentUser?.phone || currentUser?.userPhoneNumber || null;
+                                            
+                                            // Always get the latest user data from localStorage to ensure we have the phone number
+                                            let latestUser = currentUser;
+                                            try {
+                                                const userJson = localStorage.getItem('currentUser');
+                                                if (userJson) {
+                                                    latestUser = JSON.parse(userJson);
+                                                }
+                                            } catch (e) {
+                                                console.error('Error reading user from localStorage:', e);
+                                            }
+                                            
+                                            // Get phone number - try multiple possible field names and formats
+                                            let userPhoneNumber = latestUser?.phoneNumber || 
+                                                                 latestUser?.phone || 
+                                                                 latestUser?.userPhoneNumber || 
+                                                                 (latestUser?.user && latestUser.user.phoneNumber) ||
+                                                                 null;
+
+                                            // If phone number has + prefix, keep it; otherwise ensure it's properly formatted
+                                            if (userPhoneNumber && typeof userPhoneNumber === 'string') {
+                                                userPhoneNumber = userPhoneNumber.trim();
+                                            }
 
                                             if (!userPhoneNumber) {
-                                                alert('Unable to get your phone number. Please make sure you are logged in.');
+                                                alert('Unable to get your phone number from session. Please make sure you are logged in.');
+                                                setIsSubmittingReview(false);
                                                 return;
                                             }
 
