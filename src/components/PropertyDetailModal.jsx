@@ -289,7 +289,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
 
     const handleDeleteReview = async (reviewToDelete = null) => {
         const review = reviewToDelete || userReview;
-        if (!review || !currentUser) return;
+        if (!review) return;
         
         if (!confirm('Are you sure you want to delete your review?')) {
             return;
@@ -299,11 +299,32 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
             const propertyId = property._id || property.id;
             const propertyType = property.propertyType || 'commercial';
             const reviewId = review._id || review.id;
-            // Get phone number - primary field is phoneNumber (matching dashboard pattern)
-            const userPhoneNumber = currentUser?.phoneNumber || currentUser?.phone || currentUser?.userPhoneNumber;
+            
+            // Always get the latest user data from localStorage to ensure we have the phone number
+            let latestUser = currentUser;
+            try {
+                const userJson = localStorage.getItem('currentUser');
+                if (userJson) {
+                    latestUser = JSON.parse(userJson);
+                }
+            } catch (e) {
+                console.error('Error reading user from localStorage:', e);
+            }
+            
+            // Get phone number - try multiple possible field names and formats
+            let userPhoneNumber = latestUser?.phoneNumber || 
+                                 latestUser?.phone || 
+                                 latestUser?.userPhoneNumber || 
+                                 (latestUser?.user && latestUser.user.phoneNumber) ||
+                                 null;
 
-            if (!userPhoneNumber) {
-                alert('Unable to get your phone number. Please make sure you are logged in.');
+            // If phone number has + prefix, keep it; otherwise ensure it's properly formatted
+            if (userPhoneNumber && typeof userPhoneNumber === 'string') {
+                userPhoneNumber = userPhoneNumber.trim();
+            }
+
+            if (!userPhoneNumber || !latestUser) {
+                alert('Unable to get your phone number from session. Please make sure you are logged in.');
                 return;
             }
 
@@ -332,9 +353,9 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                     }
                 } catch (error) {
                     console.error('Error refreshing property data:', error);
-                    // Still reload as fallback
-                    window.location.reload();
+                    // Don't reload - just update state
                 }
+                // Don't show alert - deletion is complete
             } else {
                 alert(data.message || 'Failed to delete review. Please try again.');
             }
@@ -1121,12 +1142,27 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                                 const propData = await propResponse.json();
                                                 
                                                 if (propData.success && propData.property) {
-                                                    // Update the property object with fresh data
+                                                    // Update the property object with fresh data (since it's passed by reference)
                                                     property.reviews = propData.property.reviews || [];
                                                     property.ratings = propData.property.ratings || property.ratings;
                                                     
-                                                    // Check for user review with updated property data
+                                                    // Force a re-render by updating a dependency
+                                                    // Immediately check for user review with updated property data
+                                                    // This will set hasUserSubmittedReview to true if review exists
                                                     checkUserReview(propData.property);
+                                                    
+                                                    // Also force a re-check after a brief delay to ensure state is updated
+                                                    setTimeout(() => {
+                                                        checkUserReview(propData.property);
+                                                        // Force component update by setting state that depends on property
+                                                        if (propData.property.reviews) {
+                                                            setHasUserSubmittedReview(prev => {
+                                                                // Re-check to ensure state is correct
+                                                                checkUserReview(propData.property);
+                                                                return prev;
+                                                            });
+                                                        }
+                                                    }, 100);
                                                 }
                                             } catch (error) {
                                                 console.error('Error refreshing property data:', error);

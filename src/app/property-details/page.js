@@ -759,8 +759,7 @@ function PropertyDetailsContent() {
                 setHasUserSubmittedReview(false);
                 setUserReview(null);
                 
-                // Show success message
-                alert('Review deleted successfully');
+                // Don't show alert - deletion is complete
             } else {
                 alert(data.message || 'Failed to delete review. Please try again.');
             }
@@ -2110,6 +2109,8 @@ function PropertyDetailsContent() {
                                         const data = await response.json();
 
                                         if (data.success) {
+                                            setReviewSubmitSuccess(true);
+                                            
                                             // Refresh property data to get updated reviews
                                             const updatedProperty = await refreshPropertyData();
                                             
@@ -2121,11 +2122,15 @@ function PropertyDetailsContent() {
                                                     ratings: updatedProperty.ratings || prev.ratings
                                                 }));
                                                 
-                                                // Check for user review with updated property data
+                                                // Immediately check for user review with updated property data
+                                                // This will set hasUserSubmittedReview to true if review exists
                                                 checkUserReview(updatedProperty);
+                                                
+                                                // Also force a re-check after a brief delay to ensure state is updated
+                                                setTimeout(() => {
+                                                    checkUserReview(updatedProperty);
+                                                }, 100);
                                             }
-
-                                            setReviewSubmitSuccess(true);
 
                                             // Close modal after showing success
                                             setTimeout(() => {
@@ -3471,20 +3476,28 @@ function PropertyDetailsContent() {
                                             const data = await response.json();
 
                                             if (data.success) {
+                                                setReviewSubmitSuccess(true);
+                                                
                                                 // Refresh property data to get updated reviews
                                                 const updatedProperty = await refreshPropertyData();
                                                 
-                                                // Check for user review immediately with the updated property
                                                 if (updatedProperty) {
+                                                    // Update property state with fresh data
+                                                    setProperty(prev => ({
+                                                        ...prev,
+                                                        reviews: updatedProperty.reviews || [],
+                                                        ratings: updatedProperty.ratings || prev.ratings
+                                                    }));
+                                                    
+                                                    // Immediately check for user review with updated property data
+                                                    // This will set hasUserSubmittedReview to true if review exists
                                                     checkUserReview(updatedProperty);
+                                                    
+                                                    // Also force a re-check after a brief delay to ensure state is updated
+                                                    setTimeout(() => {
+                                                        checkUserReview(updatedProperty);
+                                                    }, 100);
                                                 }
-                                                
-                                                // Also check again after a short delay to ensure state is updated
-                                                setTimeout(() => {
-                                                    checkUserReview();
-                                                }, 200);
-
-                                                setReviewSubmitSuccess(true);
 
                                                 // Close modal after showing success
                                                 setTimeout(() => {
