@@ -214,10 +214,28 @@ function PropertyDetailsContent() {
     // Helper function to check if a review belongs to current user
     // Uses phoneNumber as primary field (matching dashboard pattern)
     const isReviewByCurrentUser = (review) => {
-        if (!currentUser || !review) return false;
+        if (!review) return false;
         
-        // Primary field is phoneNumber (as used in dashboard)
-        const userPhone = currentUser.phoneNumber || currentUser.phone || currentUser.userPhoneNumber;
+        // Always get the latest user data from localStorage
+        let latestUser = currentUser;
+        try {
+            const userJson = localStorage.getItem('currentUser');
+            if (userJson) {
+                latestUser = JSON.parse(userJson);
+            }
+        } catch (e) {
+            console.error('Error reading user from localStorage in isReviewByCurrentUser:', e);
+        }
+        
+        if (!latestUser) return false;
+        
+        // Get user phone number - try multiple possible field names and formats
+        const userPhone = latestUser?.phoneNumber || 
+                         latestUser?.phone || 
+                         latestUser?.userPhoneNumber || 
+                         (latestUser?.user && latestUser.user.phoneNumber) ||
+                         null;
+        
         const reviewPhone = review.userPhoneNumber || review.userPhone || review.phoneNumber || review.phone;
         
         if (!userPhone || !reviewPhone) return false;
@@ -232,14 +250,29 @@ function PropertyDetailsContent() {
     const checkUserReview = (propertyToCheck = null) => {
         const propToCheck = propertyToCheck || property;
         
-        if (!propToCheck || !propToCheck.reviews || !Array.isArray(propToCheck.reviews) || !currentUser) {
+        // Always get the latest user data from localStorage to ensure we have the phone number
+        let latestUser = currentUser;
+        try {
+            const userJson = localStorage.getItem('currentUser');
+            if (userJson) {
+                latestUser = JSON.parse(userJson);
+            }
+        } catch (e) {
+            console.error('Error reading user from localStorage in checkUserReview:', e);
+        }
+        
+        if (!propToCheck || !propToCheck.reviews || !Array.isArray(propToCheck.reviews) || !latestUser) {
             setHasUserSubmittedReview(false);
             setUserReview(null);
             return;
         }
 
-        // Get user phone number - primary field is phoneNumber (matching dashboard pattern)
-        const userPhone = currentUser.phoneNumber || currentUser.phone || currentUser.userPhoneNumber;
+        // Get user phone number - try multiple possible field names and formats
+        const userPhone = latestUser?.phoneNumber || 
+                         latestUser?.phone || 
+                         latestUser?.userPhoneNumber || 
+                         (latestUser?.user && latestUser.user.phoneNumber) ||
+                         null;
         
         if (!userPhone) {
             setHasUserSubmittedReview(false);
@@ -2029,12 +2062,30 @@ function PropertyDetailsContent() {
                                             userPhoneNumber = userPhoneNumber.trim();
                                         }
 
+                                        console.log('Review Submit - Latest user from localStorage:', latestUser);
+                                        console.log('Review Submit - Extracted userPhoneNumber:', userPhoneNumber);
+
                                         if (!userPhoneNumber) {
                                             alert('Unable to get your phone number from session. Please make sure you are logged in.');
                                             setIsSubmittingReview(false);
                                             return;
                                         }
 
+                                        const requestBody = {
+                                            propertyId,
+                                            propertyType,
+                                            user: userName.trim(),
+                                            rating: selectedRating,
+                                            comment: reviewText.trim(),
+                                            userPhoneNumber: userPhoneNumber
+                                        };
+                                        
+                                        if (isEditingReview && userReview) {
+                                            requestBody.reviewId = userReview._id || userReview.id;
+                                        }
+                                        
+                                        console.log('Review Submit - Sending to API:', requestBody);
+                                        
                                         let response;
                                         if (isEditingReview && userReview) {
                                             // Edit existing review
@@ -2043,15 +2094,7 @@ function PropertyDetailsContent() {
                                                 headers: {
                                                     'Content-Type': 'application/json',
                                                 },
-                                                body: JSON.stringify({
-                                                    propertyId,
-                                                    propertyType,
-                                                    reviewId: userReview._id || userReview.id,
-                                                    user: userName.trim(),
-                                                    rating: selectedRating,
-                                                    comment: reviewText.trim(),
-                                                    userPhoneNumber: userPhoneNumber
-                                                }),
+                                                body: JSON.stringify(requestBody),
                                             });
                                         } else {
                                             // Create new review
@@ -2060,14 +2103,7 @@ function PropertyDetailsContent() {
                                                 headers: {
                                                     'Content-Type': 'application/json',
                                                 },
-                                                body: JSON.stringify({
-                                                    propertyId,
-                                                    propertyType,
-                                                    user: userName.trim(),
-                                                    rating: selectedRating,
-                                                    comment: reviewText.trim(),
-                                                    userPhoneNumber: userPhoneNumber
-                                                }),
+                                                body: JSON.stringify(requestBody),
                                             });
                                         }
 

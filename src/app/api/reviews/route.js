@@ -37,6 +37,10 @@ export async function POST(request) {
     const body = await request.json();
     const { propertyId, propertyType, user, rating, comment, userPhoneNumber } = body;
 
+    // Debug logging
+    console.log('POST Review - Received userPhoneNumber:', userPhoneNumber);
+    console.log('POST Review - Full body:', JSON.stringify(body, null, 2));
+
     // Validation
     if (!propertyId || !user || !user.trim() || !rating || rating < 1 || rating > 5 || !comment || !comment.trim()) {
       return NextResponse.json(
@@ -104,13 +108,20 @@ export async function POST(request) {
       user,
       rating,
       comment: comment.trim(),
-      userPhoneNumber: userPhoneNumber || undefined, // Save phone number from logged-in user
       date: new Date().toLocaleDateString('en-US', { 
         year: 'numeric', 
         month: 'short', 
         day: 'numeric' 
       })
     };
+    
+    // Only add userPhoneNumber if it exists (don't set undefined)
+    if (userPhoneNumber && userPhoneNumber.trim()) {
+      newReview.userPhoneNumber = userPhoneNumber.trim();
+      console.log('POST Review - Adding userPhoneNumber to review:', newReview.userPhoneNumber);
+    } else {
+      console.log('POST Review - WARNING: userPhoneNumber is missing or empty!');
+    }
 
     // Add new review to beginning of array
     const updatedReviews = [newReview, ...existingReviews];
@@ -148,6 +159,10 @@ export async function POST(request) {
 
     // Get the saved review with _id
     const savedReview = updatedProperty.reviews[0];
+    
+    // Debug: Check if phone number was saved
+    console.log('POST Review - Saved review userPhoneNumber:', savedReview.userPhoneNumber);
+    console.log('POST Review - Saved review:', JSON.stringify(savedReview, null, 2));
     
     // Return plain object for ratings to avoid serialization issues
     return NextResponse.json({
@@ -250,8 +265,11 @@ export async function PUT(request) {
     existingReviews[reviewIndex].rating = rating;
     existingReviews[reviewIndex].comment = comment.trim();
     // Always update phone number if provided (for logged-in users)
-    if (userPhoneNumber) {
-      existingReviews[reviewIndex].userPhoneNumber = userPhoneNumber;
+    if (userPhoneNumber && userPhoneNumber.trim()) {
+      existingReviews[reviewIndex].userPhoneNumber = userPhoneNumber.trim();
+      console.log('PUT Review - Updated userPhoneNumber:', existingReviews[reviewIndex].userPhoneNumber);
+    } else {
+      console.log('PUT Review - WARNING: userPhoneNumber is missing or empty!');
     }
     existingReviews[reviewIndex].date = new Date().toLocaleDateString('en-US', { 
       year: 'numeric', 

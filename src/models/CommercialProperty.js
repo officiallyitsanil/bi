@@ -37,6 +37,7 @@ const ReviewSchema = new mongoose.Schema({
   },
   date: String,
   comment: String,
+  userPhoneNumber: String,
 }, { _id: true });
 
 const FloorConfigurationSchema = new mongoose.Schema({
