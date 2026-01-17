@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Menu, ArrowRight, User } from 'lucide-react';
+import { Menu, User, Sun, Building, Home, Globe } from 'lucide-react';
 import MenuSideBar from '@/components/MenuSideBar';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -30,10 +30,38 @@ export default function Header() {
     }, []);
 
     const navLinks = [
-        { href: '/', label: 'Map-View', icon: <div className="bg-yellow-300 w-2 h-2 rounded-full"></div> },
-        { href: '/commercial', label: 'Commercial' },
-        { href: '/residential', label: 'Residential' },
-        { href: '/builders', label: 'Builders', icon: <Image src="/crown.svg" alt="Crown" width={24} height={24} /> },
+        { 
+            href: '/', 
+            label: 'Map-View', 
+            icon: 'circle',
+            activeBg: 'bg-blue-50',
+            activeText: 'text-blue-700',
+            inactiveText: 'text-gray-600'
+        },
+        { 
+            href: '/commercial', 
+            label: 'Commercial',
+            icon: 'building',
+            activeBg: 'bg-blue-50',
+            activeText: 'text-blue-700',
+            inactiveText: 'text-gray-600'
+        },
+        { 
+            href: '/residential', 
+            label: 'Residential',
+            icon: 'home',
+            activeBg: 'bg-blue-50',
+            activeText: 'text-blue-700',
+            inactiveText: 'text-gray-600'
+        },
+        { 
+            href: '/builders', 
+            label: 'Builders',
+            icon: 'crown',
+            activeBg: 'bg-blue-50',
+            activeText: 'text-blue-700',
+            inactiveText: 'text-gray-600'
+        },
     ];
 
     const handleLoginSuccess = (userData) => {
@@ -41,61 +69,105 @@ export default function Header() {
         setIsLoginOpen(false);
     };
 
+    const getIcon = (link) => {
+        const isActive = pathname === link.href;
+        const iconClass = isActive ? link.activeText : link.inactiveText;
+        const iconSize = 20;
+
+        switch (link.icon) {
+            case 'circle':
+                return isActive ? (
+                    <div className="w-4 h-4 rounded-full bg-blue-700"></div>
+                ) : (
+                    <div className="w-4 h-4 rounded-full bg-gray-400"></div>
+                );
+            case 'building':
+                return <Building className={`w-5 h-5 ${iconClass}`} strokeWidth={isActive ? 2 : 1.5} />;
+            case 'home':
+                return <Home className={`w-5 h-5 ${iconClass}`} strokeWidth={isActive ? 2 : 1.5} />;
+            case 'crown':
+                return <Image src="/crown.svg" alt="Crown" width={iconSize} height={iconSize} className={isActive ? 'opacity-100' : 'opacity-60'} />;
+            default:
+                return null;
+        }
+    };
+
     return (
         <>
             <header
                 className={`
                     ${pathname === '/' ? 'hidden md:block' : 'block'} 
-                    bg-white shadow-sm sticky top-0 z-50 py-0 md:py-2
+                    bg-white sticky top-0 z-50 py-4
                 `}
             >
                 <div className="container mx-auto px-4 md:px-12">
-                    <div className="flex items-center justify-between h-16">
-                        <div className="flex items-center">
+                    <div className="flex items-center justify-between">
+                        {/* Left: Logo + Location */}
+                        <div className="flex items-center gap-4">
                             <Link href="/">
                                 <Image src="/logo.png" width={100} height={70} className='w-24' alt="Logo" />
                             </Link>
+                            <div className="hidden md:flex items-center gap-1.5">
+                                <Globe className="w-4 h-4 text-gray-600" strokeWidth={1.5} />
+                                <span className="text-sm text-black">India</span>
+                            </div>
                         </div>
 
-                        <nav className="hidden md:flex items-center space-x-8">
-                            {navLinks.map((link) => (
-                                <Link
-                                    key={link.href}
-                                    href={link.href}
-                                    className={`flex items-center gap-2 pr-6 border-r border-gray-200 
-                                        ${pathname === link.href ? 'text-gray-900 font-semibold' : 'text-gray-800'}
-                                    `}
-                                >
-                                    {link.icon && link.icon}
-                                    {link.label}
-                                </Link>
-                            ))}
+                        {/* Center: Navigation Tabs */}
+                        <nav className="hidden md:flex items-center gap-4">
+                            {navLinks.map((link) => {
+                                const isActive = pathname === link.href;
+                                return (
+                                    <Link
+                                        key={link.href}
+                                        href={link.href}
+                                        className={`
+                                            flex items-center gap-2 px-4 py-2 rounded-full transition-all
+                                            ${isActive 
+                                                ? `${link.activeBg} ${link.activeText}` 
+                                                : link.inactiveText
+                                            }
+                                        `}
+                                    >
+                                        {getIcon(link)}
+                                        <span className={`text-sm font-medium ${isActive ? link.activeText : link.inactiveText}`}>
+                                            {link.label}
+                                        </span>
+                                    </Link>
+                                );
+                            })}
                         </nav>
 
-                        <div className="flex items-center md:gap-4">
-                            {currentUser ? (
-                                <Link
-                                    href="/dashboard"
-                                    className="hidden md:flex items-center gap-2 bg-[rgb(255,221,87)] text-black px-6 py-3 rounded-full font-semibold transition-colors hover:cursor-pointer"
-                                >
-                                    Profile
-                                    <User className="w-4 h-4" />
-                                </Link>
-                            ) : (
-                                <button
-                                    onClick={() => setIsLoginOpen(true)}
-                                    className="hidden md:flex items-center gap-2 bg-[rgb(255,221,87)] text-black px-6 py-3 rounded-full font-semibold transition-colors hover:cursor-pointer"
-                                >
-                                    Login
-                                    <ArrowRight className="w-4 h-4" />
-                                </button>
-                            )}
-                            <button
-                                className="px-0 md:p-2 rounded-md hover:cursor-pointer"
-                                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            >
-                                <Menu className="w-6 h-6 text-gray-800" />
+                        {/* Right: Sun Icon + Menu + Profile Pill Button */}
+                        <div className="flex items-center gap-3">
+                            {/* Sun Icon (Light/Dark Mode) */}
+                            <button className="hover:cursor-pointer">
+                                <Sun className="w-6 h-6 text-black" strokeWidth={1.5} />
                             </button>
+                            
+                            {/* Menu + Profile Pill Button */}
+                            <div className="flex items-center gap-3 px-4 py-2 border border-gray-300 rounded-full bg-white">
+                                <button
+                                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                    className="hover:cursor-pointer"
+                                >
+                                    <Menu className="w-5 h-5 text-black" strokeWidth={1.5} />
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        if (currentUser) {
+                                            window.location.href = '/dashboard';
+                                        } else {
+                                            setIsLoginOpen(true);
+                                        }
+                                    }}
+                                    className="hover:cursor-pointer flex items-center justify-center"
+                                >
+                                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                        <User className="w-5 h-5 text-blue-600" strokeWidth={2} fill="none" />
+                                    </div>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
