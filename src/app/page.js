@@ -1,19 +1,22 @@
 "use client";
 import MenuSideBar from '@/components/MenuSideBar';
 import LoginModal from '@/components/LoginModal';
-import { Search, X, Plus, Share2, SlidersHorizontal, Copy, CopyCheck, Menu, List, Check, Heart, Building2, Home, MapPin, ChevronDown, ChevronRight, ChevronLeft, LayoutGrid, Map, Globe } from 'lucide-react';
+import { Search, X, Plus, SlidersHorizontal, Menu, List, Check, Heart, Building2, Home, MapPin, ChevronDown, ChevronRight, ChevronLeft, LayoutGrid, Map, Globe, ZoomIn, LocateFixed, Layers, Minus, Sun, Moon, User } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from "next/dynamic";
+import { usePathname } from 'next/navigation';
 import PropertyDetailModal from '@/components/PropertyDetailModal';
 import VisitorTracker from '@/components/VisitorTracker';
 import { getUserLocation } from '@/utils/geolocation';
 import { loginUser } from '@/utils/auth';
+import { indianCities } from '@/utils/indianCities';
+import { useTheme } from '@/context/ThemeContext';
 
 const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 
-function Modal({ children, style, onClose, hideClose = false, className = "" }) {
+function Modal({ children, style, onClose, hideClose = false, className = "", isDark = false }) {
   return (
     <div className="fixed inset-0 bg-black/50 md:bg-transparent z-50 pointer-events-none">
       <div
@@ -23,7 +26,7 @@ function Modal({ children, style, onClose, hideClose = false, className = "" }) 
         {!hideClose && (
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 text-gray-500 bg-[#f2f2f2] p-2 rounded-full hover:text-gray-600 z-10 hover:cursor-pointer mt-0 m-1"
+            className={`absolute top-3 right-3 p-2 rounded-full z-10 hover:cursor-pointer mt-0 m-1 transition-colors ${isDark ? 'text-gray-400 bg-[#1f2229] hover:text-white hover:bg-[#3a3f4b]' : 'text-gray-500 bg-[#f2f2f2] hover:text-gray-600'}`}
           >
             <X className="w-5 h-5" />
           </button>
@@ -35,10 +38,9 @@ function Modal({ children, style, onClose, hideClose = false, className = "" }) 
 }
 
 export default function HomePage() {
+  const pathname = usePathname();
+  const { theme, toggleTheme, isDark } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeModal, setActiveModal] = useState(null);
-  const [modalPos, setModalPos] = useState({ top: 0, right: 0 });
-  const [copied, setCopied] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -81,8 +83,15 @@ export default function HomePage() {
 
   const [sizeUnit, setSizeUnit] = useState('Square Yards');
   const [showFiltersView, setShowFiltersView] = useState(false);
+  const [showCitySelector, setShowCitySelector] = useState(false);
+  const [citySearchQuery, setCitySearchQuery] = useState('');
+  const [showLayerMenu, setShowLayerMenu] = useState(false);
+  const [showAddPropertyModal, setShowAddPropertyModal] = useState(false);
+  const [mapType, setMapType] = useState('hybrid'); // 'roadmap', 'satellite', 'hybrid', 'terrain'
+  const [showTraffic, setShowTraffic] = useState(false);
   const [searchType, setSearchType] = useState('locality'); // 'locality', 'metro', 'travel'
   const [buildingType, setBuildingType] = useState('commercial'); // 'commercial', 'residential'
+  const [showMobileList, setShowMobileList] = useState(false); // For mobile list view toggle
   const [propertyTypes, setPropertyTypes] = useState({
     officeSpace: false,
     coWorking: false,
@@ -310,9 +319,6 @@ export default function HomePage() {
   }, []);
 
   // Location tracking is handled by VisitorTracker component
-
-  const addBtnRef = useRef(null);
-  const shareBtnRef = useRef(null);
 
   // Generate suggestions based on search query
   const generateSuggestions = (query) => {
@@ -741,51 +747,203 @@ export default function HomePage() {
     return filtered;
   };
 
-  const openModal = (modalType, ref) => {
-    if (!ref.current) return;
-
-    if (activeModal === modalType) {
-      setActiveModal(null);
-      return;
-    }
-
-    setActiveModal(null);
-    setTimeout(() => {
-      const rect = ref.current.getBoundingClientRect();
-      let pos = { top: rect.bottom + window.scrollY + 8, right: window.innerWidth - rect.right - window.scrollX };
-
-      if (modalType === "add") {
-        pos = { top: rect.top + window.scrollY, right: window.innerWidth - rect.left - window.scrollX + 8 };
-      } else if (modalType === "share") {
-        const addRect = addBtnRef.current?.getBoundingClientRect();
-        if (addRect) pos = { top: addRect.top + window.scrollY, right: window.innerWidth - addRect.left - window.scrollX + 8 };
-      }
-
-      setModalPos(pos);
-      setActiveModal(modalType);
-      if (modalType !== "share") setCopied(false);
-    }, 150);
-  };
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText("https://buildersinfo.in/");
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   return (
-    <div className="h-[90vh] md:h-[87vh] bg-[#1f2229] flex flex-col">
+    <div className={`h-screen md:h-[87vh] flex flex-col relative transition-colors ${isDark ? 'bg-[#1f2229]' : 'bg-gray-100'}`}>
       <VisitorTracker onLocationUpdate={handleLocationUpdate} />
-      <main className="flex-1 relative flex">
+      
+      {/* Scrollbar Styles for Mobile Modals */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .mobile-modal-scroll::-webkit-scrollbar {
+          width: 6px;
+        }
+        .mobile-modal-scroll::-webkit-scrollbar-track {
+          background: ${isDark ? '#2d3139' : '#f1f5f9'};
+          border-radius: 10px;
+        }
+        .mobile-modal-scroll::-webkit-scrollbar-thumb {
+          background: ${isDark ? '#4b5563' : '#cbd5e1'};
+          border-radius: 10px;
+        }
+        .mobile-modal-scroll::-webkit-scrollbar-thumb:hover {
+          background: ${isDark ? '#6b7280' : '#94a3b8'};
+        }
+      `}} />
+      
+      {/* Mobile Header - Only visible on screens < 480px */}
+      <div className={`md:hidden sticky top-0 z-50 transition-colors ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}>
+        <div className="flex items-center justify-between px-3 py-2">
+          {/* Left: Logo + India */}
+          <div className="flex items-center gap-2">
+            <Link href="/">
+              <Image src="/logo.png" width={80} height={40} className="w-20 h-auto" alt="Logo" />
+            </Link>
+            <div className="flex items-center gap-1">
+              <Globe className={`w-3.5 h-3.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} strokeWidth={1.5} />
+              <span className={`text-xs font-medium ${isDark ? 'text-white' : 'text-black'}`}>India</span>
+            </div>
+          </div>
+          
+          {/* Right: Theme Toggle + Menu/Profile pill */}
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={toggleTheme}
+              className={`hover:cursor-pointer p-1.5 rounded-full transition-colors ${isDark ? 'text-yellow-400 hover:bg-white/10' : 'text-gray-700 hover:bg-gray-100'}`}
+            >
+              {isDark ? (
+                <Sun className="w-5 h-5" strokeWidth={1.5} />
+              ) : (
+                <Moon className="w-5 h-5" strokeWidth={1.5} />
+              )}
+            </button>
+            {/* Menu + Profile Pill Button */}
+            <div className={`flex items-center gap-2 px-3 py-1.5 border rounded-full transition-colors ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-300 bg-white'}`}>
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="hover:cursor-pointer"
+              >
+                <Menu className={`w-4 h-4 ${isDark ? 'text-white' : 'text-black'}`} strokeWidth={1.5} />
+              </button>
+              <button
+                onClick={() => {
+                  if (currentUser) {
+                    window.location.href = '/dashboard';
+                  } else {
+                    setIsLoginModalOpen(true);
+                  }
+                }}
+                className="hover:cursor-pointer flex items-center justify-center"
+              >
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                  <User className="w-4 h-4 text-blue-600" strokeWidth={2} fill="none" />
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Search Bar - Floating on map with gap from header */}
+      <div className="md:hidden absolute top-20 left-0 right-0 z-40 px-3">
+        <form onSubmit={handleSearch} className="relative search-container">
+          <div className={`rounded-full pl-4 pr-3 py-2.5 w-full flex items-center gap-2 shadow-lg transition-colors ${isDark ? 'bg-[#282c34]' : 'bg-white'}`}>
+            <Search className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={handleSearchInputChange}
+              onFocus={() => {
+                setIsSearchFocused(true);
+                setShowSuggestions(true);
+              }}
+              onBlur={() => {
+                setTimeout(() => {
+                  setIsSearchFocused(false);
+                  setShowSuggestions(false);
+                }, 150);
+              }}
+              placeholder="Search 'Kora'"
+              className={`flex-1 outline-none text-sm font-medium bg-transparent mobile-search-input-field ${isDark ? 'text-white placeholder:text-gray-500' : 'text-gray-700 placeholder:text-gray-400'}`}
+              style={{ background: 'transparent', border: 'none', padding: 0 }}
+            />
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowCitySelector(false);
+                  setShowFiltersView(true);
+                }}
+                className={`transition-colors cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                <SlidersHorizontal className="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowFiltersView(false);
+                  setShowCitySelector(true);
+                }}
+                className={`transition-colors cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                <Globe className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile Suggestions Dropdown */}
+          {showSuggestions && (
+            <div className={`absolute top-full left-0 right-0 rounded-lg shadow-xl mt-1 max-h-60 overflow-y-auto z-50 border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'bg-white border-gray-200'}`}>
+              {suggestions.length > 0 ? (
+                suggestions.map((suggestion, index) => (
+                  <div
+                    key={index}
+                    onMouseDown={async (e) => {
+                      e.preventDefault();
+                      setSearchQuery(suggestion.text);
+                      setShowSuggestions(false);
+
+                      const searchText = suggestion.text;
+
+                      const matchingProperty = markers.find(marker =>
+                        marker.state_name?.toLowerCase() === searchText.toLowerCase() ||
+                        marker.layer_location?.toLowerCase() === searchText.toLowerCase() ||
+                        marker.location_district?.toLowerCase() === searchText.toLowerCase()
+                      );
+
+                      if (matchingProperty && matchingProperty.position) {
+                        setMapCenter(matchingProperty.position);
+                        setZoomLevel(12);
+                        setSearchQuery("");
+                        return;
+                      }
+
+                      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+                      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchText)}&key=${apiKey}`;
+
+                      try {
+                        const res = await fetch(url);
+                        const data = await res.json();
+
+                        if (data.status === "OK" && data.results && data.results.length > 0) {
+                          const { lat, lng } = data.results[0].geometry.location;
+                          const pos = { lat, lng };
+
+                          setZoomLevel(12);
+                          setMapCenter(pos);
+                          setSearchQuery("");
+                        }
+                      } catch (err) {
+                        console.error("Search error:", err);
+                      }
+                    }}
+                    className={`px-3 py-2 cursor-pointer border-b last:border-b-0 transition-all duration-200 ${isDark ? 'hover:bg-gray-700 border-gray-700' : 'hover:bg-gray-100 border-gray-100'}`}
+                  >
+                    <div className={`text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{suggestion.displayText}</div>
+                  </div>
+                ))
+              ) : (
+                <div className={`px-3 py-2 text-sm ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                  No suggestions found
+                </div>
+              )}
+            </div>
+          )}
+        </form>
+      </div>
+
+      <main className="flex-1 relative flex pb-16 md:pb-0">
         <div className="hidden md:block relative">
-          <div className={`${isDrawerCollapsed ? 'w-0 overflow-hidden' : 'w-[380px]'} bg-gray-50 shadow-lg flex flex-col transition-all duration-300 h-full`}>
-            <div className={`sticky top-0 bg-white z-20 px-4 pt-4 pb-4 ${isDrawerCollapsed ? 'hidden' : ''}`}>
+          <div className={`${isDrawerCollapsed ? 'w-0 overflow-hidden' : 'w-[380px]'} shadow-lg flex flex-col transition-all duration-300 h-full ${isDark ? 'bg-[#1f2229]' : 'bg-gray-50'}`}>
+            <div className={`sticky top-0 z-20 px-4 pt-4 pb-4 ${isDrawerCollapsed ? 'hidden' : ''} ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}>
               <form onSubmit={handleSearch} className="mb-4">
                 <div className="relative search-container">
-                  <div className="bg-gray-100 rounded-full pl-4 pr-3 py-3 w-full flex items-center gap-3">
-                    <Search className="text-gray-400 w-5 h-5 flex-shrink-0" />
+                  <div className={`rounded-full pl-4 pr-3 py-3 w-full flex items-center gap-3 ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                    <Search className={`w-5 h-5 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                     <div className="flex-1 flex items-center gap-1.5 min-w-0 relative">
-                      <span className="text-gray-500 text-sm font-medium whitespace-nowrap">Search</span>
+                      <span className={`text-sm font-medium whitespace-nowrap ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Search</span>
                       <div className="flex-1 relative min-w-0" onClick={() => {
                         if (!isSearchFocused) {
                           const input = document.querySelector('.search-input-field');
@@ -796,7 +954,7 @@ export default function HomePage() {
                         }
                       }}>
                         {searchQuery && !isSearchFocused && (
-                          <span className="text-gray-700 text-sm font-medium cursor-text pointer-events-none">"{searchQuery}"</span>
+                          <span className={`text-sm font-medium cursor-text pointer-events-none ${isDark ? 'text-white' : 'text-gray-700'}`}>"{searchQuery}"</span>
                         )}
                         <input
                           type="text"
@@ -813,7 +971,7 @@ export default function HomePage() {
                             }, 150);
                           }}
                           placeholder=""
-                          className={`w-full outline-none text-gray-700 text-sm font-medium bg-transparent search-input-field ${
+                          className={`w-full outline-none text-sm font-medium bg-transparent search-input-field ${isDark ? 'text-white' : 'text-gray-700'} ${
                             searchQuery && !isSearchFocused ? 'absolute inset-0 opacity-0' : ''
                           }`}
                           style={{ background: 'transparent', border: 'none', padding: 0 }}
@@ -826,15 +984,22 @@ export default function HomePage() {
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
+                          setShowCitySelector(false);
                           setShowFiltersView(true);
                         }}
-                        className="text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
+                        className={`transition-colors cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'}`}
                       >
                         <SlidersHorizontal className="w-5 h-5" />
                       </button>
                       <button
                         type="button"
-                        className="text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setShowFiltersView(false);
+                          setShowCitySelector(true);
+                        }}
+                        className={`transition-colors cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'}`}
                       >
                         <Globe className="w-5 h-5" />
                       </button>
@@ -843,7 +1008,7 @@ export default function HomePage() {
 
                   {/* Suggestions Dropdown */}
                   {showSuggestions && (
-                    <div className="absolute top-full left-0 right-0 bg-white rounded-lg shadow-xl mt-1 max-h-60 overflow-y-auto z-500 border border-gray-200">
+                    <div className={`absolute top-full left-0 right-0 rounded-lg shadow-xl mt-1 max-h-60 overflow-y-auto z-500 border ${isDark ? 'bg-[#282c34] border-gray-700' : 'bg-white border-gray-200'}`}>
                       {suggestions.length > 0 ? (
                         suggestions.map((suggestion, index) => (
                           <div
@@ -887,13 +1052,13 @@ export default function HomePage() {
                                 console.error("Search error:", err);
                               }
                             }}
-                            className="px-4 py-2.5 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0 transition-all duration-200"
+                            className={`px-4 py-2.5 cursor-pointer border-b last:border-b-0 transition-all duration-200 ${isDark ? 'hover:bg-gray-700 border-gray-700' : 'hover:bg-gray-100 border-gray-100'}`}
                           >
-                            <div className="text-gray-800 text-sm">{suggestion.displayText}</div>
+                            <div className={`text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{suggestion.displayText}</div>
                           </div>
                         ))
                       ) : (
-                        <div className="px-4 py-2.5 text-gray-500 text-sm">
+                        <div className={`px-4 py-2.5 text-sm ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
                           No suggestions found
                         </div>
                       )}
@@ -902,10 +1067,10 @@ export default function HomePage() {
                 </div>
               </form>
 
-              {!showFiltersView && (
+              {!showFiltersView && !showCitySelector && (
                 <>
                   {/* Category Filters - Segmented Control */}
-                  <div className="bg-gray-100 rounded-full p-1 flex mb-4">
+                  <div className={`rounded-full p-1 flex mb-4 ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
                     <button
                       onClick={() => {
                         setPropertyTypeFilter('all');
@@ -916,8 +1081,8 @@ export default function HomePage() {
                       }}
                       className={`flex-1 px-4 py-2 rounded-full text-sm font-medium transition-all ${
                         propertyTypeFilter === 'all'
-                          ? 'bg-white text-gray-800 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-800'
+                          ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
+                          : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
                       }`}
                     >
                       All
@@ -932,8 +1097,8 @@ export default function HomePage() {
                       }}
                       className={`flex-1 px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${
                         propertyTypeFilter === 'commercial'
-                          ? 'bg-white text-gray-800 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-800'
+                          ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
+                          : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
                       }`}
                     >
                       <Building2 className="w-3.5 h-3.5" />
@@ -949,8 +1114,8 @@ export default function HomePage() {
                       }}
                       className={`flex-1 px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${
                         propertyTypeFilter === 'residential'
-                          ? 'bg-white text-gray-800 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-800'
+                          ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
+                          : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
                       }`}
                     >
                       <Home className="w-3.5 h-3.5" />
@@ -965,7 +1130,7 @@ export default function HomePage() {
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                         listingTypeFilter === 'forSale'
                           ? 'bg-gray-800 text-white'
-                          : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                          : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
                       }`}
                     >
                       For Sale
@@ -975,7 +1140,7 @@ export default function HomePage() {
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                         listingTypeFilter === 'forRent'
                           ? 'bg-gray-800 text-white'
-                          : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                          : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
                       }`}
                     >
                       For Rent
@@ -985,7 +1150,7 @@ export default function HomePage() {
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                         listingTypeFilter === 'readyToMove'
                           ? 'bg-gray-800 text-white'
-                          : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                          : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
                       }`}
                     >
                       Ready to Move
@@ -995,7 +1160,7 @@ export default function HomePage() {
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                         listingTypeFilter === 'newProjects'
                           ? 'bg-gray-800 text-white'
-                          : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                          : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
                       }`}
                     >
                       New Projects
@@ -1003,12 +1168,12 @@ export default function HomePage() {
                   </div>
 
                   {/* Properties Count and Sort */}
-                  <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                  <div className={`flex items-center justify-between pt-2 border-t ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
                     <p className="text-sm">
                       <span className="text-orange-500 font-medium">{getFilteredMarkers().length} {getFilteredMarkers().length === 1 ? 'property' : 'properties'}</span>
-                      <span className="text-gray-500"> found</span>
+                      <span className={isDark ? 'text-gray-400' : 'text-gray-500'}> found</span>
                     </p>
-                    <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-800 transition-colors">
+                    <button className={`flex items-center gap-1 text-sm transition-colors ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}>
                       <span>Sort by</span>
                       <ChevronDown className="w-4 h-4" />
                     </button>
@@ -1017,19 +1182,170 @@ export default function HomePage() {
               )}
             </div>
 
-            {/* Filters View */}
-            {showFiltersView ? (
-              <div className={`flex-1 overflow-y-auto bg-white ${isDrawerCollapsed ? 'hidden' : ''}`}>
+            {/* City Selector View */}
+            {showCitySelector ? (
+              <div className={`flex-1 overflow-y-auto ${isDark ? 'bg-[#1f2229]' : 'bg-white'} ${isDrawerCollapsed ? 'hidden' : ''}`}>
+                {/* City Selector Header */}
+                <div className={`flex items-center gap-3 px-4 py-3 border-b sticky top-0 z-10 ${isDark ? 'border-gray-700 bg-[#1f2229]' : 'border-gray-200 bg-white'}`}>
+                  <button 
+                    onClick={() => setShowCitySelector(false)}
+                    className={`cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>Country/City</h2>
+                </div>
+
+                {/* Search Input */}
+                <div className={`px-4 py-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <div className={`flex items-center gap-2 px-3 py-2.5 border rounded-lg ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-300 bg-white'}`}>
+                    <Search className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                    <input 
+                      type="text" 
+                      value={citySearchQuery}
+                      onChange={(e) => setCitySearchQuery(e.target.value)}
+                      placeholder="Select or type your city"
+                      className={`flex-1 text-sm outline-none bg-transparent ${isDark ? 'text-white placeholder-gray-500' : 'text-gray-700 placeholder-gray-400'}`}
+                    />
+                  </div>
+                </div>
+
+                {/* Detect Location and Reset City */}
+                <div className={`px-4 py-3 flex items-center justify-between border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const locationData = await getUserLocation();
+                        setMapCenter({ lat: locationData.lat, lng: locationData.lng });
+                        if (locationData.isApproximate) {
+                          setZoomLevel(10);
+                        } else {
+                          setZoomLevel(13);
+                        }
+                        setShowCitySelector(false);
+                      } catch (error) {
+                        console.error('Error detecting location:', error);
+                      }
+                    }}
+                    className="flex items-center gap-2 text-blue-500 hover:text-blue-600 transition-colors cursor-pointer"
+                  >
+                    <MapPin className="w-4 h-4" />
+                    <span className="text-sm font-medium">Detect my location</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedCity(null);
+                      setSelectedMarker(null);
+                      setMapCenter({ lat: 20.5937, lng: 78.9629 });
+                      setZoomLevel(5);
+                      setShowCitySelector(false);
+                    }}
+                    className={`text-sm transition-colors cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
+                  >
+                    Reset City
+                  </button>
+                </div>
+
+                {/* Top Cities Section */}
+                <div className={`px-4 py-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Top Cities</h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    {[
+                      'Bangalore', 'Chennai', 'Delhi', 'Gurgaon', 'Hyderabad', 'Kolkata',
+                      'Lucknow', 'Mumbai', 'Navi Mumbai', 'Noida', 'Pune', 'Thane'
+                    ].filter(city => 
+                      !citySearchQuery || city.toLowerCase().includes(citySearchQuery.toLowerCase())
+                    ).map(city => (
+                      <button
+                        key={city}
+                        onClick={async () => {
+                          const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+                          const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(city + ', India')}&key=${apiKey}`;
+                          
+                          try {
+                            const res = await fetch(url);
+                            const data = await res.json();
+                            
+                            if (data.status === "OK" && data.results && data.results.length > 0) {
+                              const { lat, lng } = data.results[0].geometry.location;
+                              setMapCenter({ lat, lng });
+                              setZoomLevel(12);
+                              setShowCitySelector(false);
+                              setCitySearchQuery('');
+                            }
+                          } catch (err) {
+                            console.error("Error geocoding city:", err);
+                          }
+                        }}
+                        className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-colors cursor-pointer ${isDark ? 'hover:bg-[#282c34]' : 'hover:bg-gray-50'}`}
+                      >
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                          <Building2 className="w-6 h-6 text-blue-500" />
+                        </div>
+                        <span className={`text-xs text-center font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{city}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Other Cities Section */}
+                <div className="px-4 py-4">
+                  <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Other Cities</h3>
+                  <div className="space-y-0 max-h-[400px] overflow-y-auto">
+                    {[...new Set(indianCities)]
+                      .filter(city => 
+                        !citySearchQuery || city.toLowerCase().includes(citySearchQuery.toLowerCase())
+                      )
+                      .filter(city => 
+                        !['Bangalore', 'Chennai', 'Delhi', 'Gurgaon', 'Hyderabad', 'Kolkata',
+                          'Lucknow', 'Mumbai', 'Navi Mumbai', 'Noida', 'Pune', 'Thane'].includes(city)
+                      )
+                      .sort((a, b) => a.localeCompare(b))
+                      .map(city => (
+                        <button
+                          key={city}
+                          onClick={async () => {
+                            const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+                            const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(city + ', India')}&key=${apiKey}`;
+                            
+                            try {
+                              const res = await fetch(url);
+                              const data = await res.json();
+                              
+                              if (data.status === "OK" && data.results && data.results.length > 0) {
+                                const { lat, lng } = data.results[0].geometry.location;
+                                setMapCenter({ lat, lng });
+                                setZoomLevel(12);
+                                setShowCitySelector(false);
+                                setCitySearchQuery('');
+                              }
+                            } catch (err) {
+                              console.error("Error geocoding city:", err);
+                            }
+                          }}
+                          className={`w-full px-0 py-3 text-left text-sm transition-colors cursor-pointer border-b last:border-b-0 ${isDark ? 'text-gray-300 hover:text-white hover:bg-[#282c34] border-gray-700' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50 border-gray-100'}`}
+                        >
+                          {city}
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              </div>
+            ) : showFiltersView ? (
+              <div className={`flex-1 overflow-y-auto ${isDark ? 'bg-[#1f2229]' : 'bg-white'} ${isDrawerCollapsed ? 'hidden' : ''}`}>
                 {/* Filters Header */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+                <div className={`flex items-center justify-between px-4 py-3 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
                   <div className="flex items-center gap-3">
                     <button 
-                      onClick={() => setShowFiltersView(false)}
-                      className="text-gray-600 hover:text-gray-800 cursor-pointer"
+                      onClick={() => {
+                        setShowFiltersView(false);
+                        setShowCitySelector(false);
+                      }}
+                      className={`cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
                     >
                       <ChevronLeft className="w-5 h-5" />
                     </button>
-                    <h2 className="text-lg font-semibold text-gray-800">Filters</h2>
+                    <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>Filters</h2>
                   </div>
                   <button 
                     onClick={() => {
@@ -1053,14 +1369,14 @@ export default function HomePage() {
                 <div className="p-4 space-y-6">
                   {/* Search Type */}
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-800 mb-3">Search Type</h3>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Search Type</h3>
                     <div className="flex gap-2">
                       <button
                         onClick={() => setSearchType('locality')}
                         className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all ${
                           searchType === 'locality'
                             ? 'bg-blue-500 text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            : isDark ? 'bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
                       >
                         <MapPin className="w-3.5 h-3.5" />
@@ -1071,7 +1387,7 @@ export default function HomePage() {
                         className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all ${
                           searchType === 'metro'
                             ? 'bg-blue-500 text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            : isDark ? 'bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
                       >
                         <Building2 className="w-3.5 h-3.5" />
@@ -1082,7 +1398,7 @@ export default function HomePage() {
                         className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all ${
                           searchType === 'travel'
                             ? 'bg-blue-500 text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            : isDark ? 'bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
                       >
                         <MapPin className="w-3.5 h-3.5" />
@@ -1092,26 +1408,26 @@ export default function HomePage() {
                   </div>
 
                   {/* Search Localities Input */}
-                  <div className="flex items-center gap-2 px-3 py-2.5 border border-gray-200 rounded-lg">
-                    <MapPin className="w-4 h-4 text-gray-400" />
+                  <div className={`flex items-center gap-2 px-3 py-2.5 border rounded-lg ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200'}`}>
+                    <MapPin className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                     <input 
                       type="text" 
                       placeholder="Search upto 3 localities or landmarks"
-                      className="flex-1 text-sm text-gray-600 placeholder-gray-400 outline-none bg-transparent"
+                      className={`flex-1 text-sm outline-none bg-transparent ${isDark ? 'text-white placeholder-gray-500' : 'text-gray-600 placeholder-gray-400'}`}
                     />
-                    <MapPin className="w-4 h-4 text-gray-400" />
+                    <MapPin className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                   </div>
 
                   {/* Building Type */}
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-800 mb-3">Building Type</h3>
-                    <div className="bg-gray-100 rounded-full p-1 flex">
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Building Type</h3>
+                    <div className={`rounded-full p-1 flex ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
                       <button
                         onClick={() => setBuildingType('commercial')}
                         className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
                           buildingType === 'commercial'
-                            ? 'bg-white text-gray-800 shadow-sm'
-                            : 'text-gray-600'
+                            ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
+                            : isDark ? 'text-gray-400' : 'text-gray-600'
                         }`}
                       >
                         <Building2 className="w-3.5 h-3.5" />
@@ -1121,8 +1437,8 @@ export default function HomePage() {
                         onClick={() => setBuildingType('residential')}
                         className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
                           buildingType === 'residential'
-                            ? 'bg-white text-gray-800 shadow-sm'
-                            : 'text-gray-600'
+                            ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
+                            : isDark ? 'text-gray-400' : 'text-gray-600'
                         }`}
                       >
                         <Home className="w-3.5 h-3.5" />
@@ -1133,7 +1449,7 @@ export default function HomePage() {
 
                   {/* Property Type */}
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-800 mb-3">Property Type</h3>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Property Type</h3>
                     <div className="grid grid-cols-2 gap-2">
                       {[
                         { key: 'officeSpace', label: 'Office Space' },
@@ -1152,14 +1468,14 @@ export default function HomePage() {
                             className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors ${
                               propertyTypes[item.key] 
                                 ? 'bg-blue-500 border-blue-500' 
-                                : 'border-gray-300'
+                                : isDark ? 'border-gray-600' : 'border-gray-300'
                             }`}
                           >
                             {propertyTypes[item.key] && (
                               <Check className="w-3 h-3 text-white" strokeWidth={3} />
                             )}
                           </div>
-                          <span className="text-sm text-gray-700">{item.label}</span>
+                          <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
                         </label>
                       ))}
                     </div>
@@ -1167,13 +1483,13 @@ export default function HomePage() {
 
                   {/* Budget (lumsum) */}
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-800 mb-3">Budget (lumsum)</h3>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Budget (lumsum)</h3>
                     <div className="flex gap-3">
                       <div className="flex-1">
                         <select 
                           value={budgetLumpsum.min}
                           onChange={(e) => setBudgetLumpsum(prev => ({ ...prev, min: e.target.value }))}
-                          className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600 bg-white appearance-none cursor-pointer"
+                          className={`w-full px-3 py-2.5 border rounded-lg text-sm appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
                         >
                           <option value="">Min</option>
                           <option value="5">₹5 Lac</option>
@@ -1187,7 +1503,7 @@ export default function HomePage() {
                         <select 
                           value={budgetLumpsum.max}
                           onChange={(e) => setBudgetLumpsum(prev => ({ ...prev, max: e.target.value }))}
-                          className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600 bg-white appearance-none cursor-pointer"
+                          className={`w-full px-3 py-2.5 border rounded-lg text-sm appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
                         >
                           <option value="">Max</option>
                           <option value="25">₹25 Lac</option>
@@ -1202,13 +1518,13 @@ export default function HomePage() {
 
                   {/* Budget (per seat) */}
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-800 mb-3">Budget (per seat)</h3>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Budget (per seat)</h3>
                     <div className="flex gap-3">
                       <div className="flex-1">
                         <select 
                           value={budgetPerSeat.min}
                           onChange={(e) => setBudgetPerSeat(prev => ({ ...prev, min: e.target.value }))}
-                          className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600 bg-white appearance-none cursor-pointer"
+                          className={`w-full px-3 py-2.5 border rounded-lg text-sm appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
                         >
                           <option value="">Min</option>
                           <option value="5000">₹5,000</option>
@@ -1221,7 +1537,7 @@ export default function HomePage() {
                         <select 
                           value={budgetPerSeat.max}
                           onChange={(e) => setBudgetPerSeat(prev => ({ ...prev, max: e.target.value }))}
-                          className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600 bg-white appearance-none cursor-pointer"
+                          className={`w-full px-3 py-2.5 border rounded-lg text-sm appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
                         >
                           <option value="">Max</option>
                           <option value="10000">₹10,000</option>
@@ -1235,7 +1551,7 @@ export default function HomePage() {
                 </div>
 
                 {/* Apply Filters Button */}
-                <div className="sticky bottom-0 p-4 bg-white border-t border-gray-200">
+                <div className={`sticky bottom-0 p-4 border-t ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-white border-gray-200'}`}>
                   <button 
                     onClick={() => setShowFiltersView(false)}
                     className="w-full py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
@@ -1244,13 +1560,13 @@ export default function HomePage() {
                   </button>
                 </div>
               </div>
-            ) : (
+            ) : !showCitySelector ? (
               /* Property List */
-              <div className={`flex-1 overflow-y-auto p-3 space-y-3 bg-gray-50 ${isDrawerCollapsed ? 'hidden' : ''}`}>
+              <div className={`flex-1 overflow-y-auto p-3 space-y-3 ${isDark ? 'bg-[#1f2229]' : 'bg-gray-50'} ${isDrawerCollapsed ? 'hidden' : ''}`}>
                 {getFilteredMarkers().map(marker => (
                   <div 
                     key={marker.id} 
-                    className="bg-white rounded-xl p-3 cursor-pointer hover:shadow-md transition-shadow shadow-sm"
+                    className={`rounded-xl p-3 cursor-pointer hover:shadow-md transition-shadow shadow-sm ${isDark ? 'bg-[#282c34]' : 'bg-white'}`}
                     onClick={() => handleMarkerClick(marker)}
                   >
                     <div className="flex gap-3">
@@ -1267,7 +1583,7 @@ export default function HomePage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2 mb-0.5">
                           <div className="flex items-center gap-1.5 min-w-0">
-                            <h3 className="font-semibold text-gray-800 text-sm leading-tight truncate">
+                            <h3 className={`font-semibold text-sm leading-tight truncate ${isDark ? 'text-white' : 'text-gray-800'}`}>
                               {marker.name || 'Property Name'}
                             </h3>
                             {marker.is_verified && (
@@ -1286,7 +1602,7 @@ export default function HomePage() {
                               className={`p-1 rounded-full transition-colors ${
                                 propertyFavorites[marker._id || marker.id]
                                   ? 'text-red-500'
-                                  : 'text-gray-300 hover:text-red-500'
+                                  : isDark ? 'text-gray-500 hover:text-red-500' : 'text-gray-300 hover:text-red-500'
                               }`}
                             >
                               <Heart 
@@ -1300,13 +1616,13 @@ export default function HomePage() {
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
-                              className="p-1 rounded-full hover:bg-gray-50 transition-colors"
+                              className={`p-1 rounded-full transition-colors ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
                             >
                               <Image src="/whatsapp.svg" alt="WhatsApp" width={18} height={18} />
                             </a>
                           </div>
                         </div>
-                        <p className="text-xs text-gray-500 mb-1.5 truncate">
+                        <p className={`text-xs mb-1.5 truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                           <span>in {marker.layer_location || marker.location_district || marker.state_name}</span>
                           {marker.location_district && marker.layer_location && marker.location_district !== marker.layer_location && (
                             <span>, {marker.location_district}</span>
@@ -1322,7 +1638,7 @@ export default function HomePage() {
                               <p className="text-sm">
                                 <span className="font-bold text-orange-500">{prices.discountedPrice}</span>
                                 {prices.originalPrice && prices.originalPrice !== prices.discountedPrice && (
-                                  <span className="text-gray-400 line-through ml-2 text-xs">{prices.originalPrice}</span>
+                                  <span className={`line-through ml-2 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{prices.originalPrice}</span>
                                 )}
                               </p>
                             );
@@ -1330,7 +1646,7 @@ export default function HomePage() {
                             return (
                               <p className="text-sm">
                                 <span className="font-bold text-orange-500">{marker.price_per_acre}</span>
-                                <span className="text-gray-500 text-xs">/sq.ft</span>
+                                <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>/sq.ft</span>
                               </p>
                             );
                           }
@@ -1341,7 +1657,7 @@ export default function HomePage() {
                   </div>
                 ))}
               </div>
-            )}
+            ) : null}
           </div>
           
           {/* Toggle Button - positioned relative to drawer container */}
@@ -1366,25 +1682,811 @@ export default function HomePage() {
             selectedMarker={selectedMarker}
             onMarkerClick={handleMarkerClick}
             zoom={zoomLevel}
+            mapType={mapType}
+            showTraffic={showTraffic}
+            hideLayerButton={true}
           />
 
-          <div className="absolute bottom-6 right-4 flex flex-col gap-3 z-10">
-            <button
-              ref={addBtnRef}
-              onClick={() => openModal("add", addBtnRef)}
-              className="bg-[#ffdd57] hover:cursor-pointer text-slate-800 p-2.5 rounded-lg shadow-xl"
-            >
-              {activeModal === "add" ? <X className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
-            </button>
-            <button
-              ref={shareBtnRef}
-              onClick={() => openModal("share", shareBtnRef)}
-              className="bg-white hover:cursor-pointer text-slate-800 p-2.5 rounded-lg shadow-xl transition-colors"
-            >
-              <Share2 className="w-6 h-6" />
-            </button>
+          {/* Mobile List View Button - Bottom Left above footer */}
+          <button
+            onClick={() => setShowMobileList(!showMobileList)}
+            className="md:hidden absolute bottom-16 left-3 z-10 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-2 transition-colors cursor-pointer"
+          >
+            <List className="w-4 h-4" />
+            <span className="text-sm font-medium">List View</span>
+          </button>
+
+          {/* Map Controls - Vertical Panel - Same as desktop */}
+          <div className="absolute bottom-16 md:bottom-6 right-3 md:right-4 z-10">
+            <div className={`rounded-lg overflow-hidden shadow-xl ${isDark ? 'bg-[#282c34]' : 'bg-gray-200'}`}>
+              {/* Add Property Button */}
+              <button
+                onClick={() => setShowAddPropertyModal(true)}
+                className={`w-10 h-10 md:w-12 md:h-12 transition-colors flex items-center justify-center cursor-pointer border-b ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b] border-gray-700' : 'bg-gray-200 hover:bg-gray-300 border-gray-300'}`}
+                title="Add Your Property"
+              >
+                <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full border-2 flex items-center justify-center ${isDark ? 'border-white' : 'border-black'}`}>
+                  <Plus className={`w-3 h-3 md:w-4 md:h-4 ${isDark ? 'text-white' : 'text-black'}`} />
+                </div>
+              </button>
+
+              {/* Locate Me Button */}
+              <button
+                onClick={async () => {
+                  try {
+                    const locationData = await getUserLocation();
+                    setMapCenter({ lat: locationData.lat, lng: locationData.lng });
+                    if (locationData.isApproximate) {
+                      setZoomLevel(10);
+                    } else {
+                      setZoomLevel(13);
+                    }
+                  } catch (error) {
+                    console.error('Error detecting location:', error);
+                  }
+                }}
+                className={`w-10 h-10 md:w-12 md:h-12 transition-colors flex items-center justify-center cursor-pointer border-b ${isDark ? 'bg-[#1f2229] hover:bg-[#282c34] border-gray-700' : 'bg-gray-100 hover:bg-gray-200 border-gray-300'}`}
+                title="Locate Me"
+              >
+                <LocateFixed className="w-5 h-5 md:w-6 md:h-6 text-red-500" />
+              </button>
+
+              {/* Layers Button */}
+              <button
+                onClick={() => setShowLayerMenu(!showLayerMenu)}
+                className={`w-10 h-10 md:w-12 md:h-12 transition-colors flex items-center justify-center cursor-pointer ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-gray-200 hover:bg-gray-300'}`}
+                title="Map Layers"
+              >
+                <Layers className={`w-4 h-4 md:w-5 md:h-5 ${isDark ? 'text-white' : 'text-black'}`} />
+              </button>
+            </div>
+
+            {/* Layer Menu */}
+            {showLayerMenu && (
+              <div className={`absolute bottom-full right-0 mb-2 rounded-lg shadow-xl p-3 w-40 md:w-48 ${isDark ? 'bg-[#282c34]' : 'bg-white'}`}>
+                <h3 className={`text-xs md:text-sm font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>Map Type</h3>
+                <div className="space-y-1 mb-3">
+                  {[
+                    { id: "roadmap", name: "Default", icon: "🗺️" },
+                    { id: "satellite", name: "Satellite", icon: "🛰️" },
+                    { id: "hybrid", name: "Hybrid", icon: "🌍" },
+                    { id: "terrain", name: "Terrain", icon: "⛰️" }
+                  ].map((type) => (
+                    <button
+                      key={type.id}
+                      onClick={() => {
+                        setMapType(type.id);
+                        setShowLayerMenu(false);
+                      }}
+                      className={`w-full text-left px-2 md:px-3 py-1.5 md:py-2 rounded-md text-xs md:text-sm transition-colors flex items-center gap-2 ${
+                        mapType === type.id
+                          ? "bg-blue-600/20 text-blue-400 font-medium"
+                          : isDark ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      <span>{type.icon}</span>
+                      <span>{type.name}</span>
+                      {mapType === type.id && (
+                        <svg className="w-3 h-3 md:w-4 md:h-4 ml-auto" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                <div className={`border-t pt-3 ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <h3 className={`text-xs md:text-sm font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>Layers</h3>
+                  <button
+                    onClick={() => {
+                      setShowTraffic(!showTraffic);
+                      setShowLayerMenu(false);
+                    }}
+                    className={`w-full text-left px-2 md:px-3 py-1.5 md:py-2 rounded-md text-xs md:text-sm transition-colors flex items-center gap-2 ${
+                      showTraffic
+                        ? "bg-blue-600/20 text-blue-400 font-medium"
+                        : isDark ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span>🚦</span>
+                    <span>Traffic</span>
+                    {showTraffic && (
+                      <svg className="w-3 h-3 md:w-4 md:h-4 ml-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Mobile Filters Modal */}
+      {showFiltersView && (
+        <div className="md:hidden fixed inset-0 z-50 flex items-end">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/40" onClick={() => {
+            setShowFiltersView(false);
+            setShowCitySelector(false);
+          }}></div>
+          
+          {/* Modal Content */}
+          <div className={`relative w-full rounded-t-3xl overflow-hidden flex flex-col ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`} style={{ maxHeight: '90vh' }}>
+            {/* Drag Handle */}
+            <div className="flex justify-center py-3 flex-shrink-0">
+              <div className={`w-12 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-300'}`}></div>
+            </div>
+
+            {/* Scrollable Content */}
+            <div 
+              className="overflow-y-auto mobile-modal-scroll flex-1" 
+              style={{ 
+                scrollbarWidth: 'thin',
+                scrollbarColor: isDark ? '#4b5563 #2d3139' : '#cbd5e1 #f1f5f9'
+              }}
+            >
+              {/* Filters Header */}
+              <div className={`flex items-center justify-between px-4 py-3 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={() => {
+                      setShowFiltersView(false);
+                      setShowCitySelector(false);
+                    }}
+                    className={`cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>Filters</h2>
+                </div>
+                <button 
+                  onClick={() => {
+                    setSearchType('locality');
+                    setBuildingType('commercial');
+                    setPropertyTypes({
+                      officeSpace: false, coWorking: false, shop: false, showroom: false,
+                      godownWarehouse: false, industrialShed: false, industrialBuilding: false,
+                      otherBusiness: false, restaurantCafe: false,
+                    });
+                    setBudgetLumpsum({ min: '', max: '' });
+                    setBudgetPerSeat({ min: '', max: '' });
+                  }}
+                  className="text-blue-500 text-sm font-medium hover:text-blue-600 cursor-pointer"
+                >
+                  Clear all
+                </button>
+              </div>
+
+              {/* Filters Content */}
+              <div className="p-4 space-y-6 pb-24">
+            {/* Search Type */}
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Search Type</h3>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setSearchType('locality')}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all ${
+                    searchType === 'locality'
+                      ? 'bg-blue-500 text-white'
+                      : isDark ? 'bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  <MapPin className="w-3.5 h-3.5" />
+                  Locality
+                </button>
+                <button
+                  onClick={() => setSearchType('metro')}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all ${
+                    searchType === 'metro'
+                      ? 'bg-blue-500 text-white'
+                      : isDark ? 'bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  <Building2 className="w-3.5 h-3.5" />
+                  Along Metro
+                </button>
+                <button
+                  onClick={() => setSearchType('travel')}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all ${
+                    searchType === 'travel'
+                      ? 'bg-blue-500 text-white'
+                      : isDark ? 'bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  <MapPin className="w-3.5 h-3.5" />
+                  Travel time
+                </button>
+              </div>
+            </div>
+
+            {/* Search Localities Input */}
+            <div className={`flex items-center gap-2 px-3 py-2.5 border rounded-lg ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200'}`}>
+              <MapPin className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+              <input 
+                type="text" 
+                placeholder="Search upto 3 localities or landmarks"
+                className={`flex-1 text-sm outline-none bg-transparent ${isDark ? 'text-white placeholder-gray-500' : 'text-gray-600 placeholder-gray-400'}`}
+              />
+              <LocateFixed className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+            </div>
+
+            {/* Building Type */}
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Building Type</h3>
+              <div className={`rounded-full p-1 flex ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                <button
+                  onClick={() => setBuildingType('commercial')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    buildingType === 'commercial'
+                      ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
+                      : isDark ? 'text-gray-400' : 'text-gray-600'
+                  }`}
+                >
+                  <Building2 className="w-3.5 h-3.5" />
+                  Commercial
+                </button>
+                <button
+                  onClick={() => setBuildingType('residential')}
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    buildingType === 'residential'
+                      ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
+                      : isDark ? 'text-gray-400' : 'text-gray-600'
+                  }`}
+                >
+                  <Home className="w-3.5 h-3.5" />
+                  Residential
+                </button>
+              </div>
+            </div>
+
+            {/* Property Type */}
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Property Type</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { key: 'officeSpace', label: 'Office Space' },
+                  { key: 'coWorking', label: 'Co-Working' },
+                  { key: 'shop', label: 'Shop' },
+                  { key: 'showroom', label: 'Showroom' },
+                  { key: 'godownWarehouse', label: 'Godown/Warehouse' },
+                  { key: 'industrialShed', label: 'Industrial Shed' },
+                  { key: 'industrialBuilding', label: 'Industrial Building' },
+                  { key: 'otherBusiness', label: 'Other business' },
+                  { key: 'restaurantCafe', label: 'Restaurant/Cafe' },
+                ].map(item => (
+                  <label key={item.key} className="flex items-center gap-2 cursor-pointer">
+                    <div 
+                      onClick={() => setPropertyTypes(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                      className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors ${
+                        propertyTypes[item.key] 
+                          ? 'bg-blue-500 border-blue-500' 
+                          : isDark ? 'border-gray-600' : 'border-gray-300'
+                      }`}
+                    >
+                      {propertyTypes[item.key] && (
+                        <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                      )}
+                    </div>
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Budget (lumsum) */}
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Budget (lumsum)</h3>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <select 
+                    value={budgetLumpsum.min}
+                    onChange={(e) => setBudgetLumpsum(prev => ({ ...prev, min: e.target.value }))}
+                    className={`w-full px-3 py-2.5 border rounded-lg text-sm appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
+                  >
+                    <option value="">Min</option>
+                    <option value="5">₹5 Lac</option>
+                    <option value="10">₹10 Lac</option>
+                    <option value="25">₹25 Lac</option>
+                    <option value="50">₹50 Lac</option>
+                    <option value="100">₹1 Cr</option>
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <select 
+                    value={budgetLumpsum.max}
+                    onChange={(e) => setBudgetLumpsum(prev => ({ ...prev, max: e.target.value }))}
+                    className={`w-full px-3 py-2.5 border rounded-lg text-sm appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
+                  >
+                    <option value="">Max</option>
+                    <option value="25">₹25 Lac</option>
+                    <option value="50">₹50 Lac</option>
+                    <option value="100">₹1 Cr</option>
+                    <option value="200">₹2 Cr</option>
+                    <option value="500">₹5 Cr</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Budget (per seat) */}
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Budget (per seat)</h3>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <select 
+                    value={budgetPerSeat.min}
+                    onChange={(e) => setBudgetPerSeat(prev => ({ ...prev, min: e.target.value }))}
+                    className={`w-full px-3 py-2.5 border rounded-lg text-sm appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
+                  >
+                    <option value="">Min</option>
+                    <option value="5000">₹5,000</option>
+                    <option value="7500">₹7,500</option>
+                    <option value="10000">₹10,000</option>
+                    <option value="15000">₹15,000</option>
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <select 
+                    value={budgetPerSeat.max}
+                    onChange={(e) => setBudgetPerSeat(prev => ({ ...prev, max: e.target.value }))}
+                    className={`w-full px-3 py-2.5 border rounded-lg text-sm appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
+                  >
+                    <option value="">Max</option>
+                    <option value="10000">₹10,000</option>
+                    <option value="15000">₹15,000</option>
+                    <option value="20000">₹20,000</option>
+                    <option value="25000">₹25,000</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            </div>
+            </div>
+
+            {/* Apply Filters Button */}
+            <div className={`flex-shrink-0 p-4 pb-20 border-t ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-white border-gray-200'}`}>
+              <button 
+                onClick={() => setShowFiltersView(false)}
+                className="w-full py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
+              >
+                Apply Filters
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile City Selector Modal */}
+      {showCitySelector && (
+        <div className="md:hidden fixed inset-0 z-50 flex items-end">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowCitySelector(false)}></div>
+          
+          {/* Modal Content */}
+          <div className={`relative w-full rounded-t-3xl overflow-hidden flex flex-col ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`} style={{ maxHeight: '90vh' }}>
+            {/* Drag Handle */}
+            <div className="flex justify-center py-3 flex-shrink-0">
+              <div className={`w-12 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-300'}`}></div>
+            </div>
+
+            {/* Scrollable Content */}
+            <div 
+              className="overflow-y-auto mobile-modal-scroll flex-1" 
+              style={{ 
+                scrollbarWidth: 'thin',
+                scrollbarColor: isDark ? '#4b5563 #2d3139' : '#cbd5e1 #f1f5f9'
+              }}
+            >
+              {/* City Selector Header */}
+              <div className={`flex items-center gap-3 px-4 py-3 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                <button 
+                  onClick={() => setShowCitySelector(false)}
+                  className={`cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>Country/City</h2>
+                <div className="ml-auto">
+                  <button
+                    onClick={() => setShowCitySelector(false)}
+                    className={`cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Search Input */}
+              <div className={`px-4 py-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+            <div className={`flex items-center gap-2 px-3 py-2.5 border rounded-lg ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-300 bg-white'}`}>
+              <Search className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+              <input 
+                type="text" 
+                value={citySearchQuery}
+                onChange={(e) => setCitySearchQuery(e.target.value)}
+                placeholder="Select or type your city"
+                className={`flex-1 text-sm outline-none bg-transparent ${isDark ? 'text-white placeholder-gray-500' : 'text-gray-700 placeholder-gray-400'}`}
+              />
+            </div>
+          </div>
+
+          {/* Detect Location and Reset City */}
+          <div className={`px-4 py-3 flex items-center justify-between border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+            <button
+              onClick={async () => {
+                try {
+                  const locationData = await getUserLocation();
+                  setMapCenter({ lat: locationData.lat, lng: locationData.lng });
+                  if (locationData.isApproximate) {
+                    setZoomLevel(10);
+                  } else {
+                    setZoomLevel(13);
+                  }
+                  setShowCitySelector(false);
+                } catch (error) {
+                  console.error('Error detecting location:', error);
+                }
+              }}
+              className="flex items-center gap-2 text-blue-500 hover:text-blue-600 transition-colors cursor-pointer"
+            >
+              <LocateFixed className="w-4 h-4" />
+              <span className="text-sm font-medium">Detect my location</span>
+            </button>
+            <button
+              onClick={() => {
+                setSelectedCity(null);
+                setSelectedMarker(null);
+                setMapCenter({ lat: 20.5937, lng: 78.9629 });
+                setZoomLevel(5);
+                setShowCitySelector(false);
+              }}
+              className={`text-sm transition-colors cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
+            >
+              Reset City
+            </button>
+          </div>
+
+          {/* Top Cities Section */}
+          <div className={`px-4 py-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+            <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Top Cities</h3>
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                'Bangalore', 'Chennai', 'Delhi', 'Gurgaon', 'Hyderabad', 'Kolkata',
+                'Lucknow', 'Mumbai', 'Navi Mumbai', 'Noida', 'Pune', 'Thane'
+              ].filter(city => 
+                !citySearchQuery || city.toLowerCase().includes(citySearchQuery.toLowerCase())
+              ).map(city => (
+                <button
+                  key={city}
+                  onClick={async () => {
+                    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+                    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(city + ', India')}&key=${apiKey}`;
+                    
+                    try {
+                      const res = await fetch(url);
+                      const data = await res.json();
+                      
+                      if (data.status === "OK" && data.results && data.results.length > 0) {
+                        const { lat, lng } = data.results[0].geometry.location;
+                        setMapCenter({ lat, lng });
+                        setZoomLevel(12);
+                        setShowCitySelector(false);
+                        setCitySearchQuery('');
+                      }
+                    } catch (err) {
+                      console.error("Error geocoding city:", err);
+                    }
+                  }}
+                  className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-colors cursor-pointer ${isDark ? 'hover:bg-[#282c34]' : 'hover:bg-gray-50'}`}
+                >
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                    <Building2 className="w-6 h-6 text-blue-500" />
+                  </div>
+                  <span className={`text-xs text-center font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{city}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+              {/* Other Cities Section */}
+              <div className="px-4 py-4 pb-24">
+                <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Other Cities</h3>
+                <div className="space-y-0">
+              {[...new Set(indianCities)]
+                .filter(city => 
+                  !citySearchQuery || city.toLowerCase().includes(citySearchQuery.toLowerCase())
+                )
+                .filter(city => 
+                  !['Bangalore', 'Chennai', 'Delhi', 'Gurgaon', 'Hyderabad', 'Kolkata',
+                    'Lucknow', 'Mumbai', 'Navi Mumbai', 'Noida', 'Pune', 'Thane'].includes(city)
+                )
+                .sort((a, b) => a.localeCompare(b))
+                .map(city => (
+                  <button
+                    key={city}
+                    onClick={async () => {
+                      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+                      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(city + ', India')}&key=${apiKey}`;
+                      
+                      try {
+                        const res = await fetch(url);
+                        const data = await res.json();
+                        
+                        if (data.status === "OK" && data.results && data.results.length > 0) {
+                          const { lat, lng } = data.results[0].geometry.location;
+                          setMapCenter({ lat, lng });
+                          setZoomLevel(12);
+                          setShowCitySelector(false);
+                          setCitySearchQuery('');
+                        }
+                      } catch (err) {
+                        console.error("Error geocoding city:", err);
+                      }
+                    }}
+                    className={`w-full px-0 py-3 text-left text-sm transition-colors cursor-pointer border-b last:border-b-0 ${isDark ? 'text-gray-300 hover:text-white hover:bg-[#282c34] border-gray-700' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50 border-gray-100'}`}
+                  >
+                    {city}
+                  </button>
+                ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile List View Overlay */}
+        {showMobileList && (
+          <div className="md:hidden fixed inset-0 z-40 flex items-end">
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-black/40" onClick={() => setShowMobileList(false)}></div>
+            
+            {/* Modal Content */}
+            <div className={`relative w-full rounded-t-3xl overflow-hidden flex flex-col ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`} style={{ maxHeight: '90vh' }}>
+              {/* Drag Handle */}
+              <div className="flex justify-center py-3 flex-shrink-0">
+                <div className={`w-12 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-300'}`}></div>
+              </div>
+
+              {/* Scrollable Content */}
+              <div className="overflow-y-auto mobile-modal-scroll flex-1" style={{ scrollbarWidth: 'thin', scrollbarColor: isDark ? '#4b5563 #2d3139' : '#cbd5e1 #f1f5f9' }}>
+                <div className={`sticky top-0 border-b z-10 ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-white border-gray-200'}`}>
+                  {/* Header */}
+                  <div className="px-3 py-2.5 flex items-center justify-between">
+                <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>Properties</h2>
+                <button
+                  onClick={() => setShowMobileList(false)}
+                  className={`cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Category Filters - Segmented Control */}
+              <div className="px-3 pb-3">
+                <div className={`rounded-full p-1 flex mb-3 ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                  <button
+                    onClick={() => {
+                      setPropertyTypeFilter('all');
+                      setFilters(prev => ({
+                        ...prev,
+                        type: { commercial: false, residential: false }
+                      }));
+                    }}
+                    className={`flex-1 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      propertyTypeFilter === 'all'
+                        ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
+                        : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={() => {
+                      setPropertyTypeFilter('commercial');
+                      setFilters(prev => ({
+                        ...prev,
+                        type: { commercial: true, residential: false }
+                      }));
+                    }}
+                    className={`flex-1 px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${
+                      propertyTypeFilter === 'commercial'
+                        ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
+                        : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    <Building2 className="w-3.5 h-3.5" />
+                    Commercial
+                  </button>
+                  <button
+                    onClick={() => {
+                      setPropertyTypeFilter('residential');
+                      setFilters(prev => ({
+                        ...prev,
+                        type: { commercial: false, residential: true }
+                      }));
+                    }}
+                    className={`flex-1 px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${
+                      propertyTypeFilter === 'residential'
+                        ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
+                        : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    <Home className="w-3.5 h-3.5" />
+                    Residential
+                  </button>
+                </div>
+
+                {/* Listing Type Filters */}
+                <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
+                  <button
+                    onClick={() => setListingTypeFilter('forSale')}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+                      listingTypeFilter === 'forSale'
+                        ? 'bg-gray-800 text-white'
+                        : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    For Sale
+                  </button>
+                  <button
+                    onClick={() => setListingTypeFilter('forRent')}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+                      listingTypeFilter === 'forRent'
+                        ? 'bg-gray-800 text-white'
+                        : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    For Rent
+                  </button>
+                  <button
+                    onClick={() => setListingTypeFilter('readyToMove')}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+                      listingTypeFilter === 'readyToMove'
+                        ? 'bg-gray-800 text-white'
+                        : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    Ready to Move
+                  </button>
+                  <button
+                    onClick={() => setListingTypeFilter('newProjects')}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+                      listingTypeFilter === 'newProjects'
+                        ? 'bg-gray-800 text-white'
+                        : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    New Projects
+                  </button>
+                  <button
+                    onClick={() => setListingTypeFilter('verified')}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+                      listingTypeFilter === 'verified'
+                        ? 'bg-gray-800 text-white'
+                        : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    Verified
+                  </button>
+                </div>
+
+                {/* Results Summary and Sort */}
+                <div className={`flex items-center justify-between pt-2 mt-2 border-t ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
+                  <p className="text-sm">
+                    <span className="text-orange-500 font-medium">{getFilteredMarkers().length} {getFilteredMarkers().length === 1 ? 'property' : 'properties'}</span>
+                    <span className={isDark ? 'text-gray-400' : 'text-gray-500'}> found</span>
+                  </p>
+                  <button className={`flex items-center gap-1 text-sm transition-colors ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}>
+                    <span>Sort by</span>
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+                </div>
+              <div className={`p-3 space-y-3 pb-24 ${isDark ? 'bg-[#1f2229]' : ''}`}>
+              {getFilteredMarkers().map(marker => (
+                <div 
+                  key={marker.id} 
+                  className={`rounded-xl p-3 cursor-pointer hover:shadow-md transition-shadow shadow-sm ${isDark ? 'bg-[#282c34]' : 'bg-white border border-gray-100'}`}
+                  onClick={() => {
+                    handleMarkerClick(marker);
+                    setShowMobileList(false);
+                  }}
+                >
+                  <div className="flex gap-3">
+                    <div className="relative flex-shrink-0">
+                      <Image
+                        src={marker.featuredImageUrl || marker.images?.[0] || '/placeholder.png'}
+                        alt={marker.name || "Property Image"}
+                        width={90}
+                        height={90}
+                        className="rounded-lg object-cover w-20 h-20"
+                        unoptimized
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2 mb-0.5">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <h3 className={`font-semibold text-sm leading-tight truncate ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                            {marker.name || 'Property Name'}
+                          </h3>
+                          {marker.is_verified && (
+                            <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none">
+                              <path d="M12 1L14.4 4.2L18.3 3.4L18.1 7.4L21.6 9.2L19.4 12.5L21.6 15.8L18.1 17.6L18.3 21.6L14.4 20.8L12 24L9.6 20.8L5.7 21.6L5.9 17.6L2.4 15.8L4.6 12.5L2.4 9.2L5.9 7.4L5.7 3.4L9.6 4.2L12 1Z" fill="#FBBF24"/>
+                              <path d="M8.5 12.5L10.5 14.5L15.5 9.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleFavouriteToggle(marker);
+                            }}
+                            className={`p-1 rounded-full transition-colors ${
+                              propertyFavorites[marker._id || marker.id]
+                                ? 'text-red-500'
+                                : isDark ? 'text-gray-500 hover:text-red-500' : 'text-gray-300 hover:text-red-500'
+                            }`}
+                          >
+                            <Heart 
+                              className="w-4 h-4" 
+                              fill={propertyFavorites[marker._id || marker.id] ? "currentColor" : "none"} 
+                              strokeWidth={2} 
+                            />
+                          </button>
+                          <a
+                            href={`https://wa.me/${marker.sellerPhoneNumber?.replace(/[^0-9]/g, '') || '918151915199'}?text=Hi,%20I%20am%20interested%20in%20${encodeURIComponent(marker.name || 'this property')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className={`p-1 rounded-full transition-colors ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
+                          >
+                            <Image src="/whatsapp.svg" alt="WhatsApp" width={18} height={18} />
+                          </a>
+                        </div>
+                      </div>
+                      <p className={`text-xs mb-1.5 truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                        <span>in {marker.layer_location || marker.location_district || marker.state_name}</span>
+                        {marker.location_district && marker.layer_location && marker.location_district !== marker.layer_location && (
+                          <span>, {marker.location_district}</span>
+                        )}
+                        {marker.state_name && (
+                          <span>, {marker.state_name}</span>
+                        )}
+                      </p>
+                      {(() => {
+                        const prices = calculatePropertyPrices(marker);
+                        if (prices.discountedPrice) {
+                          return (
+                            <p className="text-sm">
+                              <span className="font-bold text-orange-500">{prices.discountedPrice}</span>
+                              {prices.originalPrice && prices.originalPrice !== prices.discountedPrice && (
+                                <span className={`line-through ml-2 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{prices.originalPrice}</span>
+                              )}
+                            </p>
+                          );
+                        } else if (marker.price_per_acre && marker.price_per_acre !== 'N/A') {
+                          return (
+                            <p className="text-sm">
+                              <span className="font-bold text-orange-500">{marker.price_per_acre}</span>
+                              <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>/sq.ft</span>
+                            </p>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              </div>
+            </div>
+          </div>
+        </div>
+        )}
       </main>
 
       {isMenuOpen && <MenuSideBar onClose={() => setIsMenuOpen(false)} />}
@@ -1404,45 +2506,80 @@ export default function HomePage() {
         />
       )}
 
-
-
-
-      {activeModal === "add" && (
-        <Modal
-          style={{ top: modalPos.top + 2, right: modalPos.right, width: 200 }}
-          onClose={() => setActiveModal(null)}
-          hideClose={true}
-          className="bg-[#dddedf]"
-        >
+      {/* Mobile Bottom Navigation Bar - Only visible on screens < 480px */}
+      <div className={`md:hidden fixed bottom-0 left-0 right-0 border-t z-50 transition-colors ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-white border-gray-200'}`}>
+        <div className="flex items-stretch">
           <Link
-            href="https://wa.me/+918151915199/?text=Hi,%20I%20want%20to%20list%20my%20land%20on%20buildersinfo."
-            className="flex items-center gap-3 text-gray-700 font-medium px-1 py-3 rounded-lg align-middle justify-center bg-[#dddedf] text-[0.9rem]"
+            href="/"
+            className="flex flex-col items-center justify-center gap-0.5 flex-1 py-2"
           >
-            <Image src='/whatsapp.svg' alt='whatsapp' width={24} height={24} /> List My Land (Free)
+            <svg className={`w-5 h-5 ${pathname === '/' ? 'text-blue-600' : isDark ? 'text-gray-500' : 'text-gray-500'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 7V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V7" />
+              <path d="M3 7L12 3L21 7" />
+              <path d="M12 11V19" />
+              <path d="M8 11V15" />
+              <path d="M16 11V15" />
+            </svg>
+            <span className={`text-[10px] font-medium ${pathname === '/' ? 'text-blue-600' : isDark ? 'text-gray-500' : 'text-gray-500'}`}>Map-View</span>
           </Link>
-        </Modal>
-      )}
-
-      {activeModal === "share" && (
-        <Modal
-          style={{ top: modalPos.top - 4, right: modalPos.right + 2 }}
-          onClose={() => setActiveModal(null)}
-          hideClose={true}
-          className="bg-[#dddedf] w-52 md:w-[270px] p-1 md:p-2.5"
-        >
-          <button
-            onClick={handleCopy}
-            className="flex items-center gap-2 text-gray-800 font-medium mb-2 p-2 rounded-sm justify-between w-full text-sm md:text-[0.9rem] hover:cursor-pointer"
-          >
-            Copy Link
-            {copied ? <CopyCheck className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-          </button>
           <Link
-            href="https://wa.me/?text=Check%20Verified%20Lands%20on%20Map%20View%3A%20%0A%20https%3A%2F%2Fwww.buildersinfo.in%2F%3Fcenter_lng%3D79.17%26center_lat%3D18.73%26zoom%3D18"
-            className="flex items-center text-sm md:text-[0.9rem] gap-2 text-gray-800 font-medium p-2 rounded justify-between"
+            href="/commercial"
+            className="flex flex-col items-center justify-center gap-0.5 flex-1 py-2"
           >
-            Share via WhatsApp <Image src='/whatsapp.svg' alt="whatsapp" width={24} height={24} />
+            <Building2 className={`w-5 h-5 ${pathname === '/commercial' ? 'text-blue-600' : isDark ? 'text-gray-500' : 'text-gray-500'}`} strokeWidth={1.5} />
+            <span className={`text-[10px] font-medium ${pathname === '/commercial' ? 'text-blue-600' : isDark ? 'text-gray-500' : 'text-gray-500'}`}>Commercial</span>
           </Link>
+          <Link
+            href="/residential"
+            className="flex flex-col items-center justify-center gap-0.5 flex-1 py-2"
+          >
+            <Home className={`w-5 h-5 ${pathname === '/residential' ? 'text-blue-600' : isDark ? 'text-gray-500' : 'text-gray-500'}`} strokeWidth={1.5} />
+            <span className={`text-[10px] font-medium ${pathname === '/residential' ? 'text-blue-600' : isDark ? 'text-gray-500' : 'text-gray-500'}`}>Residential</span>
+          </Link>
+          <Link
+            href="/builders"
+            className="flex flex-col items-center justify-center gap-0.5 flex-1 py-2"
+          >
+            <Image 
+              src="/crown.svg" 
+              width={20} 
+              height={20} 
+              alt="Builders" 
+              className={pathname === '/builders' ? 'opacity-100' : 'opacity-50'} 
+            />
+            <span className={`text-[10px] font-medium ${pathname === '/builders' ? 'text-blue-600' : isDark ? 'text-gray-500' : 'text-gray-500'}`}>Builders</span>
+          </Link>
+        </div>
+      </div>
+
+      {/* Add Property Modal */}
+      {showAddPropertyModal && (
+        <Modal
+          style={{ 
+            top: '50%', 
+            left: '50%', 
+            transform: 'translate(-50%, -50%)',
+            width: '90%',
+            maxWidth: '400px'
+          }}
+          onClose={() => setShowAddPropertyModal(false)}
+          className={`rounded-xl shadow-2xl ${isDark ? 'bg-[#282c34]' : 'bg-white'}`}
+          isDark={isDark}
+        >
+          <div className="p-6">
+            <h2 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>Add Your Property</h2>
+            <p className={`mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>List your property for free on BuildersInfo!</p>
+            <Link
+              href="https://wa.me/+918151915199/?text=Hi,%20I%20want%20to%20list%20my%20land%20on%20buildersinfo."
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setShowAddPropertyModal(false)}
+              className="flex items-center gap-3 text-white font-medium px-4 py-3 rounded-lg bg-green-500 hover:bg-green-600 transition-colors justify-center w-full"
+            >
+              <Image src='/whatsapp.svg' alt='whatsapp' width={24} height={24} /> 
+              List My Property (Free)
+            </Link>
+          </div>
         </Modal>
       )}
     </div>

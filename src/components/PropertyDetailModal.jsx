@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { loginUser } from "@/utils/auth";
 import { mapAmenitiesToObjects } from "@/utils/amenityMapping";
+import { useTheme } from "@/context/ThemeContext";
 
 // Helper function to safely display database values
 const safeDisplay = (value, fallback = "-") => {
@@ -34,7 +35,8 @@ import {
     ThumbsDown,
     Check,
     Edit,
-    Trash2
+    Trash2,
+    Building2
 } from "lucide-react";
 import Image from "next/image";
 
@@ -47,6 +49,7 @@ import LoginModal from "./LoginModal";
 
 
 export default function PropertyDetailModal({ property, onClose, isPropertyListVisible = false }) {
+    const { isDark } = useTheme();
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
@@ -529,404 +532,512 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
     const whatsBad = ratings?.whatsBad || [];
     const floorPlanCategories = Object.keys(floorPlans);
 
-    return (
+    // Dummy data for missing fields
+    const brandName = property.brandName || "BHIVE Workspace";
+    const brandStats = property.brandStats || {
+        cities: "2+ Cities",
+        clients: "1000+ Clients",
+        spaces: "27+ Coworking Spaces",
+        seats: "8000+ Seats"
+    };
+    const brandDescription = property.brandDescription || "BHIVE Workspace, established in 2014, specializes in providing Zero CapEx, Enterprise Grade, Customized...";
+    const rating = property.ratings?.overall || 4.8;
+    const isTopRated = property.isTopRated !== undefined ? property.isTopRated : true;
+
+    // Mobile view (< md breakpoint)
+    const mobileModal = (
         <div
             role="dialog"
-            className={`z-50 bg-white shadow-lg flex max-w-xl md:max-w-sm flex-col overflow-hidden rounded-2xl p-0 text-left absolute bottom-5 w-[420px] md:w-[360px] left-0 h-full max-h-[calc(100%-96px-70px)] max-[425px]:!w-full max-[425px]:!left-0 max-[425px]:!right-0 max-[425px]:!top-0 max-[425px]:!bottom-0 max-[425px]:!max-h-full max-[425px]:!rounded-none transition-all duration-300 ${isPropertyListVisible ? 'md:left-[400px] md:top-[11rem]' : 'md:left-[3.5rem] top-[9rem]'}`}
+            className="md:hidden fixed inset-0 z-50 flex items-end"
             tabIndex="-1"
         >
-            <div className="sticky top-0 mx-4 flex flex-row justify-between space-y-0 border-b py-4 pb-2 text-left items-start gap-4 lg:pt-6 bg-white max-[375px]:mx-2 max-[375px]:py-3">
-                <div className="flex w-full items-start justify-between">
-                    <div className="flex-1">
-                        <div className="mb-3 flex w-full items-center justify-between text-left lg:mb-2">
-                            <div className="flex items-center gap-1.5">
-                                <div className="text-lg font-semibold text-gray-800 lg:text-xl">{safeDisplay(name)}</div>
-                                {is_verified && <BadgeCheck width="18" height="18" className="text-white fill-blue-500" />}
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-black/40" onClick={onClose}></div>
+            
+            {/* Modal Content */}
+            <div className={`relative pb-32 w-full rounded-t-3xl overflow-hidden transition-colors ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`} style={{ maxHeight: '90vh' }}>
+                {/* Drag Handle */}
+                <div className="flex justify-center py-3">
+                    <div className={`w-12 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-300'}`}></div>
+                </div>
+
+                {/* Scrollable Content */}
+                <div className="overflow-y-auto" style={{ maxHeight: 'calc(90vh - 80px)' }}>
+                    {/* Image Carousel */}
+                    <div className={`relative mx-4 rounded-2xl overflow-hidden h-48 ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                        {/* Action Icons - Top Left */}
+                        <div className="absolute top-3 left-3 z-20 flex gap-2">
+                            <button
+                                onClick={handleFavouriteToggle}
+                                className={`w-9 h-9 rounded-full flex items-center justify-center shadow-md ${isDark ? 'bg-[#282c34]/95' : 'bg-white/95'}`}
+                            >
+                                <Heart className={`w-5 h-5 ${isFavourite ? 'fill-red-500 text-red-500' : isDark ? 'text-gray-300' : 'text-gray-600'}`} />
+                            </button>
+                            <button
+                                onClick={handleShare}
+                                className={`w-9 h-9 rounded-full flex items-center justify-center shadow-md ${isDark ? 'bg-[#282c34]/95' : 'bg-white/95'}`}
+                            >
+                                <Share2 className={`w-5 h-5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`} />
+                            </button>
+                        </div>
+
+                        {/* Close Button - Top Right */}
+                        <button 
+                            aria-label="Close" 
+                            className={`absolute top-3 right-3 z-20 w-9 h-9 rounded-full flex items-center justify-center shadow-md ${isDark ? 'bg-[#282c34]/95' : 'bg-white/95'}`}
+                            onClick={onClose}
+                        >
+                            <X className={`w-5 h-5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`} />
+                        </button>
+
+                        <Swiper
+                            modules={[Navigation]}
+                            navigation={{
+                                prevEl: ".mobile-prop-prev",
+                                nextEl: ".mobile-prop-next",
+                            }}
+                            spaceBetween={0}
+                            slidesPerView={1}
+                            loop={true}
+                            className="h-full"
+                        >
+                            {images.length > 0 ? images.map((img, i) => (
+                                <SwiperSlide key={i}>
+                                    <Image 
+                                        alt="Property" 
+                                        width={400} 
+                                        height={200}
+                                        className="h-full w-full object-cover" 
+                                        src={img} 
+                                        unoptimized 
+                                    />
+                                </SwiperSlide>
+                            )) : (
+                                <SwiperSlide>
+                                    <div className="h-full w-full bg-gray-200 flex items-center justify-center">
+                                        <span className="text-gray-400">No Image</span>
+                                    </div>
+                                </SwiperSlide>
+                            )}
+                        </Swiper>
+                        
+                        {/* Navigation Arrows */}
+                        <button className={`mobile-prop-prev absolute top-1/2 -translate-y-1/2 left-2 h-8 w-8 rounded-full flex items-center justify-center z-10 shadow ${isDark ? 'bg-[#282c34]/90' : 'bg-white/90'}`}>
+                            <ChevronLeft className={`h-5 w-5 ${isDark ? 'text-gray-200' : 'text-gray-700'}`} />
+                        </button>
+                        <button className={`mobile-prop-next absolute top-1/2 -translate-y-1/2 right-2 h-8 w-8 rounded-full flex items-center justify-center z-10 shadow ${isDark ? 'bg-[#282c34]/90' : 'bg-white/90'}`}>
+                            <ChevronRight className={`h-5 w-5 ${isDark ? 'text-gray-200' : 'text-gray-700'}`} />
+                        </button>
+
+                        {/* Dots */}
+                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex gap-1.5">
+                            {images.slice(0, 5).map((_, i) => (
+                                <div key={i} className="w-2 h-2 rounded-full bg-white/80"></div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="px-4 pt-4 pb-6">
+                        {/* Title & Rating */}
+                        <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1 pr-3">
+                                <div className="flex items-center gap-1.5 mb-1">
+                                    <h1 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(name)}</h1>
+                                    {is_verified && (
+                                        <BadgeCheck className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <MapPin className="w-4 h-4 text-blue-500" />
+                                    <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                        in{safeDisplay(layer_location)}{location_district ? `, ${safeDisplay(location_district)}` : ''}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg ${isDark ? 'bg-green-900/30' : 'bg-green-50'}`}>
+                                <Star className="w-4 h-4 fill-green-500 text-green-500" />
+                                <span className={`text-sm font-bold ${isDark ? 'text-green-400' : 'text-green-600'}`}>{rating.toFixed(1)}</span>
                             </div>
                         </div>
-                        <div className="flex flex-col gap-1">
-                            <div className="flex items-center gap-1.5">
-                                <MapPin className="shrink-0" height="14" width="14" />
-                                <div className="text-left text-sm font-medium capitalize text-gray-600">
-                                    {safeDisplay(layer_location)}{location_district ? `, ${safeDisplay(location_district)}` : ''}
+
+                        {/* Tags */}
+                        <div className="flex flex-wrap gap-2 mb-5">
+                            <span className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 ${isDark ? 'bg-[#282c34] text-gray-300' : 'bg-gray-100 text-gray-600'}`}>
+                                <Building2 className="w-3.5 h-3.5" />
+                                {propertyType === 'commercial' ? 'Commercial' : 'Residential'}
+                            </span>
+                            <span className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 ${isDark ? 'bg-[#282c34] text-gray-300' : 'bg-gray-100 text-gray-600'}`}>
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                </svg>
+                                {safeDisplay(property.carpetArea, '5000')} sq.ft
+                            </span>
+                            <span className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 ${isDark ? 'bg-[#282c34] text-gray-300' : 'bg-gray-100 text-gray-600'}`}>
+                                <Check className="w-3.5 h-3.5" />
+                                {safeDisplay(property.furnishing, 'Furnished')}
+                            </span>
+                        </div>
+
+                        {/* Amenities */}
+                        <div className="grid grid-cols-4 gap-4 mb-5">
+                            {(displayedAmenities.length > 0 ? displayedAmenities.slice(0, 4) : [
+                                { name: "Guest Check-in", image: null },
+                                { name: "Delivery Acceptance", image: null },
+                                { name: "Package Notification", image: null },
+                                { name: "Fire Safety", image: null }
+                            ]).map((amenity, index) => (
+                                <div key={index} className="flex flex-col items-center gap-2">
+                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${isDark ? 'bg-blue-900/30' : 'bg-blue-50'}`}>
+                                        {amenity.image ? (
+                                            <Image src={amenity.image} alt={amenity.name} width={28} height={28} className="object-contain" unoptimized />
+                                        ) : (
+                                            <span className="text-2xl">
+                                                {index === 0 ? '👤' : index === 1 ? '📦' : index === 2 ? '🔔' : '🔥'}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <span className={`text-[10px] text-center leading-tight ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{amenity.name}</span>
                                 </div>
+                            ))}
+                        </div>
+
+                        {/* Info Boxes */}
+                        <div className="grid grid-cols-3 gap-3 mb-5">
+                            <div className={`border rounded-xl py-3 px-2 text-center ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                                <p className={`text-[11px] mb-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Price</p>
+                                <p className="text-base font-bold text-blue-600">₹120</p>
+                                <p className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>/sq.ft</p>
                             </div>
-                            <div className="flex items-center gap-1.5">
-                                <div>
-                                    <span className="text-sm font-semibold text-gray-800">{safeDisplay(discountedPrice)}</span>
-                                    <span className="text-xs font-medium text-gray-500 line-through ml-2">{safeDisplay(originalPrice)}</span>
-                                </div>
+                            <div className={`border rounded-xl py-3 px-2 text-center ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                                <p className={`text-[11px] mb-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Status</p>
+                                <p className={`text-base font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Available</p>
+                            </div>
+                            <div className={`border rounded-xl py-3 px-2 text-center ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                                <p className={`text-[11px] mb-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Reviews</p>
+                                <p className={`text-base font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>{reviews.length || 120}</p>
+                            </div>
+                        </div>
+
+                        {/* Brand + Contact */}
+                        <div className="flex items-center justify-between mb-4">
+                            <div>
+                                <h4 className={`text-base font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{brandName}</h4>
+                                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Workspace</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <a
+                                    href={`tel:${safeDisplay(sellerPhoneNumber)}`}
+                                    className={`w-11 h-11 rounded-full flex items-center justify-center ${isDark ? 'bg-blue-900/30' : 'bg-blue-100'}`}
+                                >
+                                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                    </svg>
+                                </a>
+                                <a
+                                    href={`https://wa.me/${safeDisplay(sellerPhoneNumber)?.replace(/[^0-9]/g, '') || '918151915199'}?text=Hi, I am interested in ${encodeURIComponent(name || 'this property')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={`w-11 h-11 rounded-full flex items-center justify-center ${isDark ? 'bg-green-900/30' : 'bg-green-100'}`}
+                                >
+                                    <Image src="/whatsapp.svg" alt="WhatsApp" width={24} height={24} />
+                                </a>
                             </div>
                         </div>
                     </div>
-                    <button aria-label="Close" className="text-gray-500 hover:text-gray-800" onClick={onClose}>
-                        <X />
-                    </button>
+                </div>
+
+                {/* Fixed Button */}
+                <div className={`p-4 pb-20 mt-5 border-t transition-colors ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-white border-gray-100'}`}>
+                    <a
+                        href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block w-full bg-blue-600 text-white py-4 rounded-xl text-center font-semibold text-base"
+                    >
+                        View Full Details
+                    </a>
                 </div>
             </div>
+        </div>
+    );
 
-            <div className="flex-1 overflow-y-auto p-4 pt-0 lg:pt-4 max-[375px]:p-2">
-                <main>
-                    <section className="mb-4">
-                        <div className="relative group">
+    // Desktop view (>= md breakpoint)
+    const desktopModal = (
+        <div
+            role="dialog"
+            className={`hidden md:block fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 shadow-2xl rounded-2xl overflow-hidden transition-colors ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}
+            style={{ width: '750px', maxWidth: '95vw', height: '450px' }}
+            tabIndex="-1"
+        >
+            <div className="flex h-full relative">
+                {/* Left Section - Image Carousel */}
+                <div className={`w-[350px] relative flex-shrink-0 ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                    <div className="relative h-full">
+                        {/* Top RATED Badge */}
+                        {isTopRated && (
+                            <div className="absolute top-3 right-3 z-20 bg-red-500 text-white px-2 py-1 rounded-lg flex items-center gap-1 shadow-lg">
+                                <span className="text-[10px] font-bold">TOP RATED</span>
+                                <div className="flex gap-0.5">
+                                    {[1, 2, 3].map((i) => (
+                                        <Star key={i} className="w-2.5 h-2.5 fill-white text-white" />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        
+                        {/* Action Icons - Top Left */}
+                        <div className="absolute top-3 left-3 z-20 flex flex-col gap-1.5">
+                            <button
+                                onClick={handleFavouriteToggle}
+                                className={`w-7 h-7 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-md ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}
+                            >
+                                <Heart className={`w-3.5 h-3.5 ${isFavourite ? 'fill-red-500 text-red-500' : isDark ? 'text-gray-300' : 'text-gray-700'}`} />
+                            </button>
+                            <button
+                                onClick={handleShare}
+                                className={`w-7 h-7 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-md ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}
+                            >
+                                <Share2 className={`w-3.5 h-3.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} />
+                            </button>
+                            <a
+                                href={`https://maps.google.com/maps?q=${property.coordinates?.lat || property.position?.lat},${property.coordinates?.lng || property.position?.lng}&z=16&t=h`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={`w-7 h-7 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-md ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}
+                            >
+                                <CornerUpRight className={`w-3.5 h-3.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} />
+                            </a>
+                            <a
+                                href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={`w-7 h-7 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-md ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}
+                            >
+                                <SquareArrowOutUpRight className={`w-3.5 h-3.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} />
+                            </a>
+                        </div>
+
+                        {/* Close Button - Top Right */}
+                        <button 
+                            aria-label="Close" 
+                            className={`absolute top-3 right-12 z-20 w-7 h-7 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-md ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}
+                            onClick={onClose}
+                        >
+                            <X className={`w-3.5 h-3.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} />
+                        </button>
+
+                        {/* Image Carousel */}
+                        <div className="relative h-full">
                             <Swiper
                                 modules={[Navigation]}
                                 navigation={{
                                     prevEl: ".prop-prev",
                                     nextEl: ".prop-next",
                                 }}
-                                spaceBetween={10}
+                                spaceBetween={0}
                                 slidesPerView={1}
                                 loop={true}
+                                className="h-full"
                             >
-                                {images.map((img, i) => (
+                                {images.length > 0 ? images.map((img, i) => (
                                     <SwiperSlide key={i}>
-                                        <Image alt="An image of land" width="400" className="h-[180px] w-full rounded-2xl object-cover" height="180" loading="lazy" src={img} unoptimized />
-                                    </SwiperSlide>
-                                ))}
-                            </Swiper>
-                            <button className="prop-prev absolute top-1/2 -translate-y-1/2 left-2 h-8 w-8 rounded-full bg-white/70 items-center justify-center flex z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                                <ChevronLeft className="h-5 w-5 text-gray-800" />
-                            </button>
-                            <button className="prop-next absolute top-1/2 -translate-y-1/2 right-2 h-8 w-8 rounded-full bg-white/70 items-center justify-center flex z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                                <ChevronRight className="h-5 w-5 text-gray-800" />
-                            </button>
-                        </div>
-                    </section>
-
-                    <section>
-                        <div className="flex gap-4 px-7 justify-around max-[375px]:px-2 max-[375px]:gap-2">
-                            <div className="flex flex-1 flex-col items-center gap-2">
-                                <button
-                                    onClick={handleFavouriteToggle}
-                                    className="cursor-pointer rounded-full bg-gray-100 p-3 hover:bg-gray-200 transition-colors"
-                                >
-                                    <Heart
-                                        className={`w-5 h-5 ${isFavourite ? 'fill-red-500 text-red-500' : 'text-gray-800'}`}
-                                    />
-                                </button>
-                                <div className="text-xs text-gray-800">Favourite</div>
-                            </div>
-                            <div className="flex flex-1 flex-col items-center gap-2">
-                                <button
-                                    onClick={handleShare}
-                                    className="cursor-pointer rounded-full bg-gray-100 p-3 hover:bg-gray-200 transition-colors"
-                                >
-                                    <Share2 className="w-5 h-5 text-gray-800" />
-                                </button>
-                                <div className="text-xs text-gray-800">Share</div>
-                            </div>
-                            <div className="flex flex-1 flex-col items-center gap-2">
-                                <a
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    href={`https://maps.google.com/maps?q=${property.coordinates?.lat || property.position?.lat},${property.coordinates?.lng || property.position?.lng}&z=16&t=h`}
-                                    className="cursor-pointer rounded-full bg-gray-100 p-3 hover:bg-gray-200 transition-colors"
-                                >
-                                    <CornerUpRight className="w-5 h-5 text-gray-800" />
-                                </a>
-                                <div className="text-xs text-gray-800">Directions</div>
-                            </div>
-                            <div className="flex flex-1 flex-col items-center gap-2">
-                                <a
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
-                                    className="cursor-pointer rounded-full bg-gray-100 p-3 hover:bg-gray-200 transition-colors"
-                                >
-                                    <SquareArrowOutUpRight className="w-5 h-5 text-gray-800" />
-                                </a>
-                                <div className="text-xs text-gray-800">New tab</div>
-                            </div>
-                        </div>
-                        <div className="shrink-0 h-[1px] w-full my-4 bg-gray-200"></div>
-                    </section>
-
-                    <section>
-                        <div className="flex flex-col">
-                            <div className="space-y-2">
-                                <div className="flex gap-2"><span className="flex-1 text-sm font-medium text-gray-500">Date Added</span><span className="flex-1 text-sm font-semibold capitalize text-gray-800">{safeDisplay(date_added)}</span></div>
-                            </div>
-                        </div>
-                    </section>
-
-                    {mappedAmenities.length > 0 && (
-                        <section className="my-4">
-                            <div className="shrink-0 h-[1px] w-full mb-4 bg-gray-200"></div>
-                            <h3 className="text-base font-semibold text-gray-800 mb-3">Amenities</h3>
-                            <div className="grid grid-cols-4 gap-3">
-                                {displayedAmenities.map((amenity, index) => (
-                                    <div key={index} className="flex flex-col items-center gap-1.5">
-                                        <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
-                                            <Image
-                                                src={amenity.image}
-                                                alt={amenity.name}
-                                                width={24}
-                                                height={24}
-                                                className="object-contain"
-                                                unoptimized
+                                        <div className="relative h-full w-full">
+                                            <Image 
+                                                alt="Property image" 
+                                                width={350} 
+                                                height={450}
+                                                className="h-full w-full object-cover" 
+                                                loading="lazy" 
+                                                src={img} 
+                                                unoptimized 
                                             />
                                         </div>
-                                        <span className="text-[10px] text-center text-gray-600 leading-tight">{amenity.name}</span>
-                                    </div>
+                                    </SwiperSlide>
+                                )) : (
+                                    <SwiperSlide>
+                                        <div className={`relative h-full w-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-200'}`}>
+                                            <span className={isDark ? 'text-gray-500' : 'text-gray-400'}>No Image</span>
+                                        </div>
+                                    </SwiperSlide>
+                                )}
+                            </Swiper>
+                            
+                            {/* Navigation Arrows */}
+                            <button className={`prop-prev absolute top-1/2 -translate-y-1/2 left-2 h-8 w-8 rounded-full backdrop-blur-sm items-center justify-center flex z-10 shadow-lg transition-colors ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}>
+                                <ChevronLeft className={`h-5 w-5 ${isDark ? 'text-gray-200' : 'text-gray-800'}`} />
+                            </button>
+                            <button className={`prop-next absolute top-1/2 -translate-y-1/2 right-2 h-8 w-8 rounded-full backdrop-blur-sm items-center justify-center flex z-10 shadow-lg transition-colors ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}>
+                                <ChevronRight className={`h-5 w-5 ${isDark ? 'text-gray-200' : 'text-gray-800'}`} />
+                            </button>
+
+                            {/* Image Indicators (dots) */}
+                            <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 z-10 flex gap-1">
+                                {images.slice(0, 5).map((_, i) => (
+                                    <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/80 backdrop-blur-sm"></div>
                                 ))}
                             </div>
-                            {mappedAmenities.length > 8 && (
-                                <a
-                                    href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-xs text-blue-600 hover:underline mt-3 inline-block"
-                                >
-                                    +{mappedAmenities.length - 8} more amenities
-                                </a>
-                            )}
-                        </section>
-                    )}
-
-                    {floorPlanCategories.length > 0 && (
-                        <section className="my-4">
-                            <div className="shrink-0 h-[1px] w-full mb-4 bg-gray-200"></div>
-                            <h3 className="text-base font-semibold text-gray-800 mb-3">Property Layout</h3>
-                            <div className="space-y-3">
-                                {floorPlanCategories.slice(0, 2).map((category, index) => (
-                                    <div key={index}>
-                                        <p className="text-xs font-medium text-gray-700 mb-2">{category}</p>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            {floorPlans[category].slice(0, 2).map((img, imgIndex) => (
-                                                <Image
-                                                    key={imgIndex}
-                                                    src={img}
-                                                    alt={`${category} layout`}
-                                                    width={150}
-                                                    height={100}
-                                                    className="w-full h-20 object-cover rounded-lg"
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                            {floorPlanCategories.length > 2 && (
-                                <a
-                                    href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-xs text-blue-600 hover:underline mt-3 inline-block"
-                                >
-                                    View all layouts
-                                </a>
-                            )}
-                        </section>
-                    )}
-
-                    <section className="my-4">
-                        <div className="shrink-0 h-[1px] w-full mb-4 bg-gray-200"></div>
-                            <div className="flex items-center justify-between mb-3">
-                            <h3 className="text-base font-semibold text-gray-800">Ratings & Reviews</h3>
-                            <div className="flex items-center gap-2">
-                                {/* Show Add Review button if: not logged in OR logged in but no review submitted */}
-                                {(!currentUser || (currentUser && !hasUserSubmittedReview)) && (
-                                    <button
-                                        onClick={handleAddReview}
-                                        className="bg-[#f8c02f] text-gray-800 px-3 py-1 rounded-lg font-medium text-xs hover:bg-[#e0ad2a] cursor-pointer transition-colors"
-                                    >
-                                        Add Review
-                                    </button>
-                                )}
-                                <div className="flex items-center gap-1">
-                                    <Star className={`w-4 h-4 ${ratings?.overall > 0 ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
-                                    <span className="text-sm font-semibold text-gray-800">
-                                        {ratings?.overall > 0 ? safeDisplay(ratings.overall) : '0'}
-                                    </span>
-                                    <span className="text-xs text-gray-500">
-                                        ({ratings?.totalRatings > 0 ? safeDisplay(ratings.totalRatings) : '0'})
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {(whatsGood.length > 0 || whatsBad.length > 0) && (
-                            <div className="mb-4 space-y-3">
-                                {whatsGood.length > 0 && (
-                                    <div className="bg-green-50 rounded-lg p-3">
-                                        <div className="flex items-center gap-1.5 mb-2">
-                                            <ThumbsUp className="w-4 h-4 text-green-600" />
-                                            <span className="text-xs font-semibold text-green-800">What's Good</span>
-                                        </div>
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {whatsGood.slice(0, 3).map((item, index) => (
-                                                <span
-                                                    key={index}
-                                                    onClick={() => {
-                                                        if (!currentUser) {
-                                                            setIsLoginModalOpen(true);
-                                                            return;
-                                                        }
-                                                        setReviewText(item);
-                                                        setShowRatingModal(true);
-                                                    }}
-                                                    className="text-[10px] bg-white px-2 py-1 rounded-full text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
-                                                >
-                                                    {item}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                                {whatsBad.length > 0 && (
-                                    <div className="bg-red-50 rounded-lg p-3">
-                                        <div className="flex items-center gap-1.5 mb-2">
-                                            <ThumbsDown className="w-4 h-4 text-red-600" />
-                                            <span className="text-xs font-semibold text-red-800">What's Bad</span>
-                                        </div>
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {whatsBad.slice(0, 2).map((item, index) => (
-                                                <span
-                                                    key={index}
-                                                    onClick={() => {
-                                                        if (!currentUser) {
-                                                            setIsLoginModalOpen(true);
-                                                            return;
-                                                        }
-                                                        setReviewText(item);
-                                                        setShowRatingModal(true);
-                                                    }}
-                                                    className="text-[10px] bg-white px-2 py-1 rounded-full text-gray-700 cursor-pointer hover:bg-red-100 transition-colors"
-                                                >
-                                                    {item}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {displayedReviews.length > 0 ? (
-                            <div className="space-y-3">
-                                {displayedReviews.map((review, index) => {
-                                    const isUserReview = isReviewByCurrentUser(review);
-                                    
-                                    return (
-                                        <div key={review._id || review.id || index} className="bg-gray-50 rounded-lg p-3">
-                                            <div className="flex items-center justify-between mb-1.5">
-                                                <span className="text-xs font-medium text-gray-800">{safeDisplay(review.user)}</span>
-                                                <div className="flex items-center gap-1.5">
-                                                    {isUserReview && (
-                                                        <>
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    handleEditReview(review);
-                                                                }}
-                                                                className="text-blue-600 hover:text-blue-800 cursor-pointer transition-colors"
-                                                                title="Edit review"
-                                                            >
-                                                                <Edit className="w-3 h-3" />
-                                                            </button>
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    handleDeleteReview(review);
-                                                                }}
-                                                                className="text-red-600 hover:text-red-800 cursor-pointer transition-colors"
-                                                                title="Delete review"
-                                                            >
-                                                                <Trash2 className="w-3 h-3" />
-                                                            </button>
-                                                        </>
-                                                    )}
-                                                    <div className="flex items-center gap-1">
-                                                        <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                                        <span className="text-xs font-medium text-gray-700">{safeDisplay(review.rating)}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <p className="text-xs text-gray-600 mb-1">{safeDisplay(review.comment)}</p>
-                                            <span className="text-[10px] text-gray-500">{safeDisplay(review.date)}</span>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ) : (
-                            <div className="text-center py-4">
-                                <p className="text-sm text-gray-500">No reviews yet</p>
-                            </div>
-                        )}
-
-                        {reviews.length > 3 && (
-                            <a
-                                href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs text-blue-600 hover:underline mt-3 inline-block"
-                            >
-                                View all {reviews.length} reviews
-                            </a>
-                        )}
-                    </section>
-
-                    <div className="border bg-card text-card-foreground shadow-sm my-4 rounded-2xl border-gray-200 p-4">
-                        <div className="space-y-2">
-                            <div>
-                                <span className="flex items-center gap-2">
-                                    <BadgeCheck className="text-white fill-blue-500" />
-                                    <span className="text-sm font-normal text-gray-600">Preliminary verification done.</span>
-                                </span>
-                            </div>
-                        </div>
-                        <div className="shrink-0 h-[1px] w-full my-3 bg-gray-200"></div>
-                        <div
-                            onClick={() => {
-                                // Check if user is logged in
-                                if (!currentUser) {
-                                    setIsLoginModalOpen(true);
-                                    return;
-                                }
-                                setIsReportModalOpen(true);
-                            }}
-                            className="flex cursor-pointer items-center gap-2 "
-                        >
-                            <TriangleAlert className="h-4 w-4 text-gray-800" />
-                            <span className="text-sm font-normal text-gray-800 underline underline-offset-2">Report this listing</span>
                         </div>
                     </div>
-                </main>
-            </div>
+                </div>
 
-            <div className="sticky bottom-0 z-20 w-full bg-white p-4 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] max-[375px]:p-2">
-                <div className="flex gap-3 max-[375px]:gap-2">
-                    <button
-                        onClick={() => {
-                            const phone = safeDisplay(sellerPhoneNumber);
-                            const propName = safeDisplay(name);
-                            if (phone !== "-" && propName !== "-") {
-                                window.open(`https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${propName}`, '_blank');
-                            }
-                        }}
-                        className="flex-1 border-2 border-green-500 text-green-500 py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-green-50 cursor-pointer transition-colors"
+                {/* Right Section - Details */}
+                <div className="flex-1 flex flex-col overflow-hidden relative">
+                    <div className="flex-1 overflow-y-auto p-4 pr-10">
+                        <main>
+                            {/* Header Section */}
+                            <section className="mb-4">
+                                <div className="flex items-start justify-between mb-3">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1.5">
+                                            <h1 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(name)}</h1>
+                                            <div className="flex items-center gap-1">
+                                                <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+                                                <span className={`text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{rating.toFixed(1)}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 mb-2">
+                                            <MapPin className={`w-3.5 h-3.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                                            <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                                in {safeDisplay(layer_location)}{location_district ? `, ${safeDisplay(location_district)}` : ''}
+                                                {property.state_name ? `, ${safeDisplay(property.state_name)}` : ''}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center gap-1 ${isDark ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-700'}`}>
+                                                <Check className="w-2.5 h-2.5" />
+                                                Best price guaranteed
+                                            </span>
+                                            <a
+                                                href={`tel:${safeDisplay(sellerPhoneNumber)}`}
+                                                className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-gray-100 hover:bg-gray-200'}`}
+                                            >
+                                                <svg className={`w-3.5 h-3.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                                </svg>
+                                            </a>
+                                            <a
+                                                href={`https://wa.me/${safeDisplay(sellerPhoneNumber)?.replace(/[^0-9]/g, '') || '918151915199'}?text=Hi, I am interested in ${encodeURIComponent(name || 'this property')}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-gray-100 hover:bg-gray-200'}`}
+                                            >
+                                                <Image src="/whatsapp.svg" alt="WhatsApp" width={16} height={16} />
+                                            </a>
+                                        </div>
+                                        <div className="flex items-baseline gap-2">
+                                            <span className="text-xl font-bold text-blue-600">{safeDisplay(discountedPrice)}</span>
+                                            {originalPrice && originalPrice !== discountedPrice && (
+                                                <span className={`text-base line-through ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{safeDisplay(originalPrice)}</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* Amenities Section */}
+                            <section className="mb-4">
+                                <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Amenities</h3>
+                                <div className="grid grid-cols-4 gap-3">
+                                    {displayedAmenities.length > 0 ? displayedAmenities.map((amenity, index) => (
+                                        <div key={index} className="flex flex-col items-center gap-1.5">
+                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                                                <Image
+                                                    src={amenity.image}
+                                                    alt={amenity.name}
+                                                    width={24}
+                                                    height={24}
+                                                    className="object-contain"
+                                                    unoptimized
+                                                />
+                                            </div>
+                                            <span className={`text-[10px] text-center leading-tight ${isDark ? 'text-gray-400' : 'text-gray-700'}`}>{amenity.name}</span>
+                                        </div>
+                                    )) : (
+                                        [
+                                            { name: "Guest Check-in", icon: "👤" },
+                                            { name: "Delivery Acceptance", icon: "🔔" },
+                                            { name: "Package Notification", icon: "📦" },
+                                            { name: "Fire Safety", icon: "🚨" },
+                                            { name: "Guest Management", icon: "⚙️" },
+                                            { name: "Video Surveillance", icon: "📹" },
+                                            { name: "Keycard Access", icon: "🔑" },
+                                            { name: "Tea", icon: "☕" }
+                                        ].map((amenity, index) => (
+                                            <div key={index} className="flex flex-col items-center gap-1.5">
+                                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                                                    <span className="text-xl">{amenity.icon}</span>
+                                                </div>
+                                                <span className={`text-[10px] text-center leading-tight ${isDark ? 'text-gray-400' : 'text-gray-700'}`}>{amenity.name}</span>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </section>
+
+                            {/* About the Brand Section */}
+                            <section className="mb-4">
+                                <h3 className={`text-sm font-semibold mb-2 ${isDark ? 'text-gray-400' : 'text-gray-800'}`}>ABOUT THE BRAND</h3>
+                                <h4 className={`text-base font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>{brandName}</h4>
+                                <div className="grid grid-cols-2 gap-3 mb-2">
+                                    <div className="flex items-center gap-1.5">
+                                        <Building2 className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
+                                        <span className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{brandStats.cities}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <svg className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                        </svg>
+                                        <span className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{brandStats.clients}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <Building2 className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
+                                        <span className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{brandStats.spaces}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <svg className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                        </svg>
+                                        <span className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{brandStats.seats}</span>
+                                    </div>
+                                </div>
+                                <p className={`text-xs leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                    {brandDescription}
+                                    <a
+                                        href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 hover:underline ml-1"
+                                    >
+                                        Read more
+                                    </a>
+                                </p>
+                            </section>
+
+                        </main>
+                    </div>
+                </div>
+                
+                {/* View Details Button - Right Edge */}
+                <div className="absolute right-0 top-0 bottom-0 w-10 flex items-center justify-center">
+                    <a
+                        href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-6 rounded-l-lg shadow-lg transition-colors cursor-pointer writing-vertical-rl text-xs font-medium"
+                        style={{ writingMode: 'vertical-rl' }}
                     >
-                        <img
-                            src="/property-details/whatsapp.png"
-                            alt="WhatsApp"
-                            className="w-4 h-4 object-contain"
-                        />
-                        WhatsApp
-                    </button>
-                    <button
-                        onClick={() => window.location.href = `tel:${safeDisplay(sellerPhoneNumber)}`}
-                        className="flex-1 bg-green-500 text-white py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors"
-                    >
-                        <img
-                            src="/property-details/call-icon.png"
-                            alt="Call"
-                            className="w-4 h-4 object-contain"
-                        />
-                        Request for call
-                    </button>
+                        View Details
+                    </a>
                 </div>
             </div>
+        </div>
+    );
+
+    return (
+        <>
+            {mobileModal}
+            {desktopModal}
 
             {isLoginModalOpen && (
                 <LoginModal onClose={() => setIsLoginModalOpen(false)} onProceed={handleLoginSuccess} />
@@ -940,17 +1051,17 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                 >
                     <div
                         onClick={(e) => e.stopPropagation()}
-                        className="bg-white rounded-2xl shadow-lg w-11/12 md:w-96 relative p-6"
+                        className={`rounded-2xl shadow-lg w-11/12 md:w-96 relative p-6 ${isDark ? 'bg-[#282c34]' : 'bg-white'}`}
                     >
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-lg font-semibold text-gray-800">Owner Details</h2>
-                            <button onClick={() => setIsContactModalOpen(false)} className="text-gray-500 hover:text-gray-800">
+                            <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>Owner Details</h2>
+                            <button onClick={() => setIsContactModalOpen(false)} className={`${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-800'}`}>
                                 <X className="w-6 h-6" />
                             </button>
                         </div>
                         <div className="space-y-3">
-                            <p className="text-base"><span className="font-medium text-gray-600">Owner Name:</span> <span className="font-semibold text-gray-900">{safeDisplay(createdBy?.name)}</span></p>
-                            <p className="text-base"><span className="font-medium text-gray-600">Contact:</span>
+                            <p className="text-base"><span className={`font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Owner Name:</span> <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(createdBy?.name)}</span></p>
+                            <p className="text-base"><span className={`font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Contact:</span>
                                 <a href={`tel:${sellerPhoneNumber}`} className="font-semibold text-blue-600 hover:underline ml-2">{safeDisplay(sellerPhoneNumber)}</a>
                             </p>
                         </div>
@@ -971,33 +1082,33 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                 >
                     <div
                         onClick={(e) => e.stopPropagation()}
-                        className="bg-white rounded-xl w-full max-w-sm p-5"
+                        className={`rounded-xl w-full max-w-sm p-5 ${isDark ? 'bg-[#282c34]' : 'bg-white'}`}
                     >
                         <div className="text-center mb-5">
-                            <h3 className="text-lg font-bold text-gray-800 mb-1.5">{isEditingReview ? 'Edit Your Review' : 'Rate Your Experience'}</h3>
+                            <h3 className={`text-lg font-bold mb-1.5 ${isDark ? 'text-white' : 'text-gray-800'}`}>{isEditingReview ? 'Edit Your Review' : 'Rate Your Experience'}</h3>
                             <div className="w-24 h-0.5 bg-yellow-400 mx-auto"></div>
                         </div>
 
                         {reviewSubmitSuccess && (
-                            <div className="mb-3 bg-green-100 border border-green-400 text-green-700 px-3 py-2 rounded-lg text-center text-sm">
+                            <div className={`mb-3 border px-3 py-2 rounded-lg text-center text-sm ${isDark ? 'bg-green-900/30 border-green-600 text-green-400' : 'bg-green-100 border-green-400 text-green-700'}`}>
                                 {isEditingReview ? 'Review updated successfully!' : 'Review submitted successfully!'}
                             </div>
                         )}
 
                         <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Your Name *</label>
+                            <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Your Name *</label>
                             <input
                                 type="text"
                                 value={userName}
                                 onChange={(e) => setUserName(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm ${isDark ? 'bg-[#1f2229] border-gray-600 text-white placeholder:text-gray-500' : 'border-gray-300 text-gray-800'}`}
                                 placeholder="Enter your name"
                                 required
                             />
                         </div>
 
                         <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Rating *</label>
+                            <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Rating *</label>
                             <div className="flex justify-center gap-1.5">
                                 {[1, 2, 3, 4, 5].map((star) => (
                                     <Star
@@ -1007,7 +1118,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                         onMouseLeave={() => setHoverRating(0)}
                                         className={`w-9 h-9 cursor-pointer transition-all ${star <= (hoverRating || selectedRating)
                                             ? 'text-yellow-400 fill-yellow-400'
-                                            : 'text-gray-300'
+                                            : isDark ? 'text-gray-600' : 'text-gray-300'
                                             }`}
                                     />
                                 ))}
@@ -1015,12 +1126,12 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                         </div>
 
                         <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Review *</label>
+                            <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Review *</label>
                             <textarea
                                 value={reviewText}
                                 onChange={(e) => setReviewText(e.target.value)}
                                 rows={3}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                className={`w-full px-3 py-2 border rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm ${isDark ? 'bg-[#1f2229] border-gray-600 text-white placeholder:text-gray-500' : 'border-gray-300 text-gray-800'}`}
                                 placeholder="Share your experience..."
                                 required
                             />
@@ -1036,7 +1147,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                     setUserName('');
                                     setReviewSubmitSuccess(false);
                                 }}
-                                className="flex-1 bg-transparent border-2 border-[#f8c02f] text-gray-800 py-3 rounded-lg font-semibold text-base hover:bg-[#f8c02f]/10 transition-colors cursor-pointer"
+                                className={`flex-1 bg-transparent border-2 border-[#f8c02f] py-3 rounded-lg font-semibold text-base hover:bg-[#f8c02f]/10 transition-colors cursor-pointer ${isDark ? 'text-white' : 'text-gray-800'}`}
                                 disabled={isSubmittingReview}
                             >
                                 Cancel
@@ -1213,10 +1324,10 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                 >
                     <div
                         onClick={(e) => e.stopPropagation()}
-                        className="bg-white rounded-2xl shadow-lg w-full max-w-md relative max-h-[90vh] overflow-y-auto"
+                        className={`rounded-2xl shadow-lg w-full max-w-md relative max-h-[90vh] overflow-y-auto ${isDark ? 'bg-[#282c34]' : 'bg-white'}`}
                     >
-                        <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-white z-10 rounded-t-2xl">
-                            <h2 className="text-xl font-semibold text-gray-800">Report this Property</h2>
+                        <div className={`flex justify-between items-center p-6 border-b sticky top-0 z-10 rounded-t-2xl ${isDark ? 'bg-[#282c34] border-gray-700' : 'bg-white border-gray-200'}`}>
+                            <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>Report this Property</h2>
                             <button
                                 onClick={() => {
                                     setIsReportModalOpen(false);
@@ -1228,7 +1339,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                         details: "",
                                     });
                                 }}
-                                className="text-gray-500 hover:text-gray-800"
+                                className={`${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-800'}`}
                             >
                                 <X className="w-6 h-6" />
                             </button>
@@ -1272,7 +1383,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                             }
                         }}>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                                     Your Name <span className="text-red-500">*</span>
                                 </label>
                                 <input
@@ -1280,13 +1391,13 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                     required
                                     value={reportFormData.reporterName}
                                     onChange={(e) => setReportFormData({ ...reportFormData, reporterName: e.target.value })}
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all ${isDark ? 'bg-[#1f2229] border-gray-600 text-white placeholder:text-gray-500' : 'border-gray-300 text-gray-800'}`}
                                     placeholder="Enter your name"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                                     Email <span className="text-red-500">*</span>
                                 </label>
                                 <input
@@ -1294,33 +1405,33 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                     required
                                     value={reportFormData.reporterEmail}
                                     onChange={(e) => setReportFormData({ ...reportFormData, reporterEmail: e.target.value })}
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all ${isDark ? 'bg-[#1f2229] border-gray-600 text-white placeholder:text-gray-500' : 'border-gray-300 text-gray-800'}`}
                                     placeholder="your.email@example.com"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                                     Phone Number
                                 </label>
                                 <input
                                     type="tel"
                                     value={reportFormData.reporterPhone}
                                     onChange={(e) => setReportFormData({ ...reportFormData, reporterPhone: e.target.value })}
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all ${isDark ? 'bg-[#1f2229] border-gray-600 text-white placeholder:text-gray-500' : 'border-gray-300 text-gray-800'}`}
                                     placeholder="+91 XXXXX XXXXX"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                                     Reason for Report <span className="text-red-500">*</span>
                                 </label>
                                 <select
                                     required
                                     value={reportFormData.reason}
                                     onChange={(e) => setReportFormData({ ...reportFormData, reason: e.target.value })}
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all bg-white"
+                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all ${isDark ? 'bg-[#1f2229] border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'}`}
                                 >
                                     <option value="">Select a reason</option>
                                     <option value="incorrect_info">Incorrect Information</option>
@@ -1333,7 +1444,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                                     Additional Details <span className="text-red-500">*</span>
                                 </label>
                                 <textarea
@@ -1341,7 +1452,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                     rows="4"
                                     value={reportFormData.details}
                                     onChange={(e) => setReportFormData({ ...reportFormData, details: e.target.value })}
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
+                                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none ${isDark ? 'bg-[#1f2229] border-gray-600 text-white placeholder:text-gray-500' : 'border-gray-300 text-gray-800'}`}
                                     placeholder="Please provide more details about your report..."
                                 ></textarea>
                             </div>
@@ -1359,7 +1470,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                             details: "",
                                         });
                                     }}
-                                    className="flex-1 px-4 py-2.5 border-2 border-yellow-400 text-yellow-600 rounded-lg font-medium hover:bg-yellow-50 transition-colors cursor-pointer"
+                                    className={`flex-1 px-4 py-2.5 border-2 border-yellow-400 rounded-lg font-medium transition-colors cursor-pointer ${isDark ? 'text-yellow-400 hover:bg-yellow-400/10' : 'text-yellow-600 hover:bg-yellow-50'}`}
                                 >
                                     Cancel
                                 </button>
@@ -1375,6 +1486,6 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                     </div>
                 </div>
             )}
-        </div>
+        </>
     );
 }

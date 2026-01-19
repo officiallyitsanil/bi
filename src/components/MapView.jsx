@@ -4,11 +4,15 @@ import { useMemo, useState } from "react";
 import { Layers, House, Building } from "lucide-react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-export default function MapView({ center, markers, selectedMarker, onMarkerClick, zoom }) {
+export default function MapView({ center, markers, selectedMarker, onMarkerClick, zoom, mapType: externalMapType, showTraffic: externalShowTraffic, hideLayerButton = false }) {
   const mapCenter = useMemo(() => center, [center]);
-  const [mapType, setMapType] = useState("hybrid");
-  const [showTraffic, setShowTraffic] = useState(false);
+  const [internalMapType, setInternalMapType] = useState("hybrid");
+  const [internalShowTraffic, setInternalShowTraffic] = useState(false);
   const [showLayerMenu, setShowLayerMenu] = useState(false);
+  
+  // Use external props if provided, otherwise use internal state
+  const mapType = externalMapType !== undefined ? externalMapType : internalMapType;
+  const showTraffic = externalShowTraffic !== undefined ? externalShowTraffic : internalShowTraffic;
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
@@ -98,15 +102,16 @@ export default function MapView({ center, markers, selectedMarker, onMarkerClick
 
   return (
     <div className="relative w-full h-full">
-      {/* Layer Control Button */}
-      <div className="absolute max-[425px]:bottom-[140px] max-[425px]:right-4 max-[425px]:top-auto max-[425px]:left-auto min-[426px]:top-4 min-[426px]:left-4 z-10">
-        <button
-          onClick={() => setShowLayerMenu(!showLayerMenu)}
-          className="bg-white p-2.5 max-[425px]:p-3 rounded-lg shadow-xl hover:bg-gray-50 transition-colors"
-          title="Map Layers"
-        >
-          <Layers className="w-5 h-5 max-[425px]:w-5.5 max-[425px]:h-5.5 text-gray-700" />
-        </button>
+      {/* Layer Control Button - Only show if not hidden */}
+      {!hideLayerButton && (
+        <div className="absolute max-[425px]:bottom-[140px] max-[425px]:right-4 max-[425px]:top-auto max-[425px]:left-auto min-[426px]:top-4 min-[426px]:left-4 z-10">
+          <button
+            onClick={() => setShowLayerMenu(!showLayerMenu)}
+            className="bg-white p-2.5 max-[425px]:p-3 rounded-lg shadow-xl hover:bg-gray-50 transition-colors"
+            title="Map Layers"
+          >
+            <Layers className="w-5 h-5 max-[425px]:w-5.5 max-[425px]:h-5.5 text-gray-700" />
+          </button>
 
         {/* Layer Menu */}
         {showLayerMenu && (
@@ -117,7 +122,9 @@ export default function MapView({ center, markers, selectedMarker, onMarkerClick
                 <button
                   key={type.id}
                   onClick={() => {
-                    setMapType(type.id);
+                    if (externalMapType === undefined) {
+                      setInternalMapType(type.id);
+                    }
                     setShowLayerMenu(false);
                   }}
                   className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center gap-2 ${mapType === type.id
@@ -139,7 +146,11 @@ export default function MapView({ center, markers, selectedMarker, onMarkerClick
             <div className="border-t pt-3">
               <h3 className="text-sm font-semibold text-gray-800 mb-2">Layers</h3>
               <button
-                onClick={() => setShowTraffic(!showTraffic)}
+                onClick={() => {
+                  if (externalShowTraffic === undefined) {
+                    setInternalShowTraffic(!showTraffic);
+                  }
+                }}
                 className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center gap-2 ${showTraffic
                     ? "bg-blue-50 text-blue-700 font-medium"
                     : "text-gray-700 hover:bg-gray-50"
@@ -156,7 +167,8 @@ export default function MapView({ center, markers, selectedMarker, onMarkerClick
             </div>
           </div>
         )}
-      </div>
+        </div>
+      )}
 
       <GoogleMap
         mapContainerStyle={containerStyle}
