@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Layers, House, Building } from "lucide-react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-export default function MapView({ center, markers, selectedMarker, onMarkerClick, zoom, mapType: externalMapType, showTraffic: externalShowTraffic, hideLayerButton = false }) {
+export default function MapView({ center, markers, selectedMarker, onMarkerClick, zoom, mapType: externalMapType, showTraffic: externalShowTraffic, hideLayerButton = false, isDark = false }) {
   const mapCenter = useMemo(() => center, [center]);
   const [internalMapType, setInternalMapType] = useState("hybrid");
   const [internalShowTraffic, setInternalShowTraffic] = useState(false);
@@ -195,19 +195,247 @@ export default function MapView({ center, markers, selectedMarker, onMarkerClick
           const isSelected = selectedMarker && selectedMarker.id === marker.id;
           const markerType = marker.propertyType || 'residential';
 
-          // Get price for display
-          const getDisplayPrice = () => {
-            if (marker.discountedPrice && marker.discountedPrice !== '₹XX' && marker.discountedPrice !== 'N/A') {
-              // Extract just the number part (e.g., "₹250" -> "250")
-              const priceMatch = marker.discountedPrice.match(/[\d.]+/);
-              return priceMatch ? `₹${priceMatch[0]}` : '₹XX';
-            } else if (marker.price_per_acre && marker.price_per_acre !== 'N/A') {
-              const priceMatch = marker.price_per_acre.toString().match(/[\d.]+/);
-              return priceMatch ? `₹${priceMatch[0]}` : '₹XX';
-            } else if (marker.originalPrice && marker.originalPrice !== '₹XX' && marker.originalPrice !== 'N/A') {
-              const priceMatch = marker.originalPrice.match(/[\d.]+/);
-              return priceMatch ? `₹${priceMatch[0]}` : '₹XX';
+          // Format price to compact format (₹300, ₹450, ₹30K, etc.) - max 3 chars + ₹
+          const formatCompactPrice = (priceValue) => {
+            // Check for invalid values
+            if (!priceValue || 
+                priceValue === '₹XX' || 
+                priceValue === 'XX' ||
+                priceValue === 'N/A' || 
+                priceValue === '' ||
+                (typeof priceValue === 'string' && priceValue.trim() === '')) {
+              return null;
             }
+
+            // Extract numeric value from string (handles formats like "₹250", "250", "₹2.5L", etc.)
+            let numericValue = 0;
+            
+            // Check if it's already a number
+            if (typeof priceValue === 'number' && !isNaN(priceValue) && priceValue > 0) {
+              numericValue = priceValue;
+            } else {
+              // Extract number from string
+              const priceStr = priceValue.toString().trim();
+              
+              // Check for Lakhs (L) or Crores (C) in the string
+              if (priceStr.toLowerCase().includes('l') || priceStr.toLowerCase().includes('lakh')) {
+                const numMatch = priceStr.match(/[\d.]+/);
+                if (numMatch && numMatch[0]) {
+                  numericValue = parseFloat(numMatch[0]) * 100000; // Convert lakhs to actual number
+                }
+              } else if (priceStr.toLowerCase().includes('c') || priceStr.toLowerCase().includes('crore')) {
+                const numMatch = priceStr.match(/[\d.]+/);
+                if (numMatch && numMatch[0]) {
+                  numericValue = parseFloat(numMatch[0]) * 10000000; // Convert crores to actual number
+                }
+              } else if (priceStr.toLowerCase().includes('k') || priceStr.toLowerCase().includes('thousand')) {
+                const numMatch = priceStr.match(/[\d.]+/);
+                if (numMatch && numMatch[0]) {
+                  numericValue = parseFloat(numMatch[0]) * 1000; // Convert thousands to actual number
+                }
+              } else {
+                // Regular number extraction - remove currency symbols, commas, and spaces
+                const cleanedStr = priceStr.replace(/[₹,\s]/g, '');
+                const numMatch = cleanedStr.match(/[\d.]+/);
+                if (numMatch && numMatch[0]) {
+                  numericValue = parseFloat(numMatch[0]);
+                }
+              }
+            }
+
+            if (!numericValue || isNaN(numericValue) || numericValue <= 0) {
+              return null;
+            }
+
+            // Format to compact 3-character format (digits + letter) with ₹ prefix
+            let formatted = '';
+            if (numericValue >= 10000000) {
+              // Crores: show as ₹3C, ₹4C, ₹45C, etc. (max 3 chars + ₹)
+              const crores = numericValue / 10000000;
+              if (crores >= 100) {
+                formatted = `${Math.round(crores)}C`; // e.g., 100C, 250C
+              } else if (crores >= 10) {
+                formatted = `${Math.round(crores)}C`; // e.g., 10C, 45C
+              } else {
+                // For single digit crores, show with 1 decimal if needed, but keep max 3 chars
+                const rounded = Math.round(crores * 10) / 10;
+                if (rounded % 1 === 0) {
+                  formatted = `${Math.round(rounded)}C`; // e.g., 3C, 5C
+                } else {
+                  formatted = `${rounded.toFixed(1)}C`; // e.g., 3.5C, 4.2C
+                }
+              }
+            } else if (numericValue >= 100000) {
+              // Lakhs: show as ₹30L, ₹45L, ₹3.5L, etc. (max 3 chars + ₹)
+              const lakhs = numericValue / 100000;
+              if (lakhs >= 100) {
+                formatted = `${Math.round(lakhs)}L`; // e.g., 100L, 250L
+              } else if (lakhs >= 10) {
+                formatted = `${Math.round(lakhs)}L`; // e.g., 10L, 45L
+              } else {
+                const rounded = Math.round(lakhs * 10) / 10;
+                if (rounded % 1 === 0) {
+                  formatted = `${Math.round(rounded)}L`; // e.g., 3L, 5L
+                } else {
+                  formatted = `${rounded.toFixed(1)}L`; // e.g., 3.5L, 4.2L
+                }
+              }
+            } else if (numericValue >= 1000) {
+              // Thousands: show as ₹30K, ₹45K, ₹3.5K, etc. (max 3 chars + ₹)
+              const thousands = numericValue / 1000;
+              if (thousands >= 100) {
+                formatted = `${Math.round(thousands)}K`; // e.g., 100K, 250K
+              } else if (thousands >= 10) {
+                formatted = `${Math.round(thousands)}K`; // e.g., 10K, 45K
+              } else {
+                const rounded = Math.round(thousands * 10) / 10;
+                if (rounded % 1 === 0) {
+                  formatted = `${Math.round(rounded)}K`; // e.g., 3K, 5K
+                } else {
+                  formatted = `${rounded.toFixed(1)}K`; // e.g., 3.5K, 4.2K
+                }
+              }
+            } else {
+              // Less than 1000: show as ₹300, ₹450, etc. - max 3 digits + ₹
+              const rounded = Math.round(numericValue);
+              formatted = rounded.toString(); // e.g., 300, 450, 999
+            }
+
+            return formatted ? `₹${formatted}` : null;
+          };
+
+          // Calculate price from property data (similar to PropertyDetailModal)
+          const calculatePriceFromProperty = (property) => {
+            let originalPriceValue = 0;
+            
+            if (property.propertyType === 'residential') {
+              // For residential: use expectedRent
+              const expectedRent = property.expectedRent || '0';
+              originalPriceValue = parseFloat(expectedRent.toString().replace(/[₹,]/g, '')) || 0;
+            } else if (property.propertyType === 'commercial') {
+              // For commercial: calculate from floorConfigurations
+              if (property.floorConfigurations && property.floorConfigurations.length > 0) {
+                const firstFloor = property.floorConfigurations[0];
+                if (firstFloor.dedicatedCabin && firstFloor.dedicatedCabin.seats && firstFloor.dedicatedCabin.pricePerSeat) {
+                  // Extract lower values from ranges like "70 - 90" and "6000-8000"
+                  const seatsStr = firstFloor.dedicatedCabin.seats.toString();
+                  const pricePerSeatStr = firstFloor.dedicatedCabin.pricePerSeat.toString();
+                  
+                  const seatsMatch = seatsStr.match(/(\d+)/);
+                  const pricePerSeatMatch = pricePerSeatStr.match(/(\d+)/);
+                  
+                  if (seatsMatch && pricePerSeatMatch) {
+                    const seatsLower = parseFloat(seatsMatch[1]);
+                    const pricePerSeatLower = parseFloat(pricePerSeatMatch[1]);
+                    originalPriceValue = seatsLower * pricePerSeatLower;
+                  }
+                }
+              }
+            }
+            
+            // Calculate discounted price (5% off = 95% of original) - same as PropertyDetailModal
+            const discountedPriceValue = originalPriceValue * 0.95;
+            
+            return discountedPriceValue;
+          };
+
+          // Get price for display - check ALL possible price fields
+          const getDisplayPrice = () => {
+            // First, try to calculate DISCOUNTED price from property data (for commercial/residential)
+            const calculatedDiscountedPrice = calculatePriceFromProperty(marker);
+            if (calculatedDiscountedPrice > 0) {
+              const formatted = formatCompactPrice(calculatedDiscountedPrice);
+              if (formatted && formatted !== '₹XX') return formatted;
+            }
+
+            // List of all possible price fields to check (in priority order)
+            const priceFields = [
+              'discountedPrice',
+              'total_price',
+              'expectedRent',
+              'price_per_acre',
+              'price_per_sqft',
+              'price_per_desk',
+              'originalPrice',
+              'additionalPrice'
+            ];
+
+            // Try each field in priority order
+            for (const field of priceFields) {
+              const priceValue = marker[field];
+              
+              // Skip if null, undefined
+              if (priceValue === null || priceValue === undefined) continue;
+              
+              // Convert to string for checking
+              const priceStr = String(priceValue).trim();
+              
+              // Skip if it's a placeholder value
+              if (priceStr === '₹XX' || 
+                  priceStr === 'XX' || 
+                  priceStr === 'N/A' || 
+                  priceStr === '' ||
+                  priceStr.toLowerCase() === 'na' ||
+                  priceStr.toLowerCase() === 'null' ||
+                  priceStr.toLowerCase() === 'undefined') {
+                continue;
+              }
+
+              // Check if it's already a valid number
+              if (typeof priceValue === 'number' && !isNaN(priceValue) && priceValue > 0) {
+                const formatted = formatCompactPrice(priceValue);
+                if (formatted && formatted !== '₹XX') return formatted;
+                continue;
+              }
+
+              // Try to extract number from string - be more aggressive
+              // Remove all non-numeric characters except dots, L, C, K
+              let cleaned = priceStr.replace(/[₹,\s]/g, '');
+              
+              // Check for Lakhs/Crores/Thousands indicators
+              let multiplier = 1;
+              if (cleaned.toLowerCase().includes('l') || cleaned.toLowerCase().includes('lakh')) {
+                multiplier = 100000;
+                cleaned = cleaned.replace(/[^0-9.]/g, '');
+              } else if (cleaned.toLowerCase().includes('c') || cleaned.toLowerCase().includes('crore')) {
+                multiplier = 10000000;
+                cleaned = cleaned.replace(/[^0-9.]/g, '');
+              } else if (cleaned.toLowerCase().includes('k') || cleaned.toLowerCase().includes('thousand')) {
+                multiplier = 1000;
+                cleaned = cleaned.replace(/[^0-9.]/g, '');
+              } else {
+                // Remove all non-numeric except dots
+                cleaned = cleaned.replace(/[^0-9.]/g, '');
+              }
+              
+              // Try to extract number
+              const numMatch = cleaned.match(/[\d.]+/);
+              
+              if (numMatch && numMatch[0]) {
+                const numValue = parseFloat(numMatch[0]);
+                if (!isNaN(numValue) && numValue > 0) {
+                  const finalValue = numValue * multiplier;
+                  const formatted = formatCompactPrice(finalValue);
+                  if (formatted && formatted !== '₹XX') return formatted;
+                }
+              }
+            }
+
+            // Last resort: check if marker has any numeric field that might be a price
+            // Look for fields with "price" or "rent" in the name
+            for (const key in marker) {
+              if (key.toLowerCase().includes('price') || 
+                  key.toLowerCase().includes('rent') ||
+                  key.toLowerCase().includes('cost')) {
+                const value = marker[key];
+                if (value && typeof value === 'number' && value > 0) {
+                  const formatted = formatCompactPrice(value);
+                  if (formatted && formatted !== '₹XX') return formatted;
+                }
+              }
+            }
+
+            // If nothing found, return ₹XX
             return '₹XX';
           };
 
@@ -222,21 +450,22 @@ export default function MapView({ center, markers, selectedMarker, onMarkerClick
                 fillColor: '#FF0000',
                 fillOpacity: 1,
                 strokeColor: '#FFFFFF',
-                strokeWeight: 2,
-                scale: 8,
+                strokeWeight: 1.5,
+                scale: 6,
               };
             }
 
             const isCommercial = markerType === 'commercial';
-            const iconColor = '#1d4ed8'; // Vibrant Blue (blue-700) matching reference
+            // Use brighter blue in dark mode for better visibility, darker blue in light mode
+            const iconColor = isDark ? '#60a5fa' : '#1d4ed8'; // Light blue (blue-400) in dark mode, darker blue (blue-700) in light mode
 
             // Render Lucide icon to SVG string using renderToStaticMarkup
             const IconComponent = isCommercial ? Building : House;
             const iconSvgString = renderToStaticMarkup(
               <IconComponent
-                size={20}
+                size={16}
                 color={iconColor}
-                strokeWidth={2.5}
+                strokeWidth={2}
               />
             );
 
@@ -255,38 +484,48 @@ export default function MapView({ center, markers, selectedMarker, onMarkerClick
             const strokeColor = isSelected ? '#1d4ed8' : 'white';
             const strokeWidth = isSelected ? 2 : 0;
 
-            // Pill dimensions
-            const pillWidth = 95;
-            const pillHeight = 36;
-            const pillX = 5;
-            const pillY = 5;
-            const cornerRadius = 18; // fully rounded ends
+            // Pill dimensions - reduced size with less padding
+            const pillWidth = 65;
+            const pillHeight = 28;
+            const pillX = 4;
+            const pillY = 4;
+            const cornerRadius = 14; // fully rounded ends
 
-            // Create the complete SVG marker - EXACTLY like the reference images
+            // SVG dimensions - reduced size
+            const svgWidth = 75;
+            const svgHeight = 50;
+            const centerX = svgWidth / 2;
+
+            // Dark mode colors - match the dark theme used in the app
+            const pillBackgroundColor = isDark ? '#282c34' : 'white';
+            const priceTextColor = isDark ? '#FFFFFF' : '#000000';
+            const pointerDotColor = isDark ? '#282c34' : 'white';
+
+            // Create the complete SVG marker - smaller size with less spacing
             const svg = `
-            <svg width="105" height="60" viewBox="0 0 105 60" xmlns="http://www.w3.org/2000/svg">
+            <svg width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}" xmlns="http://www.w3.org/2000/svg">
               ${shadowFilter}
               
-              <!-- White pill-shaped bubble with shadow -->
-              <rect x="${pillX}" y="${pillY}" width="${pillWidth}" height="${pillHeight}" rx="${cornerRadius}" ry="${cornerRadius}" fill="white" stroke="${strokeColor}" stroke-width="${strokeWidth}" filter="url(#${filterId})"/>
+              <!-- Pill-shaped bubble with shadow (black in dark mode, white in light mode) -->
+              <rect x="${pillX}" y="${pillY}" width="${pillWidth}" height="${pillHeight}" rx="${cornerRadius}" ry="${cornerRadius}" fill="${pillBackgroundColor}" stroke="${strokeColor}" stroke-width="${strokeWidth}" filter="url(#${filterId})"/>
               
-              <!-- Blue icon on the left side, centered vertically -->
-              <g transform="translate(${pillX + 10}, ${pillY + 8})">
+              <!-- Blue icon on the left side, centered vertically (color stays the same) -->
+              <g transform="translate(${pillX + 6}, ${pillY + 6})">
                 ${iconSvgString}
               </g>
               
-              <!-- Price text on the right side, centered vertically with more right padding -->
-              <text x="${pillX + pillWidth - 16}" y="${pillY + pillHeight / 2 + 1}" text-anchor="end" dominant-baseline="middle" fill="#000000" font-size="15" font-weight="700" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">${displayPrice}</text>
+              <!-- Price text on the right side, centered vertically with less padding (white in dark mode, black in light mode) -->
+              <text x="${pillX + pillWidth - 8}" y="${pillY + pillHeight / 2 + 1}" text-anchor="end" dominant-baseline="middle" fill="${priceTextColor}" font-size="12" font-weight="700" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">${displayPrice}</text>
               
-              <!-- Small white circular pointer dot below the bubble -->
-              <circle cx="52" cy="${pillY + pillHeight + 6}" r="5" fill="white" filter="url(#${filterId})"/>
+              <!-- Small circular pointer dot below the bubble (black in dark mode, white in light mode) -->
+              <circle cx="${centerX}" cy="${pillY + pillHeight + 5}" r="4" fill="${pointerDotColor}" filter="url(#${filterId})"/>
             </svg>
           `;
 
             return {
               url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
-              scaledSize: new window.google.maps.Size(105, 60),
-              anchor: new window.google.maps.Point(52, pillY + pillHeight + 6), // Anchor at the white dot (center bottom)
+              scaledSize: new window.google.maps.Size(svgWidth, svgHeight),
+              anchor: new window.google.maps.Point(centerX, pillY + pillHeight + 5), // Anchor at the white dot (center bottom)
             };
           };
 

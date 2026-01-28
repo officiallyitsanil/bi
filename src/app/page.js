@@ -1,7 +1,7 @@
 "use client";
 import MenuSideBar from '@/components/MenuSideBar';
 import LoginModal from '@/components/LoginModal';
-import { Search, X, Plus, SlidersHorizontal, Menu, List, Check, Heart, Building2, Home, MapPin, ChevronDown, ChevronRight, ChevronLeft, LayoutGrid, Map, Globe, ZoomIn, LocateFixed, Layers, Minus, Sun, Moon, User } from 'lucide-react';
+import { Search, X, Plus, SlidersHorizontal, Menu, List, Check, Heart, Building2, Home, MapPin, ChevronDown, ChevronRight, ChevronLeft, LayoutGrid, Map as MapIcon, Globe, ZoomIn, LocateFixed, Layers, Minus, Sun, Moon, User, FileText, Grid3x3, ChevronUp, Bus, Target } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -26,9 +26,9 @@ function Modal({ children, style, onClose, hideClose = false, className = "", is
         {!hideClose && (
           <button
             onClick={onClose}
-            className={`absolute top-3 right-3 p-2 rounded-full z-10 hover:cursor-pointer mt-0 m-1 transition-colors ${isDark ? 'text-gray-400 bg-[#1f2229] hover:text-white hover:bg-[#3a3f4b]' : 'text-gray-500 bg-[#f2f2f2] hover:text-gray-600'}`}
+            className={`absolute top-4 right-4 p-1 z-10 hover:cursor-pointer transition-colors ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-800 hover:text-black'}`}
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" strokeWidth={2} />
           </button>
         )}
         {children}
@@ -62,10 +62,13 @@ export default function HomePage() {
   const [zoomLevel, setZoomLevel] = useState(5); // Start zoomed out to show India
   const [, setLocationError] = useState(null);
   const [propertyTypeFilter, setPropertyTypeFilter] = useState('all'); // 'all', 'commercial', 'residential'
-  const [listingTypeFilter, setListingTypeFilter] = useState('forSale'); // 'forSale', 'forRent', 'readyToMove', 'newProjects', 'verified'
+  const [listingTypeFilter, setListingTypeFilter] = useState('all'); // 'all', 'forSale', 'forRent', 'readyToMove', 'newProjects', 'verified'
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
   const [userLocationInfo, setUserLocationInfo] = useState(null);
-  const [sortBy, setSortBy] = useState('default');
+  const [isLoadingProperties, setIsLoadingProperties] = useState(true);
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [sortBy, setSortBy] = useState('uploadedDateLatest');
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
 
   const [filters, setFilters] = useState({
     type: {
@@ -87,6 +90,8 @@ export default function HomePage() {
   const [citySearchQuery, setCitySearchQuery] = useState('');
   const [showLayerMenu, setShowLayerMenu] = useState(false);
   const [showAddPropertyModal, setShowAddPropertyModal] = useState(false);
+  const [showLocateModal, setShowLocateModal] = useState(false);
+  const [locateModalStep, setLocateModalStep] = useState(1); // 1 for declaration, 2 for layers
   const [mapType, setMapType] = useState('hybrid'); // 'roadmap', 'satellite', 'hybrid', 'terrain'
   const [showTraffic, setShowTraffic] = useState(false);
   const [searchType, setSearchType] = useState('locality'); // 'locality', 'metro', 'travel'
@@ -235,6 +240,10 @@ export default function HomePage() {
       if (!event.target.closest('.search-container')) {
         setShowSuggestions(false);
       }
+      // Close sort dropdown when clicking outside
+      if (!event.target.closest('.sort-dropdown-container')) {
+        setShowSortDropdown(false);
+      }
     };
 
     document.addEventListener('click', handleClickOutside);
@@ -243,6 +252,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const loadProperties = async () => {
+      setIsLoadingProperties(true);
       try {
         const response = await fetch('/api/properties');
         const result = await response.json();
@@ -258,6 +268,14 @@ export default function HomePage() {
           );
 
           console.log("Confirmed properties:", confirmedProperties.length);
+
+          // Dummy data arrays for random assignment
+          const listingTypes = ['For Sale', 'For Rent', 'Ready to Move', 'New Projects'];
+          const propertyCategoryTypes = [
+            'Office Space', 'Co-Working', 'Shop', 'Showroom', 
+            'Godown/Warehouse', 'Industrial Shed', 'Industrial Building', 
+            'Other business', 'Restaurant/Cafe'
+          ];
 
           const properties = confirmedProperties.map((property, index) => {
             // Ensure coordinates are in the correct format
@@ -278,11 +296,29 @@ export default function HomePage() {
               console.warn(`Property ${property.name || property._id} (Index: ${index}) has no valid coordinates.`);
             }
 
+            // Assign dummy listing_type and property_category_type
+            // Use index to ensure consistent assignment
+            const listingType = property.listing_type || property.listingType || listingTypes[index % listingTypes.length];
+            const propertyCategoryType = property.property_category_type || property.propertyCategoryType || 
+              (property.propertyType === 'commercial' 
+                ? propertyCategoryTypes[index % propertyCategoryTypes.length]
+                : 'Residential Property');
+
+            // Generate dummy uploaded date - spread dates over the last 6 months
+            const now = Date.now();
+            const sixMonthsAgo = now - (180 * 24 * 60 * 60 * 1000); // 6 months in milliseconds
+            const randomDate = new Date(sixMonthsAgo + (index * 2 * 24 * 60 * 60 * 1000)); // Spread dates
+            const uploadedDate = property.uploadedDate || property.date_added || randomDate.toISOString();
+
             return {
               ...property,
               id: property._id || `temp-id-${index}-${Date.now()}`,
               name: property.name || property.propertyName || 'Property Name',
               propertyType: property.propertyType || property.Category?.toLowerCase() || 'residential',
+              listing_type: listingType,
+              listingType: listingType, // Keep both for compatibility
+              property_category_type: propertyCategoryType,
+              propertyCategoryType: propertyCategoryType, // Keep both for compatibility
               state_name: property.state_name || property.address?.state || 'Location',
               layer_location: property.layer_location || property.address?.locality || 'Area',
               location_district: property.location_district || property.address?.district || property.address?.city || 'District',
@@ -290,9 +326,11 @@ export default function HomePage() {
               coordinates: parsedPosition,
               images: property.images || ['/placeholder.png'],
               featuredImageUrl: property.featuredImageUrl || property.featuredImage?.url || '/placeholder.png',
-              originalPrice: property.originalPrice || '₹XX',
-              discountedPrice: property.discountedPrice || '₹XX',
+              // Don't default to '₹XX' - keep original value (null/undefined) so price extraction can check other fields
+              originalPrice: property.originalPrice,
+              discountedPrice: property.discountedPrice,
               date_added: property.date_added || 'N/A',
+              uploadedDate: uploadedDate, // ISO string for sorting
               is_verified: property.is_verified || property.verificationStatus === 'confirmed' || false,
               sellerPhoneNumber: property.sellerPhoneNumber || '+91 XXXXXXXXXX',
               address: typeof property.address === 'string' ? property.address : 'Address not available',
@@ -302,8 +340,11 @@ export default function HomePage() {
               ratings: property.ratings || { overall: 0, totalRatings: 0, breakdown: {}, whatsGood: [], whatsBad: [] },
               reviews: property.reviews || [],
               size: property.size || property.propertySize || property.carpetArea || 'N/A',
-              price_per_acre: property.price_per_acre || property.price_per_sqft || 'N/A',
-              total_price: property.total_price || property.originalPrice || property.discountedPrice || 'N/A'
+              price_per_acre: property.price_per_acre || property.price_per_sqft,
+              // Try to get total_price from various sources
+              total_price: property.total_price || property.originalPrice || property.discountedPrice || property.expectedRent,
+              // Also preserve expectedRent for residential properties
+              expectedRent: property.expectedRent
             };
           });
 
@@ -312,6 +353,8 @@ export default function HomePage() {
       } catch (error) {
         console.error('Error loading properties:', error);
         setMarkers([]);
+      } finally {
+        setIsLoadingProperties(false);
       }
     };
 
@@ -320,7 +363,7 @@ export default function HomePage() {
 
   // Location tracking is handled by VisitorTracker component
 
-  // Generate suggestions based on search query
+  // Generate suggestions based on search query - show property names and addresses/locations only
   const generateSuggestions = (query) => {
     // Only show suggestions if query has at least 1 character
     if (!query.trim() || query.trim().length < 1) {
@@ -329,100 +372,74 @@ export default function HomePage() {
       return;
     }
 
-    const uniqueLocations = new Map();
+    const uniqueSuggestions = new Map();
     const filteredSuggestions = [];
+    const queryLower = query.toLowerCase().trim();
 
-    // Indian cities and capitals database
-    const indianCities = [
-      'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Ahmedabad', 'Chennai', 'Kolkata', 'Pune', 'Jaipur', 'Surat',
-      'Lucknow', 'Kanpur', 'Nagpur', 'Indore', 'Thane', 'Bhopal', 'Visakhapatnam', 'Pimpri-Chinchwad', 'Patna', 'Vadodara',
-      'Ghaziabad', 'Ludhiana', 'Agra', 'Nashik', 'Faridabad', 'Meerut', 'Rajkot', 'Kalyan-Dombivali', 'Vasai-Virar', 'Varanasi',
-      'Srinagar', 'Aurangabad', 'Dhanbad', 'Amritsar', 'Navi Mumbai', 'Allahabad', 'Ranchi', 'Howrah', 'Coimbatore', 'Jabalpur',
-      'Gwalior', 'Vijayawada', 'Jodhpur', 'Madurai', 'Raipur', 'Kota', 'Chandigarh', 'Guwahati', 'Solapur', 'Hubli-Dharwad',
-      'Mysore', 'Tiruchirappalli', 'Bareilly', 'Aligarh', 'Tiruppur', 'Moradabad', 'Jalandhar', 'Bhubaneswar', 'Salem', 'Warangal',
-      'Guntur', 'Bhiwandi', 'Saharanpur', 'Gorakhpur', 'Bikaner', 'Amravati', 'Noida', 'Jamshedpur', 'Bhilai', 'Cuttack',
-      'Firozabad', 'Kochi', 'Nellore', 'Bhavnagar', 'Dehradun', 'Durgapur', 'Asansol', 'Rourkela', 'Nanded', 'Kolhapur',
-      'Ajmer', 'Akola', 'Gulbarga', 'Jamnagar', 'Ujjain', 'Loni', 'Siliguri', 'Jhansi', 'Ulhasnagar', 'Jammu',
-      'Sangli-Miraj', 'Mangalore', 'Erode', 'Belgaum', 'Ambattur', 'Tirunelveli', 'Malegaon', 'Gaya', 'Jalgaon', 'Udaipur'
-    ];
-
-    const indianStates = [
-      'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh',
-      'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland',
-      'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal'
-    ];
-
-    // Check cities and states from the database
-    indianCities.forEach(city => {
-      if (city.toLowerCase().includes(query.toLowerCase())) {
-        const key = city.toLowerCase();
-        if (!uniqueLocations.has(key)) {
-          uniqueLocations.set(key, true);
-          filteredSuggestions.push({
-            text: city,
-            displayText: `${city}, India`,
-            marker: null,
-            isProperty: false
-          });
-        }
-      }
-    });
-
-    indianStates.forEach(state => {
-      if (state.toLowerCase().includes(query.toLowerCase())) {
-        const key = state.toLowerCase();
-        if (!uniqueLocations.has(key)) {
-          uniqueLocations.set(key, true);
-          filteredSuggestions.push({
-            text: state,
-            displayText: `${state}, India`,
-            marker: null,
-            isProperty: false
-          });
-        }
-      }
-    });
-
-    // Also check locations from existing properties
+    // Check properties for name and location matches
     markers.forEach(marker => {
-      // Check state name
-      if (marker.state_name && marker.state_name.toLowerCase().includes(query.toLowerCase())) {
-        const key = marker.state_name.toLowerCase();
-        if (!uniqueLocations.has(key)) {
-          uniqueLocations.set(key, true);
+      if (marker.isSearchResult) return;
+
+      // Check property name
+      const name = marker.name || marker.propertyName || '';
+      if (name && name.toLowerCase().includes(queryLower)) {
+        const key = `name-${name.toLowerCase()}`;
+        if (!uniqueSuggestions.has(key)) {
+          uniqueSuggestions.set(key, true);
+          const location = marker.layer_location || marker.location_district || '';
           filteredSuggestions.push({
-            text: marker.state_name,
-            displayText: `${marker.state_name}, India`,
+            text: name,
+            displayText: location ? `${name}, ${location}` : name,
             marker: marker,
-            isProperty: false
+            isProperty: true
           });
         }
       }
 
-      // Check district
-      if (marker.location_district && marker.location_district.toLowerCase().includes(query.toLowerCase())) {
-        const key = marker.location_district.toLowerCase();
-        if (!uniqueLocations.has(key)) {
-          uniqueLocations.set(key, true);
+      // Check property location (layer_location, location_district, address) - but NOT state_name
+      const layerLocation = marker.layer_location || '';
+      if (layerLocation && layerLocation.toLowerCase().includes(queryLower)) {
+        const key = `location-${layerLocation.toLowerCase()}`;
+        if (!uniqueSuggestions.has(key)) {
+          uniqueSuggestions.set(key, true);
+          const propertyName = marker.name || marker.propertyName || 'Property';
           filteredSuggestions.push({
-            text: marker.location_district,
-            displayText: `${marker.location_district}, India`,
+            text: layerLocation,
+            displayText: `${propertyName}, ${layerLocation}`,
             marker: marker,
-            isProperty: false
+            isProperty: true
           });
         }
       }
 
-      // Check layer location
-      if (marker.layer_location && marker.layer_location.toLowerCase().includes(query.toLowerCase())) {
-        const key = marker.layer_location.toLowerCase();
-        if (!uniqueLocations.has(key)) {
-          uniqueLocations.set(key, true);
+      // Check location_district (but not state)
+      const locationDistrict = marker.location_district || '';
+      if (locationDistrict && locationDistrict.toLowerCase().includes(queryLower)) {
+        const key = `district-${locationDistrict.toLowerCase()}`;
+        if (!uniqueSuggestions.has(key)) {
+          uniqueSuggestions.set(key, true);
+          const propertyName = marker.name || marker.propertyName || 'Property';
           filteredSuggestions.push({
-            text: marker.layer_location,
-            displayText: `${marker.layer_location}, India`,
+            text: locationDistrict,
+            displayText: `${propertyName}, ${locationDistrict}`,
             marker: marker,
-            isProperty: false
+            isProperty: true
+          });
+        }
+      }
+
+      // Check address if it's a string
+      const address = typeof marker.address === 'string' ? marker.address : '';
+      if (address && address.toLowerCase().includes(queryLower)) {
+        const key = `address-${address.toLowerCase()}`;
+        if (!uniqueSuggestions.has(key)) {
+          uniqueSuggestions.set(key, true);
+          const propertyName = marker.name || marker.propertyName || 'Property';
+          filteredSuggestions.push({
+            text: address,
+            displayText: `${propertyName}, ${address}`,
+            marker: marker,
+            isProperty: true
           });
         }
       }
@@ -430,75 +447,59 @@ export default function HomePage() {
 
     const finalSuggestions = filteredSuggestions.slice(0, 5);
     setSuggestions(finalSuggestions);
-    setShowSuggestions(true); // Always show dropdown when query has 1+ characters
+    setShowSuggestions(finalSuggestions.length > 0);
   };
 
   const handleSearchInputChange = (e) => {
     const value = e.target.value;
     setSearchQuery(value);
-    generateSuggestions(value);
+    
+    // For country view, don't generate property suggestions
+    if (!showCitySelector) {
+      generateSuggestions(value);
+    }
+    // For country view, the search will be handled by citySearchQuery
   };
 
 
 
   const handleSearch = async (e) => {
     e.preventDefault();
-    if (!searchQuery) return;
-
-    setShowSuggestions(false);
-
-    // First check if the search query matches any property location
-    const matchingProperty = markers.find(marker =>
-      marker.state_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      marker.layer_location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      marker.location_district?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    if (matchingProperty && matchingProperty.position) {
-      // If found in properties, zoom to that location
-      setMapCenter(matchingProperty.position);
-      setZoomLevel(14);
-      handleMarkerClick(matchingProperty);
+    if (!searchQuery.trim()) {
+      // Clear search filter if empty
       setSearchQuery("");
       return;
     }
 
-    // If not found in properties, use Google Geocoding API
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchQuery)}&key=${apiKey}`;
+    setShowSuggestions(false);
 
-    try {
-      const res = await fetch(url);
-      const data = await res.json();
+    // Top search bar: consistently filter properties by name/location in ALL views (initial, filters, country)
+    // The search query will be used in getFilteredMarkers to filter properties
+    // If there are matching properties, zoom to show them
+    const matchingProperties = markers.filter(marker => {
+      if (marker.isSearchResult) return false;
+      const query = searchQuery.toLowerCase().trim();
+      const name = (marker.name || '').toLowerCase();
+      const propertyName = (marker.propertyName || '').toLowerCase();
+      const layerLocation = (marker.layer_location || '').toLowerCase();
+      const locationDistrict = (marker.location_district || '').toLowerCase();
+      const stateName = (marker.state_name || '').toLowerCase();
+      const address = (typeof marker.address === 'string' ? marker.address : '').toLowerCase();
+      
+      return name.includes(query) ||
+             propertyName.includes(query) ||
+             layerLocation.includes(query) ||
+             locationDistrict.includes(query) ||
+             stateName.includes(query) ||
+             address.includes(query);
+    });
 
-      if (data.status === "OK" && data.results && data.results.length > 0) {
-        const { lat, lng } = data.results[0].geometry.location;
-        const pos = { lat, lng };
-
-        // Create a red marker for searched location (not in properties)
-        const searchMarker = {
-          id: `search-${Date.now()}`,
-          layer_location: data.results[0].formatted_address,
-          popup_text: 'This is the location you searched for.',
-          position: pos,
-          isSearchResult: true, // Flag to identify search result markers
-        };
-
-        setZoomLevel(14);
-        setMapCenter(pos);
-
-        // Remove previous search markers and add new one
-        setMarkers(prevMarkers => [
-          ...prevMarkers.filter(marker => !marker.isSearchResult),
-          searchMarker
-        ]);
-        setSearchQuery("");
-      } else {
-        console.error("Geocoding failed:", data.status, data.error_message);
-      }
-    } catch (err) {
-      console.error("Search error:", err);
+    if (matchingProperties.length > 0 && matchingProperties[0].position) {
+      // Zoom to first matching property - less zoom so city name is visible
+      setMapCenter(matchingProperties[0].position);
+      setZoomLevel(10);
     }
+    // The filtering will be handled by getFilteredMarkers
   };
 
   const handleMarkerClick = (marker) => {
@@ -657,23 +658,106 @@ export default function HomePage() {
     };
   };
 
+  // Helper function to get numeric price value for sorting
+  const getPriceValue = (marker) => {
+    const prices = calculatePropertyPrices(marker);
+    if (prices.discountedPrice) {
+      // Extract numeric value from discounted price
+      const priceStr = prices.discountedPrice.toString().replace(/[₹,]/g, '');
+      return parseFloat(priceStr) || 0;
+    }
+    // Fallback to other price fields
+    if (marker.total_price && marker.total_price !== 'N/A') {
+      const priceStr = marker.total_price.toString().replace(/[₹,]/g, '');
+      return parseFloat(priceStr) || 0;
+    }
+    if (marker.originalPrice && marker.originalPrice !== '₹XX' && marker.originalPrice !== 'N/A') {
+      const priceStr = marker.originalPrice.toString().replace(/[₹,]/g, '');
+      return parseFloat(priceStr) || 0;
+    }
+    return 0;
+  };
+
+  // Helper function to get numeric size value for sorting
+  const getSizeValue = (marker) => {
+    const sizeStr = marker.size || '0';
+    const size = parseFloat(sizeStr.replace(/[^0-9.]/g, '')) || 0;
+    
+    // Convert to square feet for consistent comparison
+    if (sizeStr.toLowerCase().includes('sq ft') || sizeStr.toLowerCase().includes('sqft')) {
+      return size; // Already in square feet
+    } else {
+      return size * 9; // Convert square yards to square feet
+    }
+  };
+
+  // Helper function to get total price value for sorting
+  const getTotalPriceValue = (marker) => {
+    // Try total_price first
+    if (marker.total_price && marker.total_price !== 'N/A') {
+      const priceStr = marker.total_price.toString().replace(/[₹,]/g, '');
+      return parseFloat(priceStr) || 0;
+    }
+    // Fallback to calculated price
+    return getPriceValue(marker);
+  };
+
+  // Helper function to get price per seat for commercial properties
+  const getPricePerSeat = (marker) => {
+    if (marker.propertyType === 'commercial' && marker.floorConfigurations && marker.floorConfigurations.length > 0) {
+      const firstFloor = marker.floorConfigurations[0];
+      if (firstFloor.dedicatedCabin && firstFloor.dedicatedCabin.pricePerSeat) {
+        const pricePerSeatStr = firstFloor.dedicatedCabin.pricePerSeat.toString();
+        const priceMatch = pricePerSeatStr.match(/(\d+)/);
+        if (priceMatch) {
+          return parseFloat(priceMatch[1]) || 0;
+        }
+      }
+    }
+    // Fallback: calculate from total price if available
+    const prices = calculatePropertyPrices(marker);
+    if (prices.discountedPrice) {
+      const totalPrice = parseFloat(prices.discountedPrice.toString().replace(/[₹,]/g, '')) || 0;
+      // If we have seats info, calculate per seat
+      if (marker.floorConfigurations && marker.floorConfigurations.length > 0) {
+        const firstFloor = marker.floorConfigurations[0];
+        if (firstFloor.dedicatedCabin && firstFloor.dedicatedCabin.seats) {
+          const seatsStr = firstFloor.dedicatedCabin.seats.toString();
+          const seatsMatch = seatsStr.match(/(\d+)/);
+          if (seatsMatch) {
+            const seats = parseFloat(seatsMatch[1]) || 1;
+            return totalPrice / seats;
+          }
+        }
+      }
+    }
+    return 0;
+  };
+
   const getFilteredMarkers = () => {
-    let filtered = markers;
+    let filtered = markers.filter(marker => !marker.isSearchResult); // Exclude search result markers
 
-    // Check if any filters are applied
-    const hasTypeFilters = filters.type.commercial || filters.type.residential;
-    const hasListedByFilters = filters.listedBy.owner || filters.listedBy.agent || filters.listedBy.iacre;
-    const hasBudgetFilters = !(filters.budget[0] === 0 && filters.budget[1] === 30);
-    const hasSizeFilters = !(filters.size[0] === 0 && filters.size[1] === 50000);
-
-    const hasAnyFilters = hasTypeFilters || hasListedByFilters || hasBudgetFilters || hasSizeFilters;
-
-    // If no filters are applied, show all markers
-    if (!hasAnyFilters) {
-      return filtered;
+    // Apply search query filter - consistently filter properties in ALL views (initial, filters, country)
+    if (searchQuery && searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(marker => {
+        const name = (marker.name || '').toLowerCase();
+        const propertyName = (marker.propertyName || '').toLowerCase();
+        const layerLocation = (marker.layer_location || '').toLowerCase();
+        const locationDistrict = (marker.location_district || '').toLowerCase();
+        const stateName = (marker.state_name || '').toLowerCase();
+        const address = (typeof marker.address === 'string' ? marker.address : '').toLowerCase();
+        
+        return name.includes(query) ||
+               propertyName.includes(query) ||
+               layerLocation.includes(query) ||
+               locationDistrict.includes(query) ||
+               stateName.includes(query) ||
+               address.includes(query);
+      });
     }
 
-    // Apply property type filter (Commercial/Residential buttons) - this is separate from modal filters
+    // Apply building type filter (Commercial/Residential) - always apply if set
     if (propertyTypeFilter !== 'all') {
       filtered = filtered.filter(marker => {
         const markerType = marker.propertyType || 'residential';
@@ -681,66 +765,202 @@ export default function HomePage() {
       });
     }
 
-    // Apply modal filters (type, listedBy, budget, size)
-    // Apply type filters
-    if (hasTypeFilters) {
+    // Apply listing type filter (For Sale, For Rent, Ready to Move, New Projects)
+    if (listingTypeFilter && listingTypeFilter !== 'all') {
       filtered = filtered.filter(marker => {
-        const markerType = marker.propertyType || 'residential';
-        return (
-          (filters.type.commercial && markerType === 'commercial') ||
-          (filters.type.residential && markerType === 'residential')
-        );
+        const markerListingType = marker.listing_type || marker.listingType || '';
+        // Map filter values to property values
+        const filterMapping = {
+          'forSale': 'For Sale',
+          'forRent': 'For Rent',
+          'readyToMove': 'Ready to Move',
+          'newProjects': 'New Projects',
+          'verified': 'Verified'
+        };
+        const expectedValue = filterMapping[listingTypeFilter] || listingTypeFilter;
+        return markerListingType === expectedValue || 
+               (listingTypeFilter === 'verified' && marker.is_verified);
       });
     }
 
-    // Apply listed by filter
-    if (hasListedByFilters) {
-      filtered = filtered.filter(marker => {
-        const listedBy = marker.listed_by?.toLowerCase() || 'agent';
-        return (
-          (filters.listedBy.owner && listedBy === 'owner') ||
-          (filters.listedBy.agent && listedBy === 'agent') ||
-          (filters.listedBy.iacre && listedBy === 'buildersinfo')
-        );
-      });
-    }
+    // Check if any modal filters are applied
+    const hasTypeFilters = filters.type.commercial || filters.type.residential;
+    const hasListedByFilters = filters.listedBy.owner || filters.listedBy.agent || filters.listedBy.iacre;
+    const hasBudgetFilters = !(filters.budget[0] === 0 && filters.budget[1] === 30);
+    const hasSizeFilters = !(filters.size[0] === 0 && filters.size[1] === 50000);
+    const hasPropertyTypeFilters = Object.values(propertyTypes).some(v => v === true);
+    const hasBudgetLumpsumFilters = budgetLumpsum.min !== '' || budgetLumpsum.max !== '';
+    const hasBudgetPerSeatFilters = budgetPerSeat.min !== '' || budgetPerSeat.max !== '';
 
-    // Apply budget filter
-    if (hasBudgetFilters) {
-      filtered = filtered.filter(marker => {
-        const priceStr = marker.total_price || '0';
-        const price = parseFloat(priceStr.replace(/[^0-9.]/g, '')) || 0;
-        const minBudget = filters.budget[0] * 10000000; // Convert crores to actual price (1 crore = 10,000,000)
-        const maxBudget = filters.budget[1] * 10000000;
-        return price >= minBudget && price <= maxBudget;
-      });
-    }
+    const hasAnyModalFilters = hasTypeFilters || hasListedByFilters || hasBudgetFilters || 
+                               hasSizeFilters || hasPropertyTypeFilters || hasBudgetLumpsumFilters || 
+                               hasBudgetPerSeatFilters;
 
-    // Apply size filter
-    if (hasSizeFilters) {
-      filtered = filtered.filter(marker => {
-        const sizeStr = marker.size || '0';
-        const size = parseFloat(sizeStr.replace(/[^0-9.]/g, '')) || 0;
-        const minSize = filters.size[0];
-        const maxSize = filters.size[1];
+    // Apply modal filters if any are set
+    if (hasAnyModalFilters) {
+      // Apply type filters (commercial/residential from modal)
+      if (hasTypeFilters) {
+        filtered = filtered.filter(marker => {
+          const markerType = marker.propertyType || 'residential';
+          return (
+            (filters.type.commercial && markerType === 'commercial') ||
+            (filters.type.residential && markerType === 'residential')
+          );
+        });
+      }
 
-        // Handle different size units based on the selected unit in the filter
-        let sizeInFilterUnit = size;
-        if (sizeStr.toLowerCase().includes('sq ft') || sizeStr.toLowerCase().includes('sqft')) {
-          // Data is in square feet, convert to filter unit
-          if (sizeUnit === 'Square Yards') {
-            sizeInFilterUnit = size / 9; // Convert square feet to square yards
+      // Apply property category type filters (Office Space, Co-Working, etc.)
+      if (hasPropertyTypeFilters) {
+        filtered = filtered.filter(marker => {
+          const categoryType = marker.property_category_type || marker.propertyCategoryType || '';
+          const categoryMapping = {
+            'officeSpace': 'Office Space',
+            'coWorking': 'Co-Working',
+            'shop': 'Shop',
+            'showroom': 'Showroom',
+            'godownWarehouse': 'Godown/Warehouse',
+            'industrialShed': 'Industrial Shed',
+            'industrialBuilding': 'Industrial Building',
+            'otherBusiness': 'Other business',
+            'restaurantCafe': 'Restaurant/Cafe'
+          };
+          
+          // Check if any selected property type matches
+          return Object.entries(propertyTypes).some(([key, isSelected]) => {
+            if (!isSelected) return false;
+            const expectedCategory = categoryMapping[key];
+            return categoryType === expectedCategory;
+          });
+        });
+      }
+
+      // Apply listed by filter
+      if (hasListedByFilters) {
+        filtered = filtered.filter(marker => {
+          const listedBy = marker.listed_by?.toLowerCase() || 'agent';
+          return (
+            (filters.listedBy.owner && listedBy === 'owner') ||
+            (filters.listedBy.agent && listedBy === 'agent') ||
+            (filters.listedBy.iacre && listedBy === 'buildersinfo')
+          );
+        });
+      }
+
+      // Apply budget lumpsum filter
+      if (hasBudgetLumpsumFilters) {
+        filtered = filtered.filter(marker => {
+          const prices = calculatePropertyPrices(marker);
+          const priceValue = prices.discountedPrice 
+            ? parseFloat(prices.discountedPrice.toString().replace(/[₹,]/g, '')) || 0
+            : getPriceValue(marker);
+          
+          const minBudget = budgetLumpsum.min ? parseFloat(budgetLumpsum.min) * 100000 : 0; // Convert lacs to actual price
+          const maxBudget = budgetLumpsum.max ? parseFloat(budgetLumpsum.max) * 100000 : Infinity;
+          
+          if (budgetLumpsum.min && priceValue < minBudget) return false;
+          if (budgetLumpsum.max && priceValue > maxBudget) return false;
+          return true;
+        });
+      }
+
+      // Apply budget per seat filter
+      if (hasBudgetPerSeatFilters) {
+        filtered = filtered.filter(marker => {
+          const pricePerSeat = getPricePerSeat(marker);
+          if (pricePerSeat === 0) return false; // Skip if no price per seat available
+          
+          const minPrice = budgetPerSeat.min ? parseFloat(budgetPerSeat.min) : 0;
+          const maxPrice = budgetPerSeat.max ? parseFloat(budgetPerSeat.max) : Infinity;
+          
+          return pricePerSeat >= minPrice && pricePerSeat <= maxPrice;
+        });
+      }
+
+      // Apply budget filter (old filter - in crores)
+      if (hasBudgetFilters) {
+        filtered = filtered.filter(marker => {
+          const prices = calculatePropertyPrices(marker);
+          const priceValue = prices.discountedPrice 
+            ? parseFloat(prices.discountedPrice.toString().replace(/[₹,]/g, '')) || 0
+            : getPriceValue(marker);
+          const minBudget = filters.budget[0] * 10000000; // Convert crores to actual price (1 crore = 10,000,000)
+          const maxBudget = filters.budget[1] * 10000000;
+          return priceValue >= minBudget && priceValue <= maxBudget;
+        });
+      }
+
+      // Apply size filter
+      if (hasSizeFilters) {
+        filtered = filtered.filter(marker => {
+          const sizeStr = marker.size || '0';
+          const size = parseFloat(sizeStr.replace(/[^0-9.]/g, '')) || 0;
+          const minSize = filters.size[0];
+          const maxSize = filters.size[1];
+
+          // Handle different size units based on the selected unit in the filter
+          let sizeInFilterUnit = size;
+          if (sizeStr.toLowerCase().includes('sq ft') || sizeStr.toLowerCase().includes('sqft')) {
+            // Data is in square feet, convert to filter unit
+            if (sizeUnit === 'Square Yards') {
+              sizeInFilterUnit = size / 9; // Convert square feet to square yards
+            }
+            // If filter unit is also square feet, no conversion needed
+          } else {
+            // Data is in square yards, convert to filter unit
+            if (sizeUnit === 'Square Feet') {
+              sizeInFilterUnit = size * 9; // Convert square yards to square feet
+            }
+            // If filter unit is also square yards, no conversion needed
           }
-          // If filter unit is also square feet, no conversion needed
-        } else {
-          // Data is in square yards, convert to filter unit
-          if (sizeUnit === 'Square Feet') {
-            sizeInFilterUnit = size * 9; // Convert square yards to square feet
-          }
-          // If filter unit is also square yards, no conversion needed
+
+          return sizeInFilterUnit >= minSize && sizeInFilterUnit <= maxSize;
+        });
+      }
+    }
+
+    // Apply sorting
+    if (sortBy && sortBy !== 'default') {
+      filtered = [...filtered].sort((a, b) => {
+        switch (sortBy) {
+          case 'uploadedDateLatest':
+            // Sort by uploaded date - latest first
+            const dateA = a.uploadedDate ? new Date(a.uploadedDate).getTime() : 0;
+            const dateB = b.uploadedDate ? new Date(b.uploadedDate).getTime() : 0;
+            return dateB - dateA; // Latest first (descending)
+          
+          case 'priceLow':
+            const priceA = getPriceValue(a);
+            const priceB = getPriceValue(b);
+            return priceA - priceB; // Low to high
+          
+          case 'priceHigh':
+            const priceA2 = getPriceValue(a);
+            const priceB2 = getPriceValue(b);
+            return priceB2 - priceA2; // High to low
+          
+          case 'sizeLow':
+            const sizeA = getSizeValue(a);
+            const sizeB = getSizeValue(b);
+            return sizeA - sizeB; // Low to high
+          
+          case 'sizeHigh':
+            const sizeA2 = getSizeValue(a);
+            const sizeB2 = getSizeValue(b);
+            return sizeB2 - sizeA2; // High to low
+          
+          case 'totalPriceLow':
+            const totalPriceA = getTotalPriceValue(a);
+            const totalPriceB = getTotalPriceValue(b);
+            return totalPriceA - totalPriceB; // Low to high
+          
+          case 'totalPriceHigh':
+            const totalPriceA2 = getTotalPriceValue(a);
+            const totalPriceB2 = getTotalPriceValue(b);
+            return totalPriceB2 - totalPriceA2; // High to low
+          
+          default:
+            return 0;
         }
-
-        return sizeInFilterUnit >= minSize && sizeInFilterUnit <= maxSize;
       });
     }
 
@@ -880,44 +1100,22 @@ export default function HomePage() {
                 suggestions.map((suggestion, index) => (
                   <div
                     key={index}
-                    onMouseDown={async (e) => {
+                    onMouseDown={(e) => {
                       e.preventDefault();
                       setSearchQuery(suggestion.text);
                       setShowSuggestions(false);
 
-                      const searchText = suggestion.text;
-
-                      const matchingProperty = markers.find(marker =>
-                        marker.state_name?.toLowerCase() === searchText.toLowerCase() ||
-                        marker.layer_location?.toLowerCase() === searchText.toLowerCase() ||
-                        marker.location_district?.toLowerCase() === searchText.toLowerCase()
-                      );
-
-                      if (matchingProperty && matchingProperty.position) {
-                        setMapCenter(matchingProperty.position);
-                        setZoomLevel(12);
-                        setSearchQuery("");
+                      // If suggestion has a marker (property), zoom to it
+                      if (suggestion.marker && suggestion.marker.position) {
+                        setMapCenter(suggestion.marker.position);
+                        setZoomLevel(10); // Less zoom so city name is visible
+                        setSearchQuery(suggestion.text);
+                        // The search query will filter properties via getFilteredMarkers
                         return;
                       }
 
-                      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-                      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchText)}&key=${apiKey}`;
-
-                      try {
-                        const res = await fetch(url);
-                        const data = await res.json();
-
-                        if (data.status === "OK" && data.results && data.results.length > 0) {
-                          const { lat, lng } = data.results[0].geometry.location;
-                          const pos = { lat, lng };
-
-                          setZoomLevel(12);
-                          setMapCenter(pos);
-                          setSearchQuery("");
-                        }
-                      } catch (err) {
-                        console.error("Search error:", err);
-                      }
+                      // If no marker, just set the search query to filter properties
+                      setSearchQuery(suggestion.text);
                     }}
                     className={`px-3 py-2 cursor-pointer border-b last:border-b-0 transition-all duration-200 ${isDark ? 'hover:bg-gray-700 border-gray-700' : 'hover:bg-gray-100 border-gray-100'}`}
                   >
@@ -936,9 +1134,9 @@ export default function HomePage() {
 
       <main className="flex-1 relative flex pb-16 md:pb-0">
         <div className="hidden md:block relative">
-          <div className={`${isDrawerCollapsed ? 'w-0 overflow-hidden' : 'w-[380px]'} shadow-lg flex flex-col transition-all duration-300 h-full ${isDark ? 'bg-[#1f2229]' : 'bg-gray-50'}`}>
-            <div className={`sticky top-0 z-20 px-4 pt-4 pb-4 ${isDrawerCollapsed ? 'hidden' : ''} ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}>
-              <form onSubmit={handleSearch} className="mb-4">
+          <div className={`${isDrawerCollapsed ? 'w-0 overflow-hidden' : 'w-[380px]'} shadow-lg flex flex-col transition-all duration-300 h-full ${isDark ? 'bg-[#1f2229]' : 'bg-gray-50'} ${isLoadingProperties ? 'opacity-30 pointer-events-none' : ''}`}>
+            <div className={`sticky top-0 z-20 px-4 pt-4 ${showFiltersView || showCitySelector ? 'pb-0' : 'pb-4'} ${isDrawerCollapsed ? 'hidden' : ''} ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}>
+              <form onSubmit={handleSearch} className={showFiltersView || showCitySelector ? 'mb-2' : 'mb-4'}>
                 <div className="relative search-container">
                   <div className={`rounded-full pl-4 pr-3 py-3 w-full flex items-center gap-3 ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
                     <Search className={`w-5 h-5 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
@@ -971,9 +1169,10 @@ export default function HomePage() {
                             }, 150);
                           }}
                           placeholder=""
+                          disabled={isLoadingProperties}
                           className={`w-full outline-none text-sm font-medium bg-transparent search-input-field ${isDark ? 'text-white' : 'text-gray-700'} ${
                             searchQuery && !isSearchFocused ? 'absolute inset-0 opacity-0' : ''
-                          }`}
+                          } ${isLoadingProperties ? 'cursor-not-allowed' : ''}`}
                           style={{ background: 'transparent', border: 'none', padding: 0 }}
                         />
                       </div>
@@ -987,7 +1186,8 @@ export default function HomePage() {
                           setShowCitySelector(false);
                           setShowFiltersView(true);
                         }}
-                        className={`transition-colors cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'}`}
+                        disabled={isLoadingProperties}
+                        className={`transition-colors ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'}`}
                       >
                         <SlidersHorizontal className="w-5 h-5" />
                       </button>
@@ -999,7 +1199,8 @@ export default function HomePage() {
                           setShowFiltersView(false);
                           setShowCitySelector(true);
                         }}
-                        className={`transition-colors cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'}`}
+                        disabled={isLoadingProperties}
+                        className={`transition-colors ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'}`}
                       >
                         <Globe className="w-5 h-5" />
                       </button>
@@ -1013,44 +1214,22 @@ export default function HomePage() {
                         suggestions.map((suggestion, index) => (
                           <div
                             key={index}
-                            onMouseDown={async (e) => {
+                            onMouseDown={(e) => {
                               e.preventDefault();
                               setSearchQuery(suggestion.text);
                               setShowSuggestions(false);
 
-                              const searchText = suggestion.text;
-
-                              const matchingProperty = markers.find(marker =>
-                                marker.state_name?.toLowerCase() === searchText.toLowerCase() ||
-                                marker.layer_location?.toLowerCase() === searchText.toLowerCase() ||
-                                marker.location_district?.toLowerCase() === searchText.toLowerCase()
-                              );
-
-                              if (matchingProperty && matchingProperty.position) {
-                                setMapCenter(matchingProperty.position);
-                                setZoomLevel(12);
-                                setSearchQuery("");
+                              // If suggestion has a marker (property), zoom to it
+                              if (suggestion.marker && suggestion.marker.position) {
+                                setMapCenter(suggestion.marker.position);
+                                setZoomLevel(10); // Less zoom so city name is visible
+                                setSearchQuery(suggestion.text);
+                                // The search query will filter properties via getFilteredMarkers
                                 return;
                               }
 
-                              const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-                              const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchText)}&key=${apiKey}`;
-
-                              try {
-                                const res = await fetch(url);
-                                const data = await res.json();
-
-                                if (data.status === "OK" && data.results && data.results.length > 0) {
-                                  const { lat, lng } = data.results[0].geometry.location;
-                                  const pos = { lat, lng };
-
-                                  setZoomLevel(12);
-                                  setMapCenter(pos);
-                                  setSearchQuery("");
-                                }
-                              } catch (err) {
-                                console.error("Search error:", err);
-                              }
+                              // If no marker, just set the search query to filter properties
+                              setSearchQuery(suggestion.text);
                             }}
                             className={`px-4 py-2.5 cursor-pointer border-b last:border-b-0 transition-all duration-200 ${isDark ? 'hover:bg-gray-700 border-gray-700' : 'hover:bg-gray-100 border-gray-100'}`}
                           >
@@ -1079,11 +1258,12 @@ export default function HomePage() {
                           type: { commercial: false, residential: false }
                         }));
                       }}
+                      disabled={isLoadingProperties}
                       className={`flex-1 px-4 py-2 rounded-full text-sm font-medium transition-all ${
                         propertyTypeFilter === 'all'
                           ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
                           : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
-                      }`}
+                      } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : ''}`}
                     >
                       All
                     </button>
@@ -1095,11 +1275,12 @@ export default function HomePage() {
                           type: { commercial: true, residential: false }
                         }));
                       }}
+                      disabled={isLoadingProperties}
                       className={`flex-1 px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${
                         propertyTypeFilter === 'commercial'
                           ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
                           : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
-                      }`}
+                      } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : ''}`}
                     >
                       <Building2 className="w-3.5 h-3.5" />
                       Commercial
@@ -1112,11 +1293,12 @@ export default function HomePage() {
                           type: { commercial: false, residential: true }
                         }));
                       }}
+                      disabled={isLoadingProperties}
                       className={`flex-1 px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${
                         propertyTypeFilter === 'residential'
                           ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
                           : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
-                      }`}
+                      } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : ''}`}
                     >
                       <Home className="w-3.5 h-3.5" />
                       Residential
@@ -1126,58 +1308,140 @@ export default function HomePage() {
                   {/* Listing Type Filters */}
                   <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide">
                     <button
-                      onClick={() => setListingTypeFilter('forSale')}
+                      onClick={() => setListingTypeFilter(listingTypeFilter === 'forSale' ? 'all' : 'forSale')}
+                      disabled={isLoadingProperties}
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                         listingTypeFilter === 'forSale'
-                          ? 'bg-gray-800 text-white'
+                          ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
                           : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
-                      }`}
+                      } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : ''}`}
                     >
                       For Sale
                     </button>
                     <button
-                      onClick={() => setListingTypeFilter('forRent')}
+                      onClick={() => setListingTypeFilter(listingTypeFilter === 'forRent' ? 'all' : 'forRent')}
+                      disabled={isLoadingProperties}
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                         listingTypeFilter === 'forRent'
-                          ? 'bg-gray-800 text-white'
+                          ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
                           : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
-                      }`}
+                      } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : ''}`}
                     >
                       For Rent
                     </button>
                     <button
-                      onClick={() => setListingTypeFilter('readyToMove')}
+                      onClick={() => setListingTypeFilter(listingTypeFilter === 'readyToMove' ? 'all' : 'readyToMove')}
+                      disabled={isLoadingProperties}
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                         listingTypeFilter === 'readyToMove'
-                          ? 'bg-gray-800 text-white'
+                          ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
                           : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
-                      }`}
+                      } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : ''}`}
                     >
                       Ready to Move
                     </button>
                     <button
-                      onClick={() => setListingTypeFilter('newProjects')}
+                      onClick={() => setListingTypeFilter(listingTypeFilter === 'newProjects' ? 'all' : 'newProjects')}
+                      disabled={isLoadingProperties}
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                         listingTypeFilter === 'newProjects'
-                          ? 'bg-gray-800 text-white'
+                          ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
                           : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
-                      }`}
+                      } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : ''}`}
                     >
                       New Projects
                     </button>
                   </div>
 
                   {/* Properties Count and Sort */}
-                  <div className={`flex items-center justify-between pt-2 border-t ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
-                    <p className="text-sm">
-                      <span className="text-orange-500 font-medium">{getFilteredMarkers().length} {getFilteredMarkers().length === 1 ? 'property' : 'properties'}</span>
-                      <span className={isDark ? 'text-gray-400' : 'text-gray-500'}> found</span>
-                    </p>
-                    <button className={`flex items-center gap-1 text-sm transition-colors ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}>
-                      <span>Sort by</span>
-                      <ChevronDown className="w-4 h-4" />
-                    </button>
-                  </div>
+                  {getFilteredMarkers().length > 0 && (
+                    <div className={`flex items-center justify-between pt-2 border-t ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
+                      <p className="text-sm">
+                        <span className={`font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{getFilteredMarkers().length} {getFilteredMarkers().length === 1 ? 'property' : 'properties'}</span>
+                        <span className={isDark ? 'text-gray-400' : 'text-gray-500'}> found</span>
+                      </p>
+                      <div className="relative sort-dropdown-container">
+                        <button 
+                          onClick={() => setShowSortDropdown(!showSortDropdown)}
+                          disabled={isLoadingProperties}
+                          className={`flex items-center gap-1 text-sm transition-colors ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'} ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : ''}`}
+                        >
+                          <span>Sort by</span>
+                          <ChevronDown className={`w-4 h-4 transition-transform ${showSortDropdown ? 'rotate-180' : ''}`} />
+                        </button>
+                        
+                        {showSortDropdown && (
+                          <div className={`absolute right-0 top-full mt-2 w-56 rounded-lg shadow-xl z-50 border ${isDark ? 'bg-[#282c34] border-gray-700' : 'bg-white border-gray-200'}`}>
+                            <div className="py-1">
+                              <button
+                                onClick={() => {
+                                  setSortBy('uploadedDateLatest');
+                                  setShowSortDropdown(false);
+                                }}
+                                className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'uploadedDateLatest' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                              >
+                                Uploaded Date (Latest)
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setSortBy('priceLow');
+                                  setShowSortDropdown(false);
+                                }}
+                                className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'priceLow' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                              >
+                                Price (low to high)
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setSortBy('priceHigh');
+                                  setShowSortDropdown(false);
+                                }}
+                                className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'priceHigh' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                              >
+                                Price (high to low)
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setSortBy('sizeLow');
+                                  setShowSortDropdown(false);
+                                }}
+                                className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'sizeLow' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                              >
+                                Size (low to high)
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setSortBy('sizeHigh');
+                                  setShowSortDropdown(false);
+                                }}
+                                className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'sizeHigh' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                              >
+                                Size (high to low)
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setSortBy('totalPriceLow');
+                                  setShowSortDropdown(false);
+                                }}
+                                className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'totalPriceLow' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                              >
+                                Total Price (low to high)
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setSortBy('totalPriceHigh');
+                                  setShowSortDropdown(false);
+                                }}
+                                className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'totalPriceHigh' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                              >
+                                Total Price (high to low)
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -1186,7 +1450,7 @@ export default function HomePage() {
             {showCitySelector ? (
               <div className={`flex-1 overflow-y-auto ${isDark ? 'bg-[#1f2229]' : 'bg-white'} ${isDrawerCollapsed ? 'hidden' : ''}`}>
                 {/* City Selector Header */}
-                <div className={`flex items-center gap-3 px-4 py-3 border-b sticky top-0 z-10 ${isDark ? 'border-gray-700 bg-[#1f2229]' : 'border-gray-200 bg-white'}`}>
+                <div className={`flex items-center gap-3 px-4 py-3 border-b sticky top-0 z-10 -mt-2 ${isDark ? 'border-gray-700 bg-[#1f2229]' : 'border-gray-200 bg-white'}`}>
                   <button 
                     onClick={() => setShowCitySelector(false)}
                     className={`cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
@@ -1214,23 +1478,74 @@ export default function HomePage() {
                 <div className={`px-4 py-3 flex items-center justify-between border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
                   <button
                     onClick={async () => {
+                      if (isDetectingLocation || isLoadingProperties) return;
+                      
                       try {
+                        setIsDetectingLocation(true);
                         const locationData = await getUserLocation();
-                        setMapCenter({ lat: locationData.lat, lng: locationData.lng });
-                        if (locationData.isApproximate) {
-                          setZoomLevel(10);
-                        } else {
-                          setZoomLevel(13);
+                        
+                        // Reverse geocode to get city name
+                        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+                        const reverseGeocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${locationData.lat},${locationData.lng}&key=${apiKey}`;
+                        
+                        const geocodeRes = await fetch(reverseGeocodeUrl);
+                        const geocodeData = await geocodeRes.json();
+                        
+                        let cityName = null;
+                        if (geocodeData.status === "OK" && geocodeData.results && geocodeData.results.length > 0) {
+                          // Extract city name from address components
+                          const addressComponents = geocodeData.results[0].address_components;
+                          for (const component of addressComponents) {
+                            if (component.types.includes('locality')) {
+                              cityName = component.long_name;
+                              break;
+                            } else if (component.types.includes('administrative_area_level_2')) {
+                              cityName = component.long_name;
+                            }
+                          }
                         }
-                        setShowCitySelector(false);
+                        
+                        // If we found a city, use it; otherwise use coordinates
+                        if (cityName) {
+                          // Geocode the city name to get its center
+                          const cityGeocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(cityName + ', India')}&key=${apiKey}`;
+                          const cityRes = await fetch(cityGeocodeUrl);
+                          const cityData = await cityRes.json();
+                          
+                          if (cityData.status === "OK" && cityData.results && cityData.results.length > 0) {
+                            const { lat, lng } = cityData.results[0].geometry.location;
+                            // Offset latitude to position city towards top of map
+                            const offsetLat = lat - 0.15;
+                            setMapCenter({ lat: offsetLat, lng });
+                            setZoomLevel(10);
+                            setCitySearchQuery(cityName); // Set city name in search
+                          } else {
+                            // Fallback to coordinates
+                            const offsetLat = locationData.lat - 0.15;
+                            setMapCenter({ lat: offsetLat, lng: locationData.lng });
+                            setZoomLevel(10);
+                            setCitySearchQuery('');
+                          }
+                        } else {
+                          // No city found, use coordinates
+                          const offsetLat = locationData.lat - 0.15;
+                          setMapCenter({ lat: offsetLat, lng: locationData.lng });
+                          setZoomLevel(10);
+                          setCitySearchQuery('');
+                        }
+                        
+                        // Don't close country view - stay in country view
                       } catch (error) {
                         console.error('Error detecting location:', error);
+                      } finally {
+                        setIsDetectingLocation(false);
                       }
                     }}
-                    className="flex items-center gap-2 text-blue-500 hover:text-blue-600 transition-colors cursor-pointer"
+                    disabled={isLoadingProperties || isDetectingLocation}
+                    className={`flex items-center gap-2 text-blue-500 hover:text-blue-600 transition-colors ${(isLoadingProperties || isDetectingLocation) ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                   >
                     <MapPin className="w-4 h-4" />
-                    <span className="text-sm font-medium">Detect my location</span>
+                    <span className="text-sm font-medium">{isDetectingLocation ? 'Detecting...' : 'Detect my location'}</span>
                   </button>
                   <button
                     onClick={() => {
@@ -1238,9 +1553,11 @@ export default function HomePage() {
                       setSelectedMarker(null);
                       setMapCenter({ lat: 20.5937, lng: 78.9629 });
                       setZoomLevel(5);
-                      setShowCitySelector(false);
+                      setCitySearchQuery(''); // Clear city search
+                      // Don't close country view on reset - stay in country view
                     }}
-                    className={`text-sm transition-colors cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
+                    disabled={isLoadingProperties}
+                    className={`text-sm transition-colors ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
                   >
                     Reset City
                   </button>
@@ -1268,9 +1585,11 @@ export default function HomePage() {
                             
                             if (data.status === "OK" && data.results && data.results.length > 0) {
                               const { lat, lng } = data.results[0].geometry.location;
-                              setMapCenter({ lat, lng });
-                              setZoomLevel(12);
-                              setShowCitySelector(false);
+                              // Offset latitude to position city towards top of map (subtract to move center down)
+                              const offsetLat = lat - 0.15; // Moves center down more, making city appear higher on map
+                              setMapCenter({ lat: offsetLat, lng });
+                              setZoomLevel(10); // Less zoom so city name is visible
+                              // Don't close country view - stay in country view
                               setCitySearchQuery('');
                             }
                           } catch (err) {
@@ -1334,7 +1653,7 @@ export default function HomePage() {
             ) : showFiltersView ? (
               <div className={`flex-1 overflow-y-auto ${isDark ? 'bg-[#1f2229]' : 'bg-white'} ${isDrawerCollapsed ? 'hidden' : ''}`}>
                 {/* Filters Header */}
-                <div className={`flex items-center justify-between px-4 py-3 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                <div className={`flex items-center justify-between px-4 py-3 border-b sticky top-0 z-10 -mt-2 ${isDark ? 'border-gray-700 bg-[#1f2229]' : 'border-gray-200 bg-white'}`}>
                   <div className="flex items-center gap-3">
                     <button 
                       onClick={() => {
@@ -1351,6 +1670,11 @@ export default function HomePage() {
                     onClick={() => {
                       setSearchType('locality');
                       setBuildingType('commercial');
+                      setPropertyTypeFilter('all');
+                      setFilters(prev => ({
+                        ...prev,
+                        type: { commercial: false, residential: false }
+                      }));
                       setPropertyTypes({
                         officeSpace: false, coWorking: false, shop: false, showroom: false,
                         godownWarehouse: false, industrialShed: false, industrialBuilding: false,
@@ -1423,7 +1747,14 @@ export default function HomePage() {
                     <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Building Type</h3>
                     <div className={`rounded-full p-1 flex ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
                       <button
-                        onClick={() => setBuildingType('commercial')}
+                        onClick={() => {
+                          setBuildingType('commercial');
+                          setPropertyTypeFilter('commercial');
+                          setFilters(prev => ({
+                            ...prev,
+                            type: { commercial: true, residential: false }
+                          }));
+                        }}
                         className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
                           buildingType === 'commercial'
                             ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
@@ -1434,7 +1765,14 @@ export default function HomePage() {
                         Commercial
                       </button>
                       <button
-                        onClick={() => setBuildingType('residential')}
+                        onClick={() => {
+                          setBuildingType('residential');
+                          setPropertyTypeFilter('residential');
+                          setFilters(prev => ({
+                            ...prev,
+                            type: { commercial: false, residential: true }
+                          }));
+                        }}
                         className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
                           buildingType === 'residential'
                             ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
@@ -1636,7 +1974,7 @@ export default function HomePage() {
                           if (prices.discountedPrice) {
                             return (
                               <p className="text-sm">
-                                <span className="font-bold text-orange-500">{prices.discountedPrice}</span>
+                                <span className="font-bold text-blue-500">{prices.discountedPrice}</span>
                                 {prices.originalPrice && prices.originalPrice !== prices.discountedPrice && (
                                   <span className={`line-through ml-2 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{prices.originalPrice}</span>
                                 )}
@@ -1685,6 +2023,7 @@ export default function HomePage() {
             mapType={mapType}
             showTraffic={showTraffic}
             hideLayerButton={true}
+            isDark={isDark}
           />
 
           {/* Mobile List View Button - Bottom Left above footer */}
@@ -1712,18 +2051,9 @@ export default function HomePage() {
 
               {/* Locate Me Button */}
               <button
-                onClick={async () => {
-                  try {
-                    const locationData = await getUserLocation();
-                    setMapCenter({ lat: locationData.lat, lng: locationData.lng });
-                    if (locationData.isApproximate) {
-                      setZoomLevel(10);
-                    } else {
-                      setZoomLevel(13);
-                    }
-                  } catch (error) {
-                    console.error('Error detecting location:', error);
-                  }
+                onClick={() => {
+                  setShowLocateModal(true);
+                  setLocateModalStep(1);
                 }}
                 className={`w-10 h-10 md:w-12 md:h-12 transition-colors flex items-center justify-center cursor-pointer border-b ${isDark ? 'bg-[#1f2229] hover:bg-[#282c34] border-gray-700' : 'bg-gray-100 hover:bg-gray-200 border-gray-300'}`}
                 title="Locate Me"
@@ -1844,6 +2174,11 @@ export default function HomePage() {
                   onClick={() => {
                     setSearchType('locality');
                     setBuildingType('commercial');
+                    setPropertyTypeFilter('all');
+                    setFilters(prev => ({
+                      ...prev,
+                      type: { commercial: false, residential: false }
+                    }));
                     setPropertyTypes({
                       officeSpace: false, coWorking: false, shop: false, showroom: false,
                       godownWarehouse: false, industrialShed: false, industrialBuilding: false,
@@ -1916,7 +2251,14 @@ export default function HomePage() {
               <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Building Type</h3>
               <div className={`rounded-full p-1 flex ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
                 <button
-                  onClick={() => setBuildingType('commercial')}
+                  onClick={() => {
+                    setBuildingType('commercial');
+                    setPropertyTypeFilter('commercial');
+                    setFilters(prev => ({
+                      ...prev,
+                      type: { commercial: true, residential: false }
+                    }));
+                  }}
                   className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
                     buildingType === 'commercial'
                       ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
@@ -1927,7 +2269,14 @@ export default function HomePage() {
                   Commercial
                 </button>
                 <button
-                  onClick={() => setBuildingType('residential')}
+                  onClick={() => {
+                    setBuildingType('residential');
+                    setPropertyTypeFilter('residential');
+                    setFilters(prev => ({
+                      ...prev,
+                      type: { commercial: false, residential: true }
+                    }));
+                  }}
                   className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
                     buildingType === 'residential'
                       ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
@@ -2115,23 +2464,74 @@ export default function HomePage() {
           <div className={`px-4 py-3 flex items-center justify-between border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
             <button
               onClick={async () => {
+                if (isDetectingLocation || isLoadingProperties) return;
+                
                 try {
+                  setIsDetectingLocation(true);
                   const locationData = await getUserLocation();
-                  setMapCenter({ lat: locationData.lat, lng: locationData.lng });
-                  if (locationData.isApproximate) {
-                    setZoomLevel(10);
-                  } else {
-                    setZoomLevel(13);
+                  
+                  // Reverse geocode to get city name
+                  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+                  const reverseGeocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${locationData.lat},${locationData.lng}&key=${apiKey}`;
+                  
+                  const geocodeRes = await fetch(reverseGeocodeUrl);
+                  const geocodeData = await geocodeRes.json();
+                  
+                  let cityName = null;
+                  if (geocodeData.status === "OK" && geocodeData.results && geocodeData.results.length > 0) {
+                    // Extract city name from address components
+                    const addressComponents = geocodeData.results[0].address_components;
+                    for (const component of addressComponents) {
+                      if (component.types.includes('locality')) {
+                        cityName = component.long_name;
+                        break;
+                      } else if (component.types.includes('administrative_area_level_2')) {
+                        cityName = component.long_name;
+                      }
+                    }
                   }
-                  setShowCitySelector(false);
+                  
+                  // If we found a city, use it; otherwise use coordinates
+                  if (cityName) {
+                    // Geocode the city name to get its center
+                    const cityGeocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(cityName + ', India')}&key=${apiKey}`;
+                    const cityRes = await fetch(cityGeocodeUrl);
+                    const cityData = await cityRes.json();
+                    
+                    if (cityData.status === "OK" && cityData.results && cityData.results.length > 0) {
+                      const { lat, lng } = cityData.results[0].geometry.location;
+                      // Offset latitude to position city towards top of map
+                      const offsetLat = lat - 0.15;
+                      setMapCenter({ lat: offsetLat, lng });
+                      setZoomLevel(10);
+                      setCitySearchQuery(cityName); // Set city name in search
+                    } else {
+                      // Fallback to coordinates
+                      const offsetLat = locationData.lat - 0.15;
+                      setMapCenter({ lat: offsetLat, lng: locationData.lng });
+                      setZoomLevel(10);
+                      setCitySearchQuery('');
+                    }
+                  } else {
+                    // No city found, use coordinates
+                    const offsetLat = locationData.lat - 0.15;
+                    setMapCenter({ lat: offsetLat, lng: locationData.lng });
+                    setZoomLevel(10);
+                    setCitySearchQuery('');
+                  }
+                  
+                  // Don't close country view - stay in country view
                 } catch (error) {
                   console.error('Error detecting location:', error);
+                } finally {
+                  setIsDetectingLocation(false);
                 }
               }}
-              className="flex items-center gap-2 text-blue-500 hover:text-blue-600 transition-colors cursor-pointer"
+              disabled={isLoadingProperties || isDetectingLocation}
+              className={`flex items-center gap-2 text-blue-500 hover:text-blue-600 transition-colors ${(isLoadingProperties || isDetectingLocation) ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
             >
               <LocateFixed className="w-4 h-4" />
-              <span className="text-sm font-medium">Detect my location</span>
+              <span className="text-sm font-medium">{isDetectingLocation ? 'Detecting...' : 'Detect my location'}</span>
             </button>
             <button
               onClick={() => {
@@ -2139,9 +2539,11 @@ export default function HomePage() {
                 setSelectedMarker(null);
                 setMapCenter({ lat: 20.5937, lng: 78.9629 });
                 setZoomLevel(5);
-                setShowCitySelector(false);
+                setCitySearchQuery(''); // Clear city search
+                // Don't close country view on reset - stay in country view
               }}
-              className={`text-sm transition-colors cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
+              disabled={isLoadingProperties}
+              className={`text-sm transition-colors ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
             >
               Reset City
             </button>
@@ -2169,9 +2571,11 @@ export default function HomePage() {
                       
                       if (data.status === "OK" && data.results && data.results.length > 0) {
                         const { lat, lng } = data.results[0].geometry.location;
-                        setMapCenter({ lat, lng });
-                        setZoomLevel(12);
-                        setShowCitySelector(false);
+                        // Offset latitude to position city towards top of map (subtract to move center down)
+                        const offsetLat = lat - 0.08; // Moves center down, making city appear higher
+                        setMapCenter({ lat: offsetLat, lng });
+                        setZoomLevel(10); // Less zoom so city name is visible
+                        // Don't close country view - stay in country view
                         setCitySearchQuery('');
                       }
                     } catch (err) {
@@ -2321,50 +2725,50 @@ export default function HomePage() {
                 {/* Listing Type Filters */}
                 <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
                   <button
-                    onClick={() => setListingTypeFilter('forSale')}
+                    onClick={() => setListingTypeFilter(listingTypeFilter === 'forSale' ? 'all' : 'forSale')}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                       listingTypeFilter === 'forSale'
-                        ? 'bg-gray-800 text-white'
+                        ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
                         : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     For Sale
                   </button>
                   <button
-                    onClick={() => setListingTypeFilter('forRent')}
+                    onClick={() => setListingTypeFilter(listingTypeFilter === 'forRent' ? 'all' : 'forRent')}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                       listingTypeFilter === 'forRent'
-                        ? 'bg-gray-800 text-white'
+                        ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
                         : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     For Rent
                   </button>
                   <button
-                    onClick={() => setListingTypeFilter('readyToMove')}
+                    onClick={() => setListingTypeFilter(listingTypeFilter === 'readyToMove' ? 'all' : 'readyToMove')}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                       listingTypeFilter === 'readyToMove'
-                        ? 'bg-gray-800 text-white'
+                        ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
                         : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     Ready to Move
                   </button>
                   <button
-                    onClick={() => setListingTypeFilter('newProjects')}
+                    onClick={() => setListingTypeFilter(listingTypeFilter === 'newProjects' ? 'all' : 'newProjects')}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                       listingTypeFilter === 'newProjects'
-                        ? 'bg-gray-800 text-white'
+                        ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
                         : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     New Projects
                   </button>
                   <button
-                    onClick={() => setListingTypeFilter('verified')}
+                    onClick={() => setListingTypeFilter(listingTypeFilter === 'verified' ? 'all' : 'verified')}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                       listingTypeFilter === 'verified'
-                        ? 'bg-gray-800 text-white'
+                        ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
                         : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
                     }`}
                   >
@@ -2373,16 +2777,93 @@ export default function HomePage() {
                 </div>
 
                 {/* Results Summary and Sort */}
-                <div className={`flex items-center justify-between pt-2 mt-2 border-t ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
-                  <p className="text-sm">
-                    <span className="text-orange-500 font-medium">{getFilteredMarkers().length} {getFilteredMarkers().length === 1 ? 'property' : 'properties'}</span>
-                    <span className={isDark ? 'text-gray-400' : 'text-gray-500'}> found</span>
-                  </p>
-                  <button className={`flex items-center gap-1 text-sm transition-colors ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}>
-                    <span>Sort by</span>
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
-                </div>
+                {getFilteredMarkers().length > 0 && (
+                  <div className={`flex items-center justify-between pt-2 mt-2 border-t ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
+                    <p className="text-sm">
+                      <span className={`font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{getFilteredMarkers().length} {getFilteredMarkers().length === 1 ? 'property' : 'properties'}</span>
+                      <span className={isDark ? 'text-gray-400' : 'text-gray-500'}> found</span>
+                    </p>
+                    <div className="relative sort-dropdown-container">
+                      <button 
+                        onClick={() => setShowSortDropdown(!showSortDropdown)}
+                        className={`flex items-center gap-1 text-sm transition-colors ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
+                      >
+                        <span>Sort by</span>
+                        <ChevronDown className={`w-4 h-4 transition-transform ${showSortDropdown ? 'rotate-180' : ''}`} />
+                      </button>
+                      
+                      {showSortDropdown && (
+                        <div className={`absolute right-0 top-full mt-2 w-56 rounded-lg shadow-xl z-50 border ${isDark ? 'bg-[#282c34] border-gray-700' : 'bg-white border-gray-200'}`}>
+                          <div className="py-1">
+                            <button
+                              onClick={() => {
+                                setSortBy('uploadedDateLatest');
+                                setShowSortDropdown(false);
+                              }}
+                              className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'uploadedDateLatest' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                            >
+                              Uploaded Date (Latest)
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSortBy('priceLow');
+                                setShowSortDropdown(false);
+                              }}
+                              className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'priceLow' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                            >
+                              Price (low to high)
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSortBy('priceHigh');
+                                setShowSortDropdown(false);
+                              }}
+                              className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'priceHigh' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                            >
+                              Price (high to low)
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSortBy('sizeLow');
+                                setShowSortDropdown(false);
+                              }}
+                              className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'sizeLow' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                            >
+                              Size (low to high)
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSortBy('sizeHigh');
+                                setShowSortDropdown(false);
+                              }}
+                              className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'sizeHigh' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                            >
+                              Size (high to low)
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSortBy('totalPriceLow');
+                                setShowSortDropdown(false);
+                              }}
+                              className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'totalPriceLow' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                            >
+                              Total Price (low to high)
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSortBy('totalPriceHigh');
+                                setShowSortDropdown(false);
+                              }}
+                              className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'totalPriceHigh' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                            >
+                              Total Price (high to low)
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
                 </div>
               <div className={`p-3 space-y-3 pb-24 ${isDark ? 'bg-[#1f2229]' : ''}`}>
@@ -2462,7 +2943,7 @@ export default function HomePage() {
                         if (prices.discountedPrice) {
                           return (
                             <p className="text-sm">
-                              <span className="font-bold text-orange-500">{prices.discountedPrice}</span>
+                              <span className="font-bold text-blue-500">{prices.discountedPrice}</span>
                               {prices.originalPrice && prices.originalPrice !== prices.discountedPrice && (
                                 <span className={`line-through ml-2 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{prices.originalPrice}</span>
                               )}
@@ -2560,26 +3041,183 @@ export default function HomePage() {
             left: '50%', 
             transform: 'translate(-50%, -50%)',
             width: '90%',
-            maxWidth: '400px'
+            maxWidth: '450px'
           }}
           onClose={() => setShowAddPropertyModal(false)}
-          className={`rounded-xl shadow-2xl ${isDark ? 'bg-[#282c34]' : 'bg-white'}`}
+          className={`rounded-3xl shadow-2xl ${isDark ? 'bg-[#1f2937]' : 'bg-white'}`}
           isDark={isDark}
         >
           <div className="p-6">
-            <h2 className={`text-xl font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>Add Your Property</h2>
-            <p className={`mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>List your property for free on BuildersInfo!</p>
-            <Link
-              href="https://wa.me/+918151915199/?text=Hi,%20I%20want%20to%20list%20my%20land%20on%20buildersinfo."
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setShowAddPropertyModal(false)}
-              className="flex items-center gap-3 text-white font-medium px-4 py-3 rounded-lg bg-green-500 hover:bg-green-600 transition-colors justify-center w-full"
-            >
-              <Image src='/whatsapp.svg' alt='whatsapp' width={24} height={24} /> 
-              List My Property (Free)
-            </Link>
+            {/* Logo Section - Centered */}
+            <div className="mb-5 flex justify-center">
+              <Image src="/logo.png" width={140} height={45} className="h-10 w-auto" alt="BuildersInfo Logo" />
+            </div>
+
+            {/* Main Heading - Smaller */}
+            <h2 className={`text-xl font-bold mb-3 leading-tight text-center ${isDark ? 'text-white' : 'text-black'}`}>
+              List your property for free
+            </h2>
+
+            {/* Descriptive Text - Smaller Gray */}
+            <p className={`text-sm mb-6 leading-relaxed text-center ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              Reach thousands of potential buyers by listing your property on BuildersInfo. Our team will help you get started.
+            </p>
+
+            {/* WhatsApp Button - Reduced Width, Centered */}
+            <div className="flex justify-center">
+              <Link
+                href="https://wa.me/+918151915199/?text=Hi,%20I%20want%20to%20list%20my%20land%20on%20buildersinfo."
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setShowAddPropertyModal(false)}
+                className="flex items-center gap-3 text-white font-medium px-6 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20BA5A] transition-colors justify-center min-w-[300px]"
+              >
+                <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center flex-shrink-0">
+                  <Image src='/whatsapp.svg' alt='whatsapp' width={20} height={20} />
+                </div>
+                <span className="text-sm">Contact on WhatsApp</span>
+              </Link>
+            </div>
           </div>
+        </Modal>
+      )}
+
+      {/* Locate Me Modal - Two Step Design */}
+      {showLocateModal && (
+        <Modal
+          style={{ 
+            top: '50%', 
+            left: '50%', 
+            transform: 'translate(-50%, -50%)',
+            width: locateModalStep === 1 ? '280px' : '300px',
+            maxWidth: locateModalStep === 1 ? '280px' : '300px'
+          }}
+          onClose={() => {
+            setShowLocateModal(false);
+            setLocateModalStep(1);
+          }}
+          className={`rounded-lg shadow-2xl ${isDark ? 'bg-[#1f2937]' : 'bg-white'}`}
+          isDark={isDark}
+        >
+          {locateModalStep === 1 ? (
+            // Step 1: Layers Declaration
+            <div className="p-3">
+              <h2 className={`text-xs font-bold mb-2 text-center ${isDark ? 'text-white' : 'text-black'}`}>
+                Layers Declaration
+              </h2>
+              
+              <div className={`mb-3 text-[10px] leading-tight space-y-1.5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                <p>
+                  Map layers on buildersinfo.in are created from publicly available data for general informational purposes only.
+                </p>
+                <p>
+                  While we strive to ensure accuracy by referencing sources like HMDA.gov.in and Bhuvan-ISRO, these layers may contain outdated records, digitisation errors, satellite distortions, and missing cadastral data that can affect accuracy.
+                </p>
+                <p>
+                  These maps are not substitutes for official government surveys or legal verification. Please independently verify all details before making land or investment decisions.
+                </p>
+                <p>
+                  By using these layers, you acknowledge and accept these limitations. Click the info icon (in layers section) for more details on individual layers.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setLocateModalStep(2)}
+                className="w-full bg-[#FFA500] hover:bg-[#FF8C00] text-black font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center justify-center gap-1 text-[10px]"
+              >
+                <span>Proceed</span>
+                <ChevronRight className="w-3 h-3" />
+              </button>
+            </div>
+          ) : (
+            // Step 2: Layers Panel
+            <div className="p-3 max-h-[60vh] overflow-y-auto">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <h2 className={`text-xs font-bold ${isDark ? 'text-white' : 'text-black'}`}>Layers</h2>
+                  <select className={`px-1.5 py-0.5 border rounded text-[10px] font-medium ${isDark ? 'border-gray-600 text-white bg-[#374151]' : 'border-gray-300 text-black bg-white'}`}>
+                    <option>Karnataka</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Top Row Buttons */}
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                <button className={`p-2 rounded-lg border flex flex-col items-center gap-1 ${isDark ? 'bg-[#374151] border-gray-600' : 'bg-white border-gray-200'}`}>
+                  <div className="relative">
+                    <FileText className={`w-4 h-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`} />
+                    <span className="absolute -top-0.5 -right-0.5 bg-blue-500 text-white text-[8px] font-bold rounded-full w-3 h-3 flex items-center justify-center">24</span>
+                  </div>
+                  <span className={`text-[9px] font-medium ${isDark ? 'text-gray-200' : 'text-black'}`}>Survey No.S</span>
+                </button>
+                
+                <button className={`p-2 rounded-lg border flex flex-col items-center gap-1 ${isDark ? 'bg-blue-900 border-blue-700' : 'bg-blue-50 border-blue-300'}`}>
+                  <div className="relative">
+                    <LayoutGrid className={`w-4 h-4 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+                    <Check className="absolute -top-0.5 -right-0.5 bg-green-500 text-white rounded-full w-3 h-3 p-0.5" />
+                  </div>
+                  <span className={`text-[9px] font-medium ${isDark ? 'text-blue-300' : 'text-blue-900'}`}>Listings</span>
+                </button>
+              </div>
+
+              {/* Bengaluru Section */}
+              <div className="mb-3">
+                <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-2 rounded-full flex items-center justify-between transition-colors text-[10px]">
+                  <span>Bengaluru</span>
+                  <ChevronUp className="w-3 h-3" />
+                </button>
+
+                {/* Masterplan Grid */}
+                <div className="grid grid-cols-2 gap-1.5 mt-2">
+                  {[
+                    { name: 'Bengaluru Masterplan', icon: '🗺️', hasCrown: true },
+                    { name: 'Anekal Masterplan', icon: '🗺️', hasCrown: true },
+                    { name: 'Nelamangala Masterplan', icon: '🗺️', hasCrown: true },
+                    { name: 'Hoskote Masterplan', icon: '🗺️', hasCrown: true },
+                    { name: 'Masterplan', icon: '🗺️', hasCrown: true },
+                    { name: 'Masterplan', icon: <Target className="w-3 h-3" />, hasCrown: true },
+                    { name: 'Masterplan', icon: <Bus className="w-3 h-3" />, hasCrown: false },
+                    { name: 'Masterplan', icon: <span className={`font-bold text-xs ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>G</span>, hasCrown: false },
+                  ].map((item, index) => (
+                    <button
+                      key={index}
+                      className={`p-1.5 rounded-lg border flex flex-col items-center gap-1 transition-colors ${isDark ? 'bg-[#374151] border-gray-600 hover:border-blue-500' : 'bg-white border-gray-200 hover:border-blue-400'}`}
+                    >
+                      <div className="relative">
+                        {typeof item.icon === 'string' ? (
+                          <span className="text-sm">{item.icon}</span>
+                        ) : (
+                          <div className={`flex items-center justify-center ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{item.icon}</div>
+                        )}
+                        {item.hasCrown && (
+                          <span className="absolute -top-0.5 -right-0.5 text-yellow-500 text-[8px]">👑</span>
+                        )}
+                      </div>
+                      <span className={`text-[8px] text-center ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bottom Action Buttons */}
+              <div className="flex gap-2 mt-3">
+                <button
+                  onClick={() => setShowLocateModal(false)}
+                  className={`flex-1 py-1.5 px-2 rounded-lg border border-blue-500 font-medium transition-colors text-[10px] ${isDark ? 'text-blue-400 hover:bg-blue-900/30' : 'text-blue-600 hover:bg-blue-50'}`}
+                >
+                  Clear all
+                </button>
+                <button
+                  onClick={() => setShowLocateModal(false)}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 text-[10px]"
+                >
+                  <span>Apply</span>
+                  <ChevronRight className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          )}
         </Modal>
       )}
     </div>

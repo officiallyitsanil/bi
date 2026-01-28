@@ -3,18 +3,18 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 
 const ThemeContext = createContext({
-    theme: 'dark',
+    theme: 'light',
     toggleTheme: () => {},
-    isDark: true,
+    isDark: false,
 });
 
 export function ThemeProvider({ children }) {
-    const [theme, setTheme] = useState('dark');
+    const [theme, setTheme] = useState('light');
     const [mounted, setMounted] = useState(false);
 
     // Load theme from localStorage on mount
     useEffect(() => {
-        const savedTheme = localStorage.getItem('theme') || 'dark';
+        const savedTheme = localStorage.getItem('theme') || 'light';
         setTheme(savedTheme);
         setMounted(true);
     }, []);

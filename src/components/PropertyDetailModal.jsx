@@ -581,15 +581,6 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                             </button>
                         </div>
 
-                        {/* Close Button - Top Right */}
-                        <button 
-                            aria-label="Close" 
-                            className={`absolute top-3 right-3 z-20 w-9 h-9 rounded-full flex items-center justify-center shadow-md ${isDark ? 'bg-[#282c34]/95' : 'bg-white/95'}`}
-                            onClick={onClose}
-                        >
-                            <X className={`w-5 h-5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`} />
-                        </button>
-
                         <Swiper
                             modules={[Navigation]}
                             navigation={{
@@ -762,70 +753,71 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
         </div>
     );
 
-    // Desktop view (>= md breakpoint)
+    // Desktop view (>= md breakpoint) - Exact match to image design
     const desktopModal = (
         <div
             role="dialog"
             className={`hidden md:block fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 shadow-2xl rounded-2xl overflow-hidden transition-colors ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}
-            style={{ width: '750px', maxWidth: '95vw', height: '450px' }}
+            style={{ width: '680px', maxWidth: '95vw', height: '260px' }}
             tabIndex="-1"
         >
-            <div className="flex h-full relative">
-                {/* Left Section - Image Carousel */}
-                <div className={`w-[350px] relative flex-shrink-0 ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+            <div className="flex h-full">
+                {/* Left Section - Image Carousel (40% width) */}
+                <div className={`w-[260px] relative flex-shrink-0 ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
                     <div className="relative h-full">
-                        {/* Top RATED Badge */}
+                        {/* Top RATED Badge - Exact match to image */}
                         {isTopRated && (
-                            <div className="absolute top-3 right-3 z-20 bg-red-500 text-white px-2 py-1 rounded-lg flex items-center gap-1 shadow-lg">
-                                <span className="text-[10px] font-bold">TOP RATED</span>
-                                <div className="flex gap-0.5">
+                            <div className="absolute top-1.5 right-1.5 z-20 bg-red-500 text-white px-1.5 py-1 rounded-t-lg shadow-lg flex flex-col items-center justify-center">
+                                {/* Three stars above */}
+                                <div className="flex gap-0.5 mb-0.5">
                                     {[1, 2, 3].map((i) => (
-                                        <Star key={i} className="w-2.5 h-2.5 fill-white text-white" />
+                                        <Star key={i} className="w-1 h-1 fill-white text-white" />
+                                    ))}
+                                </div>
+                                {/* TOP text */}
+                                <span className="text-[8px] font-bold leading-tight">TOP</span>
+                                {/* RATED text */}
+                                <span className="text-[8px] font-bold leading-tight">RATED</span>
+                                {/* Three stars below */}
+                                <div className="flex gap-0.5 mt-0.5">
+                                    {[1, 2, 3].map((i) => (
+                                        <Star key={i} className="w-1 h-1 fill-white text-white" />
                                     ))}
                                 </div>
                             </div>
                         )}
                         
                         {/* Action Icons - Top Left */}
-                        <div className="absolute top-3 left-3 z-20 flex flex-col gap-1.5">
+                        <div className="absolute top-1.5 left-1.5 z-20 flex gap-0.5">
                             <button
                                 onClick={handleFavouriteToggle}
-                                className={`w-7 h-7 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-md ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}
+                                className={`w-5 h-5 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-md ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}
                             >
-                                <Heart className={`w-3.5 h-3.5 ${isFavourite ? 'fill-red-500 text-red-500' : isDark ? 'text-gray-300' : 'text-gray-700'}`} />
+                                <Heart className={`w-2.5 h-2.5 ${isFavourite ? 'fill-red-500 text-red-500' : isDark ? 'text-gray-300' : 'text-gray-700'}`} />
                             </button>
                             <button
                                 onClick={handleShare}
-                                className={`w-7 h-7 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-md ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}
+                                className={`w-5 h-5 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-md ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}
                             >
-                                <Share2 className={`w-3.5 h-3.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} />
+                                <Share2 className={`w-2.5 h-2.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} />
                             </button>
                             <a
                                 href={`https://maps.google.com/maps?q=${property.coordinates?.lat || property.position?.lat},${property.coordinates?.lng || property.position?.lng}&z=16&t=h`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className={`w-7 h-7 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-md ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}
+                                className={`w-5 h-5 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-md ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}
                             >
-                                <CornerUpRight className={`w-3.5 h-3.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} />
+                                <CornerUpRight className={`w-2.5 h-2.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} />
                             </a>
                             <a
                                 href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className={`w-7 h-7 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-md ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}
+                                className={`w-5 h-5 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-md ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}
                             >
-                                <SquareArrowOutUpRight className={`w-3.5 h-3.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} />
+                                <SquareArrowOutUpRight className={`w-2.5 h-2.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} />
                             </a>
                         </div>
-
-                        {/* Close Button - Top Right */}
-                        <button 
-                            aria-label="Close" 
-                            className={`absolute top-3 right-12 z-20 w-7 h-7 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-md ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}
-                            onClick={onClose}
-                        >
-                            <X className={`w-3.5 h-3.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} />
-                        </button>
 
                         {/* Image Carousel */}
                         <div className="relative h-full">
@@ -845,8 +837,8 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                         <div className="relative h-full w-full">
                                             <Image 
                                                 alt="Property image" 
-                                                width={350} 
-                                                height={450}
+                                                width={260} 
+                                                height={260}
                                                 className="h-full w-full object-cover" 
                                                 loading="lazy" 
                                                 src={img} 
@@ -857,104 +849,90 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                 )) : (
                                     <SwiperSlide>
                                         <div className={`relative h-full w-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-200'}`}>
-                                            <span className={isDark ? 'text-gray-500' : 'text-gray-400'}>No Image</span>
+                                            <span className={`text-sm ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>No Image</span>
                                         </div>
                                     </SwiperSlide>
                                 )}
                             </Swiper>
                             
                             {/* Navigation Arrows */}
-                            <button className={`prop-prev absolute top-1/2 -translate-y-1/2 left-2 h-8 w-8 rounded-full backdrop-blur-sm items-center justify-center flex z-10 shadow-lg transition-colors ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}>
-                                <ChevronLeft className={`h-5 w-5 ${isDark ? 'text-gray-200' : 'text-gray-800'}`} />
+                            <button className={`prop-prev absolute top-1/2 -translate-y-1/2 left-1 h-5 w-5 rounded-full backdrop-blur-sm items-center justify-center flex z-10 shadow-lg transition-colors ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}>
+                                <ChevronLeft className={`h-2.5 w-2.5 ${isDark ? 'text-gray-200' : 'text-gray-800'}`} />
                             </button>
-                            <button className={`prop-next absolute top-1/2 -translate-y-1/2 right-2 h-8 w-8 rounded-full backdrop-blur-sm items-center justify-center flex z-10 shadow-lg transition-colors ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}>
-                                <ChevronRight className={`h-5 w-5 ${isDark ? 'text-gray-200' : 'text-gray-800'}`} />
+                            <button className={`prop-next absolute top-1/2 -translate-y-1/2 right-1 h-5 w-5 rounded-full backdrop-blur-sm items-center justify-center flex z-10 shadow-lg transition-colors ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}>
+                                <ChevronRight className={`h-2.5 w-2.5 ${isDark ? 'text-gray-200' : 'text-gray-800'}`} />
                             </button>
 
                             {/* Image Indicators (dots) */}
-                            <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 z-10 flex gap-1">
+                            <div className="absolute bottom-1.5 left-1/2 transform -translate-x-1/2 z-10 flex gap-0.5">
                                 {images.slice(0, 5).map((_, i) => (
-                                    <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/80 backdrop-blur-sm"></div>
+                                    <div key={i} className="w-0.5 h-0.5 rounded-full bg-white/80 backdrop-blur-sm"></div>
                                 ))}
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Right Section - Details */}
+                {/* Right Section - Details (60% width) */}
                 <div className="flex-1 flex flex-col overflow-hidden relative">
-                    <div className="flex-1 overflow-y-auto p-4 pr-10">
-                        <main>
-                            {/* Header Section */}
-                            <section className="mb-4">
-                                <div className="flex items-start justify-between mb-3">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1.5">
-                                            <h1 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(name)}</h1>
-                                            <div className="flex items-center gap-1">
-                                                <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
-                                                <span className={`text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{rating.toFixed(1)}</span>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-1.5 mb-2">
-                                            <MapPin className={`w-3.5 h-3.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
-                                            <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                                                in {safeDisplay(layer_location)}{location_district ? `, ${safeDisplay(location_district)}` : ''}
-                                                {property.state_name ? `, ${safeDisplay(property.state_name)}` : ''}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center gap-1 ${isDark ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-700'}`}>
-                                                <Check className="w-2.5 h-2.5" />
-                                                Best price guaranteed
-                                            </span>
-                                            <a
-                                                href={`tel:${safeDisplay(sellerPhoneNumber)}`}
-                                                className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-gray-100 hover:bg-gray-200'}`}
-                                            >
-                                                <svg className={`w-3.5 h-3.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                                </svg>
-                                            </a>
-                                            <a
-                                                href={`https://wa.me/${safeDisplay(sellerPhoneNumber)?.replace(/[^0-9]/g, '') || '918151915199'}?text=Hi, I am interested in ${encodeURIComponent(name || 'this property')}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-gray-100 hover:bg-gray-200'}`}
-                                            >
-                                                <Image src="/whatsapp.svg" alt="WhatsApp" width={16} height={16} />
-                                            </a>
-                                        </div>
-                                        <div className="flex items-baseline gap-2">
-                                            <span className="text-xl font-bold text-blue-600">{safeDisplay(discountedPrice)}</span>
-                                            {originalPrice && originalPrice !== discountedPrice && (
-                                                <span className={`text-base line-through ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{safeDisplay(originalPrice)}</span>
-                                            )}
+                    <div className="flex-1 flex flex-col p-2 pb-3">
+                        {/* Property Header - Title/rating on left, Price on right */}
+                        <section className="mb-1.5">
+                            <div className="flex items-start justify-between mb-1">
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-1.5 mb-0.5">
+                                        <h1 className={`text-base font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(name)}</h1>
+                                        <div className="flex items-center gap-0.5">
+                                            <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+                                            <span className={`text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{rating.toFixed(1)}</span>
                                         </div>
                                     </div>
+                                    <div className="flex items-center gap-1 mb-0.5">
+                                        <MapPin className={`w-3.5 h-3.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                                        <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                            in {safeDisplay(layer_location)}{location_district ? `, ${safeDisplay(location_district)}` : ''}
+                                            {property.state_name ? `, ${safeDisplay(property.state_name)}` : ''}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className={`px-2 py-1 rounded-full text-[10px] font-medium flex items-center gap-1 ${isDark ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-700'}`}>
+                                            <Check className="w-2.5 h-2.5" />
+                                            Best price guaranteed
+                                        </span>
+                                        <a
+                                            href={`tel:${safeDisplay(sellerPhoneNumber)}`}
+                                            className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-gray-100 hover:bg-gray-200'}`}
+                                        >
+                                            <svg className={`w-3.5 h-3.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                            </svg>
+                                        </a>
+                                        <a
+                                            href={`https://wa.me/${safeDisplay(sellerPhoneNumber)?.replace(/[^0-9]/g, '') || '918151915199'}?text=Hi, I am interested in ${encodeURIComponent(name || 'this property')}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-gray-100 hover:bg-gray-200'}`}
+                                        >
+                                            <Image src="/whatsapp.svg" alt="WhatsApp" width={16} height={16} />
+                                        </a>
+                                    </div>
                                 </div>
-                            </section>
+                                {/* Price on Right Side - Stacked vertically */}
+                                <div className="flex flex-col items-end">
+                                    {originalPrice && originalPrice !== discountedPrice && (
+                                        <span className={`text-sm line-through mb-0.5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{safeDisplay(originalPrice)}</span>
+                                    )}
+                                    <span className="text-lg font-bold text-blue-600">{safeDisplay(discountedPrice)}</span>
+                                </div>
+                            </div>
+                        </section>
 
-                            {/* Amenities Section */}
-                            <section className="mb-4">
-                                <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Amenities</h3>
-                                <div className="grid grid-cols-4 gap-3">
-                                    {displayedAmenities.length > 0 ? displayedAmenities.map((amenity, index) => (
-                                        <div key={index} className="flex flex-col items-center gap-1.5">
-                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
-                                                <Image
-                                                    src={amenity.image}
-                                                    alt={amenity.name}
-                                                    width={24}
-                                                    height={24}
-                                                    className="object-contain"
-                                                    unoptimized
-                                                />
-                                            </div>
-                                            <span className={`text-[10px] text-center leading-tight ${isDark ? 'text-gray-400' : 'text-gray-700'}`}>{amenity.name}</span>
-                                        </div>
-                                    )) : (
-                                        [
+                        {/* Bottom Section - Amenities and About Brand Side by Side - Aligned to bottom */}
+                        <div className="flex gap-2 mt-auto">
+                                {/* Left Column - Amenities */}
+                                <section className="flex-1">
+                                    <div className="grid grid-cols-4 gap-1.5">
+                                        {(displayedAmenities.length > 0 ? displayedAmenities.slice(0, 8) : [
                                             { name: "Guest Check-in", icon: "👤" },
                                             { name: "Delivery Acceptance", icon: "🔔" },
                                             { name: "Package Notification", icon: "📦" },
@@ -963,68 +941,78 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                             { name: "Video Surveillance", icon: "📹" },
                                             { name: "Keycard Access", icon: "🔑" },
                                             { name: "Tea", icon: "☕" }
-                                        ].map((amenity, index) => (
-                                            <div key={index} className="flex flex-col items-center gap-1.5">
-                                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
-                                                    <span className="text-xl">{amenity.icon}</span>
+                                        ]).map((amenity, index) => (
+                                            <div key={index} className="flex flex-col items-center gap-0.5">
+                                                <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                                                    {amenity.image ? (
+                                                        <Image
+                                                            src={amenity.image}
+                                                            alt={amenity.name}
+                                                            width={18}
+                                                            height={18}
+                                                            className="object-contain"
+                                                            unoptimized
+                                                        />
+                                                    ) : (
+                                                        <span className="text-xs">{amenity.icon || '📦'}</span>
+                                                    )}
                                                 </div>
-                                                <span className={`text-[10px] text-center leading-tight ${isDark ? 'text-gray-400' : 'text-gray-700'}`}>{amenity.name}</span>
+                                                <span className={`text-[8px] text-center leading-tight ${isDark ? 'text-gray-400' : 'text-gray-700'}`}>{amenity.name}</span>
                                             </div>
-                                        ))
-                                    )}
-                                </div>
-                            </section>
+                                        ))}
+                                    </div>
+                                </section>
 
-                            {/* About the Brand Section */}
-                            <section className="mb-4">
-                                <h3 className={`text-sm font-semibold mb-2 ${isDark ? 'text-gray-400' : 'text-gray-800'}`}>ABOUT THE BRAND</h3>
-                                <h4 className={`text-base font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>{brandName}</h4>
-                                <div className="grid grid-cols-2 gap-3 mb-2">
-                                    <div className="flex items-center gap-1.5">
-                                        <Building2 className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
-                                        <span className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{brandStats.cities}</span>
+                                {/* Right Column - About the Brand */}
+                                <section className="flex-1">
+                                    <h3 className={`text-[9px] font-semibold mb-0.5 uppercase pb-0.5 border-b-2 ${isDark ? 'text-gray-400 border-blue-500' : 'text-gray-600 border-blue-500'}`}>ABOUT THE BRAND</h3>
+                                    <h4 className={`text-[10px] font-semibold mb-0.5 ${isDark ? 'text-white' : 'text-gray-900'}`}>{brandName}</h4>
+                                    <p className={`text-[9px] mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Workspace</p>
+                                    <div className="grid grid-cols-2 gap-1 mb-1">
+                                        <div className="flex items-center gap-0.5">
+                                            <Building2 className={`w-2.5 h-2.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
+                                            <span className={`text-[9px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{brandStats.cities}</span>
+                                        </div>
+                                        <div className="flex items-center gap-0.5">
+                                            <svg className={`w-2.5 h-2.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                            </svg>
+                                            <span className={`text-[9px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{brandStats.clients}</span>
+                                        </div>
+                                        <div className="flex items-center gap-0.5">
+                                            <Building2 className={`w-2.5 h-2.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
+                                            <span className={`text-[9px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{brandStats.spaces}</span>
+                                        </div>
+                                        <div className="flex items-center gap-0.5">
+                                            <svg className={`w-2.5 h-2.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                            </svg>
+                                            <span className={`text-[9px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{brandStats.seats}</span>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <svg className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                        </svg>
-                                        <span className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{brandStats.clients}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <Building2 className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
-                                        <span className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{brandStats.spaces}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <svg className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                        </svg>
-                                        <span className={`text-xs ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{brandStats.seats}</span>
-                                    </div>
-                                </div>
-                                <p className={`text-xs leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                                    {brandDescription}
-                                    <a
-                                        href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-blue-600 hover:underline ml-1"
-                                    >
-                                        Read more
-                                    </a>
-                                </p>
-                            </section>
-
-                        </main>
+                                    <p className={`text-[9px] leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                        {brandDescription.length > 80 ? brandDescription.substring(0, 80) + '...' : brandDescription}
+                                        <a
+                                            href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-600 hover:underline ml-1"
+                                        >
+                                            Read more
+                                        </a>
+                                    </p>
+                                </section>
+                        </div>
                     </div>
                 </div>
                 
-                {/* View Details Button - Right Edge */}
-                <div className="absolute right-0 top-0 bottom-0 w-10 flex items-center justify-center">
+                {/* View Details Button - Right Edge (Vertical) - Part of modal structure */}
+                <div className="w-7 flex-shrink-0 h-full">
                     <a
                         href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-6 rounded-l-lg shadow-lg transition-colors cursor-pointer writing-vertical-rl text-xs font-medium"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-1 rounded-l-lg shadow-lg transition-colors cursor-pointer writing-vertical-rl text-[9px] font-medium h-full w-full flex items-center justify-center"
                         style={{ writingMode: 'vertical-rl' }}
                     >
                         View Details
