@@ -1,7 +1,7 @@
 "use client";
 import MenuSideBar from '@/components/MenuSideBar';
 import LoginModal from '@/components/LoginModal';
-import { Search, X, Plus, SlidersHorizontal, Menu, List, Check, Heart, Building2, Home, MapPin, ChevronDown, ChevronRight, ChevronLeft, LayoutGrid, Map as MapIcon, Globe, ZoomIn, LocateFixed, Layers, Minus, Sun, Moon, User, FileText, Grid3x3, ChevronUp, Bus, Target } from 'lucide-react';
+import { Search, X, Plus, SlidersHorizontal, Menu, List, Check, Heart, Building2, Home, MapPin, ChevronDown, ChevronRight, ChevronLeft, LayoutGrid, Map as MapIcon, Globe, ZoomIn, LocateFixed, Layers, Minus, Sun, Moon, User, FileText, Grid3x3, ChevronUp, Bus, Target, Clock } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -110,6 +110,144 @@ export default function HomePage() {
   });
   const [budgetLumpsum, setBudgetLumpsum] = useState({ min: '', max: '' });
   const [budgetPerSeat, setBudgetPerSeat] = useState({ min: '', max: '' });
+  const [filterLocalitySearch, setFilterLocalitySearch] = useState('');
+  const [sizeFilter, setSizeFilter] = useState({ min: '', max: '' });
+  const [furnishing, setFurnishing] = useState({ full: false, none: false, semi: false }); // checkboxes
+  const [buildingTypeOptions, setBuildingTypeOptions] = useState({
+    independentHouse: false,
+    mall: false,
+    independentShop: false,
+    businessPark: false,
+    standaloneBuilding: false,
+  });
+  const [availability, setAvailability] = useState(''); // 'immediate' | 'within15' | 'within30' | 'after30' | ''
+  const [parking, setParking] = useState({ public: false, reserved: false });
+  const [showOnly, setShowOnly] = useState({ withPhotos: true, removeSeen: false });
+  const [amenities, setAmenities] = useState({ powerBackup: false, lift: false });
+  const [floors, setFloors] = useState({
+    ground: false,
+    '1to3': false,
+    '4to6': false,
+    '7to9': false,
+    '10above': false,
+    custom: false,
+  });
+  const [propertyAge, setPropertyAge] = useState({
+    lessThan1: false,
+    '1to5': false,
+    '5to10': false,
+    moreThan10: false,
+  });
+
+  // Residential-only filters (shown when Building Type = Residential)
+  const [residentialPropertyType, setResidentialPropertyType] = useState(''); // 'plot' | 'villa' | 'apartment' | 'independentHouse' | 'builderFloor' | 'penthouse' | ''
+  const [residentialLocalitySearch, setResidentialLocalitySearch] = useState('');
+  const [residentialLocalities, setResidentialLocalities] = useState({
+    mysoreRoad: false,
+    sampangiRamaNagar: false,
+    hebbal: false,
+    banashankari: false,
+  });
+  const [residentialSocieties, setResidentialSocieties] = useState({
+    godrejTiara: false,
+    sobhaInfinia: false,
+    snnClermont: false,
+    lntRaintreeBoulevard: false,
+  });
+  const [residentialSocietySearch, setResidentialSocietySearch] = useState('');
+
+  // Residential Bedrooms filter (1 BHK, 1 RK, 1.5 BHK, 2 BHK, ... Studio)
+  const [bedrooms, setBedrooms] = useState(''); // '1bhk' | '1rk' | '1.5bhk' | '2bhk' | '2.5bhk' | '3bhk' | '3.5bhk' | '4bhk' | '5bhk' | '6bhk' | '6plusbhk' | 'studio' | ''
+
+  // Commercial filters (image-style: Sale Type, Construction Status, Washrooms, Floor, Facing, RERA, Offers, Furnishing Status, Posted by, Possession, Localities, Societies, Amenities)
+  const [saleType, setSaleType] = useState(''); // 'new' | 'resale' | ''
+  const [constructionStatus, setConstructionStatus] = useState(''); // 'readyToMove' | 'underConstruction' | ''
+  const [washrooms, setWashrooms] = useState(''); // '1' | '2' | '3' | '4' | '5' | ''
+  const [floorFilter, setFloorFilter] = useState(''); // 'basement' | 'ground' | '1to4' | '5to8' | '9to12' | '13to16' | '16plus' | ''
+  const [facing, setFacing] = useState(''); // east, northEast, south, southWest, north, northWest, southEast, west
+  const [reraRegistered, setReraRegistered] = useState(false);
+  const [propertiesWithOffers, setPropertiesWithOffers] = useState(false);
+  const [furnishingStatus, setFurnishingStatus] = useState(''); // 'furnished' | 'semiFurnished' | 'unfurnished' | 'gatedCommunities' | ''
+  const [postedBy, setPostedBy] = useState(''); // 'owners' | 'partnerAgents' | ''
+  const [possessionStatus, setPossessionStatus] = useState(''); // 'readyToMove' | 'underConstruction' | ''
+  const [commercialLocalitySearch, setCommercialLocalitySearch] = useState('');
+  const [commercialLocalities, setCommercialLocalities] = useState({
+    mysoreRoad: false,
+    sampangiRamaNagar: false,
+    hebbal: false,
+    banashankari: false,
+  });
+  const [commercialSocietySearch, setCommercialSocietySearch] = useState('');
+  const [commercialSocieties, setCommercialSocieties] = useState({
+    godrejTiara: false,
+    sobhaInfinia: false,
+    snnClermont: false,
+    lntRaintreeBoulevard: false,
+  });
+  // Expanded amenities (image-style pill buttons): 24x7 Security, Power Backup, Visitor's Parking, etc.
+  const [amenitiesPills, setAmenitiesPills] = useState({
+    security24x7: false,
+    powerBackup: false,
+    visitorParking: false,
+    attachedMarket: false,
+    swimmingPool: false,
+    clubhouse: false,
+    centralAC: false,
+    kidsPlayArea: false,
+    intercom: false,
+    vaastuCompliant: false,
+    airConditioned: false,
+    lift: false,
+  });
+
+  // Applied filters: only used for filtering when user clicks "Apply Filters" (not on every checkbox/radio change)
+  const [appliedFilters, setAppliedFilters] = useState(null);
+
+  // Snapshot current filter panel state (for applying on button click)
+  const getFilterSnapshot = () => ({
+    buildingType,
+    filterLocalitySearch,
+    propertyTypeFilter,
+    filters: {
+      type: { ...filters.type },
+      listedBy: { ...filters.listedBy },
+      budget: [...filters.budget],
+      size: [...filters.size],
+    },
+    propertyTypes: { ...propertyTypes },
+    budgetLumpsum: { ...budgetLumpsum },
+    budgetPerSeat: { ...budgetPerSeat },
+    sizeFilter: { ...sizeFilter },
+    furnishing: { ...furnishing },
+    buildingTypeOptions: { ...buildingTypeOptions },
+    availability,
+    parking: { ...parking },
+    showOnly: { ...showOnly },
+    amenities: { ...amenities },
+    amenitiesPills: { ...amenitiesPills },
+    floors: { ...floors },
+    propertyAge: { ...propertyAge },
+    residentialPropertyType,
+    residentialLocalitySearch,
+    residentialLocalities: { ...residentialLocalities },
+    residentialSocietySearch,
+    residentialSocieties: { ...residentialSocieties },
+    bedrooms,
+    saleType,
+    constructionStatus,
+    washrooms,
+    floorFilter,
+    facing,
+    reraRegistered,
+    propertiesWithOffers,
+    furnishingStatus,
+    postedBy,
+    possessionStatus,
+    commercialLocalitySearch,
+    commercialLocalities: { ...commercialLocalities },
+    commercialSocietySearch,
+    commercialSocieties: { ...commercialSocieties },
+  });
 
   // Handle location updates from VisitorTracker
   const handleLocationUpdate = (locationData) => {
@@ -737,6 +875,9 @@ export default function HomePage() {
   const getFilteredMarkers = () => {
     let filtered = markers.filter(marker => !marker.isSearchResult); // Exclude search result markers
 
+    // Use applied filters (set when user clicks "Apply Filters") or current draft if none applied yet
+    const f = appliedFilters !== null ? appliedFilters : getFilterSnapshot();
+
     // Apply search query filter - consistently filter properties in ALL views (initial, filters, country)
     if (searchQuery && searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
@@ -756,12 +897,24 @@ export default function HomePage() {
                address.includes(query);
       });
     }
+    // Apply filter panel locality search (additional AND filter)
+    if (f.filterLocalitySearch && f.filterLocalitySearch.trim()) {
+      const locQuery = f.filterLocalitySearch.toLowerCase().trim();
+      filtered = filtered.filter(marker => {
+        const name = (marker.name || '').toLowerCase();
+        const layerLocation = (marker.layer_location || '').toLowerCase();
+        const locationDistrict = (marker.location_district || '').toLowerCase();
+        const address = (typeof marker.address === 'string' ? marker.address : '').toLowerCase();
+        return name.includes(locQuery) || layerLocation.includes(locQuery) ||
+               locationDistrict.includes(locQuery) || address.includes(locQuery);
+      });
+    }
 
     // Apply building type filter (Commercial/Residential) - always apply if set
-    if (propertyTypeFilter !== 'all') {
+    if (f.propertyTypeFilter !== 'all') {
       filtered = filtered.filter(marker => {
         const markerType = marker.propertyType || 'residential';
-        return markerType === propertyTypeFilter;
+        return markerType === f.propertyTypeFilter;
       });
     }
 
@@ -783,28 +936,247 @@ export default function HomePage() {
       });
     }
 
-    // Check if any modal filters are applied
-    const hasTypeFilters = filters.type.commercial || filters.type.residential;
-    const hasListedByFilters = filters.listedBy.owner || filters.listedBy.agent || filters.listedBy.iacre;
-    const hasBudgetFilters = !(filters.budget[0] === 0 && filters.budget[1] === 30);
-    const hasSizeFilters = !(filters.size[0] === 0 && filters.size[1] === 50000);
-    const hasPropertyTypeFilters = Object.values(propertyTypes).some(v => v === true);
-    const hasBudgetLumpsumFilters = budgetLumpsum.min !== '' || budgetLumpsum.max !== '';
-    const hasBudgetPerSeatFilters = budgetPerSeat.min !== '' || budgetPerSeat.max !== '';
+    // Residential-only filter flags (used when Building Type = Residential)
+    const hasResidentialSaleTypeFilter = f.saleType && f.saleType !== '';
+    const hasResidentialConstructionStatusFilter = f.constructionStatus && f.constructionStatus !== '';
+    const hasResidentialWashroomsFilter = f.washrooms && f.washrooms !== '';
+    const hasResidentialFloorFilter = f.floorFilter && f.floorFilter !== '';
+    const hasResidentialFacingFilter = f.facing && f.facing !== '';
+    const hasResidentialReraFilter = f.reraRegistered === true;
+    const hasResidentialOffersFilter = f.propertiesWithOffers === true;
+    const hasResidentialFurnishingStatusFilter = f.furnishingStatus && f.furnishingStatus !== '';
+    const hasResidentialPostedByFilter = f.postedBy && f.postedBy !== '';
+    const hasResidentialPossessionStatusFilter = f.possessionStatus && f.possessionStatus !== '';
+    const hasResidentialAmenitiesPillsFilter = f.amenitiesPills && Object.values(f.amenitiesPills).some(v => v === true);
+    const hasResidentialBedroomsFilter = f.bedrooms && f.bedrooms !== '';
 
+    // Apply residential-only filters (when Building Type = Residential)
+    if (f.propertyTypeFilter === 'residential') {
+      if (f.residentialPropertyType) {
+        const resTypeMap = {
+          plot: 'Plot',
+          villa: 'Villa',
+          apartment: 'Apartment',
+          independentHouse: 'Independent House',
+          builderFloor: 'Builder Floor',
+          penthouse: 'Penthouse',
+        };
+        const expectedResType = resTypeMap[f.residentialPropertyType] || f.residentialPropertyType;
+        filtered = filtered.filter(marker => {
+          const mType = (marker.property_category_type || marker.propertyType || marker.property_type || '').toString();
+          if (!mType) return true;
+          return mType.toLowerCase().includes(expectedResType.toLowerCase());
+        });
+      }
+      const hasResidentialLocality = Object.values(f.residentialLocalities).some(v => v === true) || (f.residentialLocalitySearch && f.residentialLocalitySearch.trim());
+      if (hasResidentialLocality) {
+        const localityLabels = {
+          mysoreRoad: 'Mysore Road',
+          sampangiRamaNagar: 'Sampangi Rama Nagar',
+          hebbal: 'Hebbal',
+          banashankari: 'Banashankari',
+        };
+        const selectedLocalities = Object.entries(f.residentialLocalities)
+          .filter(([, sel]) => sel)
+          .map(([key]) => (localityLabels[key] || '').toLowerCase());
+        const searchTerm = (f.residentialLocalitySearch || '').trim().toLowerCase();
+        filtered = filtered.filter(marker => {
+          const loc = (marker.layer_location || marker.location_district || marker.address || '').toLowerCase();
+          if (searchTerm && loc.includes(searchTerm)) return true;
+          if (selectedLocalities.length === 0) return true;
+          return selectedLocalities.some(s => loc.includes(s));
+        });
+      }
+      // Apply residential Societies filter
+      const hasResidentialSociety = Object.values(f.residentialSocieties || {}).some(v => v === true) || (f.residentialSocietySearch && f.residentialSocietySearch.trim());
+      if (hasResidentialSociety && f.residentialSocieties) {
+        const societyLabels = {
+          godrejTiara: 'Godrej Tiara',
+          sobhaInfinia: 'Sobha Infinia',
+          snnClermont: 'SNN Clermont',
+          lntRaintreeBoulevard: 'LnT Raintree Boulevard',
+        };
+        const selectedSocieties = Object.entries(f.residentialSocieties)
+          .filter(([, sel]) => sel)
+          .map(([key]) => (societyLabels[key] || '').toLowerCase());
+        const searchTerm = (f.residentialSocietySearch || '').trim().toLowerCase();
+        filtered = filtered.filter(marker => {
+          const loc = (marker.layer_location || marker.location_district || marker.address || marker.society || marker.name || '').toLowerCase();
+          if (searchTerm && loc.includes(searchTerm)) return true;
+          if (selectedSocieties.length === 0) return true;
+          return selectedSocieties.some(s => loc.includes(s));
+        });
+      }
+
+      // Apply residential Bedrooms filter
+      if (hasResidentialBedroomsFilter) {
+        const bedroomsMap = {
+          '1bhk': ['1 bhk', '1bhk', '1 bhk'],
+          '1rk': ['1 rk', '1rk', 'rk', 'studio'],
+          '1.5bhk': ['1.5 bhk', '1.5bhk'],
+          '2bhk': ['2 bhk', '2bhk'],
+          '2.5bhk': ['2.5 bhk', '2.5bhk'],
+          '3bhk': ['3 bhk', '3bhk'],
+          '3.5bhk': ['3.5 bhk', '3.5bhk'],
+          '4bhk': ['4 bhk', '4bhk'],
+          '5bhk': ['5 bhk', '5bhk'],
+          '6bhk': ['6 bhk', '6bhk'],
+          '6plusbhk': ['6+ bhk', '6+ bhk', '7 bhk', '8 bhk'],
+          'studio': ['studio', '1 rk', '1rk', 'rk'],
+        };
+        const expectedTerms = bedroomsMap[f.bedrooms] || [f.bedrooms];
+        filtered = filtered.filter(marker => {
+          const config = (marker.bedrooms || marker.bhk || marker.configuration || marker.config || '').toString().toLowerCase().replace(/\s/g, '');
+          if (!config) return true;
+          return expectedTerms.some(term => config.includes(term.replace(/\s/g, '')));
+        });
+      }
+
+      // Apply residential-only filters: Sale Type, Construction Status, Washrooms, Floor, Facing, RERA, Offers, Furnishing Status, Posted by, Possession Status, Amenities pills
+      if (hasResidentialSaleTypeFilter) {
+        filtered = filtered.filter(marker => {
+          const sale = (marker.saleType || marker.listing_type || '').toLowerCase();
+          if (!sale) return true;
+          if (f.saleType === 'new') return sale.includes('new') || sale.includes('primary');
+          if (f.saleType === 'resale') return sale.includes('resale') || sale.includes('secondary');
+          return true;
+        });
+      }
+      if (hasResidentialConstructionStatusFilter || hasResidentialPossessionStatusFilter) {
+        const statusFilter = f.constructionStatus || f.possessionStatus;
+        if (statusFilter) {
+          filtered = filtered.filter(marker => {
+            const status = (marker.constructionStatus || marker.possessionStatus || marker.readyToMove || '').toLowerCase();
+            if (!status) return true;
+            if (statusFilter === 'readyToMove') return status.includes('ready') || status.includes('move') || status.includes('completed');
+            if (statusFilter === 'underConstruction') return status.includes('under') || status.includes('construction') || status.includes('ongoing');
+            return true;
+          });
+        }
+      }
+      if (hasResidentialWashroomsFilter) {
+        const minWash = parseInt(f.washrooms, 10) || 0;
+        filtered = filtered.filter(marker => {
+          const w = parseInt(marker.washrooms || marker.bathrooms || '0', 10) || 0;
+          return w >= minWash;
+        });
+      }
+      if (hasResidentialFloorFilter) {
+        const floorMap = {
+          basement: [-1, -1],
+          ground: [0, 0],
+          '1to4': [1, 4],
+          '5to8': [5, 8],
+          '9to12': [9, 12],
+          '13to16': [13, 16],
+          '16plus': [17, 999],
+        };
+        const range = floorMap[f.floorFilter];
+        if (range) {
+          filtered = filtered.filter(marker => {
+            const floorNum = parseInt(marker.floor || marker.floors || '0', 10) || 0;
+            return floorNum >= range[0] && floorNum <= range[1];
+          });
+        }
+      }
+      if (hasResidentialFacingFilter) {
+        const facingLabels = { east: 'east', northEast: 'north-east', south: 'south', southWest: 'south-west', north: 'north', northWest: 'north-west', southEast: 'south-east', west: 'west' };
+        const expectedFacing = (facingLabels[f.facing] || f.facing || '').toLowerCase();
+        filtered = filtered.filter(marker => {
+          const mFacing = (marker.facing || '').toLowerCase();
+          if (!mFacing) return true;
+          return mFacing.includes(expectedFacing);
+        });
+      }
+      if (hasResidentialReraFilter) {
+        filtered = filtered.filter(marker => !!(marker.reraRegistered || marker.rera_registered || marker.isRera));
+      }
+      if (hasResidentialOffersFilter) {
+        filtered = filtered.filter(marker => !!(marker.hasOffers || marker.offers || marker.discount));
+      }
+      if (hasResidentialFurnishingStatusFilter) {
+        filtered = filtered.filter(marker => {
+          if (f.furnishingStatus === 'gatedCommunities') {
+            const amenities = (marker.amenities || marker.amenitiesList || '').toString().toLowerCase();
+            const name = (marker.name || '').toLowerCase();
+            const desc = (marker.description || '').toLowerCase();
+            return amenities.includes('gated') || name.includes('gated') || desc.includes('gated') ||
+              amenities.includes('gated community') || name.includes('gated community') || desc.includes('gated community');
+          }
+          const mFurn = (marker.furnishing || '').toLowerCase();
+          if (!mFurn) return true;
+          if (f.furnishingStatus === 'furnished') return mFurn.includes('full') || mFurn.includes('furnished');
+          if (f.furnishingStatus === 'semiFurnished') return mFurn.includes('semi');
+          if (f.furnishingStatus === 'unfurnished') return mFurn.includes('none') || mFurn.includes('unfurnished');
+          return true;
+        });
+      }
+      if (hasResidentialPostedByFilter) {
+        filtered = filtered.filter(marker => {
+          const listedBy = (marker.listed_by || marker.listedBy || '').toLowerCase();
+          if (f.postedBy === 'owners') return listedBy.includes('owner');
+          if (f.postedBy === 'partnerAgents') return listedBy.includes('agent') || listedBy.includes('partner');
+          return true;
+        });
+      }
+      if (hasResidentialAmenitiesPillsFilter && f.amenitiesPills) {
+        const amenityKeywords = {
+          security24x7: ['security', '24x7', '24/7'],
+          powerBackup: ['power', 'backup', 'generator'],
+          visitorParking: ['visitor', 'parking'],
+          attachedMarket: ['market', 'mall'],
+          swimmingPool: ['swimming', 'pool'],
+          clubhouse: ['clubhouse', 'club'],
+          centralAC: ['central', 'ac', 'air conditioning'],
+          kidsPlayArea: ['kids', 'play', 'playground'],
+          intercom: ['intercom'],
+          vaastuCompliant: ['vaastu', 'vastu'],
+          airConditioned: ['ac', 'air condition', 'air conditioned'],
+          lift: ['lift', 'elevator'],
+        };
+        filtered = filtered.filter(marker => {
+          const mAmenities = (marker.amenities || marker.amenitiesList || '').toString().toLowerCase();
+          if (!mAmenities) return true;
+          return Object.entries(f.amenitiesPills).every(([key, sel]) => {
+            if (!sel) return true;
+            const keywords = amenityKeywords[key] || [];
+            return keywords.some(kw => mAmenities.includes(kw));
+          });
+        });
+      }
+    }
+
+    // Check if any modal filters are applied (from applied snapshot) - commercial only
+    const hasTypeFilters = f.filters.type.commercial || f.filters.type.residential;
+    const hasListedByFilters = f.filters.listedBy.owner || f.filters.listedBy.agent || f.filters.listedBy.iacre;
+    const hasBudgetFilters = !(f.filters.budget[0] === 0 && f.filters.budget[1] === 30);
+    const hasSizeFilters = !(f.filters.size[0] === 0 && f.filters.size[1] === 50000);
+    const hasPropertyTypeFilters = Object.values(f.propertyTypes).some(v => v === true);
+    const hasBudgetLumpsumFilters = f.budgetLumpsum.min !== '' || f.budgetLumpsum.max !== '';
+    const hasBudgetPerSeatFilters = f.budgetPerSeat.min !== '' || f.budgetPerSeat.max !== '';
+
+    const hasSizeFilterDropdown = f.sizeFilter.min !== '' || f.sizeFilter.max !== '';
+    const hasBuildingTypeOptions = Object.values(f.buildingTypeOptions).some(v => v === true);
+    const hasFloorsFilter = Object.values(f.floors).some(v => v === true);
+    const hasPropertyAgeFilter = Object.values(f.propertyAge).some(v => v === true);
+
+    const hasFurnishingFilter = Object.values(f.furnishing).some(v => v === true);
     const hasAnyModalFilters = hasTypeFilters || hasListedByFilters || hasBudgetFilters || 
                                hasSizeFilters || hasPropertyTypeFilters || hasBudgetLumpsumFilters || 
-                               hasBudgetPerSeatFilters;
+                               hasBudgetPerSeatFilters || hasSizeFilterDropdown || hasFurnishingFilter ||
+                               hasBuildingTypeOptions || f.availability !== '' || f.parking.public || f.parking.reserved ||
+                               f.amenities.powerBackup || f.amenities.lift || hasFloorsFilter || hasPropertyAgeFilter ||
+                               f.showOnly.withPhotos || f.showOnly.removeSeen;
 
-    // Apply modal filters if any are set
-    if (hasAnyModalFilters) {
+    // Apply commercial modal filters only when not in residential mode
+    if (f.propertyTypeFilter !== 'residential' && hasAnyModalFilters) {
       // Apply type filters (commercial/residential from modal)
       if (hasTypeFilters) {
         filtered = filtered.filter(marker => {
           const markerType = marker.propertyType || 'residential';
           return (
-            (filters.type.commercial && markerType === 'commercial') ||
-            (filters.type.residential && markerType === 'residential')
+            (f.filters.type.commercial && markerType === 'commercial') ||
+            (f.filters.type.residential && markerType === 'residential')
           );
         });
       }
@@ -826,7 +1198,7 @@ export default function HomePage() {
           };
           
           // Check if any selected property type matches
-          return Object.entries(propertyTypes).some(([key, isSelected]) => {
+          return Object.entries(f.propertyTypes).some(([key, isSelected]) => {
             if (!isSelected) return false;
             const expectedCategory = categoryMapping[key];
             return categoryType === expectedCategory;
@@ -839,9 +1211,9 @@ export default function HomePage() {
         filtered = filtered.filter(marker => {
           const listedBy = marker.listed_by?.toLowerCase() || 'agent';
           return (
-            (filters.listedBy.owner && listedBy === 'owner') ||
-            (filters.listedBy.agent && listedBy === 'agent') ||
-            (filters.listedBy.iacre && listedBy === 'buildersinfo')
+            (f.filters.listedBy.owner && listedBy === 'owner') ||
+            (f.filters.listedBy.agent && listedBy === 'agent') ||
+            (f.filters.listedBy.iacre && listedBy === 'buildersinfo')
           );
         });
       }
@@ -854,11 +1226,11 @@ export default function HomePage() {
             ? parseFloat(prices.discountedPrice.toString().replace(/[₹,]/g, '')) || 0
             : getPriceValue(marker);
           
-          const minBudget = budgetLumpsum.min ? parseFloat(budgetLumpsum.min) * 100000 : 0; // Convert lacs to actual price
-          const maxBudget = budgetLumpsum.max ? parseFloat(budgetLumpsum.max) * 100000 : Infinity;
+          const minBudget = f.budgetLumpsum.min ? parseFloat(f.budgetLumpsum.min) * 100000 : 0; // Convert lacs to actual price
+          const maxBudget = f.budgetLumpsum.max ? parseFloat(f.budgetLumpsum.max) * 100000 : Infinity;
           
-          if (budgetLumpsum.min && priceValue < minBudget) return false;
-          if (budgetLumpsum.max && priceValue > maxBudget) return false;
+          if (f.budgetLumpsum.min && priceValue < minBudget) return false;
+          if (f.budgetLumpsum.max && priceValue > maxBudget) return false;
           return true;
         });
       }
@@ -869,8 +1241,8 @@ export default function HomePage() {
           const pricePerSeat = getPricePerSeat(marker);
           if (pricePerSeat === 0) return false; // Skip if no price per seat available
           
-          const minPrice = budgetPerSeat.min ? parseFloat(budgetPerSeat.min) : 0;
-          const maxPrice = budgetPerSeat.max ? parseFloat(budgetPerSeat.max) : Infinity;
+          const minPrice = f.budgetPerSeat.min ? parseFloat(f.budgetPerSeat.min) : 0;
+          const maxPrice = f.budgetPerSeat.max ? parseFloat(f.budgetPerSeat.max) : Infinity;
           
           return pricePerSeat >= minPrice && pricePerSeat <= maxPrice;
         });
@@ -883,8 +1255,8 @@ export default function HomePage() {
           const priceValue = prices.discountedPrice 
             ? parseFloat(prices.discountedPrice.toString().replace(/[₹,]/g, '')) || 0
             : getPriceValue(marker);
-          const minBudget = filters.budget[0] * 10000000; // Convert crores to actual price (1 crore = 10,000,000)
-          const maxBudget = filters.budget[1] * 10000000;
+          const minBudget = f.filters.budget[0] * 10000000; // Convert crores to actual price (1 crore = 10,000,000)
+          const maxBudget = f.filters.budget[1] * 10000000;
           return priceValue >= minBudget && priceValue <= maxBudget;
         });
       }
@@ -894,8 +1266,8 @@ export default function HomePage() {
         filtered = filtered.filter(marker => {
           const sizeStr = marker.size || '0';
           const size = parseFloat(sizeStr.replace(/[^0-9.]/g, '')) || 0;
-          const minSize = filters.size[0];
-          const maxSize = filters.size[1];
+          const minSize = f.filters.size[0];
+          const maxSize = f.filters.size[1];
 
           // Handle different size units based on the selected unit in the filter
           let sizeInFilterUnit = size;
@@ -916,6 +1288,131 @@ export default function HomePage() {
           return sizeInFilterUnit >= minSize && sizeInFilterUnit <= maxSize;
         });
       }
+
+      // Apply size filter (Min/Max dropdown in sq ft)
+      if (hasSizeFilterDropdown) {
+        filtered = filtered.filter(marker => {
+          const sizeNum = getSizeValue(marker); // in sq ft
+          if (sizeNum === 0) return true; // include if no size data
+          const minSqft = f.sizeFilter.min ? parseFloat(f.sizeFilter.min) : 0;
+          const maxSqft = f.sizeFilter.max ? parseFloat(f.sizeFilter.max) : Infinity;
+          return sizeNum >= minSqft && sizeNum <= maxSqft;
+        });
+      }
+
+      // Apply furnishing filter (multi-select checkboxes)
+      if (hasFurnishingFilter) {
+        filtered = filtered.filter(marker => {
+          const mFurnishing = (marker.furnishing || '').toLowerCase().replace(/\s/g, '');
+          if (!mFurnishing) return true;
+          const fMap = { full: 'full', none: 'none', semi: 'semi' };
+          return Object.entries(f.furnishing).some(([key, sel]) => sel && mFurnishing.includes(fMap[key]));
+        });
+      }
+
+      // Apply building type options (Independent House, Mall, etc.)
+      if (hasBuildingTypeOptions) {
+        const buildingLabels = {
+          independentHouse: 'Independent House',
+          mall: 'Mall',
+          independentShop: 'Independent shop',
+          businessPark: 'Business Park',
+          standaloneBuilding: 'Standalone building',
+        };
+        filtered = filtered.filter(marker => {
+          const mType = (marker.building_type || marker.buildingType || '').toLowerCase();
+          if (!mType) return true;
+          return Object.entries(f.buildingTypeOptions).some(([key, sel]) => sel && mType.includes((buildingLabels[key] || '').toLowerCase()));
+        });
+      }
+
+      // Apply availability filter
+      if (f.availability) {
+        filtered = filtered.filter(marker => {
+          const mAvail = (marker.availability || '').toLowerCase();
+          if (!mAvail) return true;
+          const aMap = { immediate: 'immediate', within30: '30', within15: '15', after30: 'after' };
+          return mAvail.includes(aMap[f.availability]) || (f.availability === 'immediate' && mAvail.includes('immediate'));
+        });
+      }
+
+      // Apply parking filter
+      if (f.parking.public || f.parking.reserved) {
+        filtered = filtered.filter(marker => {
+          const mParking = (marker.parking || '').toLowerCase();
+          if (!mParking) return true;
+          if (f.parking.public && mParking.includes('public')) return true;
+          if (f.parking.reserved && mParking.includes('reserved')) return true;
+          return false;
+        });
+      }
+
+      // Apply show only: With Photos
+      if (f.showOnly.withPhotos) {
+        filtered = filtered.filter(marker => {
+          const hasImg = !!(marker.featuredImageUrl || (marker.images && marker.images.length > 0));
+          return hasImg;
+        });
+      }
+      // Remove Seen Properties - no-op if no seen tracking (include all)
+      if (f.showOnly.removeSeen) {
+        // Dummy: exclude nothing; could integrate with a "seen" list later
+      }
+
+      // Apply amenities filter
+      if (f.amenities.powerBackup || f.amenities.lift) {
+        filtered = filtered.filter(marker => {
+          const mAmenities = (marker.amenities || marker.amenitiesList || '').toString().toLowerCase();
+          if (!mAmenities) return true;
+          const needPower = f.amenities.powerBackup && mAmenities.includes('power');
+          const needLift = f.amenities.lift && mAmenities.includes('lift');
+          if (f.amenities.powerBackup && !needPower) return false;
+          if (f.amenities.lift && !needLift) return false;
+          return true;
+        });
+      }
+
+      // Apply floors filter
+      if (hasFloorsFilter) {
+        const floorRanges = {
+          ground: [0, 0],
+          '1to3': [1, 3],
+          '4to6': [4, 6],
+          '7to9': [7, 9],
+          '10above': [10, 999],
+          custom: null,
+        };
+        filtered = filtered.filter(marker => {
+          const floorNum = parseInt(marker.floor || marker.floors || '0', 10) || 0;
+          if (isNaN(floorNum)) return true;
+          return Object.entries(f.floors).some(([key, sel]) => {
+            if (!sel) return false;
+            const range = floorRanges[key];
+            if (!range) return true; // custom: include
+            return floorNum >= range[0] && floorNum <= range[1];
+          });
+        });
+      }
+
+      // Apply property age filter
+      if (hasPropertyAgeFilter) {
+        filtered = filtered.filter(marker => {
+          const age = (marker.propertyAge || marker.age || '').toLowerCase();
+          if (!age) return true;
+          const ageMap = {
+            lessThan1: ['less', '1 year', 'new'],
+            '1to5': ['1 to 5', '1-5'],
+            '5to10': ['5 to 10', '5-10'],
+            moreThan10: ['10', 'old', 'more than'],
+          };
+          return Object.entries(f.propertyAge).some(([key, sel]) => {
+            if (!sel) return false;
+            const terms = ageMap[key] || [];
+            return terms.some(t => age.includes(t));
+          });
+        });
+      }
+
     }
 
     // Apply sorting
@@ -1682,16 +2179,66 @@ export default function HomePage() {
                       });
                       setBudgetLumpsum({ min: '', max: '' });
                       setBudgetPerSeat({ min: '', max: '' });
-                    }}
-                    className="text-blue-500 text-sm font-medium hover:text-blue-600 cursor-pointer"
-                  >
-                    Clear all
-                  </button>
-                </div>
+                      setFilterLocalitySearch('');
+                      setSizeFilter({ min: '', max: '' });
+                      setFurnishing({ full: false, none: false, semi: false });
+                      setBuildingTypeOptions({
+                        independentHouse: false,
+                        mall: false,
+                        independentShop: false,
+                        businessPark: false,
+                        standaloneBuilding: false,
+                      });
+                      setAvailability('');
+                      setParking({ public: false, reserved: false });
+                      setShowOnly({ withPhotos: true, removeSeen: false });
+                      setAmenities({ powerBackup: false, lift: false });
+                      setFloors({
+                        ground: false,
+                        '1to3': false,
+                        '4to6': false,
+                        '7to9': false,
+                        '10above': false,
+                        custom: false,
+                      });
+                    setPropertyAge({
+                      lessThan1: false,
+                      '1to5': false,
+                      '5to10': false,
+                      moreThan10: false,
+                    });
+                    setResidentialPropertyType('');
+                    setResidentialLocalitySearch('');
+                    setResidentialLocalities({ mysoreRoad: false, sampangiRamaNagar: false, hebbal: false, banashankari: false });
+                    setResidentialSocietySearch('');
+                    setResidentialSocieties({ godrejTiara: false, sobhaInfinia: false, snnClermont: false, lntRaintreeBoulevard: false });
+                    setBedrooms('');
+                    setSaleType('');
+                    setConstructionStatus('');
+                    setWashrooms('');
+                    setFloorFilter('');
+                    setFacing('');
+                    setReraRegistered(false);
+                    setPropertiesWithOffers(false);
+                    setFurnishingStatus('');
+                    setPostedBy('');
+                    setPossessionStatus('');
+                    setCommercialLocalitySearch('');
+                    setCommercialLocalities({ mysoreRoad: false, sampangiRamaNagar: false, hebbal: false, banashankari: false });
+                    setCommercialSocietySearch('');
+                    setCommercialSocieties({ godrejTiara: false, sobhaInfinia: false, snnClermont: false, lntRaintreeBoulevard: false });
+                    setAmenitiesPills({ security24x7: false, powerBackup: false, visitorParking: false, attachedMarket: false, swimmingPool: false, clubhouse: false, centralAC: false, kidsPlayArea: false, intercom: false, vaastuCompliant: false, airConditioned: false, lift: false });
+                    setAppliedFilters(null); // list will use current (cleared) snapshot
+                  }}
+                  className="text-blue-500 text-sm font-medium hover:text-blue-600 cursor-pointer"
+                >
+                  Clear all
+                </button>
+              </div>
 
                 {/* Filters Content */}
                 <div className="p-4 space-y-6">
-                  {/* Search Type */}
+                  {/* Search Type - at top, for both Commercial and Residential */}
                   <div>
                     <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Search Type</h3>
                     <div className="flex gap-2">
@@ -1725,7 +2272,7 @@ export default function HomePage() {
                             : isDark ? 'bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
                       >
-                        <MapPin className="w-3.5 h-3.5" />
+                        <Clock className="w-3.5 h-3.5" />
                         Travel time
                       </button>
                     </div>
@@ -1733,13 +2280,15 @@ export default function HomePage() {
 
                   {/* Search Localities Input */}
                   <div className={`flex items-center gap-2 px-3 py-2.5 border rounded-lg ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200'}`}>
-                    <MapPin className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                    <MapPin className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                     <input 
                       type="text" 
+                      value={filterLocalitySearch}
+                      onChange={(e) => setFilterLocalitySearch(e.target.value)}
                       placeholder="Search upto 3 localities or landmarks"
-                      className={`flex-1 text-sm outline-none bg-transparent ${isDark ? 'text-white placeholder-gray-500' : 'text-gray-600 placeholder-gray-400'}`}
+                      className={`flex-1 text-sm outline-none bg-transparent min-w-0 ${isDark ? 'text-white placeholder-gray-500' : 'text-gray-600 placeholder-gray-400'}`}
                     />
-                    <MapPin className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                    <Target className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                   </div>
 
                   {/* Building Type */}
@@ -1785,7 +2334,10 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  {/* Property Type */}
+                  {/* Commercial-only filters */}
+                  {buildingType === 'commercial' && (
+                    <>
+                  {/* Property Type (Commercial) */}
                   <div>
                     <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Property Type</h3>
                     <div className="grid grid-cols-2 gap-2">
@@ -1806,7 +2358,7 @@ export default function HomePage() {
                             className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors ${
                               propertyTypes[item.key] 
                                 ? 'bg-blue-500 border-blue-500' 
-                                : isDark ? 'border-gray-600' : 'border-gray-300'
+                                : 'border-blue-500'
                             }`}
                           >
                             {propertyTypes[item.key] && (
@@ -1886,12 +2438,706 @@ export default function HomePage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Size */}
+                  <div>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Size</h3>
+                    <div className="flex gap-3">
+                      <div className="flex-1">
+                        <select 
+                          value={sizeFilter.min}
+                          onChange={(e) => setSizeFilter(prev => ({ ...prev, min: e.target.value }))}
+                          className={`w-full px-3 py-2.5 border rounded-lg text-sm appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
+                        >
+                          <option value="">Min</option>
+                          <option value="500">500 sq ft</option>
+                          <option value="1000">1000 sq ft</option>
+                          <option value="2000">2000 sq ft</option>
+                          <option value="5000">5000 sq ft</option>
+                          <option value="10000">10000 sq ft</option>
+                        </select>
+                      </div>
+                      <div className="flex-1">
+                        <select 
+                          value={sizeFilter.max}
+                          onChange={(e) => setSizeFilter(prev => ({ ...prev, max: e.target.value }))}
+                          className={`w-full px-3 py-2.5 border rounded-lg text-sm appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
+                        >
+                          <option value="">Max</option>
+                          <option value="1000">1000 sq ft</option>
+                          <option value="2000">2000 sq ft</option>
+                          <option value="5000">5000 sq ft</option>
+                          <option value="10000">10000 sq ft</option>
+                          <option value="50000">50000 sq ft</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Furnishing - checkboxes, 2 columns side by side */}
+                  <div>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Furnishing</h3>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                      {[
+                        { key: 'full', label: 'Full' },
+                        { key: 'none', label: 'None' },
+                        { key: 'semi', label: 'Semi' },
+                      ].map(item => (
+                        <label key={item.key} className="flex items-center gap-2 cursor-pointer">
+                          <div 
+                            onClick={() => setFurnishing(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                            className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${
+                              furnishing[item.key] 
+                                ? 'bg-blue-500 border-blue-500' 
+                                : 'border-blue-500'
+                            }`}
+                          >
+                            {furnishing[item.key] && (
+                              <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                            )}
+                          </div>
+                          <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Building Type - checkboxes, 2 columns side by side */}
+                  <div>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Building Type</h3>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                      {[
+                        { key: 'independentHouse', label: 'Independent House' },
+                        { key: 'mall', label: 'Mall' },
+                        { key: 'independentShop', label: 'Independent shop' },
+                        { key: 'businessPark', label: 'Business Park' },
+                        { key: 'standaloneBuilding', label: 'Standalone building' },
+                      ].map(item => (
+                        <label key={item.key} className="flex items-center gap-2 cursor-pointer">
+                          <div 
+                            onClick={() => setBuildingTypeOptions(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                            className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${
+                              buildingTypeOptions[item.key] 
+                                ? 'bg-blue-500 border-blue-500' 
+                                : 'border-blue-500'
+                            }`}
+                          >
+                            {buildingTypeOptions[item.key] && (
+                              <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                            )}
+                          </div>
+                          <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Availability - radio, 2 columns side by side */}
+                  <div>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Availability</h3>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                      {[
+                        { value: 'immediate', label: 'Immediate' },
+                        { value: 'within30', label: 'Within 30 Days' },
+                        { value: 'within15', label: 'Within 15 Days' },
+                        { value: 'after30', label: 'After 30 Days' },
+                      ].map(opt => (
+                        <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
+                          <span className="relative inline-flex items-center justify-center w-4 h-4 rounded-full border-2 border-blue-500 flex-shrink-0 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="availability"
+                              checked={availability === opt.value}
+                              onChange={() => setAvailability(prev => prev === opt.value ? '' : opt.value)}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            />
+                            {availability === opt.value && (
+                              <span className="w-2 h-2 rounded-full bg-blue-500 pointer-events-none" />
+                            )}
+                          </span>
+                          <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{opt.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Parking - checkboxes, 2 columns side by side */}
+                  <div>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Parking</h3>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                      {[
+                        { key: 'public', label: 'Public' },
+                        { key: 'reserved', label: 'Reserved' },
+                      ].map(item => (
+                        <label key={item.key} className="flex items-center gap-2 cursor-pointer">
+                          <div 
+                            onClick={() => setParking(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                            className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${
+                              parking[item.key] 
+                                ? 'bg-blue-500 border-blue-500' 
+                                : 'border-blue-500'
+                            }`}
+                          >
+                            {parking[item.key] && (
+                              <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                            )}
+                          </div>
+                          <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Show Only - vertical list (With Photos, Remove Seen + New) */}
+                  <div>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Show Only</h3>
+                    <div className="flex flex-col gap-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <div 
+                          onClick={() => setShowOnly(prev => ({ ...prev, withPhotos: !prev.withPhotos }))}
+                          className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${
+                            showOnly.withPhotos 
+                              ? 'bg-blue-500 border-blue-500' 
+                              : 'border-blue-500'
+                          }`}
+                        >
+                          {showOnly.withPhotos && (
+                            <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                          )}
+                        </div>
+                        <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>With Photos</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <div 
+                          onClick={() => setShowOnly(prev => ({ ...prev, removeSeen: !prev.removeSeen }))}
+                          className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${
+                            showOnly.removeSeen 
+                              ? 'bg-blue-500 border-blue-500' 
+                              : 'border-blue-500'
+                          }`}
+                        >
+                          {showOnly.removeSeen && (
+                            <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                          )}
+                        </div>
+                        <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Remove Seen Properties</span>
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">New</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Amenities - checkboxes side by side on one row */}
+                  <div>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Amenities</h3>
+                    <div className="flex flex-wrap gap-x-6 gap-y-2">
+                      {[
+                        { key: 'powerBackup', label: 'Power Backup' },
+                        { key: 'lift', label: 'Lift' },
+                      ].map(item => (
+                        <label key={item.key} className="flex items-center gap-2 cursor-pointer">
+                          <div 
+                            onClick={() => setAmenities(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                            className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${
+                              amenities[item.key] 
+                                ? 'bg-blue-500 border-blue-500' 
+                                : 'border-blue-500'
+                            }`}
+                          >
+                            {amenities[item.key] && (
+                              <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                            )}
+                          </div>
+                          <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Floors - pill buttons, 2 rows x 3 columns */}
+                  <div>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Floors</h3>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { key: 'ground', label: 'Ground' },
+                        { key: '1to3', label: '1 to 3' },
+                        { key: '4to6', label: '4 to 6' },
+                        { key: '7to9', label: '7 to 9' },
+                        { key: '10above', label: '10 & above' },
+                        { key: 'custom', label: 'Custom' },
+                      ].map(item => (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => setFloors(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                          className={`px-3 py-2 rounded-full text-sm font-medium transition-all border ${
+                            floors[item.key]
+                              ? 'bg-blue-500 text-white border-blue-500'
+                              : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
+                          }`}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Property Age - checkboxes, 2 columns side by side */}
+                  <div>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Property Age</h3>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                      {[
+                        { key: 'lessThan1', label: 'Less than a Year' },
+                        { key: '5to10', label: '5 to 10 year' },
+                        { key: '1to5', label: '1 to 5 year' },
+                        { key: 'moreThan10', label: 'More than 10 year' },
+                      ].map(item => (
+                        <label key={item.key} className="flex items-center gap-2 cursor-pointer">
+                          <div 
+                            onClick={() => setPropertyAge(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                            className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${
+                              propertyAge[item.key] 
+                                ? 'bg-blue-500 border-blue-500' 
+                                : 'border-blue-500'
+                            }`}
+                          >
+                            {propertyAge[item.key] && (
+                              <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                            )}
+                          </div>
+                          <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                    </>
+                  )}
+
+                  {/* Residential-only filters */}
+                  {buildingType === 'residential' && (
+                    <>
+                  {/* Property Type (Residential) - pills, smaller font, exactly like image */}
+                  <div>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Property Type</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { key: 'plot', label: 'Plot' },
+                        { key: 'villa', label: 'Villa' },
+                        { key: 'apartment', label: 'Apartment' },
+                        { key: 'independentHouse', label: 'Independent House' },
+                        { key: 'builderFloor', label: 'Builder Floor' },
+                        { key: 'penthouse', label: 'Penthouse' },
+                      ].map(item => (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => setResidentialPropertyType(prev => prev === item.key ? '' : item.key)}
+                          className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium transition-all border ${
+                            residentialPropertyType === item.key
+                              ? 'bg-blue-500 text-white border-blue-500'
+                              : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {residentialPropertyType === item.key && (
+                            <Check className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={2.5} />
+                          )}
+                          <span>{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Localities (Residential) - search + checkboxes */}
+                  <div>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Localities</h3>
+                    <div className={`flex items-center gap-2 px-3 py-2.5 border rounded-2xl mb-3 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
+                      <Search className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                      <input
+                        type="text"
+                        value={residentialLocalitySearch}
+                        onChange={(e) => setResidentialLocalitySearch(e.target.value)}
+                        placeholder="Search"
+                        className={`flex-1 text-sm outline-none bg-transparent min-w-0 ${isDark ? 'text-white placeholder-gray-500' : 'text-gray-600 placeholder-gray-400'}`}
+                      />
+                    </div>
+                    <div className={`rounded-lg border p-3 space-y-2 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
+                      {[
+                        { key: 'mysoreRoad', label: 'Mysore Road' },
+                        { key: 'sampangiRamaNagar', label: 'Sampangi Rama Nagar' },
+                        { key: 'hebbal', label: 'Hebbal' },
+                        { key: 'banashankari', label: 'Banashankari' },
+                      ].map(item => (
+                        <label key={item.key} className="flex items-center gap-2 cursor-pointer">
+                          <div
+                            onClick={() => setResidentialLocalities(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                            className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${
+                              residentialLocalities[item.key] ? 'bg-blue-500 border-blue-500' : 'border-blue-500'
+                            }`}
+                          >
+                            {residentialLocalities[item.key] && (
+                              <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                            )}
+                          </div>
+                          <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Societies (Residential) - search + checkboxes (image-style) */}
+                  <div>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Societies</h3>
+                    <div className={`flex items-center gap-2 px-3 py-2.5 border rounded-2xl mb-3 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
+                      <Search className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                      <input
+                        type="text"
+                        value={residentialSocietySearch}
+                        onChange={(e) => setResidentialSocietySearch(e.target.value)}
+                        placeholder="Search"
+                        className={`flex-1 text-sm outline-none bg-transparent min-w-0 ${isDark ? 'text-white placeholder-gray-500' : 'text-gray-600 placeholder-gray-400'}`}
+                      />
+                    </div>
+                    <div className={`rounded-lg border p-3 space-y-2 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
+                      {[
+                        { key: 'godrejTiara', label: 'Godrej Tiara' },
+                        { key: 'sobhaInfinia', label: 'Sobha Infinia' },
+                        { key: 'snnClermont', label: 'SNN Clermont' },
+                        { key: 'lntRaintreeBoulevard', label: 'LnT Raintree Boulevard' },
+                      ].map(item => (
+                        <label key={item.key} className="flex items-center gap-2 cursor-pointer">
+                          <div
+                            onClick={() => setResidentialSocieties(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                            className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${
+                              residentialSocieties[item.key] ? 'bg-blue-500 border-blue-500' : 'border-blue-500'
+                            }`}
+                          >
+                            {residentialSocieties[item.key] && (
+                              <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                            )}
+                          </div>
+                          <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Bedrooms - pill buttons grid (residential only) - 3 cols x 4 rows */}
+                  <div>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Bedrooms</h3>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { key: '1bhk', label: '1 BHK' },
+                        { key: '1rk', label: '1 RK' },
+                        { key: '1.5bhk', label: '1.5 BHK' },
+                        { key: '2bhk', label: '2 BHK' },
+                        { key: '2.5bhk', label: '2.5 BHK' },
+                        { key: '3bhk', label: '3 BHK' },
+                        { key: '3.5bhk', label: '3.5 BHK' },
+                        { key: '4bhk', label: '4 BHK' },
+                        { key: '5bhk', label: '5 BHK' },
+                        { key: '6bhk', label: '6 BHK' },
+                        { key: '6plusbhk', label: '6+ BHK' },
+                        { key: 'studio', label: 'Studio' },
+                      ].map(item => (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => setBedrooms(prev => prev === item.key ? '' : item.key)}
+                          className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
+                            bedrooms === item.key
+                              ? 'bg-blue-500 text-white border-blue-500'
+                              : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {bedrooms === item.key && <Check className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={2.5} />}
+                          <span>{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Sale Type - pill buttons (residential only) */}
+                  <div>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Sale Type</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { key: 'new', label: 'New' },
+                        { key: 'resale', label: 'Resale' },
+                      ].map(item => (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => setSaleType(prev => prev === item.key ? '' : item.key)}
+                          className={`flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
+                            saleType === item.key
+                              ? 'bg-blue-500 text-white border-blue-500'
+                              : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {saleType === item.key && <Check className="w-3.5 h-3.5" strokeWidth={2.5} />}
+                          <span>{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Construction Status - pill buttons (residential only) */}
+                  <div>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Construction Status</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { key: 'readyToMove', label: 'Ready To Move' },
+                        { key: 'underConstruction', label: 'Under Construction' },
+                      ].map(item => (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => setConstructionStatus(prev => prev === item.key ? '' : item.key)}
+                          className={`flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
+                            constructionStatus === item.key
+                              ? 'bg-blue-500 text-white border-blue-500'
+                              : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {constructionStatus === item.key && <Check className="w-3.5 h-3.5" strokeWidth={2.5} />}
+                          <span>{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Number of washrooms - pill buttons (residential only) */}
+                  <div>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Number of washrooms</h3>
+                    <div className="grid grid-cols-5 gap-2">
+                      {['1', '2', '3', '4', '5'].map(n => (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => setWashrooms(prev => prev === n ? '' : n)}
+                          className={`flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
+                            washrooms === n
+                              ? 'bg-blue-500 text-white border-blue-500'
+                              : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {washrooms === n && <Check className="w-3.5 h-3.5" strokeWidth={2.5} />}
+                          <span>+{n}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Floor - pill buttons (residential only) */}
+                  <div>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Floor</h3>
+                    <div className="grid grid-cols-4 gap-2">
+                      {[
+                        { key: 'basement', label: 'Basement' },
+                        { key: 'ground', label: 'Ground' },
+                        { key: '1to4', label: '1-4' },
+                        { key: '5to8', label: '5-8' },
+                        { key: '9to12', label: '9-12' },
+                        { key: '13to16', label: '13-16' },
+                        { key: '16plus', label: '16+' },
+                      ].map(item => (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => setFloorFilter(prev => prev === item.key ? '' : item.key)}
+                          className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
+                            floorFilter === item.key
+                              ? 'bg-blue-500 text-white border-blue-500'
+                              : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {floorFilter === item.key && <Check className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={2.5} />}
+                          <span>{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Facing - 8 directions (residential only) */}
+                  <div>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Facing</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { key: 'east', label: 'East' },
+                        { key: 'northEast', label: 'North-East' },
+                        { key: 'south', label: 'South' },
+                        { key: 'southWest', label: 'South-West' },
+                        { key: 'north', label: 'North' },
+                        { key: 'northWest', label: 'North-West' },
+                        { key: 'southEast', label: 'South-East' },
+                        { key: 'west', label: 'West' },
+                      ].map(item => (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => setFacing(prev => prev === item.key ? '' : item.key)}
+                          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
+                            facing === item.key
+                              ? 'bg-blue-500 text-white border-blue-500'
+                              : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {facing === item.key && <Check className="w-3.5 h-3.5" strokeWidth={2.5} />}
+                          <span>{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* RERA Registered Properties - toggle (residential only) */}
+                  <div className="flex items-center justify-between">
+                    <h3 className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>RERA Registered Properties</h3>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={reraRegistered}
+                      onClick={() => setReraRegistered(prev => !prev)}
+                      className={`relative w-10 h-6 rounded-full transition-colors cursor-pointer ${reraRegistered ? 'bg-blue-500' : isDark ? 'bg-gray-600' : 'bg-gray-300'}`}
+                    >
+                      <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${reraRegistered ? 'left-5' : 'left-1'}`} />
+                    </button>
+                  </div>
+
+                  {/* Properties with Offers - toggle (residential only) */}
+                  <div className="flex items-center justify-between">
+                    <h3 className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>Properties with Offers</h3>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={propertiesWithOffers}
+                      onClick={() => setPropertiesWithOffers(prev => !prev)}
+                      className={`relative w-10 h-6 rounded-full transition-colors cursor-pointer ${propertiesWithOffers ? 'bg-blue-500' : isDark ? 'bg-gray-600' : 'bg-gray-300'}`}
+                    >
+                      <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${propertiesWithOffers ? 'left-5' : 'left-1'}`} />
+                    </button>
+                  </div>
+
+                  {/* Furnishing Status - pill buttons (residential only) */}
+                  <div>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Furnishing Status</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { key: 'furnished', label: 'Furnished' },
+                        { key: 'semiFurnished', label: 'Semi-Furnished' },
+                        { key: 'unfurnished', label: 'Unfurnished' },
+                        { key: 'gatedCommunities', label: 'Gated Communities' },
+                      ].map(item => (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => setFurnishingStatus(prev => prev === item.key ? '' : item.key)}
+                          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
+                            furnishingStatus === item.key
+                              ? 'bg-blue-500 text-white border-blue-500'
+                              : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {furnishingStatus === item.key && <Check className="w-3.5 h-3.5" strokeWidth={2.5} />}
+                          <span>{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Posted by - pill buttons (residential only) */}
+                  <div>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Posted by</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { key: 'owners', label: 'Owners' },
+                        { key: 'partnerAgents', label: 'Partner Agents' },
+                      ].map(item => (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => setPostedBy(prev => prev === item.key ? '' : item.key)}
+                          className={`flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
+                            postedBy === item.key
+                              ? 'bg-blue-500 text-white border-blue-500'
+                              : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {postedBy === item.key && <Check className="w-3.5 h-3.5" strokeWidth={2.5} />}
+                          <span>{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Possession Status - pill buttons (residential only) */}
+                  <div>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Possession Status</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { key: 'readyToMove', label: 'Ready To Move' },
+                        { key: 'underConstruction', label: 'Under Construction' },
+                      ].map(item => (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => setPossessionStatus(prev => prev === item.key ? '' : item.key)}
+                          className={`flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
+                            possessionStatus === item.key
+                              ? 'bg-blue-500 text-white border-blue-500'
+                              : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {possessionStatus === item.key && <Check className="w-3.5 h-3.5" strokeWidth={2.5} />}
+                          <span>{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Amenities - pill buttons (residential only) */}
+                  <div>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Amenities</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { key: 'security24x7', label: '24 x 7 Security' },
+                        { key: 'powerBackup', label: 'Power Backup' },
+                        { key: 'visitorParking', label: "Visitor's Parking" },
+                        { key: 'attachedMarket', label: 'Attached Market' },
+                        { key: 'swimmingPool', label: 'Swimming Pool' },
+                        { key: 'clubhouse', label: 'Clubhouse' },
+                        { key: 'centralAC', label: 'Central AC' },
+                        { key: 'kidsPlayArea', label: 'Kids Play Area' },
+                        { key: 'intercom', label: 'Intercom' },
+                        { key: 'vaastuCompliant', label: 'Vaastu Compliant' },
+                        { key: 'airConditioned', label: 'Air Conditioned' },
+                        { key: 'lift', label: 'Lift' },
+                      ].map(item => (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => setAmenitiesPills(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
+                            amenitiesPills[item.key]
+                              ? 'bg-blue-500 text-white border-blue-500'
+                              : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {amenitiesPills[item.key] && <Check className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={2.5} />}
+                          <span>{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                    </>
+                  )}
                 </div>
 
-                {/* Apply Filters Button */}
+                {/* Apply Filters Button - only apply filter data when clicked, not on every checkbox/radio change */}
                 <div className={`sticky bottom-0 p-4 border-t ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-white border-gray-200'}`}>
                   <button 
-                    onClick={() => setShowFiltersView(false)}
+                    onClick={() => {
+                      setAppliedFilters(getFilterSnapshot());
+                      setShowFiltersView(false);
+                    }}
                     className="w-full py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
                   >
                     Apply Filters
@@ -1904,7 +3150,7 @@ export default function HomePage() {
                 {getFilteredMarkers().map(marker => (
                   <div 
                     key={marker.id} 
-                    className={`rounded-xl p-3 cursor-pointer hover:shadow-md transition-shadow shadow-sm ${isDark ? 'bg-[#282c34]' : 'bg-white'}`}
+                    className={`rounded-xl p-3 cursor-pointer transition-all shadow-sm ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-white hover:bg-[#fff3c5] hover:shadow-md'}`}
                     onClick={() => handleMarkerClick(marker)}
                   >
                     <div className="flex gap-3">
@@ -2159,16 +3405,16 @@ export default function HomePage() {
               {/* Filters Header */}
               <div className={`flex items-center justify-between px-4 py-3 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
                 <div className="flex items-center gap-3">
-                  <button 
-                    onClick={() => {
-                      setShowFiltersView(false);
-                      setShowCitySelector(false);
-                    }}
-                    className={`cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>Filters</h2>
+                <button 
+                  onClick={() => {
+                    setShowFiltersView(false);
+                    setShowCitySelector(false);
+                  }}
+                  className={`cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>Filters</h2>
                 </div>
                 <button 
                   onClick={() => {
@@ -2186,6 +3432,56 @@ export default function HomePage() {
                     });
                     setBudgetLumpsum({ min: '', max: '' });
                     setBudgetPerSeat({ min: '', max: '' });
+                    setFilterLocalitySearch('');
+                    setSizeFilter({ min: '', max: '' });
+                    setFurnishing({ full: false, none: false, semi: false });
+                    setBuildingTypeOptions({
+                      independentHouse: false,
+                      mall: false,
+                      independentShop: false,
+                      businessPark: false,
+                      standaloneBuilding: false,
+                    });
+                    setAvailability('');
+                    setParking({ public: false, reserved: false });
+                    setShowOnly({ withPhotos: true, removeSeen: false });
+                    setAmenities({ powerBackup: false, lift: false });
+                    setFloors({
+                      ground: false,
+                      '1to3': false,
+                      '4to6': false,
+                      '7to9': false,
+                      '10above': false,
+                      custom: false,
+                    });
+                    setPropertyAge({
+                      lessThan1: false,
+                      '1to5': false,
+                      '5to10': false,
+                      moreThan10: false,
+                    });
+                    setResidentialPropertyType('');
+                    setResidentialLocalitySearch('');
+                    setResidentialLocalities({ mysoreRoad: false, sampangiRamaNagar: false, hebbal: false, banashankari: false });
+                    setResidentialSocietySearch('');
+                    setResidentialSocieties({ godrejTiara: false, sobhaInfinia: false, snnClermont: false, lntRaintreeBoulevard: false });
+                    setBedrooms('');
+                    setSaleType('');
+                    setConstructionStatus('');
+                    setWashrooms('');
+                    setFloorFilter('');
+                    setFacing('');
+                    setReraRegistered(false);
+                    setPropertiesWithOffers(false);
+                    setFurnishingStatus('');
+                    setPostedBy('');
+                    setPossessionStatus('');
+                    setCommercialLocalitySearch('');
+                    setCommercialLocalities({ mysoreRoad: false, sampangiRamaNagar: false, hebbal: false, banashankari: false });
+                    setCommercialSocietySearch('');
+                    setCommercialSocieties({ godrejTiara: false, sobhaInfinia: false, snnClermont: false, lntRaintreeBoulevard: false });
+                    setAmenitiesPills({ security24x7: false, powerBackup: false, visitorParking: false, attachedMarket: false, swimmingPool: false, clubhouse: false, centralAC: false, kidsPlayArea: false, intercom: false, vaastuCompliant: false, airConditioned: false, lift: false });
+                    setAppliedFilters(null); // list will use current (cleared) snapshot
                   }}
                   className="text-blue-500 text-sm font-medium hover:text-blue-600 cursor-pointer"
                 >
@@ -2195,7 +3491,7 @@ export default function HomePage() {
 
               {/* Filters Content */}
               <div className="p-4 space-y-6 pb-24">
-            {/* Search Type */}
+            {/* Search Type - at top, for both Commercial and Residential (mobile) */}
             <div>
               <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Search Type</h3>
               <div className="flex gap-2">
@@ -2229,21 +3525,22 @@ export default function HomePage() {
                       : isDark ? 'bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
-                  <MapPin className="w-3.5 h-3.5" />
+                  <Clock className="w-3.5 h-3.5" />
                   Travel time
                 </button>
               </div>
             </div>
 
-            {/* Search Localities Input */}
             <div className={`flex items-center gap-2 px-3 py-2.5 border rounded-lg ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200'}`}>
-              <MapPin className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+              <MapPin className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
               <input 
                 type="text" 
+                value={filterLocalitySearch}
+                onChange={(e) => setFilterLocalitySearch(e.target.value)}
                 placeholder="Search upto 3 localities or landmarks"
-                className={`flex-1 text-sm outline-none bg-transparent ${isDark ? 'text-white placeholder-gray-500' : 'text-gray-600 placeholder-gray-400'}`}
+                className={`flex-1 text-sm outline-none bg-transparent min-w-0 ${isDark ? 'text-white placeholder-gray-500' : 'text-gray-600 placeholder-gray-400'}`}
               />
-              <LocateFixed className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+              <Target className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
             </div>
 
             {/* Building Type */}
@@ -2289,7 +3586,9 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Property Type */}
+            {/* Commercial-only filters (mobile) */}
+            {buildingType === 'commercial' && (
+              <>
             <div>
               <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Property Type</h3>
               <div className="grid grid-cols-2 gap-2">
@@ -2310,7 +3609,7 @@ export default function HomePage() {
                       className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors ${
                         propertyTypes[item.key] 
                           ? 'bg-blue-500 border-blue-500' 
-                          : isDark ? 'border-gray-600' : 'border-gray-300'
+                          : 'border-blue-500'
                       }`}
                     >
                       {propertyTypes[item.key] && (
@@ -2323,7 +3622,6 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Budget (lumsum) */}
             <div>
               <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Budget (lumsum)</h3>
               <div className="flex gap-3">
@@ -2390,13 +3688,703 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
+
+            {/* Size */}
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Size</h3>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <select 
+                    value={sizeFilter.min}
+                    onChange={(e) => setSizeFilter(prev => ({ ...prev, min: e.target.value }))}
+                    className={`w-full px-3 py-2.5 border rounded-lg text-sm appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
+                  >
+                    <option value="">Min</option>
+                    <option value="500">500 sq ft</option>
+                    <option value="1000">1000 sq ft</option>
+                    <option value="2000">2000 sq ft</option>
+                    <option value="5000">5000 sq ft</option>
+                    <option value="10000">10000 sq ft</option>
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <select 
+                    value={sizeFilter.max}
+                    onChange={(e) => setSizeFilter(prev => ({ ...prev, max: e.target.value }))}
+                    className={`w-full px-3 py-2.5 border rounded-lg text-sm appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
+                  >
+                    <option value="">Max</option>
+                    <option value="1000">1000 sq ft</option>
+                    <option value="2000">2000 sq ft</option>
+                    <option value="5000">5000 sq ft</option>
+                    <option value="10000">10000 sq ft</option>
+                    <option value="50000">50000 sq ft</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Furnishing - checkboxes, 2 columns side by side */}
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Furnishing</h3>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                {[
+                  { key: 'full', label: 'Full' },
+                  { key: 'none', label: 'None' },
+                  { key: 'semi', label: 'Semi' },
+                ].map(item => (
+                  <label key={item.key} className="flex items-center gap-2 cursor-pointer">
+                    <div 
+                      onClick={() => setFurnishing(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                      className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${
+                        furnishing[item.key] 
+                          ? 'bg-blue-500 border-blue-500' 
+                          : 'border-blue-500'
+                      }`}
+                    >
+                      {furnishing[item.key] && (
+                        <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                      )}
+                    </div>
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Building Type - checkboxes, 2 columns side by side */}
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Building Type</h3>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                {[
+                  { key: 'independentHouse', label: 'Independent House' },
+                  { key: 'mall', label: 'Mall' },
+                  { key: 'independentShop', label: 'Independent shop' },
+                  { key: 'businessPark', label: 'Business Park' },
+                  { key: 'standaloneBuilding', label: 'Standalone building' },
+                ].map(item => (
+                  <label key={item.key} className="flex items-center gap-2 cursor-pointer">
+                    <div 
+                      onClick={() => setBuildingTypeOptions(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                      className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${
+                        buildingTypeOptions[item.key] 
+                          ? 'bg-blue-500 border-blue-500' 
+                          : 'border-blue-500'
+                      }`}
+                    >
+                      {buildingTypeOptions[item.key] && (
+                        <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                      )}
+                    </div>
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Availability - radio, 2 columns side by side */}
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Availability</h3>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                {[
+                  { value: 'immediate', label: 'Immediate' },
+                  { value: 'within30', label: 'Within 30 Days' },
+                  { value: 'within15', label: 'Within 15 Days' },
+                  { value: 'after30', label: 'After 30 Days' },
+                ].map(opt => (
+                  <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
+                    <span className="relative inline-flex items-center justify-center w-4 h-4 rounded-full border-2 border-blue-500 flex-shrink-0 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="availability-mobile"
+                        checked={availability === opt.value}
+                        onChange={() => setAvailability(prev => prev === opt.value ? '' : opt.value)}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      {availability === opt.value && (
+                        <span className="w-2 h-2 rounded-full bg-blue-500 pointer-events-none" />
+                      )}
+                    </span>
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Parking - checkboxes, 2 columns side by side */}
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Parking</h3>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                {[
+                  { key: 'public', label: 'Public' },
+                  { key: 'reserved', label: 'Reserved' },
+                ].map(item => (
+                  <label key={item.key} className="flex items-center gap-2 cursor-pointer">
+                    <div 
+                      onClick={() => setParking(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                      className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${
+                        parking[item.key] 
+                          ? 'bg-blue-500 border-blue-500' 
+                          : 'border-blue-500'
+                      }`}
+                    >
+                      {parking[item.key] && (
+                        <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                      )}
+                    </div>
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Show Only - vertical list */}
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Show Only</h3>
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <div 
+                    onClick={() => setShowOnly(prev => ({ ...prev, withPhotos: !prev.withPhotos }))}
+                    className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${
+                      showOnly.withPhotos 
+                        ? 'bg-blue-500 border-blue-500' 
+                        : 'border-blue-500'
+                    }`}
+                  >
+                    {showOnly.withPhotos && (
+                      <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                    )}
+                  </div>
+                  <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>With Photos</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <div 
+                    onClick={() => setShowOnly(prev => ({ ...prev, removeSeen: !prev.removeSeen }))}
+                    className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${
+                      showOnly.removeSeen 
+                        ? 'bg-blue-500 border-blue-500' 
+                        : 'border-blue-500'
+                    }`}
+                  >
+                    {showOnly.removeSeen && (
+                      <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                    )}
+                  </div>
+                  <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Remove Seen Properties</span>
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">New</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Amenities - checkboxes side by side on one row */}
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Amenities</h3>
+              <div className="flex flex-wrap gap-x-6 gap-y-2">
+                {[
+                  { key: 'powerBackup', label: 'Power Backup' },
+                  { key: 'lift', label: 'Lift' },
+                ].map(item => (
+                  <label key={item.key} className="flex items-center gap-2 cursor-pointer">
+                    <div 
+                      onClick={() => setAmenities(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                      className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${
+                        amenities[item.key] 
+                          ? 'bg-blue-500 border-blue-500' 
+                          : 'border-blue-500'
+                      }`}
+                    >
+                      {amenities[item.key] && (
+                        <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                      )}
+                    </div>
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Floors - pill buttons, 2 rows x 3 columns */}
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Floors</h3>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { key: 'ground', label: 'Ground' },
+                  { key: '1to3', label: '1 to 3' },
+                  { key: '4to6', label: '4 to 6' },
+                  { key: '7to9', label: '7 to 9' },
+                  { key: '10above', label: '10 & above' },
+                  { key: 'custom', label: 'Custom' },
+                ].map(item => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setFloors(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                    className={`px-3 py-2 rounded-full text-sm font-medium transition-all border ${
+                      floors[item.key]
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Property Age - checkboxes, 2 columns side by side */}
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Property Age</h3>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                {[
+                  { key: 'lessThan1', label: 'Less than a Year' },
+                  { key: '5to10', label: '5 to 10 year' },
+                  { key: '1to5', label: '1 to 5 year' },
+                  { key: 'moreThan10', label: 'More than 10 year' },
+                ].map(item => (
+                  <label key={item.key} className="flex items-center gap-2 cursor-pointer">
+                    <div 
+                      onClick={() => setPropertyAge(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                      className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${
+                        propertyAge[item.key] 
+                          ? 'bg-blue-500 border-blue-500' 
+                          : 'border-blue-500'
+                      }`}
+                    >
+                      {propertyAge[item.key] && (
+                        <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                      )}
+                    </div>
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+              </>
+            )}
+
+            {/* Residential-only filters (mobile) */}
+            {buildingType === 'residential' && (
+              <>
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Property Type</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { key: 'plot', label: 'Plot' },
+                  { key: 'villa', label: 'Villa' },
+                  { key: 'apartment', label: 'Apartment' },
+                  { key: 'independentHouse', label: 'Independent House' },
+                  { key: 'builderFloor', label: 'Builder Floor' },
+                  { key: 'penthouse', label: 'Penthouse' },
+                ].map(item => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setResidentialPropertyType(prev => prev === item.key ? '' : item.key)}
+                    className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium transition-all border ${
+                      residentialPropertyType === item.key
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {residentialPropertyType === item.key && (
+                      <Check className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={2.5} />
+                    )}
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Localities</h3>
+              <div className={`flex items-center gap-2 px-3 py-2.5 border rounded-2xl mb-3 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
+                <Search className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                <input
+                  type="text"
+                  value={residentialLocalitySearch}
+                  onChange={(e) => setResidentialLocalitySearch(e.target.value)}
+                  placeholder="Search"
+                  className={`flex-1 text-sm outline-none bg-transparent min-w-0 ${isDark ? 'text-white placeholder-gray-500' : 'text-gray-600 placeholder-gray-400'}`}
+                />
+              </div>
+              <div className={`rounded-lg border p-3 space-y-2 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
+                {[
+                  { key: 'mysoreRoad', label: 'Mysore Road' },
+                  { key: 'sampangiRamaNagar', label: 'Sampangi Rama Nagar' },
+                  { key: 'hebbal', label: 'Hebbal' },
+                  { key: 'banashankari', label: 'Banashankari' },
+                ].map(item => (
+                  <label key={item.key} className="flex items-center gap-2 cursor-pointer">
+                    <div
+                      onClick={() => setResidentialLocalities(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                      className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${
+                        residentialLocalities[item.key] ? 'bg-blue-500 border-blue-500' : 'border-blue-500'
+                      }`}
+                    >
+                      {residentialLocalities[item.key] && (
+                        <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                      )}
+                    </div>
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Societies (Residential) - search + checkboxes (mobile) */}
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Societies</h3>
+              <div className={`flex items-center gap-2 px-3 py-2.5 border rounded-2xl mb-3 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
+                <Search className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                <input
+                  type="text"
+                  value={residentialSocietySearch}
+                  onChange={(e) => setResidentialSocietySearch(e.target.value)}
+                  placeholder="Search"
+                  className={`flex-1 text-sm outline-none bg-transparent min-w-0 ${isDark ? 'text-white placeholder-gray-500' : 'text-gray-600 placeholder-gray-400'}`}
+                />
+              </div>
+              <div className={`rounded-lg border p-3 space-y-2 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
+                {[
+                  { key: 'godrejTiara', label: 'Godrej Tiara' },
+                  { key: 'sobhaInfinia', label: 'Sobha Infinia' },
+                  { key: 'snnClermont', label: 'SNN Clermont' },
+                  { key: 'lntRaintreeBoulevard', label: 'LnT Raintree Boulevard' },
+                ].map(item => (
+                  <label key={item.key} className="flex items-center gap-2 cursor-pointer">
+                    <div
+                      onClick={() => setResidentialSocieties(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                      className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${
+                        residentialSocieties[item.key] ? 'bg-blue-500 border-blue-500' : 'border-blue-500'
+                      }`}
+                    >
+                      {residentialSocieties[item.key] && (
+                        <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                      )}
+                    </div>
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Bedrooms - pill buttons grid (residential mobile) - 3 cols */}
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Bedrooms</h3>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { key: '1bhk', label: '1 BHK' },
+                  { key: '1rk', label: '1 RK' },
+                  { key: '1.5bhk', label: '1.5 BHK' },
+                  { key: '2bhk', label: '2 BHK' },
+                  { key: '2.5bhk', label: '2.5 BHK' },
+                  { key: '3bhk', label: '3 BHK' },
+                  { key: '3.5bhk', label: '3.5 BHK' },
+                  { key: '4bhk', label: '4 BHK' },
+                  { key: '5bhk', label: '5 BHK' },
+                  { key: '6bhk', label: '6 BHK' },
+                  { key: '6plusbhk', label: '6+ BHK' },
+                  { key: 'studio', label: 'Studio' },
+                ].map(item => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setBedrooms(prev => prev === item.key ? '' : item.key)}
+                    className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
+                      bedrooms === item.key
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {bedrooms === item.key && <Check className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={2.5} />}
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Sale Type - pill buttons (residential mobile) */}
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Sale Type</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { key: 'new', label: 'New' },
+                  { key: 'resale', label: 'Resale' },
+                ].map(item => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setSaleType(prev => prev === item.key ? '' : item.key)}
+                    className={`flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
+                      saleType === item.key
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {saleType === item.key && <Check className="w-3.5 h-3.5" strokeWidth={2.5} />}
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Construction Status - pill buttons (residential mobile) */}
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Construction Status</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { key: 'readyToMove', label: 'Ready To Move' },
+                  { key: 'underConstruction', label: 'Under Construction' },
+                ].map(item => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setConstructionStatus(prev => prev === item.key ? '' : item.key)}
+                    className={`flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
+                      constructionStatus === item.key
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {constructionStatus === item.key && <Check className="w-3.5 h-3.5" strokeWidth={2.5} />}
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Number of washrooms - pill buttons (residential mobile) */}
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Number of washrooms</h3>
+              <div className="grid grid-cols-5 gap-2">
+                {['1', '2', '3', '4', '5'].map(n => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setWashrooms(prev => prev === n ? '' : n)}
+                    className={`flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
+                      washrooms === n
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {washrooms === n && <Check className="w-3.5 h-3.5" strokeWidth={2.5} />}
+                    <span>+{n}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Floor - pill buttons (residential mobile) */}
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Floor</h3>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { key: 'basement', label: 'Basement' },
+                  { key: 'ground', label: 'Ground' },
+                  { key: '1to4', label: '1-4' },
+                  { key: '5to8', label: '5-8' },
+                  { key: '9to12', label: '9-12' },
+                  { key: '13to16', label: '13-16' },
+                  { key: '16plus', label: '16+' },
+                ].map(item => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setFloorFilter(prev => prev === item.key ? '' : item.key)}
+                    className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
+                      floorFilter === item.key
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {floorFilter === item.key && <Check className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={2.5} />}
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Facing - 8 directions (residential mobile) */}
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Facing</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { key: 'east', label: 'East' },
+                  { key: 'northEast', label: 'North-East' },
+                  { key: 'south', label: 'South' },
+                  { key: 'southWest', label: 'South-West' },
+                  { key: 'north', label: 'North' },
+                  { key: 'northWest', label: 'North-West' },
+                  { key: 'southEast', label: 'South-East' },
+                  { key: 'west', label: 'West' },
+                ].map(item => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setFacing(prev => prev === item.key ? '' : item.key)}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
+                      facing === item.key
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {facing === item.key && <Check className="w-3.5 h-3.5" strokeWidth={2.5} />}
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* RERA & Properties with Offers - toggles (residential mobile) */}
+            <div className="flex items-center justify-between">
+              <h3 className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>RERA Registered Properties</h3>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={reraRegistered}
+                onClick={() => setReraRegistered(prev => !prev)}
+                className={`relative w-10 h-6 rounded-full transition-colors cursor-pointer ${reraRegistered ? 'bg-blue-500' : isDark ? 'bg-gray-600' : 'bg-gray-300'}`}
+              >
+                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${reraRegistered ? 'left-5' : 'left-1'}`} />
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <h3 className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>Properties with Offers</h3>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={propertiesWithOffers}
+                onClick={() => setPropertiesWithOffers(prev => !prev)}
+                className={`relative w-10 h-6 rounded-full transition-colors cursor-pointer ${propertiesWithOffers ? 'bg-blue-500' : isDark ? 'bg-gray-600' : 'bg-gray-300'}`}
+              >
+                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${propertiesWithOffers ? 'left-5' : 'left-1'}`} />
+              </button>
+            </div>
+
+            {/* Furnishing Status - pill buttons (residential mobile) */}
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Furnishing Status</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { key: 'furnished', label: 'Furnished' },
+                  { key: 'semiFurnished', label: 'Semi-Furnished' },
+                  { key: 'unfurnished', label: 'Unfurnished' },
+                  { key: 'gatedCommunities', label: 'Gated Communities' },
+                ].map(item => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setFurnishingStatus(prev => prev === item.key ? '' : item.key)}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
+                      furnishingStatus === item.key
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {furnishingStatus === item.key && <Check className="w-3.5 h-3.5" strokeWidth={2.5} />}
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Posted by - pill buttons (residential mobile) */}
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Posted by</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { key: 'owners', label: 'Owners' },
+                  { key: 'partnerAgents', label: 'Partner Agents' },
+                ].map(item => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setPostedBy(prev => prev === item.key ? '' : item.key)}
+                    className={`flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
+                      postedBy === item.key
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {postedBy === item.key && <Check className="w-3.5 h-3.5" strokeWidth={2.5} />}
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Possession Status - pill buttons (residential mobile) */}
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Possession Status</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { key: 'readyToMove', label: 'Ready To Move' },
+                  { key: 'underConstruction', label: 'Under Construction' },
+                ].map(item => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setPossessionStatus(prev => prev === item.key ? '' : item.key)}
+                    className={`flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
+                      possessionStatus === item.key
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {possessionStatus === item.key && <Check className="w-3.5 h-3.5" strokeWidth={2.5} />}
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Amenities - pill buttons (residential mobile) */}
+            <div>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Amenities</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { key: 'security24x7', label: '24 x 7 Security' },
+                  { key: 'powerBackup', label: 'Power Backup' },
+                  { key: 'visitorParking', label: "Visitor's Parking" },
+                  { key: 'attachedMarket', label: 'Attached Market' },
+                  { key: 'swimmingPool', label: 'Swimming Pool' },
+                  { key: 'clubhouse', label: 'Clubhouse' },
+                  { key: 'centralAC', label: 'Central AC' },
+                  { key: 'kidsPlayArea', label: 'Kids Play Area' },
+                  { key: 'intercom', label: 'Intercom' },
+                  { key: 'vaastuCompliant', label: 'Vaastu Compliant' },
+                  { key: 'airConditioned', label: 'Air Conditioned' },
+                  { key: 'lift', label: 'Lift' },
+                ].map(item => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setAmenitiesPills(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all border ${
+                      amenitiesPills[item.key]
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {amenitiesPills[item.key] && <Check className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={2.5} />}
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+              </>
+            )}
             </div>
             </div>
 
-            {/* Apply Filters Button */}
+            {/* Apply Filters Button - only apply filter data when clicked, not on every checkbox/radio change */}
             <div className={`flex-shrink-0 p-4 pb-20 border-t ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-white border-gray-200'}`}>
               <button 
-                onClick={() => setShowFiltersView(false)}
+                onClick={() => {
+                  setAppliedFilters(getFilterSnapshot());
+                  setShowFiltersView(false);
+                }}
                 className="w-full py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
               >
                 Apply Filters
@@ -2870,7 +4858,7 @@ export default function HomePage() {
               {getFilteredMarkers().map(marker => (
                 <div 
                   key={marker.id} 
-                  className={`rounded-xl p-3 cursor-pointer hover:shadow-md transition-shadow shadow-sm ${isDark ? 'bg-[#282c34]' : 'bg-white border border-gray-100'}`}
+                  className={`rounded-xl p-3 cursor-pointer transition-all shadow-sm ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-white border border-gray-100 hover:bg-[#fff3c5] hover:shadow-md'}`}
                   onClick={() => {
                     handleMarkerClick(marker);
                     setShowMobileList(false);

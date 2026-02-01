@@ -456,8 +456,8 @@ export default function MapView({ center, markers, selectedMarker, onMarkerClick
             }
 
             const isCommercial = markerType === 'commercial';
-            // Use brighter blue in dark mode for better visibility, darker blue in light mode
-            const iconColor = isDark ? '#60a5fa' : '#1d4ed8'; // Light blue (blue-400) in dark mode, darker blue (blue-700) in light mode
+            // When selected: white icon on blue bg; otherwise blue icon
+            const iconColor = isSelected ? '#FFFFFF' : (isDark ? '#60a5fa' : '#1d4ed8');
 
             // Render Lucide icon to SVG string using renderToStaticMarkup
             const IconComponent = isCommercial ? Building : House;
@@ -481,8 +481,8 @@ export default function MapView({ center, markers, selectedMarker, onMarkerClick
             </defs>
           `;
 
-            const strokeColor = isSelected ? '#1d4ed8' : 'white';
-            const strokeWidth = isSelected ? 2 : 0;
+            const strokeColor = 'white';
+            const strokeWidth = 0;
 
             // Pill dimensions - reduced size with less padding
             const pillWidth = 65;
@@ -496,17 +496,17 @@ export default function MapView({ center, markers, selectedMarker, onMarkerClick
             const svgHeight = 50;
             const centerX = svgWidth / 2;
 
-            // Dark mode colors - match the dark theme used in the app
-            const pillBackgroundColor = isDark ? '#282c34' : 'white';
-            const priceTextColor = isDark ? '#FFFFFF' : '#000000';
-            const pointerDotColor = isDark ? '#282c34' : 'white';
+            // When selected: blue bg; otherwise match theme
+            const pillBackgroundColor = isSelected ? '#2563eb' : (isDark ? '#282c34' : 'white');
+            const priceTextColor = isSelected ? '#FFFFFF' : (isDark ? '#FFFFFF' : '#000000');
+            const pointerDotColor = isSelected ? '#2563eb' : (isDark ? '#282c34' : 'white');
 
             // Create the complete SVG marker - smaller size with less spacing
             const svg = `
             <svg width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}" xmlns="http://www.w3.org/2000/svg">
               ${shadowFilter}
               
-              <!-- Pill-shaped bubble with shadow (black in dark mode, white in light mode) -->
+              <!-- Pill-shaped bubble with shadow (blue when selected, black/white otherwise) -->
               <rect x="${pillX}" y="${pillY}" width="${pillWidth}" height="${pillHeight}" rx="${cornerRadius}" ry="${cornerRadius}" fill="${pillBackgroundColor}" stroke="${strokeColor}" stroke-width="${strokeWidth}" filter="url(#${filterId})"/>
               
               <!-- Blue icon on the left side, centered vertically (color stays the same) -->
