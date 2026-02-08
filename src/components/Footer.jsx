@@ -1,6 +1,6 @@
 'use client';
 
-import { Map, User, Instagram, Youtube, Linkedin } from 'lucide-react';
+import { Map, User, Instagram, Youtube, Linkedin, Facebook, Twitter, Mail, Phone } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -107,52 +107,63 @@ export default function Footer() {
             </footer>
 
             {pathName !== '/' && (
-                <footer className={`hidden md:block border-t transition-colors ${
-                    isDark 
-                        ? 'bg-[#1f2229] border-gray-700' 
-                        : 'bg-white border-gray-900'
-                }`}>
-                    <div className={`max-w-4xl px-12 mx-auto py-10 grid grid-cols-1 md:grid-cols-3 gap-8 text-left text-base ${
-                        isDark ? 'text-gray-400' : 'text-gray-700'
-                    }`}>
-                        <div>
-                            <h4 className={`font-semibold mb-2 ${isDark ? 'text-white' : 'text-black'}`}>Services</h4>
-                            <ul className="space-y-1">
-                                <li><Link href="/hand-holding" className={`hover:underline ${isDark ? 'hover:text-white' : 'hover:text-black'}`}>Hand Holding</Link></li>
-                                <li><Link href="/tag-along" className={`hover:underline ${isDark ? 'hover:text-white' : 'hover:text-black'}`}>Tag Along</Link></li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h4 className={`font-semibold mb-2 ${isDark ? 'text-white' : 'text-black'}`}>Company</h4>
-                            <ul className="space-y-1">
-                                <li><Link href="/terms-and-conditions" className={`hover:underline ${isDark ? 'hover:text-white' : 'hover:text-black'}`}>Terms and Conditions</Link></li>
-                                <li><Link href="/privacy-policy" className={`hover:underline ${isDark ? 'hover:text-white' : 'hover:text-black'}`}>Privacy Policy</Link></li>
-                                <li><Link href="/about-us" className={`hover:underline ${isDark ? 'hover:text-white' : 'hover:text-black'}`}>About Us</Link></li>
-                            </ul>
-                        </div>
-                        <div className='ml-4'>
-                            <h4 className={`font-semibold mb-2 ${isDark ? 'text-white' : 'text-black'}`}>Contact Us</h4>
-                            <p className="mb-1">+918884886822</p>
-                            <p className="mb-2">email: <Link href="mailto:support@buildersinfo.in" className="hover:underline">support@buildersinfo.in</Link></p>
-                            <div className="flex space-x-4 mt-2">
-                                <Link href="https://www.instagram.com/buildersinfo.in/" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-black'}`}>
-                                    <Instagram className="w-7" alt='instagram' />
+                <footer className="hidden md:block bg-[#F8F8F8] border-t border-[#E5E7EB]">
+                    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-5">
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
+                            <div className="space-y-2 md:col-span-2">
+                                <Link href="/">
+                                    <Image
+                                        alt="BuildersInfo Logo"
+                                        width={90}
+                                        height={24}
+                                        src="https://i.ibb.co/gMsT7BMs/buildersinfologo3x.png"
+                                        className="h-5 w-auto"
+                                        unoptimized
+                                    />
                                 </Link>
-                                <Link href="https://www.youtube.com/@buildersinfo.in" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-black'}`}>
-                                    <Youtube className="w-7" alt='youtube' />
-                                </Link>
-                                <Link href="http://www.linkedin.com/company/buildersinfo" className={`transition-colors ${isDark ? 'hover:text-white' : 'hover:text-black'}`}>
-                                    <Linkedin className="w-7" alt='linkedin' />
-                                </Link>
+                                <p className="text-xs text-[#6B7280] leading-tight">India&apos;s first brokerage-free real estate discovery platform.</p>
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-semibold text-[#4A4A4A] mb-2">Company</h3>
+                                <ul className="space-y-1">
+                                    <li><Link className="text-xs text-[#6B7280] hover:text-[#1A6AC4]" href="/about">About Us</Link></li>
+                                    <li><Link className="text-xs text-[#6B7280] hover:text-[#1A6AC4]" href="#">Contact Us</Link></li>
+                                    <li><Link className="text-xs text-[#6B7280] hover:text-[#1A6AC4]" href="#">Our Verification Process</Link></li>
+                                    <li><Link className="text-xs text-[#6B7280] hover:text-[#1A6AC4]" href="/terms-and-conditions">Terms & Conditions</Link></li>
+                                    <li><Link className="text-xs text-[#6B7280] hover:text-[#1A6AC4]" href="/privacy-policy">Privacy Policy</Link></li>
+                                    <li><Link className="text-xs text-[#6B7280] hover:text-[#1A6AC4]" href="#">Disclaimer</Link></li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-semibold text-[#4A4A4A] mb-2">Services</h3>
+                                <ul className="space-y-1">
+                                    <li><Link className="text-xs text-[#6B7280] hover:text-[#1A6AC4]" href="/hand-holding">Hand Holding</Link></li>
+                                    <li><Link className="text-xs text-[#6B7280] hover:text-[#1A6AC4]" href="/tag-along">Tag Along</Link></li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-semibold text-[#4A4A4A] mb-2">Follow Us</h3>
+                                <div className="flex items-center gap-3">
+                                    <Link className="text-[#6B7280] hover:text-[#1A6AC4]" href="#"><Facebook className="w-5 h-5" strokeWidth={2} /></Link>
+                                    <Link className="text-[#6B7280] hover:text-[#1A6AC4]" href="#"><Twitter className="w-5 h-5" strokeWidth={2} /></Link>
+                                    <Link className="text-[#6B7280] hover:text-[#1A6AC4]" href="https://www.instagram.com/buildersinfo.in/"><Instagram className="w-5 h-5" strokeWidth={2} /></Link>
+                                    <Link className="text-[#6B7280] hover:text-[#1A6AC4]" href="https://www.linkedin.com/company/buildersinfo"><Linkedin className="w-5 h-5" strokeWidth={2} /></Link>
+                                    <Link className="text-[#6B7280] hover:text-[#1A6AC4]" href="https://www.youtube.com/@buildersinfo.in"><Youtube className="w-5 h-5" strokeWidth={2} /></Link>
+                                </div>
+                                <div className="mt-3 space-y-1">
+                                    <h3 className="text-sm font-semibold text-[#4A4A4A] mb-1">Contact</h3>
+                                    <a href="mailto:support@buildersinfo.in" className="flex items-center gap-1.5 text-xs text-[#6B7280] hover:text-[#1A6AC4]">
+                                        <Mail className="h-3.5 w-3.5 shrink-0" strokeWidth={2} /> support@buildersinfo.in
+                                    </a>
+                                    <a href="tel:+918884886822" className="flex items-center gap-1.5 text-xs text-[#6B7280] hover:text-[#1A6AC4]">
+                                        <Phone className="h-3.5 w-3.5 shrink-0" strokeWidth={2} /> +918884886822
+                                    </a>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div className={`py-3 text-center text-sm border-t ${
-                        isDark 
-                            ? 'bg-[#fbbf24] text-black border-gray-700' 
-                            : 'bg-[#ffdd57] text-black border-gray-300'
-                    }`}>
-                        © 2025 - <Link href="https://buildersinfo.in">Buildersinfo.in</Link> - All Rights Reserved
+                        <div className="mt-4 border-t border-[#E5E7EB] pt-4 text-center text-xs text-[#6B7280]">
+                            <p>© 2026 Buildersinfo.in. All rights reserved.</p>
+                        </div>
                     </div>
                 </footer>
             )}
