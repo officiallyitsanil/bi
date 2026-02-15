@@ -1,7 +1,6 @@
 import mongoose from 'mongoose';
 
 const VisitorSchema = new mongoose.Schema({
-  // IP-based location (approximate)
   ipLocation: {
     latitude: Number,
     longitude: Number,
@@ -10,30 +9,28 @@ const VisitorSchema = new mongoose.Schema({
     country: String,
     postal: String,
     timezone: String,
-    org: String, // ISP/Organization
-    location: String, // Full formatted location
-    locality: String, // City/Town name
-    sublocality: String, // Area/Neighborhood
+    org: String,
+    location: String,
+    locality: String,
+    sublocality: String,
     district: String,
     state: String
   },
-  
-  // GPS-based location (accurate - requires permission)
+
   gpsLocation: {
     latitude: Number,
     longitude: Number,
     accuracy: Number,
-    location: String, // Full formatted location
-    locality: String, // City/Town name
-    sublocality: String, // Area/Neighborhood
+    location: String,
+    locality: String,
+    sublocality: String,
     district: String,
     state: String,
     country: String,
     postal: String,
     timestamp: Date
   },
-  
-  // Legacy fields for backward compatibility
+
   latitude: {
     type: Number,
     required: false
@@ -51,8 +48,7 @@ const VisitorSchema = new mongoose.Schema({
   location: {
     type: String
   },
-  
-  // Device information
+
   userAgent: {
     type: String,
     required: true
@@ -64,7 +60,7 @@ const VisitorSchema = new mongoose.Schema({
     type: String
   },
   deviceType: {
-    type: String // mobile, desktop, tablet
+    type: String
   },
   screenResolution: {
     width: Number,
@@ -76,16 +72,14 @@ const VisitorSchema = new mongoose.Schema({
   timezone: {
     type: String
   },
-  
-  // Network information
+
   ipAddress: {
     type: String
   },
   connectionType: {
     type: String
   },
-  
-  // Session information
+
   sessionId: {
     type: String
   },
@@ -95,14 +89,12 @@ const VisitorSchema = new mongoose.Schema({
   pageUrl: {
     type: String
   },
-  
-  // Timestamps
+
   visitedAt: {
     type: Date,
     default: Date.now
   },
-  
-  // Additional metadata
+
   isFirstVisit: {
     type: Boolean,
     default: true
@@ -111,15 +103,13 @@ const VisitorSchema = new mongoose.Schema({
     type: Number,
     default: 1
   },
-  
-  // Location permission status
+
   locationPermission: {
     type: String,
     enum: ['granted', 'denied', 'prompt', 'not_requested'],
     default: 'not_requested'
   },
-  
-  // Track if this is homepage visit
+
   isHomepageVisit: {
     type: Boolean,
     default: false
@@ -128,7 +118,6 @@ const VisitorSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Index for better query performance
 VisitorSchema.index({ visitedAt: -1 });
 VisitorSchema.index({ latitude: 1, longitude: 1 });
 VisitorSchema.index({ ipAddress: 1 });

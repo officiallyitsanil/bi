@@ -44,7 +44,7 @@ export default function Footer() {
         <>
             <footer className={`md:hidden border-t fixed bottom-0 left-0 right-0 z-20 transition-colors ${
                 isDark 
-                    ? 'bg-[#1f2229] border-gray-700' 
+                    ? 'bg-[#1A1A1A] border-[#333333]' 
                     : 'bg-white border-gray-300'
             }`}>
                 <div className="flex items-center justify-around py-0.5">
@@ -60,7 +60,7 @@ export default function Footer() {
                     <Link href="/residential" className="flex flex-col items-center justify-center w-1/5 h-14">
                         <span className={`py-1.5 px-3 rounded-full text-[0.7rem] font-semibold transition-colors duration-200 ${
                             pathName === '/residential' 
-                                ? 'text-gray-900 bg-[#ffefad]' 
+                                ? isDark ? 'text-yellow-400 bg-yellow-500/20' : 'text-gray-900 bg-[#ffefad]' 
                                 : isDark ? 'text-gray-400 bg-transparent' : 'text-gray-500 bg-transparent'
                         }`}>
                             Residential
@@ -79,7 +79,7 @@ export default function Footer() {
                     <Link href="/commercial" className="flex flex-col items-center justify-center w-1/5 h-14">
                         <span className={`py-1.5 px-3 rounded-full text-[0.7rem] font-semibold transition-colors duration-200 ${
                             pathName === '/commercial' 
-                                ? 'text-gray-900 bg-[#ffefad]' 
+                                ? isDark ? 'text-yellow-400 bg-yellow-500/20' : 'text-gray-900 bg-[#ffefad]' 
                                 : isDark ? 'text-gray-400 bg-transparent' : 'text-gray-500 bg-transparent'
                         }`}>
                             Commercial
@@ -107,7 +107,7 @@ export default function Footer() {
             </footer>
 
             {pathName !== '/' && (
-                <footer className="hidden md:block bg-[#F8F8F8] border-t border-[#E5E7EB]">
+                <footer className={`hidden md:block border-t transition-colors duration-300 ${isDark ? 'bg-[#1A1A1A] border-[#333333]' : 'bg-[#F8F8F8] border-[#E5E7EB]'}`}>
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-5">
                         <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
                             <div className="space-y-2 md:col-span-2">
@@ -121,47 +121,47 @@ export default function Footer() {
                                         unoptimized
                                     />
                                 </Link>
-                                <p className="text-xs text-[#6B7280] leading-tight">India&apos;s first brokerage-free real estate discovery platform.</p>
+                                <p className={`text-xs leading-tight ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280]'}`}>India&apos;s first brokerage-free real estate discovery platform.</p>
                             </div>
                             <div>
-                                <h3 className="text-sm font-semibold text-[#4A4A4A] mb-2">Company</h3>
+                                <h3 className={`text-sm font-semibold mb-2 ${isDark ? 'text-white' : 'text-[#4A4A4A]'}`}>Company</h3>
                                 <ul className="space-y-1">
-                                    <li><Link className="text-xs text-[#6B7280] hover:text-[#1A6AC4]" href="/about">About Us</Link></li>
-                                    <li><Link className="text-xs text-[#6B7280] hover:text-[#1A6AC4]" href="#">Contact Us</Link></li>
-                                    <li><Link className="text-xs text-[#6B7280] hover:text-[#1A6AC4]" href="#">Our Verification Process</Link></li>
-                                    <li><Link className="text-xs text-[#6B7280] hover:text-[#1A6AC4]" href="/terms-and-conditions">Terms & Conditions</Link></li>
-                                    <li><Link className="text-xs text-[#6B7280] hover:text-[#1A6AC4]" href="/privacy-policy">Privacy Policy</Link></li>
-                                    <li><Link className="text-xs text-[#6B7280] hover:text-[#1A6AC4]" href="#">Disclaimer</Link></li>
+                                    <li><Link className={`text-xs hover:text-[#007BFF] ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280] hover:text-[#1A6AC4]'}`} href="/about">About Us</Link></li>
+                                    <li><Link className={`text-xs hover:text-[#007BFF] ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280] hover:text-[#1A6AC4]'}`} href="#">Contact Us</Link></li>
+                                    <li><Link className={`text-xs hover:text-[#007BFF] ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280] hover:text-[#1A6AC4]'}`} href="#">Our Verification Process</Link></li>
+                                    <li><Link className={`text-xs hover:text-[#007BFF] ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280] hover:text-[#1A6AC4]'}`} href="/terms-and-conditions">Terms & Conditions</Link></li>
+                                    <li><Link className={`text-xs hover:text-[#007BFF] ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280] hover:text-[#1A6AC4]'}`} href="/privacy-policy">Privacy Policy</Link></li>
+                                    <li><Link className={`text-xs hover:text-[#007BFF] ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280] hover:text-[#1A6AC4]'}`} href="#">Disclaimer</Link></li>
                                 </ul>
                             </div>
                             <div>
-                                <h3 className="text-sm font-semibold text-[#4A4A4A] mb-2">Services</h3>
+                                <h3 className={`text-sm font-semibold mb-2 ${isDark ? 'text-white' : 'text-[#4A4A4A]'}`}>Services</h3>
                                 <ul className="space-y-1">
-                                    <li><Link className="text-xs text-[#6B7280] hover:text-[#1A6AC4]" href="/hand-holding">Hand Holding</Link></li>
-                                    <li><Link className="text-xs text-[#6B7280] hover:text-[#1A6AC4]" href="/tag-along">Tag Along</Link></li>
+                                    <li><Link className={`text-xs hover:text-[#007BFF] ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280] hover:text-[#1A6AC4]'}`} href="/hand-holding">Hand Holding</Link></li>
+                                    <li><Link className={`text-xs hover:text-[#007BFF] ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280] hover:text-[#1A6AC4]'}`} href="/tag-along">Tag Along</Link></li>
                                 </ul>
                             </div>
                             <div>
-                                <h3 className="text-sm font-semibold text-[#4A4A4A] mb-2">Follow Us</h3>
+                                <h3 className={`text-sm font-semibold mb-2 ${isDark ? 'text-white' : 'text-[#4A4A4A]'}`}>Follow Us</h3>
                                 <div className="flex items-center gap-3">
-                                    <Link className="text-[#6B7280] hover:text-[#1A6AC4]" href="#"><Facebook className="w-5 h-5" strokeWidth={2} /></Link>
-                                    <Link className="text-[#6B7280] hover:text-[#1A6AC4]" href="#"><Twitter className="w-5 h-5" strokeWidth={2} /></Link>
-                                    <Link className="text-[#6B7280] hover:text-[#1A6AC4]" href="https://www.instagram.com/buildersinfo.in/"><Instagram className="w-5 h-5" strokeWidth={2} /></Link>
-                                    <Link className="text-[#6B7280] hover:text-[#1A6AC4]" href="https://www.linkedin.com/company/buildersinfo"><Linkedin className="w-5 h-5" strokeWidth={2} /></Link>
-                                    <Link className="text-[#6B7280] hover:text-[#1A6AC4]" href="https://www.youtube.com/@buildersinfo.in"><Youtube className="w-5 h-5" strokeWidth={2} /></Link>
+                                    <Link className={isDark ? 'text-[#CCCCCC] hover:text-[#007BFF]' : 'text-[#6B7280] hover:text-[#1A6AC4]'} href="#"><Facebook className="w-5 h-5" strokeWidth={2} /></Link>
+                                    <Link className={isDark ? 'text-[#CCCCCC] hover:text-[#007BFF]' : 'text-[#6B7280] hover:text-[#1A6AC4]'} href="#"><Twitter className="w-5 h-5" strokeWidth={2} /></Link>
+                                    <Link className={isDark ? 'text-[#CCCCCC] hover:text-[#007BFF]' : 'text-[#6B7280] hover:text-[#1A6AC4]'} href="https://www.instagram.com/buildersinfo.in/"><Instagram className="w-5 h-5" strokeWidth={2} /></Link>
+                                    <Link className={isDark ? 'text-[#CCCCCC] hover:text-[#007BFF]' : 'text-[#6B7280] hover:text-[#1A6AC4]'} href="https://www.linkedin.com/company/buildersinfo"><Linkedin className="w-5 h-5" strokeWidth={2} /></Link>
+                                    <Link className={isDark ? 'text-[#CCCCCC] hover:text-[#007BFF]' : 'text-[#6B7280] hover:text-[#1A6AC4]'} href="https://www.youtube.com/@buildersinfo.in"><Youtube className="w-5 h-5" strokeWidth={2} /></Link>
                                 </div>
                                 <div className="mt-3 space-y-1">
-                                    <h3 className="text-sm font-semibold text-[#4A4A4A] mb-1">Contact</h3>
-                                    <a href="mailto:support@buildersinfo.in" className="flex items-center gap-1.5 text-xs text-[#6B7280] hover:text-[#1A6AC4]">
+                                    <h3 className={`text-sm font-semibold mb-1 ${isDark ? 'text-white' : 'text-[#4A4A4A]'}`}>Contact</h3>
+                                    <a href="mailto:support@buildersinfo.in" className={`flex items-center gap-1.5 text-xs hover:text-[#007BFF] ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280] hover:text-[#1A6AC4]'}`}>
                                         <Mail className="h-3.5 w-3.5 shrink-0" strokeWidth={2} /> support@buildersinfo.in
                                     </a>
-                                    <a href="tel:+918884886822" className="flex items-center gap-1.5 text-xs text-[#6B7280] hover:text-[#1A6AC4]">
+                                    <a href="tel:+918884886822" className={`flex items-center gap-1.5 text-xs hover:text-[#007BFF] ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280] hover:text-[#1A6AC4]'}`}>
                                         <Phone className="h-3.5 w-3.5 shrink-0" strokeWidth={2} /> +918884886822
                                     </a>
                                 </div>
                             </div>
                         </div>
-                        <div className="mt-4 border-t border-[#E5E7EB] pt-4 text-center text-xs text-[#6B7280]">
+                        <div className={`mt-4 border-t pt-4 text-center text-xs transition-colors ${isDark ? 'border-[#333333] text-[#CCCCCC]' : 'border-[#E5E7EB] text-[#6B7280]'}`}>
                             <p>© 2026 Buildersinfo.in. All rights reserved.</p>
                         </div>
                     </div>

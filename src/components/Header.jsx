@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Menu, User, Sun, Moon, Building, Home, Globe } from 'lucide-react';
+import { Menu, User, Sun, Moon, Building, Home, Globe, Crown } from 'lucide-react';
 import MenuSideBar from '@/components/MenuSideBar';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -69,16 +69,16 @@ export default function Header() {
         switch (link.icon) {
             case 'circle':
                 return isActive ? (
-                    <div className="w-4 h-4 rounded-full bg-blue-600"></div>
+                    <div className="w-3 h-3 rounded-full bg-blue-600"></div>
                 ) : (
-                    <div className={`w-4 h-4 rounded-full ${isDark ? 'bg-gray-500' : 'bg-gray-400'}`}></div>
+                    <div className={`w-3 h-3 rounded-full ${isDark ? 'bg-gray-500' : 'bg-gray-400'}`}></div>
                 );
             case 'building':
-                return <Building className={`w-5 h-5 ${iconClass}`} strokeWidth={isActive ? 2 : 1.5} />;
+                return <Building className={`w-4 h-4 ${iconClass}`} strokeWidth={isActive ? 2 : 1.5} />;
             case 'home':
-                return <Home className={`w-5 h-5 ${iconClass}`} strokeWidth={isActive ? 2 : 1.5} />;
+                return <Home className={`w-4 h-4 ${iconClass}`} strokeWidth={isActive ? 2 : 1.5} />;
             case 'crown':
-                return <Image src="/crown.svg" alt="Crown" width={iconSize} height={iconSize} className={isActive ? 'opacity-100' : 'opacity-60'} />;
+                return <Crown className={`w-4 h-4 ${isActive ? 'text-amber-500' : isDark ? 'text-amber-500/60' : 'text-amber-500/70'}`} strokeWidth={2} />;
             default:
                 return null;
         }
@@ -89,25 +89,25 @@ export default function Header() {
             <header
                 className={`
                     ${pathname === '/' ? 'hidden md:block' : 'block'} 
-                    sticky top-0 z-50 py-4 transition-colors duration-300
+                    sticky top-0 z-50 py-1.5 transition-colors duration-300
                     ${isDark ? 'bg-[#1f2229]' : 'bg-white'}
                 `}
             >
-                <div className="container mx-auto px-4 md:px-12">
+                <div className="container mx-auto px-4 md:px-8">
                     <div className="flex items-center justify-between">
                         {/* Left: Logo + Location */}
-                        <div className="flex items-center gap-4">
-                            <Link href="/">
-                                <Image src="/logo.png" width={100} height={70} className='w-24' alt="Logo" />
+                        <div className="flex items-center gap-2">
+                            <Link href="/" className="mr-3">
+                                <Image src="/logo.png" width={100} height={70} className='w-16' alt="Logo" />
                             </Link>
-                            <div className="hidden md:flex items-center gap-1.5">
-                                <Globe className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} strokeWidth={1.5} />
-                                <span className={`text-sm ${isDark ? 'text-white' : 'text-black'}`}>India</span>
+                            <div className="hidden md:flex items-center gap-1">
+                                <Globe className={`w-3.5 h-3.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} strokeWidth={1.5} />
+                                <span className={`text-xs ${isDark ? 'text-white' : 'text-black'}`}>India</span>
                             </div>
                         </div>
 
                         {/* Center: Navigation Tabs */}
-                        <nav className="hidden md:flex items-center gap-4">
+                        <nav className="hidden md:flex items-center gap-2">
                             {navLinks.map((link) => {
                                 const isActive = pathname === link.href;
                                 return (
@@ -115,7 +115,7 @@ export default function Header() {
                                         key={link.href}
                                         href={link.href}
                                         className={`
-                                            flex items-center gap-2 px-4 py-2 rounded-full transition-all
+                                            flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all
                                             ${isActive 
                                                 ? isDark 
                                                     ? 'bg-blue-600/20 text-blue-400' 
@@ -127,7 +127,7 @@ export default function Header() {
                                         `}
                                     >
                                         {getIcon(link)}
-                                        <span className={`text-sm font-medium ${isActive ? (isDark ? 'text-blue-400' : 'text-blue-700') : ''}`}>
+                                        <span className={`text-xs font-medium ${isActive ? (isDark ? 'text-blue-400' : 'text-blue-700') : ''}`}>
                                             {link.label}
                                         </span>
                                     </Link>
@@ -136,11 +136,11 @@ export default function Header() {
                         </nav>
 
                         {/* Right: Theme Toggle + Menu + Profile Pill Button */}
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                             {/* Theme Toggle Button */}
                             <button 
                                 onClick={toggleTheme}
-                                className={`hover:cursor-pointer p-2 rounded-full transition-colors ${
+                                className={`hover:cursor-pointer p-1.5 rounded-full transition-colors ${
                                     isDark 
                                         ? 'hover:bg-white/10 text-yellow-400' 
                                         : 'hover:bg-gray-100 text-gray-700'
@@ -148,41 +148,28 @@ export default function Header() {
                                 title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                             >
                                 {isDark ? (
-                                    <Sun className="w-5 h-5" strokeWidth={1.5} />
+                                    <Sun className="w-4 h-4" strokeWidth={1.5} />
                                 ) : (
-                                    <Moon className="w-5 h-5" strokeWidth={1.5} />
+                                    <Moon className="w-4 h-4" strokeWidth={1.5} />
                                 )}
                             </button>
                             
-                            {/* Menu + Profile Pill Button */}
-                            <div className={`flex items-center gap-3 px-4 py-2 border rounded-full transition-colors ${
-                                isDark 
-                                    ? 'border-gray-600 bg-[#282c34]' 
-                                    : 'border-gray-300 bg-white'
-                            }`}>
-                                <button
-                                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                                    className="hover:cursor-pointer"
-                                >
-                                    <Menu className={`w-5 h-5 ${isDark ? 'text-white' : 'text-black'}`} strokeWidth={1.5} />
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        if (currentUser) {
-                                            window.location.href = '/dashboard';
-                                        } else {
-                                            setIsLoginOpen(true);
-                                        }
-                                    }}
-                                    className="hover:cursor-pointer flex items-center justify-center"
-                                >
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                                        isDark ? 'bg-gray-700' : 'bg-gray-200'
-                                    }`}>
-                                        <User className="w-5 h-5 text-blue-600" strokeWidth={2} fill="none" />
-                                    </div>
-                                </button>
-                            </div>
+                            {/* Menu + Profile Pill Button - both open right drawer, hover on whole container */}
+                            <button
+                                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                className={`flex items-center gap-2 px-2.5 py-1.5 border rounded-full transition-colors cursor-pointer ${
+                                    isDark 
+                                        ? 'border-gray-600 bg-[#282c34] hover:bg-white/10' 
+                                        : 'border-gray-300 bg-white hover:bg-gray-100'
+                                }`}
+                            >
+                                <Menu className={`w-4 h-4 ${isDark ? 'text-white' : 'text-black'}`} strokeWidth={1.5} />
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                                    isDark ? 'bg-gray-700' : 'bg-gray-200'
+                                }`}>
+                                    <User className="w-3.5 h-3.5 text-blue-600" strokeWidth={2} fill="none" />
+                                </div>
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -62,7 +62,7 @@ export default function HomePage() {
   const [zoomLevel, setZoomLevel] = useState(5); // Start zoomed out to show India
   const [, setLocationError] = useState(null);
   const [propertyTypeFilter, setPropertyTypeFilter] = useState('all'); // 'all', 'commercial', 'residential'
-  const [listingTypeFilter, setListingTypeFilter] = useState('all'); // 'all', 'forSale', 'forRent', 'readyToMove', 'newProjects', 'verified'
+  const [listingTypeFilter, setListingTypeFilter] = useState('all'); // 'all', 'forSale', 'forRent', 'readyToMove', 'newProjects', 'verified', 'video'
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
   const [userLocationInfo, setUserLocationInfo] = useState(null);
   const [isLoadingProperties, setIsLoadingProperties] = useState(true);
@@ -918,7 +918,7 @@ export default function HomePage() {
       });
     }
 
-    // Apply listing type filter (For Sale, For Rent, Ready to Move, New Projects)
+    // Apply listing type filter (For Sale, For Rent, Ready to Move, New Projects, Verified, Video)
     if (listingTypeFilter && listingTypeFilter !== 'all') {
       filtered = filtered.filter(marker => {
         const markerListingType = marker.listing_type || marker.listingType || '';
@@ -931,8 +931,9 @@ export default function HomePage() {
           'verified': 'Verified'
         };
         const expectedValue = filterMapping[listingTypeFilter] || listingTypeFilter;
-        return markerListingType === expectedValue || 
-               (listingTypeFilter === 'verified' && marker.is_verified);
+        if (listingTypeFilter === 'verified') return marker.is_verified;
+        if (listingTypeFilter === 'video') return !!(marker.video_url || marker.video || marker.has_video);
+        return markerListingType === expectedValue;
       });
     }
 
@@ -1484,6 +1485,29 @@ export default function HomePage() {
         .mobile-modal-scroll::-webkit-scrollbar-thumb:hover {
           background: ${isDark ? '#6b7280' : '#94a3b8'};
         }
+        /* Left drawer – thin scrollbar */
+        .drawer-scroll::-webkit-scrollbar {
+          width: 4px;
+        }
+        .drawer-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .drawer-scroll::-webkit-scrollbar-thumb {
+          background: ${isDark ? '#4b5563' : '#cbd5e1'};
+          border-radius: 4px;
+        }
+        .drawer-scroll::-webkit-scrollbar-thumb:hover {
+          background: ${isDark ? '#6b7280' : '#94a3b8'};
+        }
+        .drawer-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: ${isDark ? '#4b5563 #1f2229' : '#cbd5e1 transparent'};
+        }
+        /* Left drawer – smaller font sizes */
+        .left-drawer-panel { font-size: 0.8125rem; }
+        .left-drawer-panel .text-sm { font-size: 0.75rem !important; }
+        .left-drawer-panel .text-lg { font-size: 0.875rem !important; }
+        .left-drawer-panel .text-base { font-size: 0.8125rem !important; }
       `}} />
       
       {/* Mobile Header - Only visible on screens < 480px */}
@@ -1512,29 +1536,20 @@ export default function HomePage() {
                 <Moon className="w-5 h-5" strokeWidth={1.5} />
               )}
             </button>
-            {/* Menu + Profile Pill Button */}
-            <div className={`flex items-center gap-2 px-3 py-1.5 border rounded-full transition-colors ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-300 bg-white'}`}>
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="hover:cursor-pointer"
-              >
-                <Menu className={`w-4 h-4 ${isDark ? 'text-white' : 'text-black'}`} strokeWidth={1.5} />
-              </button>
-              <button
-                onClick={() => {
-                  if (currentUser) {
-                    window.location.href = '/dashboard';
-                  } else {
-                    setIsLoginModalOpen(true);
-                  }
-                }}
-                className="hover:cursor-pointer flex items-center justify-center"
-              >
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                  <User className="w-4 h-4 text-blue-600" strokeWidth={2} fill="none" />
-                </div>
-              </button>
-            </div>
+            {/* Menu + Profile Pill Button - same as desktop: whole unit, opens right drawer */}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className={`flex items-center gap-2 px-2.5 py-1.5 border rounded-full transition-colors cursor-pointer ${
+                isDark 
+                  ? 'border-gray-600 bg-[#282c34] hover:bg-white/10' 
+                  : 'border-gray-300 bg-white hover:bg-gray-100'
+              }`}
+            >
+              <Menu className={`w-4 h-4 ${isDark ? 'text-white' : 'text-black'}`} strokeWidth={1.5} />
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                <User className="w-3.5 h-3.5 text-blue-600" strokeWidth={2} fill="none" />
+              </div>
+            </button>
           </div>
         </div>
       </div>
@@ -1629,14 +1644,14 @@ export default function HomePage() {
         </form>
       </div>
 
-      <main className="flex-1 relative flex pb-16 md:pb-0">
-        <div className="hidden md:block relative">
-          <div className={`${isDrawerCollapsed ? 'w-0 overflow-hidden' : 'w-[380px]'} shadow-lg flex flex-col transition-all duration-300 h-full ${isDark ? 'bg-[#1f2229]' : 'bg-gray-50'} ${isLoadingProperties ? 'opacity-30 pointer-events-none' : ''}`}>
-            <div className={`sticky top-0 z-20 px-4 pt-4 ${showFiltersView || showCitySelector ? 'pb-0' : 'pb-4'} ${isDrawerCollapsed ? 'hidden' : ''} ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}>
-              <form onSubmit={handleSearch} className={showFiltersView || showCitySelector ? 'mb-2' : 'mb-4'}>
+      <main className="flex-1 relative flex pb-16 md:pb-0 min-h-0">
+        <div className="hidden md:block relative h-full min-h-0">
+          <div className={`left-drawer-panel ${isDrawerCollapsed ? 'w-0 overflow-hidden' : 'w-[328px]'} shadow-lg flex flex-col transition-all duration-300 h-full min-h-0 overflow-hidden ${isDark ? 'bg-[#1f2229]' : 'bg-gray-50'} ${isLoadingProperties ? 'opacity-30 pointer-events-none' : ''}`}>
+            <div className={`flex-shrink-0 z-20 px-3 pt-3 ${showFiltersView || showCitySelector ? 'pb-0' : 'pb-3'} ${isDrawerCollapsed ? 'hidden' : ''} ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}>
+              <form onSubmit={handleSearch} className={showFiltersView || showCitySelector ? 'mb-2' : 'mb-3'}>
                 <div className="relative search-container">
-                  <div className={`rounded-full pl-4 pr-3 py-3 w-full flex items-center gap-3 ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
-                    <Search className={`w-5 h-5 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                  <div className={`rounded-lg pl-3 pr-2.5 py-2.5 w-full flex items-center gap-2 ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                    <Search className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                     <div className="flex-1 flex items-center gap-1.5 min-w-0 relative">
                       <span className={`text-sm font-medium whitespace-nowrap ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Search</span>
                       <div className="flex-1 relative min-w-0" onClick={() => {
@@ -1686,7 +1701,7 @@ export default function HomePage() {
                         disabled={isLoadingProperties}
                         className={`transition-colors ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'}`}
                       >
-                        <SlidersHorizontal className="w-5 h-5" />
+                        <SlidersHorizontal className="w-4 h-4" />
                       </button>
                       <button
                         type="button"
@@ -1699,7 +1714,7 @@ export default function HomePage() {
                         disabled={isLoadingProperties}
                         className={`transition-colors ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'}`}
                       >
-                        <Globe className="w-5 h-5" />
+                        <Globe className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -1746,7 +1761,7 @@ export default function HomePage() {
               {!showFiltersView && !showCitySelector && (
                 <>
                   {/* Category Filters - Segmented Control */}
-                  <div className={`rounded-full p-1 flex mb-4 ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                  <div className={`rounded-lg p-0.5 flex mb-3 ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
                     <button
                       onClick={() => {
                         setPropertyTypeFilter('all');
@@ -1756,11 +1771,11 @@ export default function HomePage() {
                         }));
                       }}
                       disabled={isLoadingProperties}
-                      className={`flex-1 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      className={`flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
                         propertyTypeFilter === 'all'
                           ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
                           : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
-                      } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : ''}`}
+                      } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                     >
                       All
                     </button>
@@ -1773,11 +1788,11 @@ export default function HomePage() {
                         }));
                       }}
                       disabled={isLoadingProperties}
-                      className={`flex-1 px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${
+                      className={`flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${
                         propertyTypeFilter === 'commercial'
                           ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
                           : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
-                      } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : ''}`}
+                      } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                     >
                       <Building2 className="w-3.5 h-3.5" />
                       Commercial
@@ -1791,11 +1806,11 @@ export default function HomePage() {
                         }));
                       }}
                       disabled={isLoadingProperties}
-                      className={`flex-1 px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${
+                      className={`flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${
                         propertyTypeFilter === 'residential'
                           ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
                           : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
-                      } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : ''}`}
+                      } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                     >
                       <Home className="w-3.5 h-3.5" />
                       Residential
@@ -1803,15 +1818,15 @@ export default function HomePage() {
                   </div>
 
                   {/* Listing Type Filters */}
-                  <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide">
+                  <div className="flex gap-1.5 mb-3 overflow-x-auto scrollbar-hide">
                     <button
                       onClick={() => setListingTypeFilter(listingTypeFilter === 'forSale' ? 'all' : 'forSale')}
                       disabled={isLoadingProperties}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                         listingTypeFilter === 'forSale'
                           ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
                           : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
-                      } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : ''}`}
+                      } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                     >
                       For Sale
                     </button>
@@ -1822,31 +1837,53 @@ export default function HomePage() {
                         listingTypeFilter === 'forRent'
                           ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
                           : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
-                      } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : ''}`}
+                      } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                     >
                       For Rent
                     </button>
                     <button
                       onClick={() => setListingTypeFilter(listingTypeFilter === 'readyToMove' ? 'all' : 'readyToMove')}
                       disabled={isLoadingProperties}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                         listingTypeFilter === 'readyToMove'
                           ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
                           : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
-                      } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : ''}`}
+                      } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                     >
                       Ready to Move
                     </button>
                     <button
                       onClick={() => setListingTypeFilter(listingTypeFilter === 'newProjects' ? 'all' : 'newProjects')}
                       disabled={isLoadingProperties}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                         listingTypeFilter === 'newProjects'
                           ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
                           : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
-                      } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : ''}`}
+                      } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                     >
                       New Projects
+                    </button>
+                    <button
+                      onClick={() => setListingTypeFilter(listingTypeFilter === 'verified' ? 'all' : 'verified')}
+                      disabled={isLoadingProperties}
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+                        listingTypeFilter === 'verified'
+                          ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
+                          : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                      } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                    >
+                      Verified
+                    </button>
+                    <button
+                      onClick={() => setListingTypeFilter(listingTypeFilter === 'video' ? 'all' : 'video')}
+                      disabled={isLoadingProperties}
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+                        listingTypeFilter === 'video'
+                          ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
+                          : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                      } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                    >
+                      Video
                     </button>
                   </div>
 
@@ -1861,21 +1898,21 @@ export default function HomePage() {
                         <button 
                           onClick={() => setShowSortDropdown(!showSortDropdown)}
                           disabled={isLoadingProperties}
-                          className={`flex items-center gap-1 text-sm transition-colors ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'} ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : ''}`}
+                          className={`flex items-center gap-1 text-sm transition-colors ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'} ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                         >
                           <span>Sort by</span>
                           <ChevronDown className={`w-4 h-4 transition-transform ${showSortDropdown ? 'rotate-180' : ''}`} />
                         </button>
                         
                         {showSortDropdown && (
-                          <div className={`absolute right-0 top-full mt-2 w-56 rounded-lg shadow-xl z-50 border ${isDark ? 'bg-[#282c34] border-gray-700' : 'bg-white border-gray-200'}`}>
-                            <div className="py-1">
+                          <div className={`absolute right-0 top-full mt-1 w-40 rounded shadow-lg z-50 border text-xs ${isDark ? 'bg-[#282c34] border-gray-700' : 'bg-white border-gray-200'}`}>
+                            <div className="py-0.5">
                               <button
                                 onClick={() => {
                                   setSortBy('uploadedDateLatest');
                                   setShowSortDropdown(false);
                                 }}
-                                className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'uploadedDateLatest' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                                className={`w-full text-left px-2 py-1 transition-colors ${sortBy === 'uploadedDateLatest' ? (isDark ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-800') : (isDark ? 'text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-700 hover:bg-yellow-100 hover:text-yellow-900')}`}
                               >
                                 Uploaded Date (Latest)
                               </button>
@@ -1884,7 +1921,7 @@ export default function HomePage() {
                                   setSortBy('priceLow');
                                   setShowSortDropdown(false);
                                 }}
-                                className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'priceLow' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                                className={`w-full text-left px-2 py-1 transition-colors ${sortBy === 'priceLow' ? (isDark ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-800') : (isDark ? 'text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-700 hover:bg-yellow-100 hover:text-yellow-900')}`}
                               >
                                 Price (low to high)
                               </button>
@@ -1893,7 +1930,7 @@ export default function HomePage() {
                                   setSortBy('priceHigh');
                                   setShowSortDropdown(false);
                                 }}
-                                className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'priceHigh' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                                className={`w-full text-left px-2 py-1 transition-colors ${sortBy === 'priceHigh' ? (isDark ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-800') : (isDark ? 'text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-700 hover:bg-yellow-100 hover:text-yellow-900')}`}
                               >
                                 Price (high to low)
                               </button>
@@ -1902,7 +1939,7 @@ export default function HomePage() {
                                   setSortBy('sizeLow');
                                   setShowSortDropdown(false);
                                 }}
-                                className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'sizeLow' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                                className={`w-full text-left px-2 py-1 transition-colors ${sortBy === 'sizeLow' ? (isDark ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-800') : (isDark ? 'text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-700 hover:bg-yellow-100 hover:text-yellow-900')}`}
                               >
                                 Size (low to high)
                               </button>
@@ -1911,7 +1948,7 @@ export default function HomePage() {
                                   setSortBy('sizeHigh');
                                   setShowSortDropdown(false);
                                 }}
-                                className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'sizeHigh' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                                className={`w-full text-left px-2 py-1 transition-colors ${sortBy === 'sizeHigh' ? (isDark ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-800') : (isDark ? 'text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-700 hover:bg-yellow-100 hover:text-yellow-900')}`}
                               >
                                 Size (high to low)
                               </button>
@@ -1920,7 +1957,7 @@ export default function HomePage() {
                                   setSortBy('totalPriceLow');
                                   setShowSortDropdown(false);
                                 }}
-                                className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'totalPriceLow' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                                className={`w-full text-left px-2 py-1 transition-colors ${sortBy === 'totalPriceLow' ? (isDark ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-800') : (isDark ? 'text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-700 hover:bg-yellow-100 hover:text-yellow-900')}`}
                               >
                                 Total Price (low to high)
                               </button>
@@ -1929,7 +1966,7 @@ export default function HomePage() {
                                   setSortBy('totalPriceHigh');
                                   setShowSortDropdown(false);
                                 }}
-                                className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'totalPriceHigh' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                                className={`w-full text-left px-2 py-1 transition-colors ${sortBy === 'totalPriceHigh' ? (isDark ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-800') : (isDark ? 'text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-700 hover:bg-yellow-100 hover:text-yellow-900')}`}
                               >
                                 Total Price (high to low)
                               </button>
@@ -1945,7 +1982,7 @@ export default function HomePage() {
 
             {/* City Selector View */}
             {showCitySelector ? (
-              <div className={`flex-1 overflow-y-auto ${isDark ? 'bg-[#1f2229]' : 'bg-white'} ${isDrawerCollapsed ? 'hidden' : ''}`}>
+              <div className={`flex-1 min-h-0 overflow-y-auto drawer-scroll ${isDark ? 'bg-[#1f2229]' : 'bg-white'} ${isDrawerCollapsed ? 'hidden' : ''}`}>
                 {/* City Selector Header */}
                 <div className={`flex items-center gap-3 px-4 py-3 border-b sticky top-0 z-10 -mt-2 ${isDark ? 'border-gray-700 bg-[#1f2229]' : 'border-gray-200 bg-white'}`}>
                   <button 
@@ -2148,7 +2185,7 @@ export default function HomePage() {
                 </div>
               </div>
             ) : showFiltersView ? (
-              <div className={`flex-1 overflow-y-auto ${isDark ? 'bg-[#1f2229]' : 'bg-white'} ${isDrawerCollapsed ? 'hidden' : ''}`}>
+              <div className={`flex-1 min-h-0 overflow-y-auto drawer-scroll ${isDark ? 'bg-[#1f2229]' : 'bg-white'} ${isDrawerCollapsed ? 'hidden' : ''}`}>
                 {/* Filters Header */}
                 <div className={`flex items-center justify-between px-4 py-3 border-b sticky top-0 z-10 -mt-2 ${isDark ? 'border-gray-700 bg-[#1f2229]' : 'border-gray-200 bg-white'}`}>
                   <div className="flex items-center gap-3">
@@ -2244,7 +2281,7 @@ export default function HomePage() {
                     <div className="flex gap-2">
                       <button
                         onClick={() => setSearchType('locality')}
-                        className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all ${
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-[10px] font-medium transition-all ${
                           searchType === 'locality'
                             ? 'bg-blue-500 text-white'
                             : isDark ? 'bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -2255,7 +2292,7 @@ export default function HomePage() {
                       </button>
                       <button
                         onClick={() => setSearchType('metro')}
-                        className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all ${
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-[10px] font-medium transition-all ${
                           searchType === 'metro'
                             ? 'bg-blue-500 text-white'
                             : isDark ? 'bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -2266,7 +2303,7 @@ export default function HomePage() {
                       </button>
                       <button
                         onClick={() => setSearchType('travel')}
-                        className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all ${
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-[10px] font-medium transition-all ${
                           searchType === 'travel'
                             ? 'bg-blue-500 text-white'
                             : isDark ? 'bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -3146,51 +3183,51 @@ export default function HomePage() {
               </div>
             ) : !showCitySelector ? (
               /* Property List */
-              <div className={`flex-1 overflow-y-auto p-3 space-y-3 ${isDark ? 'bg-[#1f2229]' : 'bg-gray-50'} ${isDrawerCollapsed ? 'hidden' : ''}`}>
+              <div className={`flex-1 min-h-0 overflow-y-auto drawer-scroll p-2.5 space-y-2 ${isDark ? 'bg-[#1f2229]' : 'bg-gray-50'} ${isDrawerCollapsed ? 'hidden' : ''}`}>
                 {getFilteredMarkers().map(marker => (
                   <div 
                     key={marker.id} 
-                    className={`rounded-xl p-3 cursor-pointer transition-all shadow-sm ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-white hover:bg-[#fff3c5] hover:shadow-md'}`}
+                    className={`rounded-lg p-2 cursor-pointer transition-all shadow-sm ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-white hover:bg-[#fff3c5] hover:shadow-md'}`}
                     onClick={() => handleMarkerClick(marker)}
                   >
-                    <div className="flex gap-3">
+                    <div className="flex gap-2">
                       <div className="relative flex-shrink-0">
                         <Image
                           src={marker.featuredImageUrl || marker.images?.[0] || '/placeholder.png'}
                           alt={marker.name || "Property Image"}
-                          width={90}
-                          height={90}
-                          className="rounded-lg object-cover w-20 h-20"
+                          width={56}
+                          height={56}
+                          className="rounded-md object-cover w-14 h-14"
                           unoptimized
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2 mb-0.5">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <h3 className={`font-semibold text-sm leading-tight truncate ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                        <div className="flex items-start justify-between gap-1 mb-0.5">
+                          <div className="flex items-center gap-1 min-w-0">
+                            <h3 className={`font-semibold text-xs leading-tight truncate ${isDark ? 'text-white' : 'text-gray-800'}`}>
                               {marker.name || 'Property Name'}
                             </h3>
                             {marker.is_verified && (
-                              <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none">
+                              <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none">
                                 <path d="M12 1L14.4 4.2L18.3 3.4L18.1 7.4L21.6 9.2L19.4 12.5L21.6 15.8L18.1 17.6L18.3 21.6L14.4 20.8L12 24L9.6 20.8L5.7 21.6L5.9 17.6L2.4 15.8L4.6 12.5L2.4 9.2L5.9 7.4L5.7 3.4L9.6 4.2L12 1Z" fill="#FBBF24"/>
                                 <path d="M8.5 12.5L10.5 14.5L15.5 9.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
                             )}
                           </div>
-                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <div className="flex items-center gap-0.5 flex-shrink-0">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleFavouriteToggle(marker);
                               }}
-                              className={`p-1 rounded-full transition-colors ${
+                              className={`p-0.5 rounded-full transition-colors ${
                                 propertyFavorites[marker._id || marker.id]
                                   ? 'text-red-500'
                                   : isDark ? 'text-gray-500 hover:text-red-500' : 'text-gray-300 hover:text-red-500'
                               }`}
                             >
                               <Heart 
-                                className="w-4 h-4" 
+                                className="w-3.5 h-3.5" 
                                 fill={propertyFavorites[marker._id || marker.id] ? "currentColor" : "none"} 
                                 strokeWidth={2} 
                               />
@@ -3200,13 +3237,13 @@ export default function HomePage() {
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
-                              className={`p-1 rounded-full transition-colors ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
+                              className={`p-0.5 rounded-full transition-colors ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
                             >
-                              <Image src="/whatsapp.svg" alt="WhatsApp" width={18} height={18} />
+                              <Image src="/whatsapp.svg" alt="WhatsApp" width={14} height={14} />
                             </a>
                           </div>
                         </div>
-                        <p className={`text-xs mb-1.5 truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                        <p className={`text-[10px] mb-0.5 truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                           <span>in {marker.layer_location || marker.location_district || marker.state_name}</span>
                           {marker.location_district && marker.layer_location && marker.location_district !== marker.layer_location && (
                             <span>, {marker.location_district}</span>
@@ -3219,18 +3256,18 @@ export default function HomePage() {
                           const prices = calculatePropertyPrices(marker);
                           if (prices.discountedPrice) {
                             return (
-                              <p className="text-sm">
+                              <p className="text-xs">
                                 <span className="font-bold text-blue-500">{prices.discountedPrice}</span>
                                 {prices.originalPrice && prices.originalPrice !== prices.discountedPrice && (
-                                  <span className={`line-through ml-2 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{prices.originalPrice}</span>
+                                  <span className={`line-through ml-1 text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{prices.originalPrice}</span>
                                 )}
                               </p>
                             );
                           } else if (marker.price_per_acre && marker.price_per_acre !== 'N/A') {
                             return (
-                              <p className="text-sm">
+                              <p className="text-xs">
                                 <span className="font-bold text-orange-500">{marker.price_per_acre}</span>
-                                <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>/sq.ft</span>
+                                <span className={`text-[10px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>/sq.ft</span>
                               </p>
                             );
                           }
@@ -3282,16 +3319,16 @@ export default function HomePage() {
           </button>
 
           {/* Map Controls - Vertical Panel - Same as desktop */}
-          <div className="absolute bottom-16 md:bottom-6 right-3 md:right-4 z-10">
-            <div className={`rounded-lg overflow-hidden shadow-xl ${isDark ? 'bg-[#282c34]' : 'bg-gray-200'}`}>
+          <div className="absolute bottom-20 md:bottom-12 right-3 md:right-4 z-10">
+            <div className={`rounded-xl overflow-hidden shadow-xl ${isDark ? 'bg-[#282c34]' : 'bg-gray-200'}`}>
               {/* Add Property Button */}
               <button
                 onClick={() => setShowAddPropertyModal(true)}
-                className={`w-10 h-10 md:w-12 md:h-12 transition-colors flex items-center justify-center cursor-pointer border-b ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b] border-gray-700' : 'bg-gray-200 hover:bg-gray-300 border-gray-300'}`}
+                className={`p-2.5 md:p-3 transition-colors flex items-center justify-center cursor-pointer border-b ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b] border-gray-700' : 'bg-gray-200 hover:bg-gray-300 border-gray-300'}`}
                 title="Add Your Property"
               >
-                <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full border-2 flex items-center justify-center ${isDark ? 'border-white' : 'border-black'}`}>
-                  <Plus className={`w-3 h-3 md:w-4 md:h-4 ${isDark ? 'text-white' : 'text-black'}`} />
+                <div className={`w-3 h-3 rounded-full border-[1.5px] flex items-center justify-center ${isDark ? 'border-white' : 'border-black'}`}>
+                  <Plus className={`w-2 h-2 ${isDark ? 'text-white' : 'text-black'}`} />
                 </div>
               </button>
 
@@ -3301,19 +3338,19 @@ export default function HomePage() {
                   setShowLocateModal(true);
                   setLocateModalStep(1);
                 }}
-                className={`w-10 h-10 md:w-12 md:h-12 transition-colors flex items-center justify-center cursor-pointer border-b ${isDark ? 'bg-[#1f2229] hover:bg-[#282c34] border-gray-700' : 'bg-gray-100 hover:bg-gray-200 border-gray-300'}`}
+                className={`p-2.5 md:p-3 transition-colors flex items-center justify-center cursor-pointer border-b ${isDark ? 'bg-[#1f2229] hover:bg-[#282c34] border-gray-700' : 'bg-gray-100 hover:bg-gray-200 border-gray-300'}`}
                 title="Locate Me"
               >
-                <LocateFixed className="w-5 h-5 md:w-6 md:h-6 text-red-500" />
+                <LocateFixed className="w-3 h-3 text-red-500" />
               </button>
 
               {/* Layers Button */}
               <button
                 onClick={() => setShowLayerMenu(!showLayerMenu)}
-                className={`w-10 h-10 md:w-12 md:h-12 transition-colors flex items-center justify-center cursor-pointer ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-gray-200 hover:bg-gray-300'}`}
+                className={`p-2.5 md:p-3 transition-colors flex items-center justify-center cursor-pointer ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-gray-200 hover:bg-gray-300'}`}
                 title="Map Layers"
               >
-                <Layers className={`w-4 h-4 md:w-5 md:h-5 ${isDark ? 'text-white' : 'text-black'}`} />
+                <Layers className={`w-3 h-3 ${isDark ? 'text-white' : 'text-black'}`} />
               </button>
             </div>
 
@@ -3497,7 +3534,7 @@ export default function HomePage() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setSearchType('locality')}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-[10px] font-medium transition-all ${
                     searchType === 'locality'
                       ? 'bg-blue-500 text-white'
                       : isDark ? 'bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -3508,7 +3545,7 @@ export default function HomePage() {
                 </button>
                 <button
                   onClick={() => setSearchType('metro')}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-[10px] font-medium transition-all ${
                     searchType === 'metro'
                       ? 'bg-blue-500 text-white'
                       : isDark ? 'bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -3519,7 +3556,7 @@ export default function HomePage() {
                 </button>
                 <button
                   onClick={() => setSearchType('travel')}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-[10px] font-medium transition-all ${
                     searchType === 'travel'
                       ? 'bg-blue-500 text-white'
                       : isDark ? 'bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -4762,6 +4799,16 @@ export default function HomePage() {
                   >
                     Verified
                   </button>
+                  <button
+                    onClick={() => setListingTypeFilter(listingTypeFilter === 'video' ? 'all' : 'video')}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+                      listingTypeFilter === 'video'
+                        ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
+                        : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    Video
+                  </button>
                 </div>
 
                 {/* Results Summary and Sort */}
@@ -4781,14 +4828,14 @@ export default function HomePage() {
                       </button>
                       
                       {showSortDropdown && (
-                        <div className={`absolute right-0 top-full mt-2 w-56 rounded-lg shadow-xl z-50 border ${isDark ? 'bg-[#282c34] border-gray-700' : 'bg-white border-gray-200'}`}>
-                          <div className="py-1">
+                        <div className={`absolute right-0 top-full mt-1 w-40 rounded shadow-lg z-50 border text-xs ${isDark ? 'bg-[#282c34] border-gray-700' : 'bg-white border-gray-200'}`}>
+                          <div className="py-0.5">
                             <button
                               onClick={() => {
                                 setSortBy('uploadedDateLatest');
                                 setShowSortDropdown(false);
                               }}
-                              className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'uploadedDateLatest' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                              className={`w-full text-left px-2 py-1 transition-colors ${sortBy === 'uploadedDateLatest' ? (isDark ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-800') : (isDark ? 'text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-700 hover:bg-yellow-100 hover:text-yellow-900')}`}
                             >
                               Uploaded Date (Latest)
                             </button>
@@ -4797,7 +4844,7 @@ export default function HomePage() {
                                 setSortBy('priceLow');
                                 setShowSortDropdown(false);
                               }}
-                              className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'priceLow' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                              className={`w-full text-left px-2 py-1 transition-colors ${sortBy === 'priceLow' ? (isDark ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-800') : (isDark ? 'text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-700 hover:bg-yellow-100 hover:text-yellow-900')}`}
                             >
                               Price (low to high)
                             </button>
@@ -4806,7 +4853,7 @@ export default function HomePage() {
                                 setSortBy('priceHigh');
                                 setShowSortDropdown(false);
                               }}
-                              className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'priceHigh' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                              className={`w-full text-left px-2 py-1 transition-colors ${sortBy === 'priceHigh' ? (isDark ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-800') : (isDark ? 'text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-700 hover:bg-yellow-100 hover:text-yellow-900')}`}
                             >
                               Price (high to low)
                             </button>
@@ -4815,7 +4862,7 @@ export default function HomePage() {
                                 setSortBy('sizeLow');
                                 setShowSortDropdown(false);
                               }}
-                              className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'sizeLow' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                              className={`w-full text-left px-2 py-1 transition-colors ${sortBy === 'sizeLow' ? (isDark ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-800') : (isDark ? 'text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-700 hover:bg-yellow-100 hover:text-yellow-900')}`}
                             >
                               Size (low to high)
                             </button>
@@ -4824,7 +4871,7 @@ export default function HomePage() {
                                 setSortBy('sizeHigh');
                                 setShowSortDropdown(false);
                               }}
-                              className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'sizeHigh' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                              className={`w-full text-left px-2 py-1 transition-colors ${sortBy === 'sizeHigh' ? (isDark ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-800') : (isDark ? 'text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-700 hover:bg-yellow-100 hover:text-yellow-900')}`}
                             >
                               Size (high to low)
                             </button>
@@ -4833,7 +4880,7 @@ export default function HomePage() {
                                 setSortBy('totalPriceLow');
                                 setShowSortDropdown(false);
                               }}
-                              className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'totalPriceLow' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                              className={`w-full text-left px-2 py-1 transition-colors ${sortBy === 'totalPriceLow' ? (isDark ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-800') : (isDark ? 'text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-700 hover:bg-yellow-100 hover:text-yellow-900')}`}
                             >
                               Total Price (low to high)
                             </button>
@@ -4842,7 +4889,7 @@ export default function HomePage() {
                                 setSortBy('totalPriceHigh');
                                 setShowSortDropdown(false);
                               }}
-                              className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === 'totalPriceHigh' ? (isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black') : (isDark ? 'text-gray-300 hover:bg-[#3a3f4b]' : 'text-gray-700 hover:bg-gray-50')}`}
+                              className={`w-full text-left px-2 py-1 transition-colors ${sortBy === 'totalPriceHigh' ? (isDark ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-800') : (isDark ? 'text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-700 hover:bg-yellow-100 hover:text-yellow-900')}`}
                             >
                               Total Price (high to low)
                             </button>

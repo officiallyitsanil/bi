@@ -144,8 +144,7 @@ const ResidentialPropertySchema = new mongoose.Schema({
   featuredImage: FileSchema,
   publishedAt: Date,
   updatedBy: mongoose.Schema.Types.ObjectId,
-  
-  // Legacy fields for backward compatibility
+
   state_name: String,
   city: String,
   name: String,
@@ -165,7 +164,7 @@ const ResidentialPropertySchema = new mongoose.Schema({
 }, {
   timestamps: true,
   strict: false,
-  collection: 'residentialproperties',  // Changed to match actual MongoDB collection name (lowercase)
+  collection: 'residentialproperties',
 });
 
 export default mongoose.models.ResidentialProperty || mongoose.model('ResidentialProperty', ResidentialPropertySchema);

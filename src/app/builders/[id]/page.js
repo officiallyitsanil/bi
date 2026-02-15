@@ -6,10 +6,12 @@ import Image from 'next/image';
 import { ArrowLeft, ChevronRight, ChevronDown, ChevronLeft, ArrowUpRight, ShieldCheck, Star, Building2, Calendar, CalendarDays, ChartArea, Users, Briefcase, Phone, Mail, MessageCircle, MessageSquare, X, CircleCheck, Facebook, Twitter, Linkedin, Instagram, Download, CirclePlay, Camera } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getBuilderById } from '@/data/builders';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function BuilderDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const { isDark } = useTheme();
   const builderId = params?.id;
   const [builder, setBuilder] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -67,61 +69,70 @@ export default function BuilderDetailPage() {
 
   function transformApiToLocal(api) {
     if (!api) return null;
+    const stats = api.stats || {};
+    const team = api.team?.length ? api.team : (api.keyPeople || []).map(p => ({
+      name: p.name,
+      role: p.designation,
+      image: p.photo?.url,
+      quote: null,
+      bio: p.shortBio,
+    }));
     return {
       id: api._id,
-      name: api.builderName || api.name,
+      name: api.name || api.builderName,
       tagline: api.tagline || '',
-      founded: api.foundedYear || api.founded,
+      founded: api.founded || api.foundedYear,
       headquarters: api.headquarters || '',
       stats: {
-        projects: api.projectsCompleted?.toString() || '0',
-        cities: api.citiesPresence || api.cities || '0',
-        sqft: '1.8+',
-        clients: '1000+',
-        experience: api.yearsOfExperience ? `${api.yearsOfExperience}+` : 'N/A',
+        projects: stats.projects ?? api.projectsCompleted?.toString() ?? '0',
+        cities: stats.cities ?? api.citiesPresence ?? '0',
+        sqft: stats.sqft ?? '1.8+',
+        clients: stats.clients ?? '1000+',
+        experience: stats.experience ?? (api.yearsOfExperience ? `${api.yearsOfExperience}+` : 'N/A'),
       },
-      logo: api.builderLogo?.url || api.logo,
+      logo: api.logo || api.builderLogo?.url,
+      isBrigade: !!api.isBrigade,
       description: api.description || '',
-      mission: api.missionStatement || api.mission,
-      vision: api.visionStatement || api.vision,
-      phone: api.phoneNumber || api.phone,
-      email: api.contactEmail || api.email,
-      licenseNumber: 'RERA-KAR-2021-0012345',
-      certificate: 'ISO 9001:2015 Certified',
-      category: api.builderCategory || 'Premium Developer',
-      totalCenters: '250+',
-      specialties: ['Residential', 'Commercial', 'Hospitality', 'Retail'],
-      operatingRegions: ['Bangalore', 'Chennai', 'Hyderabad', 'Mumbai', 'Pune'],
-      moreDetails: [
+      mission: api.mission || api.missionStatement,
+      vision: api.vision || api.visionStatement,
+      phone: api.phone || api.phoneNumber,
+      email: api.email || api.contactEmail,
+      licenseNumber: api.licenseNumber || 'RERA-KAR-2021-0012345',
+      certificate: api.certificate || 'ISO 9001:2015 Certified',
+      category: api.category || api.builderCategory || 'Premium Developer',
+      totalCenters: api.totalCenters || '250+',
+      specialties: api.specialties?.length ? api.specialties : ['Residential', 'Commercial', 'Hospitality', 'Retail'],
+      operatingRegions: api.operatingRegions?.length ? api.operatingRegions : ['Bangalore', 'Chennai', 'Hyderabad', 'Mumbai', 'Pune'],
+      moreDetails: api.moreDetails?.length ? api.moreDetails : [
         { label: 'Largest Campus', value: 'HSR Layout, 8000+ seats' },
         { label: 'Minimum Lock-in', value: '12 months' },
         { label: 'Expansion/Contraction Flexibility', value: 'Yes' },
       ],
-      awards: api.awards?.map(a => ({ ...a, image: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=200' })) || [],
-      shortDescription: api.description?.slice(0, 150) + '...',
-      detailedDescription: api.description || '',
-      keyDifferentiators: ['Quality focus', 'Customer-centric', 'Innovative designs'],
-      projects: [],
-      ongoingCount: api.ongoingProjects || 9,
-      upcomingCount: api.upcomingProjects || 9,
-      relationshipManager: { name: 'Ananya Rao', title: 'Senior Manager', tag: 'Buildersinfo Expert', avatar: 'https://i.pravatar.cc/150?img=5', assisted: '500+ corporates', companyLogos: [] },
-      testimonials: [],
-      faqs: [],
-      galleryImages: api.galleryImages?.map(g => ({ url: g.url || g, alt: 'Gallery' })) || [],
-      featuredProject: null,
-      keyProjects: [],
-      team: api.keyPeople || [],
-      operationalSegments: [{ name: 'Residential', cities: ['Bangalore', 'Mumbai', 'Chennai'] }],
-      socialLinks: api.socialMedia || {},
+      awards: api.awards?.map(a => ({ ...a, image: a.image || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=200' })) || [],
+      shortDescription: api.shortDescription || api.description?.slice(0, 150) + '...',
+      detailedDescription: api.detailedDescription || api.description || '',
+      keyDifferentiators: api.keyDifferentiators?.length ? api.keyDifferentiators : ['Quality focus', 'Customer-centric', 'Innovative designs'],
+      projects: api.projects || [],
+      ongoingCount: api.ongoingCount ?? api.ongoingProjects ?? 9,
+      upcomingCount: api.upcomingCount ?? api.upcomingProjects ?? 9,
+      relationshipManager: api.relationshipManager || { name: 'Ananya Rao', title: 'Senior Manager', tag: 'Buildersinfo Expert', avatar: 'https://i.pravatar.cc/150?img=5', assisted: '500+ corporates', companyLogos: [] },
+      testimonials: api.testimonials || [],
+      faqs: api.faqs || [],
+      galleryImages: api.galleryImages?.map(g => ({ url: g.url || g, alt: g.alt || 'Gallery' })) || [],
+      featuredProject: api.featuredProject || null,
+      keyProjects: api.keyProjects || [],
+      team,
+      operationalSegments: api.operationalSegments?.length ? api.operationalSegments : [{ name: 'Residential', cities: ['Bangalore', 'Mumbai', 'Chennai'] }],
+      socialLinks: api.socialLinks || api.socialMedia || {},
     };
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className={`min-h-screen flex items-center justify-center transition-colors ${isDark ? 'bg-[#1f2229]' : 'bg-gray-50'}`}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-2 border-blue-600 border-t-transparent mx-auto mb-4" />
-          <p className="text-gray-600">Loading builder information...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-blue-500 border-t-transparent mx-auto mb-4" />
+          <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>Loading builder information...</p>
         </div>
       </div>
     );
@@ -129,10 +140,10 @@ export default function BuilderDetailPage() {
 
   if (error || !builder) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className={`min-h-screen flex items-center justify-center transition-colors ${isDark ? 'bg-[#1f2229]' : 'bg-gray-50'}`}>
         <div className="text-center">
-          <p className="text-red-600 mb-4">{error || 'Builder not found'}</p>
-          <button onClick={() => router.back()} className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800">
+          <p className="text-red-400 mb-4">{error || 'Builder not found'}</p>
+          <button onClick={() => router.back()} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
             Go Back
           </button>
         </div>
@@ -147,34 +158,34 @@ export default function BuilderDetailPage() {
   const experienceDisplay = expNum ? `${expNum} Yrs` : (stats.experience && stats.experience !== 'N/A' ? stats.experience : '33 Yrs');
 
   return (
-    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+    <div className={`min-h-screen overflow-x-hidden transition-colors ${isDark ? 'bg-[#1f2229]' : 'bg-gray-50'}`}>
       {/* Sticky header on scroll - desktop only */}
       {scrolled && (
-        <div className="hidden md:block fixed top-20 left-0 right-0 z-30 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
+        <div className={`hidden md:block fixed top-20 left-0 right-0 z-30 backdrop-blur-sm border-b shadow-sm ${isDark ? 'bg-[#1f2229]/95 border-gray-700' : 'bg-white/95 border-gray-200'}`}>
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-[425px]:px-3 h-16 flex justify-between items-center">
             <div className="flex items-center gap-4">
-              <div className="relative w-10 h-10 rounded-full overflow-hidden border border-gray-200 shrink-0 bg-white">
+              <div className={`relative w-10 h-10 rounded-full overflow-hidden border shrink-0 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
                 {builder.logo ? (
                   <Image src={builder.logo} alt={`${builder.name} logo`} fill className="object-contain p-0.5" sizes="40px" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <Building2 className="w-5 h-5 text-gray-400" />
+                    <Building2 className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                   </div>
                 )}
               </div>
               <div className="min-w-0">
-                <h1 className="text-lg font-bold truncate">{builder.name}</h1>
-                <p className="text-xs text-gray-500 truncate">{location}</p>
+                <h1 className={`text-lg font-bold truncate ${isDark ? 'text-white' : ''}`}>{builder.name}</h1>
+                <p className={`text-xs truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{location}</p>
               </div>
             </div>
             <div className="flex items-center gap-6">
               <div className="text-center">
-                <p className="font-bold text-lg">{stats.projects || '220+'}</p>
-                <p className="text-xs text-gray-500">Projects</p>
+                <p className={`font-bold text-lg ${isDark ? 'text-white' : ''}`}>{stats.projects || '220+'}</p>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Projects</p>
               </div>
               <div className="text-center">
-                <p className="font-bold text-lg">{experienceDisplay}</p>
-                <p className="text-xs text-gray-500">Experience</p>
+                <p className={`font-bold text-lg ${isDark ? 'text-white' : ''}`}>{experienceDisplay}</p>
+                <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Experience</p>
               </div>
               <button
                 type="button"
@@ -191,30 +202,30 @@ export default function BuilderDetailPage() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-[425px]:px-3 py-10 pt-10 md:pt-7 pb-40 md:pb-10 max-[425px]:pb-36 max-[425px]:py-6">
         {/* Back + Breadcrumb */}
         <div className="flex items-center gap-2 -mt-2 mb-6 max-[425px]:mb-4">
-          <button onClick={() => router.back()} className="md:hidden p-2 -ml-2 hover:bg-gray-200 rounded-lg max-[425px]:p-1.5">
-            <ArrowLeft className="w-5 h-5 max-[425px]:w-4 max-[425px]:h-4 text-gray-600" />
+          <button onClick={() => router.back()} className={`md:hidden p-2 -ml-2 rounded-lg max-[425px]:p-1.5 ${isDark ? 'hover:bg-white/10' : 'hover:bg-gray-200'}`}>
+            <ArrowLeft className={`w-5 h-5 max-[425px]:w-4 max-[425px]:h-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
           </button>
-          <div className="hidden md:flex items-center text-sm max-[425px]:text-xs text-gray-500">
-          <Link href="/" className="hover:text-blue-600">Home</Link>
+          <div className={`hidden md:flex items-center text-sm max-[425px]:text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+          <Link href="/" className="hover:text-blue-400">Home</Link>
           <ChevronRight className="h-4 w-4 mx-1" />
-          <Link href="/builders" className="hover:text-blue-600">Builders</Link>
+          <Link href="/builders" className="hover:text-blue-400">Builders</Link>
           <ChevronRight className="h-4 w-4 mx-1" />
-          <span className="font-medium text-gray-900">{builder.name}</span>
+          <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{builder.name}</span>
           </div>
         </div>
 
         {/* Header - breadcrumbs + title + clients */}
         <div className="flex md:hidden mt-3 max-[425px]:mt-2">
-          <h1 className="text-lg font-bold text-gray-900 max-[425px]:text-base truncate">{builder.name}</h1>
+          <h1 className={`text-lg font-bold max-[425px]:text-base truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{builder.name}</h1>
         </div>
         <div className="hidden md:flex justify-between items-start mt-3">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">{builder.name}</h1>
-            <p className="text-xs text-gray-500 mt-0.5">Explore projects, and more from {builder.name}.</p>
+            <h1 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{builder.name}</h1>
+            <p className={`text-xs mt-0.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Explore projects, and more from {builder.name}.</p>
           </div>
           <div className="text-right">
-            <p className="text-lg font-bold text-blue-600">{stats.clients || '1000+'}</p>
-            <p className="text-xs text-gray-500">Clients</p>
+            <p className="text-lg font-bold text-blue-400">{stats.clients || '1000+'}</p>
+            <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Clients</p>
           </div>
         </div>
 
@@ -225,7 +236,7 @@ export default function BuilderDetailPage() {
             {/* Left part - Profile + White stats */}
             <div className="space-y-3 max-[425px]:space-y-2">
               {/* Profile Card - taller, larger logo */}
-              <div className="rounded-lg border bg-white shadow-sm p-5 md:p-6 max-[425px]:p-4 min-h-[200px] max-[425px]:min-h-[160px] flex flex-col items-center text-center justify-center">
+              <div className={`rounded-lg border shadow-sm p-5 md:p-6 max-[425px]:p-4 min-h-[200px] max-[425px]:min-h-[160px] flex flex-col items-center text-center justify-center ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-200'}`}>
                 <div className="w-24 h-24 max-[425px]:w-20 max-[425px]:h-20 md:w-36 md:h-36 relative mb-3 max-[425px]:mb-2 rounded-full overflow-hidden flex items-center justify-center shrink-0">
                   {builder.isBrigade ? (
                     <div className="flex flex-col items-center justify-center w-full h-full p-2">
@@ -236,33 +247,33 @@ export default function BuilderDetailPage() {
                         <div className="w-2.5 h-1 bg-blue-600 rounded ml-1" />
                         <div className="absolute -top-0.5 right-0 w-1.5 h-1.5 rounded-full bg-amber-400" />
                       </div>
-                      <span className="text-[10px] font-semibold text-gray-900 uppercase mt-1.5">BRIGADE</span>
+                      <span className={`text-[10px] font-semibold uppercase mt-1.5 ${isDark ? 'text-white' : 'text-gray-900'}`}>BRIGADE</span>
                     </div>
                   ) : builder.logo ? (
                     <Image src={builder.logo} alt={`${builder.name} logo`} fill className="object-contain" sizes="144px" />
                   ) : (
-                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                      <Building2 className="w-12 h-12 text-gray-400" />
+                    <div className={`w-full h-full flex items-center justify-center ${isDark ? 'bg-[#1f2229]' : 'bg-gray-200'}`}>
+                      <Building2 className={`w-12 h-12 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                     </div>
                   )}
                 </div>
-                <h2 className="text-base font-bold text-gray-900 max-[425px]:text-sm truncate">{builder.name}</h2>
-                <p className="text-xs max-[425px]:text-[11px] text-gray-500 mt-1 line-clamp-2">{builder.tagline}</p>
+                <h2 className={`text-base font-bold max-[425px]:text-sm truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{builder.name}</h2>
+                <p className={`text-xs max-[425px]:text-[11px] mt-1 line-clamp-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{builder.tagline}</p>
               </div>
 
               {/* White stat cards - Years, Cities, M Sq.Ft. - full width of profile card */}
               <div className="grid grid-cols-3 gap-2 max-[425px]:gap-1.5 w-full">
-                <div className="rounded-lg border bg-white shadow-sm p-3 max-[425px]:p-2 min-h-[72px] max-[425px]:min-h-[56px] flex flex-col justify-center text-center min-w-0">
-                  <p className="text-base max-[425px]:text-sm font-bold text-gray-900">{stats.experience || '33+'}</p>
-                  <p className="text-[11px] max-[425px]:text-[9px] text-gray-500 mt-0.5">Years of Exp.</p>
+                <div className={`rounded-lg border shadow-sm p-3 max-[425px]:p-2 min-h-[72px] max-[425px]:min-h-[56px] flex flex-col justify-center text-center min-w-0 ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-200'}`}>
+                  <p className={`text-base max-[425px]:text-sm font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{stats.experience || '33+'}</p>
+                  <p className={`text-[11px] max-[425px]:text-[9px] mt-0.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Years of Exp.</p>
                 </div>
-                <div className="rounded-lg border bg-white shadow-sm p-3 max-[425px]:p-2 min-h-[72px] max-[425px]:min-h-[56px] flex flex-col justify-center text-center min-w-0">
-                  <p className="text-base max-[425px]:text-sm font-bold text-gray-900">{stats.cities || '12'}</p>
-                  <p className="text-[11px] max-[425px]:text-[9px] text-gray-500 mt-0.5">Cities</p>
+                <div className={`rounded-lg border shadow-sm p-3 max-[425px]:p-2 min-h-[72px] max-[425px]:min-h-[56px] flex flex-col justify-center text-center min-w-0 ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-200'}`}>
+                  <p className={`text-base max-[425px]:text-sm font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{stats.cities || '12'}</p>
+                  <p className={`text-[11px] max-[425px]:text-[9px] mt-0.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Cities</p>
                 </div>
-                <div className="rounded-lg border bg-white shadow-sm p-3 max-[425px]:p-2 min-h-[72px] max-[425px]:min-h-[56px] flex flex-col justify-center text-center min-w-0">
-                  <p className="text-base max-[425px]:text-sm font-bold text-gray-900">{stats.sqft || '1.8+'}</p>
-                  <p className="text-[11px] max-[425px]:text-[9px] text-gray-500 mt-0.5">M Sq.Ft.</p>
+                <div className={`rounded-lg border shadow-sm p-3 max-[425px]:p-2 min-h-[72px] max-[425px]:min-h-[56px] flex flex-col justify-center text-center min-w-0 ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-200'}`}>
+                  <p className={`text-base max-[425px]:text-sm font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{stats.sqft || '1.8+'}</p>
+                  <p className={`text-[11px] max-[425px]:text-[9px] mt-0.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>M Sq.Ft.</p>
                 </div>
               </div>
             </div>
@@ -295,28 +306,28 @@ export default function BuilderDetailPage() {
               </div>
 
               {/* Mission & Vision - compact */}
-              <div className="rounded-lg border bg-white shadow-sm p-2.5 max-[425px]:p-2">
-                <h3 className="font-semibold text-[10px] max-[425px]:text-[9px] mb-0.5">Our Mission</h3>
-                <p className="text-[9px] max-[425px]:text-[8px] text-gray-500 leading-tight line-clamp-3">{builder.mission}</p>
+              <div className={`rounded-lg border shadow-sm p-2.5 max-[425px]:p-2 ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-200'}`}>
+                <h3 className={`font-semibold text-[10px] max-[425px]:text-[9px] mb-0.5 ${isDark ? 'text-white' : ''}`}>Our Mission</h3>
+                <p className={`text-[9px] max-[425px]:text-[8px] leading-tight line-clamp-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{builder.mission}</p>
               </div>
-              <div className="rounded-lg border bg-white shadow-sm p-2.5 max-[425px]:p-2">
-                <h3 className="font-semibold text-[10px] max-[425px]:text-[9px] mb-0.5">Our Vision</h3>
-                <p className="text-[9px] max-[425px]:text-[8px] text-gray-500 leading-tight line-clamp-3">{builder.vision}</p>
+              <div className={`rounded-lg border shadow-sm p-2.5 max-[425px]:p-2 ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-200'}`}>
+                <h3 className={`font-semibold text-[10px] max-[425px]:text-[9px] mb-0.5 ${isDark ? 'text-white' : ''}`}>Our Vision</h3>
+                <p className={`text-[9px] max-[425px]:text-[8px] leading-tight line-clamp-3 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{builder.vision}</p>
               </div>
             </div>
 
             {/* About the Builder - bottom card, full width; grows so left section = right card height */}
-            <div className="md:col-span-2 rounded-lg border bg-white shadow-sm flex flex-col min-h-0 mt-2 md:mt-0">
+            <div className={`md:col-span-2 rounded-lg border shadow-sm flex flex-col min-h-0 mt-2 md:mt-0 ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-200'}`}>
               <div className="p-5 pt-5 pb-2 max-[425px]:p-3 max-[425px]:pt-3 max-[425px]:pb-1">
-                <h3 className="text-sm max-[425px]:text-xs font-bold">About the Builder</h3>
+                <h3 className={`text-sm max-[425px]:text-xs font-bold ${isDark ? 'text-white' : ''}`}>About the Builder</h3>
               </div>
-              <div className="h-px w-full bg-gray-200" />
-              <div className="p-5 pt-4 pb-5 max-[425px]:p-3 max-[425px]:pt-3 max-[425px]:pb-4 text-gray-600 space-y-3 text-xs max-[425px]:text-[11px] flex-1 min-h-0">
-                <p><strong className="text-gray-900">Short Description:</strong> {builder.shortDescription}</p>
-                <p><strong className="text-gray-900">Detailed Description:</strong> {builder.detailedDescription}</p>
+              <div className={`h-px w-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
+              <div className={`p-5 pt-4 pb-5 max-[425px]:p-3 max-[425px]:pt-3 max-[425px]:pb-4 space-y-3 text-xs max-[425px]:text-[11px] flex-1 min-h-0 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                <p><strong className={isDark ? 'text-white' : 'text-gray-900'}>Short Description:</strong> {builder.shortDescription}</p>
+                <p><strong className={isDark ? 'text-white' : 'text-gray-900'}>Detailed Description:</strong> {builder.detailedDescription}</p>
                 {builder.keyDifferentiators?.length > 0 && (
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-1 text-xs">Key Differentiators / USPs</h4>
+                    <h4 className={`font-semibold mb-1 text-xs ${isDark ? 'text-white' : 'text-gray-900'}`}>Key Differentiators / USPs</h4>
                     <ul className="list-disc pl-4 space-y-0.5 text-xs">
                       {builder.keyDifferentiators.map((item, i) => (
                         <li key={i}>{item}</li>
@@ -331,7 +342,7 @@ export default function BuilderDetailPage() {
           {/* Right half - Gallery + Featured Project (Brigade Horizon) in one card - same row height as left */}
           <div className="lg:col-span-6 h-full min-h-0 flex flex-col min-w-0">
             {(builder.galleryImages?.length > 0 || builder.featuredProject) && (
-            <div className="rounded-lg border bg-white shadow-sm overflow-hidden flex-1 min-h-0 flex flex-col">
+            <div className={`rounded-lg border shadow-sm overflow-hidden flex-1 min-h-0 flex flex-col ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-200'}`}>
               {/* Gallery */}
               {builder.galleryImages?.length > 0 && (
                 <div className="p-3 max-[425px]:p-2">
@@ -378,30 +389,30 @@ export default function BuilderDetailPage() {
               {/* Featured Project (e.g. Brigade Horizon) - merged into same card */}
               {builder.featuredProject && (
                 <>
-                  {builder.galleryImages?.length > 0 && <div className="h-px w-full bg-gray-200 mx-3 max-[425px]:mx-2" />}
+                  {builder.galleryImages?.length > 0 && <div className={`h-px w-full mx-3 max-[425px]:mx-2 ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />}
                   <div className="p-4 max-[425px]:p-3">
-                    <h2 className="text-sm max-[425px]:text-xs font-bold truncate">{builder.featuredProject.name}</h2>
-                    <p className="text-xs max-[425px]:text-[11px] text-gray-500 truncate">{builder.featuredProject.location}</p>
+                    <h2 className={`text-sm max-[425px]:text-xs font-bold truncate ${isDark ? 'text-white' : ''}`}>{builder.featuredProject.name}</h2>
+                    <p className={`text-xs max-[425px]:text-[11px] truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{builder.featuredProject.location}</p>
                     <div className="grid grid-cols-2 max-[425px]:grid-cols-2 md:grid-cols-4 gap-4 max-[425px]:gap-2 mt-4 max-[425px]:mt-3 text-sm max-[425px]:text-xs">
                       <div className="flex items-center gap-2">
-                        <Building2 className="h-5 w-5 text-blue-600 shrink-0" />
+                        <Building2 className="h-5 w-5 text-blue-500 shrink-0" />
                         <div>
-                          <p className="text-gray-500 text-xs">Project Units</p>
-                          <p className="font-semibold">{builder.featuredProject.units}</p>
+                          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Project Units</p>
+                          <p className={`font-semibold ${isDark ? 'text-white' : ''}`}>{builder.featuredProject.units}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <ChartArea className="h-5 w-5 text-blue-600 shrink-0" />
+                        <ChartArea className="h-5 w-5 text-blue-500 shrink-0" />
                         <div>
-                          <p className="text-gray-500 text-xs">Project Size</p>
-                          <p className="font-semibold">{builder.featuredProject.size}</p>
+                          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Project Size</p>
+                          <p className={`font-semibold ${isDark ? 'text-white' : ''}`}>{builder.featuredProject.size}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <CalendarDays className="h-5 w-5 text-blue-600 shrink-0" />
+                        <CalendarDays className="h-5 w-5 text-blue-500 shrink-0" />
                         <div>
-                          <p className="text-gray-500 text-xs">Launch Date</p>
-                          <p className="font-semibold">{builder.featuredProject.launchDate}</p>
+                          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Launch Date</p>
+                          <p className={`font-semibold ${isDark ? 'text-white' : ''}`}>{builder.featuredProject.launchDate}</p>
                         </div>
                       </div>
                     </div>
@@ -431,15 +442,15 @@ export default function BuilderDetailPage() {
                     {/* Possession / Plot / Propscore row */}
                     <div className="grid grid-cols-3 max-[425px]:grid-cols-3 gap-4 max-[425px]:gap-2 mt-4 max-[425px]:mt-3 text-sm max-[425px]:text-xs text-center">
                       <div>
-                        <p className="text-gray-500 text-xs max-[425px]:text-[10px]">Possession</p>
-                        <p className="font-semibold max-[425px]:text-[11px]">{builder.featuredProject.possession || 'Sep 2028'}</p>
+                        <p className={`text-xs max-[425px]:text-[10px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Possession</p>
+                        <p className={`font-semibold max-[425px]:text-[11px] ${isDark ? 'text-white' : ''}`}>{builder.featuredProject.possession || 'Sep 2028'}</p>
                       </div>
                       <div>
-                        <p className="text-gray-500 text-xs max-[425px]:text-[10px]">Plot</p>
-                        <p className="font-semibold max-[425px]:text-[11px] truncate">{builder.featuredProject.plotSize || '1,200 - 3,000 sqft'}</p>
+                        <p className={`text-xs max-[425px]:text-[10px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Plot</p>
+                        <p className={`font-semibold max-[425px]:text-[11px] truncate ${isDark ? 'text-white' : ''}`}>{builder.featuredProject.plotSize || '1,200 - 3,000 sqft'}</p>
                       </div>
                       <div>
-                        <p className="text-gray-500 text-xs max-[425px]:text-[10px]">Propscore</p>
+                        <p className={`text-xs max-[425px]:text-[10px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Propscore</p>
                         <div className="flex items-center justify-center gap-0.5 mt-0.5">
                           {[1, 2, 3, 4, 5].map((i) => (
                             <Star key={i} className={`h-4 w-4 max-[425px]:h-3 max-[425px]:w-3 ${i <= 4 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'}`} />
@@ -449,8 +460,8 @@ export default function BuilderDetailPage() {
                     </div>
                     <div className="mt-4 max-[425px]:mt-3 flex flex-col max-[425px]:flex-col sm:flex-row justify-between items-stretch max-[425px]:items-stretch sm:items-center gap-3">
                       <div>
-                        <p className="text-[10px] max-[425px]:text-[9px] text-gray-500">Total Range</p>
-                        <p className="text-base max-[425px]:text-sm font-bold text-blue-600">{builder.featuredProject.priceRange}</p>
+                        <p className={`text-[10px] max-[425px]:text-[9px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Total Range</p>
+                        <p className="text-base max-[425px]:text-sm font-bold text-blue-400">{builder.featuredProject.priceRange}</p>
                       </div>
                       <button className="bg-blue-600 text-white text-xs max-[425px]:text-[11px] font-medium px-5 py-1.5 max-[425px]:py-2 rounded-lg hover:bg-blue-700 shrink-0">
                         Contact Builder
@@ -469,24 +480,24 @@ export default function BuilderDetailPage() {
           {/* Left - About, Company, Contact, etc. */}
           <div className="lg:col-span-6 space-y-4 max-[425px]:space-y-3">
             {/* Company Information */}
-            <div className="rounded-lg border bg-white shadow-sm min-w-0">
+            <div className={`rounded-lg border shadow-sm min-w-0 ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-200'}`}>
               <div className="p-4 max-[425px]:p-3">
-                <h3 className="text-sm max-[425px]:text-xs font-bold">Company Information</h3>
+                <h3 className={`text-sm max-[425px]:text-xs font-bold ${isDark ? 'text-white' : ''}`}>Company Information</h3>
               </div>
-              <div className="h-px w-full bg-gray-200" />
+              <div className={`h-px w-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
               <div className="p-4 pt-3 max-[425px]:p-3 space-y-4 max-[425px]:space-y-3 text-xs max-[425px]:text-[11px]">
                 <div className="grid grid-cols-2 max-[425px]:grid-cols-1 gap-4 max-[425px]:gap-3">
                   <div className="flex items-start gap-2">
                     <ShieldCheck className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-[10px] text-gray-500">License Number</p>
-                      <p className="font-semibold text-xs">{builder.licenseNumber}</p>
+                      <p className={`text-[10px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>License Number</p>
+                      <p className={`font-semibold text-xs ${isDark ? 'text-white' : ''}`}>{builder.licenseNumber}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-2">
-                    <Star className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+                    <Star className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-[10px] text-gray-500">Certificate</p>
+                      <p className={`text-[10px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Certificate</p>
                       <p className="font-semibold text-xs">{builder.certificate}</p>
                     </div>
                   </div>
@@ -521,32 +532,32 @@ export default function BuilderDetailPage() {
                 </div>
                 {builder.specialties?.length > 0 && (
                   <div>
-                    <h4 className="font-semibold mb-3">Specialties</h4>
+                    <h4 className={`font-semibold mb-3 ${isDark ? 'text-white' : ''}`}>Specialties</h4>
                     <div className="flex flex-wrap gap-2">
                       {builder.specialties.map((s, i) => (
-                        <span key={i} className="px-2.5 py-0.5 rounded-lg bg-gray-100 text-xs font-semibold">{s}</span>
+                        <span key={i} className={`px-2.5 py-0.5 rounded-lg text-xs font-semibold ${isDark ? 'bg-white/10 text-gray-200' : 'bg-gray-100 text-gray-800'}`}>{s}</span>
                       ))}
                     </div>
                   </div>
                 )}
                 {builder.operatingRegions?.length > 0 && (
                   <div>
-                    <h4 className="font-semibold mb-3">Operating Regions</h4>
+                    <h4 className={`font-semibold mb-3 ${isDark ? 'text-white' : ''}`}>Operating Regions</h4>
                     <div className="flex flex-wrap gap-2">
                       {builder.operatingRegions.map((r, i) => (
-                        <span key={i} className="px-2.5 py-0.5 rounded-lg border text-xs font-semibold">{r}</span>
+                        <span key={i} className={`px-2.5 py-0.5 rounded-lg border text-xs font-semibold ${isDark ? 'border-gray-600 text-gray-300' : 'border-gray-200'}`}>{r}</span>
                       ))}
                     </div>
                   </div>
                 )}
                 {builder.moreDetails?.length > 0 && (
                   <div>
-                    <h4 className="font-semibold mb-3">More Details</h4>
-                    <ul className="space-y-2 text-sm text-gray-500">
+                    <h4 className={`font-semibold mb-3 ${isDark ? 'text-white' : ''}`}>More Details</h4>
+                    <ul className={`space-y-2 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                       {builder.moreDetails.map((d, i) => (
                         <li key={i} className="flex justify-between">
                           <span>{d.label}:</span>
-                          <span className="font-medium text-gray-900">{d.value}</span>
+                          <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{d.value}</span>
                         </li>
                       ))}
                     </ul>
@@ -556,29 +567,29 @@ export default function BuilderDetailPage() {
             </div>
 
             {/* Contact Information */}
-            <div id="contact-info" className="rounded-lg border bg-white shadow-sm scroll-mt-24 min-w-0">
+            <div id="contact-info" className={`rounded-lg border shadow-sm scroll-mt-24 min-w-0 ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-200'}`}>
               <div className="p-6 max-[425px]:p-4">
-                <h3 className="text-lg max-[425px]:text-base font-bold">Contact Information</h3>
+                <h3 className={`text-lg max-[425px]:text-base font-bold ${isDark ? 'text-white' : ''}`}>Contact Information</h3>
               </div>
-              <div className="h-px w-full bg-gray-200" />
+              <div className={`h-px w-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
               <div className="p-6 pt-6 max-[425px]:p-4 max-[425px]:pt-4 space-y-4 max-[425px]:space-y-3">
                 {builder.phone && (
-                  <a href={`tel:${builder.phone.replace(/\s/g, '')}`} className="flex items-center gap-3 text-gray-500 hover:text-blue-600">
+                  <a href={`tel:${builder.phone.replace(/\s/g, '')}`} className={`flex items-center gap-3 hover:text-blue-400 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                     <Phone className="w-5 h-5" />
                     <span>{builder.phone}</span>
                   </a>
                 )}
                 {builder.email && (
-                  <a href={`mailto:${builder.email}`} className="flex items-center gap-3 text-gray-500 hover:text-blue-600">
+                  <a href={`mailto:${builder.email}`} className={`flex items-center gap-3 hover:text-blue-400 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                     <Mail className="w-5 h-5" />
                     <span>{builder.email}</span>
                   </a>
                 )}
                 <div className="flex items-center gap-2 pt-2">
-                  {builder.socialLinks?.facebook && <a href={builder.socialLinks.facebook} className="w-10 h-10 rounded-lg border flex items-center justify-center hover:bg-gray-100"><Facebook className="w-5 h-5" /></a>}
-                  {builder.socialLinks?.twitter && <a href={builder.socialLinks.twitter} className="w-10 h-10 rounded-lg border flex items-center justify-center hover:bg-gray-100"><Twitter className="w-5 h-5" /></a>}
-                  {builder.socialLinks?.linkedin && <a href={builder.socialLinks.linkedin} className="w-10 h-10 rounded-lg border flex items-center justify-center hover:bg-gray-100"><Linkedin className="w-5 h-5" /></a>}
-                  {builder.socialLinks?.instagram && <a href={builder.socialLinks.instagram} className="w-10 h-10 rounded-lg border flex items-center justify-center hover:bg-gray-100"><Instagram className="w-5 h-5" /></a>}
+                  {builder.socialLinks?.facebook && <a href={builder.socialLinks.facebook} className={`w-10 h-10 rounded-lg border flex items-center justify-center ${isDark ? 'border-gray-600 hover:bg-white/10' : 'hover:bg-gray-100'}`}><Facebook className="w-5 h-5" /></a>}
+                  {builder.socialLinks?.twitter && <a href={builder.socialLinks.twitter} className={`w-10 h-10 rounded-lg border flex items-center justify-center ${isDark ? 'border-gray-600 hover:bg-white/10' : 'hover:bg-gray-100'}`}><Twitter className="w-5 h-5" /></a>}
+                  {builder.socialLinks?.linkedin && <a href={builder.socialLinks.linkedin} className={`w-10 h-10 rounded-lg border flex items-center justify-center ${isDark ? 'border-gray-600 hover:bg-white/10' : 'hover:bg-gray-100'}`}><Linkedin className="w-5 h-5" /></a>}
+                  {builder.socialLinks?.instagram && <a href={builder.socialLinks.instagram} className={`w-10 h-10 rounded-lg border flex items-center justify-center ${isDark ? 'border-gray-600 hover:bg-white/10' : 'hover:bg-gray-100'}`}><Instagram className="w-5 h-5" /></a>}
                   {!builder.socialLinks?.facebook && !builder.socialLinks?.linkedin && (
                     <>
                       <a href="#" className="w-10 h-10 rounded-lg border flex items-center justify-center hover:bg-gray-100"><Facebook className="w-5 h-5" /></a>
@@ -592,21 +603,21 @@ export default function BuilderDetailPage() {
 
             {/* Awards */}
             {builder.awards?.length > 0 && (
-              <div className="rounded-lg border bg-white shadow-sm">
+              <div className={`rounded-lg border shadow-sm ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-200'}`}>
                 <div className="p-6">
-                  <h3 className="text-lg font-bold">Awards & Recognition</h3>
+                  <h3 className={`text-lg font-bold ${isDark ? 'text-white' : ''}`}>Awards & Recognition</h3>
                 </div>
-                <div className="h-px w-full bg-gray-200" />
+                <div className={`h-px w-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
                 <div className="p-6 pt-6">
                   <ul className="space-y-4">
                     {builder.awards.map((a, i) => (
                       <li key={i} className="flex items-center gap-4">
-                        <div className="w-16 h-16 rounded-full overflow-hidden shrink-0 bg-gray-100">
+                        <div className={`w-16 h-16 rounded-full overflow-hidden shrink-0 ${isDark ? 'bg-[#1f2229]' : 'bg-gray-100'}`}>
                           {a.image && <Image src={a.image} alt={a.title} width={64} height={64} className="w-full h-full object-cover" />}
                         </div>
                         <div>
-                          <p className="font-semibold">{a.title}</p>
-                          <p className="text-sm text-gray-500">{a.organisation}</p>
+                          <p className={`font-semibold ${isDark ? 'text-white' : ''}`}>{a.title}</p>
+                          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{a.organisation}</p>
                         </div>
                       </li>
                     ))}
@@ -617,17 +628,17 @@ export default function BuilderDetailPage() {
 
             {/* Testimonials - Slider */}
             {builder.testimonials?.length > 0 && (
-              <div className="rounded-lg border bg-white shadow-sm">
+              <div className={`rounded-lg border shadow-sm ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-200'}`}>
                 <div className="p-6">
-                  <h3 className="text-lg font-bold">Client Testimonials</h3>
+                  <h3 className={`text-lg font-bold ${isDark ? 'text-white' : ''}`}>Client Testimonials</h3>
                 </div>
-                <div className="h-px w-full bg-gray-200" />
+                <div className={`h-px w-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
                 <div className="p-6 pt-6">
                   <div className="flex items-center justify-center gap-4">
                     <button
                       type="button"
                       onClick={() => setActiveTestimonial((prev) => (prev <= 0 ? builder.testimonials.length - 1 : prev - 1))}
-                      className="w-10 h-10 shrink-0 rounded-full border border-gray-300 bg-white flex items-center justify-center text-gray-700 hover:bg-gray-50 transition-colors"
+                      className={`w-10 h-10 shrink-0 rounded-full border flex items-center justify-center transition-colors ${isDark ? 'border-gray-600 bg-[#282c34] text-gray-300 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}
                       aria-label="Previous testimonial"
                     >
                       <ChevronLeft className="w-5 h-5" />
@@ -651,7 +662,7 @@ export default function BuilderDetailPage() {
                     <button
                       type="button"
                       onClick={() => setActiveTestimonial((prev) => (prev >= builder.testimonials.length - 1 ? 0 : prev + 1))}
-                      className="w-10 h-10 shrink-0 rounded-full border border-gray-300 bg-white flex items-center justify-center text-gray-700 hover:bg-gray-50 transition-colors"
+                      className={`w-10 h-10 shrink-0 rounded-full border flex items-center justify-center transition-colors ${isDark ? 'border-gray-600 bg-[#282c34] text-gray-300 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}
                       aria-label="Next testimonial"
                     >
                       <ChevronRight className="w-5 h-5" />
@@ -663,11 +674,11 @@ export default function BuilderDetailPage() {
 
             {/* Relationship Manager */}
             {rm.name && (
-              <div className="rounded-lg border bg-white shadow-sm min-w-0">
+              <div className={`rounded-lg border shadow-sm min-w-0 ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-200'}`}>
                 <div className="p-6 max-[425px]:p-4">
-                  <h3 className="text-lg max-[425px]:text-base font-bold">Your Relationship Manager</h3>
+                  <h3 className={`text-lg max-[425px]:text-base font-bold ${isDark ? 'text-white' : ''}`}>Your Relationship Manager</h3>
                 </div>
-                <div className="h-px w-full bg-gray-200" />
+                <div className={`h-px w-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
                 <div className="p-6 space-y-4 pt-6 max-[425px]:p-4 max-[425px]:pt-4 max-[425px]:space-y-3">
                   <div className="flex flex-col max-[425px]:flex-col sm:flex-row justify-between items-start sm:items-center gap-4 max-[425px]:gap-3">
                     <div className="flex items-center gap-4 max-[425px]:gap-3 min-w-0">
@@ -695,8 +706,8 @@ export default function BuilderDetailPage() {
                   <button type="button" className="w-full bg-blue-600 text-white font-medium py-2.5 rounded-lg hover:bg-blue-700">
                     Contact {rm.name}
                   </button>
-                  <div className="bg-gray-50 p-4 rounded-lg -m-2">
-                    {rm.assisted && <p className="text-sm text-center text-gray-500 mb-4">{rm.assisted}</p>}
+                  <div className={`p-4 rounded-lg -m-2 ${isDark ? 'bg-[#1f2229]' : 'bg-gray-50'}`}>
+                    {rm.assisted && <p className={`text-sm text-center mb-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{rm.assisted}</p>}
                     <div className="flex justify-around items-center flex-wrap gap-4">
                       {(() => {
                         const placeholders = [
@@ -709,7 +720,7 @@ export default function BuilderDetailPage() {
                         const fromData = (rm.companyLogos || []).slice(0, 5).map(l => typeof l === 'string' ? l : l?.url || '');
                         const logos = fromData.length >= 5 ? fromData : [...fromData, ...placeholders.slice(0, 5 - fromData.length)];
                         return logos.slice(0, 5).map((logo, i) => (
-                          <div key={i} className="relative w-12 h-12 rounded-lg overflow-hidden bg-white shrink-0">
+                          <div key={i} className={`relative w-12 h-12 rounded-lg overflow-hidden shrink-0 ${isDark ? 'bg-[#282c34]' : 'bg-white'}`}>
                             <Image src={logo || placeholders[i]} alt="Company" fill className="object-cover" sizes="48px" />
                           </div>
                         ));
@@ -722,11 +733,11 @@ export default function BuilderDetailPage() {
 
             {/* FAQ */}
             {builder.faqs?.length > 0 && (
-              <div className="rounded-lg border bg-white shadow-sm">
+              <div className={`rounded-lg border shadow-sm ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-200'}`}>
                 <div className="p-4">
-                  <h3 className="text-sm font-bold">Frequently Asked Questions</h3>
+                  <h3 className={`text-sm font-bold ${isDark ? 'text-white' : ''}`}>Frequently Asked Questions</h3>
                 </div>
-                <div className="h-px w-full bg-gray-200" />
+                <div className={`h-px w-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
                 <div className="p-4 pt-3">
                   {builder.faqs.map((faq, i) => (
                     <div key={i} className="border-b last:border-b-0">
@@ -749,16 +760,16 @@ export default function BuilderDetailPage() {
           <div className="lg:col-span-6 space-y-4">
             {/* Key Projects */}
             {builder.keyProjects?.length > 0 && (
-              <div className="rounded-lg border bg-white shadow-sm">
+              <div className={`rounded-lg border shadow-sm ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-200'}`}>
                 <div className="p-4">
-                  <h3 className="text-sm font-bold">Key Projects</h3>
+                  <h3 className={`text-sm font-bold ${isDark ? 'text-white' : ''}`}>Key Projects</h3>
                 </div>
-                <div className="h-px w-full bg-gray-200" />
+                <div className={`h-px w-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
                 <div className="p-4 pt-3">
                   <ul className="space-y-2">
                     {builder.keyProjects.map((p, i) => (
                       <li key={i}>
-                        <Link href={p.href || '#'} className="flex items-center gap-3 p-1.5 rounded-lg hover:bg-gray-50">
+                        <Link href={p.href || '#'} className={`flex items-center gap-3 p-1.5 rounded-lg ${isDark ? 'hover:bg-white/10' : 'hover:bg-gray-50'}`}>
                           <div className="w-12 h-12 rounded overflow-hidden shrink-0 bg-gray-200">
                             {p.image && <Image src={p.image} alt={p.name} width={48} height={48} className="w-full h-full object-cover" />}
                           </div>
@@ -776,16 +787,16 @@ export default function BuilderDetailPage() {
 
             {/* Projects from builder.projects */}
             {builder.projects?.length > 0 && !builder.keyProjects?.length && (
-              <div className="rounded-lg border bg-white shadow-sm">
+              <div className={`rounded-lg border shadow-sm ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-200'}`}>
                 <div className="p-6">
-                  <h3 className="text-lg font-bold">Key Projects</h3>
+                  <h3 className={`text-lg font-bold ${isDark ? 'text-white' : ''}`}>Key Projects</h3>
                 </div>
-                <div className="h-px w-full bg-gray-200" />
+                <div className={`h-px w-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
                 <div className="p-6 pt-6">
                   <ul className="space-y-4">
                     {builder.projects.slice(0, 5).map((p, i) => (
                       <li key={i}>
-                        <Link href="#" className="flex items-center gap-4 p-2 rounded-lg hover:bg-gray-50">
+                        <Link href="#" className={`flex items-center gap-4 p-2 rounded-lg ${isDark ? 'hover:bg-white/10' : 'hover:bg-gray-50'}`}>
                           <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0 bg-gray-200 flex items-center justify-center">
                             <Building2 className="w-8 h-8 text-gray-400" />
                           </div>
@@ -803,11 +814,11 @@ export default function BuilderDetailPage() {
 
             {/* Meet the Team - Slider */}
             {builder.team?.length > 0 && (
-              <div className="rounded-lg border bg-white shadow-sm">
+              <div className={`rounded-lg border shadow-sm ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-200'}`}>
                 <div className="p-6">
-                  <h3 className="text-lg font-bold">Meet the Team</h3>
+                  <h3 className={`text-lg font-bold ${isDark ? 'text-white' : ''}`}>Meet the Team</h3>
                 </div>
-                <div className="h-px w-full bg-gray-200" />
+                <div className={`h-px w-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
                 <div className="p-6 pt-6">
                   <div className="flex items-center gap-4">
                     <button
@@ -816,7 +827,7 @@ export default function BuilderDetailPage() {
                         setTeamDirection('prev');
                         setActiveTeamMember((prev) => (prev <= 0 ? builder.team.length - 1 : prev - 1));
                       }}
-                      className="w-10 h-10 shrink-0 rounded-full border border-gray-300 bg-white flex items-center justify-center text-gray-700 hover:bg-gray-50 transition-colors"
+                      className={`w-10 h-10 shrink-0 rounded-full border flex items-center justify-center transition-colors ${isDark ? 'border-gray-600 bg-[#282c34] text-gray-300 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}
                       aria-label="Previous team member"
                     >
                       <ChevronLeft className="w-5 h-5" />
@@ -850,7 +861,7 @@ export default function BuilderDetailPage() {
                         setTeamDirection('next');
                         setActiveTeamMember((prev) => (prev >= builder.team.length - 1 ? 0 : prev + 1));
                       }}
-                      className="w-10 h-10 shrink-0 rounded-full border border-gray-300 bg-white flex items-center justify-center text-gray-700 hover:bg-gray-50 transition-colors"
+                      className={`w-10 h-10 shrink-0 rounded-full border flex items-center justify-center transition-colors ${isDark ? 'border-gray-600 bg-[#282c34] text-gray-300 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}
                       aria-label="Next team member"
                     >
                       <ChevronRight className="w-5 h-5" />
@@ -862,18 +873,18 @@ export default function BuilderDetailPage() {
 
             {/* Operational Segments */}
             {builder.operationalSegments?.length > 0 && (
-              <div className="rounded-lg border bg-white shadow-sm">
+              <div className={`rounded-lg border shadow-sm ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-200'}`}>
                 <div className="p-6">
-                  <h3 className="text-lg font-bold">Operational Segments</h3>
+                  <h3 className={`text-lg font-bold ${isDark ? 'text-white' : ''}`}>Operational Segments</h3>
                 </div>
-                <div className="h-px w-full bg-gray-200" />
+                <div className={`h-px w-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
                 <div className="p-6 pt-6">
-                  <div className="grid grid-cols-2 max-[425px]:grid-cols-2 sm:grid-cols-4 border-b overflow-x-auto">
+                  <div className={`grid grid-cols-2 max-[425px]:grid-cols-2 sm:grid-cols-4 border-b overflow-x-auto ${isDark ? 'border-gray-600' : ''}`}>
                     {builder.operationalSegments.map((seg, i) => (
                       <button
                         key={i}
                         onClick={() => setActiveSegment(i)}
-                        className={`px-3 py-1.5 max-[425px]:px-2 max-[425px]:py-1 text-sm max-[425px]:text-xs font-semibold border-b-2 transition-colors whitespace-nowrap ${activeSegment === i ? 'border-blue-600 text-gray-900' : 'border-transparent text-gray-500'}`}
+                        className={`px-3 py-1.5 max-[425px]:px-2 max-[425px]:py-1 text-sm max-[425px]:text-xs font-semibold border-b-2 transition-colors whitespace-nowrap ${activeSegment === i ? (isDark ? 'border-blue-500 text-white' : 'border-blue-600 text-gray-900') : (isDark ? 'border-transparent text-gray-400' : 'border-transparent text-gray-500')}`}
                       >
                         {seg.name}
                       </button>
@@ -921,16 +932,16 @@ export default function BuilderDetailPage() {
       <div className="fixed bottom-6 right-4 max-[425px]:bottom-5 max-[425px]:right-3 z-50 flex flex-col items-end gap-2">
         {/* Get in Touch modal - small, anchored above the button */}
         {touchModalOpen && (
-          <div className="relative w-64 max-[425px]:w-[calc(100vw-24px)] max-[425px]:max-w-[280px] rounded-lg border bg-white shadow-lg z-[60] mb-2 mr-0" role="dialog" aria-modal="true">
-            <div className="rounded-lg border bg-white shadow-sm">
+          <div className={`relative w-64 max-[425px]:w-[calc(100vw-24px)] max-[425px]:max-w-[280px] rounded-lg border shadow-lg z-[60] mb-2 mr-0 ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-200'}`} role="dialog" aria-modal="true">
+            <div className={`rounded-lg border shadow-sm ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-200'}`}>
               <div className="flex flex-col space-y-1 p-3">
                 <div className="flex justify-between items-start">
-                  <h3 className="text-sm font-bold leading-none tracking-tight">Get in Touch</h3>
-                  <button type="button" onClick={() => setTouchModalOpen(false)} className="p-0.5 rounded hover:bg-gray-100 text-gray-500 cursor-pointer" aria-label="Close">
+                  <h3 className={`text-sm font-bold leading-none tracking-tight ${isDark ? 'text-white' : ''}`}>Get in Touch</h3>
+                  <button type="button" onClick={() => setTouchModalOpen(false)} className={`p-0.5 rounded cursor-pointer ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`} aria-label="Close">
                     <X className="h-4 w-4" />
                   </button>
                 </div>
-                <div className="flex flex-col gap-1 text-xs text-gray-500">
+                <div className={`flex flex-col gap-1 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                   <div className="flex items-center gap-1.5">
                     <CircleCheck className="h-3.5 w-3.5 text-green-500 shrink-0" />
                     <span>Our team will respond within 1 hr</span>
@@ -941,14 +952,14 @@ export default function BuilderDetailPage() {
                   </div>
                 </div>
               </div>
-              <div className="shrink-0 bg-gray-200 h-px w-full" />
+              <div className={`shrink-0 h-px w-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
               <div className="p-3 pt-2">
                 <form className="space-y-2.5" onSubmit={(e) => { e.preventDefault(); setTouchModalOpen(false); }}>
-                  <input type="text" placeholder="Name" className="flex h-8 w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1" />
-                  <input type="email" placeholder="Email ID" className="flex h-8 w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1" />
+                  <input type="text" placeholder="Name" className={`flex h-8 w-full rounded-md border px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${isDark ? 'border-gray-600 bg-[#1f2229] text-white placeholder:text-gray-500' : 'border-gray-300 bg-white placeholder:text-gray-500'}`} />
+                  <input type="email" placeholder="Email ID" className={`flex h-8 w-full rounded-md border px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${isDark ? 'border-gray-600 bg-[#1f2229] text-white placeholder:text-gray-500' : 'border-gray-300 bg-white placeholder:text-gray-500'}`} />
                   <div className="flex">
-                    <span className="inline-flex items-center px-2 text-xs text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md">+91</span>
-                    <input type="tel" placeholder="Phone" className="flex h-8 flex-1 min-w-0 rounded-r-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded-l-none" />
+                    <span className={`inline-flex items-center px-2 text-xs border border-r-0 rounded-l-md ${isDark ? 'text-gray-200 bg-[#1f2229] border-gray-600' : 'text-gray-900 bg-gray-200 border-gray-300'}`}>+91</span>
+                    <input type="tel" placeholder="Phone" className={`flex h-8 flex-1 min-w-0 rounded-r-md border px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded-l-none ${isDark ? 'border-gray-600 bg-[#1f2229] text-white placeholder:text-gray-500' : 'border-gray-300 bg-white placeholder:text-gray-500'}`} />
                   </div>
                   <button type="submit" className="inline-flex items-center justify-center w-full rounded-md text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 h-8 px-3 py-1.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
                     Contact Now

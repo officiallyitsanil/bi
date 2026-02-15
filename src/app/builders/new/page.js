@@ -22,58 +22,67 @@ import {
   ChevronDown,
   Plus,
 } from 'lucide-react';
+import { useTheme } from '@/context/ThemeContext';
 
-const inputClass =
-  'flex h-8 max-[425px]:h-7 w-full min-w-0 rounded-md border border-gray-200 bg-white px-2.5 py-1.5 max-[425px]:px-2 max-[425px]:py-1 text-xs max-[425px]:text-[11px] placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-50';
-const textareaClass =
-  'flex min-h-[60px] max-[425px]:min-h-[52px] w-full min-w-0 rounded-md border border-gray-200 bg-white px-2.5 py-1.5 max-[425px]:px-2 max-[425px]:py-1 text-xs max-[425px]:text-[11px] placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-50';
-const labelClass = 'text-xs max-[425px]:text-[11px] font-medium text-gray-700 block mb-1.5 max-[425px]:mb-1';
-const cardClass = 'rounded-md border border-gray-200 bg-white shadow-sm';
-const dividerClass = 'shrink-0 bg-gray-200 h-px w-full';
-const addButtonClass = 'inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium hover:bg-gray-50 transition-colors cursor-pointer';
+const getInputClass = (isDark) =>
+  `flex h-8 max-[425px]:h-7 w-full min-w-0 rounded-md border px-2.5 py-1.5 max-[425px]:px-2 max-[425px]:py-1 text-xs max-[425px]:text-[11px] focus:outline-none focus:ring-1 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-50 ${isDark ? 'border-gray-600 bg-[#282c34] text-white placeholder:text-gray-500' : 'border-gray-200 bg-white placeholder:text-gray-400'}`;
+const getTextareaClass = (isDark) =>
+  `flex min-h-[60px] max-[425px]:min-h-[52px] w-full min-w-0 rounded-md border px-2.5 py-1.5 max-[425px]:px-2 max-[425px]:py-1 text-xs max-[425px]:text-[11px] focus:outline-none focus:ring-1 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-50 ${isDark ? 'border-gray-600 bg-[#282c34] text-white placeholder:text-gray-500' : 'border-gray-200 bg-white placeholder:text-gray-400'}`;
+const getLabelClass = (isDark) => `text-xs max-[425px]:text-[11px] font-medium block mb-1.5 max-[425px]:mb-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`;
+const getCardClass = (isDark) => `rounded-md border shadow-sm min-w-0 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`;
+const getDividerClass = (isDark) => `shrink-0 h-px w-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`;
+const getAddButtonClass = (isDark) => `inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${isDark ? 'border-gray-600 bg-[#282c34] text-gray-300 hover:bg-[#3a3f4b]' : 'border-gray-200 bg-white hover:bg-gray-50'}`;
 
-const QuickLink = ({ href, icon: Icon, children }) => (
+const QuickLink = ({ href, icon: Icon, children, isDark }) => (
   <a
     href={href}
-    className="flex items-center gap-2 p-1.5 rounded-md hover:bg-gray-100 text-gray-600 text-xs font-medium transition-colors"
+    className={`flex items-center gap-2 p-1.5 rounded-md text-xs font-medium transition-colors ${isDark ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-gray-100 text-gray-600'}`}
   >
     <Icon className="h-4 w-4 shrink-0" />
     <span>{children}</span>
   </a>
 );
 
-const SectionCard = ({ id, title, subtitle, children }) => (
-  <div className={`${cardClass} min-w-0`} id={id}>
+const SectionCard = ({ id, title, subtitle, children, isDark }) => (
+  <div className={getCardClass(isDark)} id={id}>
     <div className="p-4 max-[425px]:p-3">
-      <h3 className="text-sm max-[425px]:text-xs font-bold leading-none">{title}</h3>
-      {subtitle && <p className="text-xs max-[425px]:text-[11px] text-gray-500 mt-0.5">{subtitle}</p>}
+      <h3 className={`text-sm max-[425px]:text-xs font-bold leading-none ${isDark ? 'text-white' : ''}`}>{title}</h3>
+      {subtitle && <p className={`text-xs max-[425px]:text-[11px] mt-0.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{subtitle}</p>}
     </div>
-    <div className={dividerClass} />
+    <div className={getDividerClass(isDark)} />
     <div className="p-4 pt-3 max-[425px]:p-3 max-[425px]:pt-3">{children}</div>
   </div>
 );
 
 export default function NewBuilderPage() {
   const router = useRouter();
+  const { isDark } = useTheme();
   const [personsCount, setPersonsCount] = useState(1);
   const [awardsCount, setAwardsCount] = useState(1);
   const [testimonialsCount, setTestimonialsCount] = useState(1);
   const [faqsCount, setFaqsCount] = useState(1);
 
+  const inputClass = getInputClass(isDark);
+  const textareaClass = getTextareaClass(isDark);
+  const labelClass = getLabelClass(isDark);
+  const cardClass = getCardClass(isDark);
+  const dividerClass = getDividerClass(isDark);
+  const addButtonClass = getAddButtonClass(isDark);
+
   return (
-    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+    <div className={`min-h-screen overflow-x-hidden transition-colors ${isDark ? 'bg-[#1f2229]' : 'bg-gray-50'}`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-[425px]:px-3 pt-4 pb-8 md:pt-6 md:pb-10 max-[425px]:pt-3 max-[425px]:pb-6">
         <Link
           href="/builders"
-          className="inline-flex items-center gap-1.5 text-gray-600 hover:text-gray-900 text-xs max-[425px]:text-[11px] font-medium mb-3 max-[425px]:mb-2 cursor-pointer"
+          className={`inline-flex items-center gap-1.5 text-xs max-[425px]:text-[11px] font-medium mb-3 max-[425px]:mb-2 cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
         >
           <ArrowLeft className="w-3.5 h-3.5 max-[425px]:w-3 max-[425px]:h-3" />
           Back to Builders
         </Link>
 
         <div className="text-center mb-6 md:mb-8 max-[425px]:mb-4">
-          <h1 className="text-2xl max-[425px]:text-xl font-extrabold text-gray-900">Add New Builder</h1>
-          <p className="mt-0.5 text-xs max-[425px]:text-[11px] text-gray-500">Fill in the details below to list a new builder on the platform.</p>
+          <h1 className={`text-2xl max-[425px]:text-xl font-extrabold ${isDark ? 'text-white' : 'text-gray-900'}`}>Apply as a builder</h1>
+          <p className={`mt-0.5 text-xs max-[425px]:text-[11px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Fill in the details below to apply as a builder on the platform.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 max-[425px]:gap-3">
@@ -81,23 +90,23 @@ export default function NewBuilderPage() {
           <aside className="hidden lg:block lg:col-span-1 lg:sticky lg:top-20 self-start">
             <div className={cardClass}>
               <div className="p-4">
-                <h3 className="text-sm font-bold leading-none tracking-tight">Quick Links</h3>
+                <h3 className={`text-sm font-bold leading-none tracking-tight ${isDark ? 'text-white' : ''}`}>Quick Links</h3>
               </div>
               <div className={dividerClass} />
               <nav className="scrollbar-hide p-1.5 flex flex-col gap-0.5 max-h-[calc(100vh-10rem)] overflow-y-auto">
-                <QuickLink href="#overview" icon={BadgeInfo}>Company Overview</QuickLink>
-                <QuickLink href="#description" icon={Building2}>Company Description</QuickLink>
-                <QuickLink href="#social" icon={BarChart3}>Social Media & Website</QuickLink>
-                <QuickLink href="#basic-details" icon={MapPin}>Basic Details</QuickLink>
-                <QuickLink href="#specialties" icon={Settings}>Specialties</QuickLink>
-                <QuickLink href="#availability" icon={BadgeCheck}>Availability Status</QuickLink>
-                <QuickLink href="#director" icon={Users}>Director/Chairman Information</QuickLink>
-                <QuickLink href="#key-people" icon={Users}>Key People</QuickLink>
-                <QuickLink href="#relationship-manager" icon={Users}>Relationship Manager</QuickLink>
-                <QuickLink href="#awards" icon={Megaphone}>Awards & Recognition</QuickLink>
-                <QuickLink href="#testimonials" icon={Megaphone}>Client Testimonials</QuickLink>
-                <QuickLink href="#faq" icon={Megaphone}>Frequently Asked Questions</QuickLink>
-                <QuickLink href="#seo" icon={Settings}>SEO Settings</QuickLink>
+                <QuickLink href="#overview" icon={BadgeInfo} isDark={isDark}>Company Overview</QuickLink>
+                <QuickLink href="#description" icon={Building2} isDark={isDark}>Company Description</QuickLink>
+                <QuickLink href="#social" icon={BarChart3} isDark={isDark}>Social Media & Website</QuickLink>
+                <QuickLink href="#basic-details" icon={MapPin} isDark={isDark}>Basic Details</QuickLink>
+                <QuickLink href="#specialties" icon={Settings} isDark={isDark}>Specialties</QuickLink>
+                <QuickLink href="#availability" icon={BadgeCheck} isDark={isDark}>Availability Status</QuickLink>
+                <QuickLink href="#director" icon={Users} isDark={isDark}>Director/Chairman Information</QuickLink>
+                <QuickLink href="#key-people" icon={Users} isDark={isDark}>Key People</QuickLink>
+                <QuickLink href="#relationship-manager" icon={Users} isDark={isDark}>Relationship Manager</QuickLink>
+                <QuickLink href="#awards" icon={Megaphone} isDark={isDark}>Awards & Recognition</QuickLink>
+                <QuickLink href="#testimonials" icon={Megaphone} isDark={isDark}>Client Testimonials</QuickLink>
+                <QuickLink href="#faq" icon={Megaphone} isDark={isDark}>Frequently Asked Questions</QuickLink>
+                <QuickLink href="#seo" icon={Settings} isDark={isDark}>SEO Settings</QuickLink>
               </nav>
             </div>
           </aside>
@@ -105,7 +114,7 @@ export default function NewBuilderPage() {
           {/* Main content */}
           <main className="lg:col-span-3 space-y-4 max-[425px]:space-y-3 min-w-0">
             {/* Company Overview */}
-            <SectionCard id="overview" title="Company Overview">
+            <SectionCard id="overview" title="Company Overview" isDark={isDark}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-[425px]:gap-3">
                 <div className="space-y-1.5">
                   <label className={labelClass}>Brand / Company Name</label>
@@ -143,14 +152,14 @@ export default function NewBuilderPage() {
                   <label className={labelClass}>Company Logo (PNG/SVG)</label>
                   <label
                     htmlFor="dropzone-logo"
-                    className="flex flex-col items-center justify-center w-full border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 aspect-square h-24"
+                    className={`flex flex-col items-center justify-center w-full border-2 border-dashed rounded-lg cursor-pointer aspect-square h-24 ${isDark ? 'border-gray-600 bg-[#1f2229] hover:bg-[#282c34]' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'}`}
                   >
                     <div className="flex flex-col items-center justify-center py-4">
-                      <CloudUpload className="w-6 h-6 mb-2 text-gray-400" />
-                      <p className="mb-1 text-xs text-gray-500">
+                      <CloudUpload className={`w-6 h-6 mb-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                      <p className={`mb-1 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                         <span className="font-semibold">Click to upload</span> or drag and drop
                       </p>
-                      <p className="text-xs text-gray-400">1:1 Ratio Recommended (SVG, PNG, JPG)</p>
+                      <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>1:1 Ratio Recommended (SVG, PNG, JPG)</p>
                     </div>
                     <input id="dropzone-logo" className="hidden" type="file" />
                   </label>
@@ -159,7 +168,7 @@ export default function NewBuilderPage() {
                   <label className={labelClass}>Builder Category</label>
                   <button
                     type="button"
-                    className="flex h-8 w-full items-center justify-between rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs text-gray-500 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`flex h-8 w-full items-center justify-between rounded-md border px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'}`}
                   >
                     <span>Select Category</span>
                     <ChevronDown className="h-3.5 w-3.5 opacity-50" />
@@ -193,7 +202,7 @@ export default function NewBuilderPage() {
             </SectionCard>
 
             {/* Company Description */}
-            <SectionCard id="description" title="Company Description">
+            <SectionCard id="description" title="Company Description" isDark={isDark}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-[425px]:gap-3">
                 <div className="space-y-2 md:col-span-2">
                   <label className={labelClass}>Short Description (100-120 words)</label>
@@ -252,7 +261,7 @@ export default function NewBuilderPage() {
             </SectionCard>
 
             {/* Social Media & Website */}
-            <SectionCard id="social" title="Social Media & Website">
+            <SectionCard id="social" title="Social Media & Website" isDark={isDark}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-[425px]:gap-3">
                 <div className="space-y-1.5">
                   <label className={labelClass}>Official Website</label>
@@ -293,7 +302,7 @@ export default function NewBuilderPage() {
             </SectionCard>
 
             {/* Basic Details */}
-            <SectionCard id="basic-details" title="Basic Details">
+            <SectionCard id="basic-details" title="Basic Details" isDark={isDark}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-[425px]:gap-3">
                 <div className="space-y-1.5">
                   <label className={labelClass}>Center Name</label>
@@ -327,14 +336,14 @@ export default function NewBuilderPage() {
                   <label className={labelClass}>Center Images (5-8 photos)</label>
                   <label
                     htmlFor="dropzone-center"
-                    className="flex flex-col items-center justify-center w-full border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 aspect-video h-auto min-h-[100px]"
+                    className={`flex flex-col items-center justify-center w-full border-2 border-dashed rounded-lg cursor-pointer aspect-video h-auto min-h-[100px] ${isDark ? 'border-gray-600 bg-[#1f2229] hover:bg-[#282c34]' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'}`}
                   >
                     <div className="flex flex-col items-center justify-center py-4">
-                      <CloudUpload className="w-6 h-6 mb-2 text-gray-400" />
-                      <p className="mb-1 text-xs text-gray-500">
+                      <CloudUpload className={`w-6 h-6 mb-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                      <p className={`mb-1 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                         <span className="font-semibold">Click to upload</span> or drag and drop
                       </p>
-                      <p className="text-[10px] text-gray-400">16:9 Ratio (High-res images)</p>
+                      <p className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>16:9 Ratio (High-res images)</p>
                     </div>
                     <input id="dropzone-center" className="hidden" type="file" multiple />
                   </label>
@@ -348,40 +357,40 @@ export default function NewBuilderPage() {
             </SectionCard>
 
             {/* Specialties */}
-            <SectionCard id="specialties" title="Specialties" subtitle="Select all specialties of the builder.">
+            <SectionCard id="specialties" title="Specialties" subtitle="Select all specialties of the builder." isDark={isDark}>
               <div className="grid grid-cols-2 max-[425px]:grid-cols-2 md:grid-cols-4 gap-4 max-[425px]:gap-3">
                 {['Residential', 'Commercial', 'Hospitality', 'Retail'].map((s) => (
                   <label key={s} className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                    <span className="text-xs font-medium">{s}</span>
+                    <span className={`text-xs font-medium ${isDark ? 'text-gray-300' : ''}`}>{s}</span>
                   </label>
                 ))}
               </div>
             </SectionCard>
 
             {/* Availability Status */}
-            <SectionCard id="availability" title="Availability Status">
+            <SectionCard id="availability" title="Availability Status" isDark={isDark}>
               <div className="flex flex-col md:flex-row gap-4 max-[425px]:gap-3">
-                <span className="text-xs max-[425px]:text-[11px] font-semibold text-gray-700">Listing Category:</span>
+                <span className={`text-xs max-[425px]:text-[11px] font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Listing Category:</span>
                 <div className="flex flex-wrap items-center gap-3 max-[425px]:gap-2">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="radio" name="availability" className="rounded-full" />
-                    <span className="text-sm font-medium">New Launch</span>
+                    <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : ''}`}>New Launch</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="radio" name="availability" className="rounded-full" />
-                    <span className="text-xs font-medium">Upcoming</span>
+                    <span className={`text-xs font-medium ${isDark ? 'text-gray-300' : ''}`}>Upcoming</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="radio" name="availability" defaultChecked className="rounded-full" />
-                    <span className="text-xs font-medium">Ready to Move In</span>
+                    <span className={`text-xs font-medium ${isDark ? 'text-gray-300' : ''}`}>Ready to Move In</span>
                   </label>
                 </div>
               </div>
             </SectionCard>
 
             {/* Director/Chairman */}
-            <SectionCard id="director" title="Director/Chairman Information">
+            <SectionCard id="director" title="Director/Chairman Information" isDark={isDark}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-[425px]:gap-3">
                 <div className="space-y-1.5">
                   <label className={labelClass}>Director Name</label>
@@ -399,20 +408,20 @@ export default function NewBuilderPage() {
             </SectionCard>
 
             {/* Key People */}
-            <SectionCard id="key-people" title="Key People">
+            <SectionCard id="key-people" title="Key People" isDark={isDark}>
               <div className="space-y-3">
                 {Array.from({ length: personsCount }, (_, i) => (
-                  <div key={`person-${i}`} className="p-3 border rounded-md space-y-3 bg-gray-50">
-                    <h4 className="text-xs font-semibold">Person {i + 1}</h4>
+                  <div key={`person-${i}`} className={`p-3 border rounded-md space-y-3 ${isDark ? 'bg-[#1f2229] border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                    <h4 className={`text-xs font-semibold ${isDark ? 'text-white' : ''}`}>Person {i + 1}</h4>
                     <div className="space-y-3">
                       <div className="space-y-1.5">
                         <label className={labelClass}>Photo Upload</label>
                         <label
                           htmlFor={`dropzone-person-${i}`}
-                          className="flex flex-col items-center justify-center w-full border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-white hover:bg-gray-50 py-6"
+                          className={`flex flex-col items-center justify-center w-full border-2 border-dashed rounded-lg cursor-pointer py-6 ${isDark ? 'border-gray-600 bg-[#282c34] hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white hover:bg-gray-50'}`}
                         >
-                          <CloudUpload className="w-6 h-6 mb-2 text-gray-400" />
-                          <p className="text-xs text-gray-500">Click to upload (1:1 Ratio)</p>
+                          <CloudUpload className={`w-6 h-6 mb-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Click to upload (1:1 Ratio)</p>
                           <input id={`dropzone-person-${i}`} className="hidden" type="file" />
                         </label>
                       </div>
@@ -445,7 +454,7 @@ export default function NewBuilderPage() {
             </SectionCard>
 
             {/* Relationship Manager */}
-            <SectionCard id="relationship-manager" title="Relationship Manager">
+            <SectionCard id="relationship-manager" title="Relationship Manager" isDark={isDark}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className={labelClass}>RM Name</label>
@@ -482,11 +491,11 @@ export default function NewBuilderPage() {
             </SectionCard>
 
             {/* Awards & Recognition */}
-            <SectionCard id="awards" title="Awards & Recognition">
+            <SectionCard id="awards" title="Awards & Recognition" isDark={isDark}>
               <div className="space-y-3">
                 {Array.from({ length: awardsCount }, (_, i) => (
-                  <div key={`award-${i}`} className="p-3 border rounded-md space-y-3 bg-gray-50">
-                    <h4 className="text-xs font-semibold">Award {i + 1}</h4>
+                  <div key={`award-${i}`} className={`p-3 border rounded-md space-y-3 ${isDark ? 'bg-[#1f2229] border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                    <h4 className={`text-xs font-semibold ${isDark ? 'text-white' : ''}`}>Award {i + 1}</h4>
                     <div className="space-y-3">
                       <div className="space-y-1.5">
                         <label className={labelClass}>Award Icon/Image</label>
@@ -525,11 +534,11 @@ export default function NewBuilderPage() {
             </SectionCard>
 
             {/* Client Testimonials */}
-            <SectionCard id="testimonials" title="Client Testimonials">
+            <SectionCard id="testimonials" title="Client Testimonials" isDark={isDark}>
               <div className="space-y-3">
                 {Array.from({ length: testimonialsCount }, (_, i) => (
-                  <div key={`testimonial-${i}`} className="p-3 border rounded-md space-y-3 bg-gray-50">
-                    <h4 className="text-xs font-semibold">Testimonial {i + 1}</h4>
+                  <div key={`testimonial-${i}`} className={`p-3 border rounded-md space-y-3 ${isDark ? 'bg-[#1f2229] border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                    <h4 className={`text-xs font-semibold ${isDark ? 'text-white' : ''}`}>Testimonial {i + 1}</h4>
                     <div className="space-y-3">
                       <div className="space-y-1.5">
                         <label className={labelClass}>Client Photo</label>
@@ -570,11 +579,11 @@ export default function NewBuilderPage() {
             </SectionCard>
 
             {/* FAQ */}
-            <SectionCard id="faq" title="Frequently Asked Questions">
+            <SectionCard id="faq" title="Frequently Asked Questions" isDark={isDark}>
               <div className="space-y-3">
                 {Array.from({ length: faqsCount }, (_, i) => (
-                  <div key={`faq-${i}`} className="p-3 border rounded-md space-y-3 bg-gray-50">
-                    <h4 className="text-xs font-semibold">FAQ {i + 1}</h4>
+                  <div key={`faq-${i}`} className={`p-3 border rounded-md space-y-3 ${isDark ? 'bg-[#1f2229] border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+                    <h4 className={`text-xs font-semibold ${isDark ? 'text-white' : ''}`}>FAQ {i + 1}</h4>
                     <div className="space-y-1.5">
                       <label className={labelClass}>Question</label>
                       <input className={inputClass} placeholder="Enter question" />
@@ -597,7 +606,7 @@ export default function NewBuilderPage() {
             </SectionCard>
 
             {/* SEO Settings */}
-            <SectionCard id="seo" title="SEO Settings">
+            <SectionCard id="seo" title="SEO Settings" isDark={isDark}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-[425px]:gap-3">
                 <div className="space-y-2 md:col-span-2">
                   <label className={labelClass}>Meta Title</label>
@@ -607,7 +616,7 @@ export default function NewBuilderPage() {
                 <div className="space-y-2 md:col-span-2">
                   <label className={labelClass}>URL Slug</label>
                   <div className="flex">
-                    <span className="inline-flex items-center px-2.5 text-xs text-gray-700 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md">
+                    <span className={`inline-flex items-center px-2.5 text-xs border border-r-0 rounded-l-md ${isDark ? 'text-gray-200 bg-[#1f2229] border-gray-600' : 'text-gray-700 bg-gray-200 border-gray-300'}`}>
                       /builders/
                     </span>
                     <input
@@ -639,7 +648,7 @@ export default function NewBuilderPage() {
               <button
                 type="button"
                 onClick={() => router.push('/builders')}
-                className="inline-flex items-center justify-center h-9 max-[425px]:h-8 rounded-md px-6 max-[425px]:px-4 text-xs max-[425px]:text-[11px] font-medium border border-gray-200 bg-white hover:bg-gray-50 transition-colors w-full sm:w-auto"
+                className={`inline-flex items-center justify-center h-9 max-[425px]:h-8 rounded-md px-6 max-[425px]:px-4 text-xs max-[425px]:text-[11px] font-medium border transition-colors w-full sm:w-auto ${isDark ? 'border-gray-600 bg-[#282c34] text-gray-300 hover:bg-[#3a3f4b]' : 'border-gray-200 bg-white hover:bg-gray-50'}`}
               >
                 Cancel
               </button>

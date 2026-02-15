@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Building2, MapPin, Calendar, TrendingUp, Award, Crown, Droplets, Lightbulb, Wallet, Home, ExternalLink, Video, FileText, Phone, Mail, MessageCircle, ChevronRight, ChevronDown, List, LayoutGrid, Plus, Check, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useTheme } from '@/context/ThemeContext';
 
 // Subscriber images for hero cards fallback
 const SUBSCRIBER_IMAGES = [
@@ -29,7 +30,7 @@ const DUMMY_BUILDER_SECTIONS = Object.values(BUILDERS_BY_ID);
 const EXPERT_CONTACT = { name: 'Rohit', phone: '+91 89*****896', tag: 'Bhive Expert' };
 
 // Compact builder card for grid view: logo, name, buttons, stats only
-function BuilderGridCard({ section, router }) {
+function BuilderGridCard({ section, router, isDark }) {
   const statItems = [
     { value: section.stats?.projects, label: 'Projects' },
     { value: section.stats?.cities, label: 'Cities' },
@@ -40,10 +41,10 @@ function BuilderGridCard({ section, router }) {
   return (
     <div
       onClick={() => section.id && router.push(`/builders/${section.id}`)}
-      className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 max-[425px]:p-3 cursor-pointer hover:shadow-md transition-shadow mt-4 mx-2 sm:mx-3 max-[425px]:mx-2"
+      className={`rounded-xl shadow-sm border p-4 max-[425px]:p-3 cursor-pointer hover:shadow-md transition-all mt-4 mx-2 sm:mx-3 max-[425px]:mx-2 ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-100'}`}
     >
       <div className="flex items-start gap-3 max-[425px]:gap-2">
-        <div className="w-[48px] h-[52px] max-[425px]:w-[44px] max-[425px]:h-[48px] sm:w-[64px] sm:h-[70px] rounded-md flex-shrink-0 overflow-hidden flex flex-col items-center justify-center bg-white border border-gray-100 shadow-sm">
+        <div className={`w-[48px] h-[52px] max-[425px]:w-[44px] max-[425px]:h-[48px] sm:w-[64px] sm:h-[70px] rounded-md flex-shrink-0 overflow-hidden flex flex-col items-center justify-center border shadow-sm ${isDark ? 'bg-[#1f2229] border-gray-600' : 'bg-white border-gray-100'}`}>
           {section.isBrigade ? (
             <div className="flex flex-col items-center justify-center p-1.5 w-full h-full">
               <div className="relative flex flex-col gap-0.5 items-start w-full pl-0.5">
@@ -54,37 +55,37 @@ function BuilderGridCard({ section, router }) {
                 <div className="w-2 h-0.5 bg-blue-600 rounded ml-1.5" />
                 <div className="absolute -top-0.5 right-0 w-1.5 h-1.5 rounded-full bg-amber-400" />
               </div>
-              <span className="text-[8px] font-semibold text-gray-900 uppercase leading-tight mt-1">BRIGADE</span>
+              <span className={`text-[8px] font-semibold uppercase leading-tight mt-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>BRIGADE</span>
             </div>
           ) : section.logo ? (
             <Image src={section.logo} alt={section.name} width={64} height={70} className="object-contain w-full h-full" />
           ) : (
             <div className="flex flex-col items-center justify-center py-1">
-              <Building2 className="w-5 h-5 text-gray-400 mb-0.5" />
-              <span className="text-gray-500 text-[8px] text-center px-1">Builders info.in</span>
+              <Building2 className={`w-5 h-5 mb-0.5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+              <span className={`text-[8px] text-center px-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Builders info.in</span>
             </div>
           )}
         </div>
         <div className="min-w-0 flex-1 flex flex-col gap-1.5 max-[425px]:gap-1">
-          <h2 className="text-base font-bold text-gray-900 max-[425px]:text-sm truncate">{section.name}</h2>
+          <h2 className={`text-base font-bold max-[425px]:text-sm truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{section.name}</h2>
           <div className="flex flex-wrap gap-1 max-[425px]:gap-0.5">
-            <a href="#" onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 max-[425px]:px-1.5 max-[425px]:py-0.5 rounded-full bg-gray-100 border border-red-500 text-red-600 text-[9px] max-[425px]:text-[8px] font-medium hover:bg-gray-200 transition-colors">
+            <a href="#" onClick={(e) => e.stopPropagation()} className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 max-[425px]:px-1.5 max-[425px]:py-0.5 rounded-full border border-red-500 text-red-500 text-[9px] max-[425px]:text-[8px] font-medium transition-colors ${isDark ? 'bg-white/10 hover:bg-white/15' : 'bg-gray-100 text-red-600 hover:bg-gray-200'}`}>
               <ExternalLink className="w-2.5 h-2.5 max-[425px]:w-2 max-[425px]:h-2" /> Website
             </a>
-            <a href="#" onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 max-[425px]:px-1.5 rounded-full bg-gray-100 text-gray-900 text-[9px] max-[425px]:text-[8px] font-medium hover:bg-gray-200 transition-colors">
+            <a href="#" onClick={(e) => e.stopPropagation()} className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 max-[425px]:px-1.5 rounded-full text-[9px] max-[425px]:text-[8px] font-medium transition-colors ${isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'}`}>
               <Video className="w-2.5 h-2.5 max-[425px]:w-2 max-[425px]:h-2" /> Watch Video
             </a>
-            <a href="#" onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 max-[425px]:px-1.5 rounded-full bg-gray-100 text-gray-900 text-[9px] max-[425px]:text-[8px] font-medium hover:bg-gray-200 transition-colors">
+            <a href="#" onClick={(e) => e.stopPropagation()} className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 max-[425px]:px-1.5 rounded-full text-[9px] max-[425px]:text-[8px] font-medium transition-colors ${isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'}`}>
               <FileText className="w-2.5 h-2.5 max-[425px]:w-2 max-[425px]:h-2" /> Brochure
             </a>
           </div>
           <div className="flex items-stretch gap-0 mt-2 max-[425px]:mt-1.5 flex-wrap max-[425px]:overflow-x-auto max-[425px]:pb-1">
             {statItems.map((item, i) => (
               <div key={i} className="flex items-center">
-                {i > 0 && <span className="w-px h-5 max-[425px]:h-4 bg-gray-200 self-center flex-shrink-0 mx-0.5 max-[425px]:mx-0" />}
+                {i > 0 && <span className={`w-px h-5 max-[425px]:h-4 self-center flex-shrink-0 mx-0.5 max-[425px]:mx-0 ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />}
                 <div className="flex flex-col items-center justify-center px-1.5 max-[425px]:px-1 min-w-0">
-                  <span className="text-[10px] max-[425px]:text-[9px] font-bold text-gray-800 leading-tight">{item.value}</span>
-                  <span className="text-[8px] max-[425px]:text-[7px] text-gray-500 mt-0.5">{item.label}</span>
+                  <span className={`text-[10px] max-[425px]:text-[9px] font-bold leading-tight ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{item.value}</span>
+                  <span className={`text-[8px] max-[425px]:text-[7px] mt-0.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{item.label}</span>
                 </div>
               </div>
             ))}
@@ -98,13 +99,15 @@ function BuilderGridCard({ section, router }) {
 // Single builder block: left = builder info, right = tabs + projects + contact + guarantees
 const DESCRIPTION_PREVIEW_LENGTH = 200;
 
-function BuilderSectionBlock({ section, expert, isVisible, delay, router }) {
+function BuilderSectionBlock({ section, expert, isVisible, delay, router, isDark }) {
   const [activeTab, setActiveTab] = useState('newLaunch');
   const [filterLocation, setFilterLocation] = useState('All Locations');
   const [filterPrice, setFilterPrice] = useState('By Price');
   const [filterSeats, setFilterSeats] = useState('By Seats');
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
-  const selectStyle = 'border rounded-lg px-2 py-1 text-[10px] text-gray-700 appearance-none cursor-pointer pr-6 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50 border-gray-200';
+  const selectStyle = isDark
+    ? 'border border-gray-600 rounded-lg px-2 py-1 text-[10px] text-gray-300 appearance-none cursor-pointer pr-6 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-[#282c34]'
+    : 'border rounded-lg px-2 py-1 text-[10px] text-gray-700 appearance-none cursor-pointer pr-6 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-gray-50 border-gray-200';
   const selectBg = {
     backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
     backgroundRepeat: 'no-repeat',
@@ -159,16 +162,16 @@ function BuilderSectionBlock({ section, expert, isVisible, delay, router }) {
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden mb-6 max-[425px]:mb-4 transition-all duration-500 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}
+      className={`rounded-xl shadow-md border overflow-hidden mb-6 max-[425px]:mb-4 transition-all duration-500 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'} ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-100'}`}
       style={{ transitionDelay: `${delay}ms` }}
     >
       <div className="p-4 sm:p-5 lg:p-6 max-[425px]:p-3">
         <div className="flex flex-col lg:flex-row gap-4 lg:gap-8 max-[425px]:gap-3">
           {/* Left section: profile card - Logo left, Name + Buttons + Stats right */}
-          <div className="lg:w-[42%] lg:max-w-[420px] lg:flex-shrink-0 lg:min-w-0 bg-white rounded-xl shadow-sm border border-gray-100 p-5 sm:p-6 max-[425px]:p-3 hover:shadow-md transition-shadow flex flex-col">
+          <div className={`lg:w-[42%] lg:max-w-[420px] lg:flex-shrink-0 lg:min-w-0 rounded-xl shadow-sm border p-5 sm:p-6 max-[425px]:p-3 hover:shadow-md transition-shadow flex flex-col ${isDark ? 'bg-[#1f2229] border-gray-600' : 'bg-white border-gray-100'}`}>
             {/* Logo (left) | Right: Row1 Name, Row2 Buttons, Row3 Stats */}
             <div className="flex items-start gap-3 max-[425px]:gap-2 flex-shrink-0">
-              <div className="w-[48px] h-[52px] max-[425px]:w-[44px] max-[425px]:h-[48px] sm:w-[64px] sm:h-[70px] rounded-md flex-shrink-0 overflow-hidden flex flex-col items-center justify-center bg-white border border-gray-100 shadow-sm">
+              <div className={`w-[48px] h-[52px] max-[425px]:w-[44px] max-[425px]:h-[48px] sm:w-[64px] sm:h-[70px] rounded-md flex-shrink-0 overflow-hidden flex flex-col items-center justify-center border shadow-sm ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-100'}`}>
                 {section.isBrigade ? (
                   <div className="flex flex-col items-center justify-center p-1.5 w-full h-full">
                     <div className="relative flex flex-col gap-0.5 items-start w-full pl-0.5">
@@ -179,29 +182,29 @@ function BuilderSectionBlock({ section, expert, isVisible, delay, router }) {
                       <div className="w-2 h-0.5 bg-blue-600 rounded ml-1.5" />
                       <div className="absolute -top-0.5 right-0 w-1.5 h-1.5 rounded-full bg-amber-400" />
                     </div>
-                    <span className="text-[8px] font-semibold text-gray-900 uppercase leading-tight mt-1">BRIGADE</span>
+                    <span className={`text-[8px] font-semibold uppercase leading-tight mt-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>BRIGADE</span>
                   </div>
                 ) : section.logo ? (
                   <Image src={section.logo} alt={section.name} width={64} height={70} className="object-contain w-full h-full" />
                 ) : (
                   <div className="flex flex-col items-center justify-center py-1">
-                    <Building2 className="w-5 h-5 text-gray-400 mb-0.5" />
-                    <span className="text-gray-500 text-[8px] text-center px-1">Builders info.in</span>
+                    <Building2 className={`w-5 h-5 mb-0.5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                    <span className={`text-[8px] text-center px-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Builders info.in</span>
                   </div>
                 )}
               </div>
               <div className="min-w-0 flex-1 flex flex-col gap-1.5 max-[425px]:gap-1">
                 {/* Row 1: Name */}
-                <h2 className="text-base font-bold text-gray-900 max-[425px]:text-sm truncate">{section.name}</h2>
+                <h2 className={`text-base font-bold max-[425px]:text-sm truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{section.name}</h2>
                 {/* Row 2: Buttons - all in one row */}
                 <div className="flex flex-wrap gap-1 max-[425px]:gap-0.5">
-                  <a href="#" className="inline-flex items-center gap-0.5 px-1.5 py-0.5 max-[425px]:px-1.5 rounded-full bg-gray-100 border border-red-500 text-red-600 text-[9px] max-[425px]:text-[8px] font-medium hover:bg-gray-200 transition-colors">
+                  <a href="#" className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 max-[425px]:px-1.5 rounded-full border border-red-500 text-[9px] max-[425px]:text-[8px] font-medium transition-colors ${isDark ? 'bg-white/10 text-red-400 hover:bg-white/15' : 'bg-gray-100 text-red-600 hover:bg-gray-200'}`}>
                     <ExternalLink className="w-2.5 h-2.5 max-[425px]:w-2 max-[425px]:h-2" /> Website
                   </a>
-                  <a href="#" className="inline-flex items-center gap-0.5 px-1.5 py-0.5 max-[425px]:px-1.5 rounded-full bg-gray-100 text-gray-900 text-[9px] max-[425px]:text-[8px] font-medium hover:bg-gray-200 transition-colors">
+                  <a href="#" className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 max-[425px]:px-1.5 rounded-full text-[9px] max-[425px]:text-[8px] font-medium transition-colors ${isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'}`}>
                     <Video className="w-2.5 h-2.5 max-[425px]:w-2 max-[425px]:h-2" /> Watch Video
                   </a>
-                  <a href="#" className="inline-flex items-center gap-0.5 px-1.5 py-0.5 max-[425px]:px-1.5 rounded-full bg-gray-100 text-gray-900 text-[9px] max-[425px]:text-[8px] font-medium hover:bg-gray-200 transition-colors">
+                  <a href="#" className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 max-[425px]:px-1.5 rounded-full text-[9px] max-[425px]:text-[8px] font-medium transition-colors ${isDark ? 'bg-white/10 text-gray-300 hover:bg-white/15' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'}`}>
                     <FileText className="w-2.5 h-2.5 max-[425px]:w-2 max-[425px]:h-2" /> Brochure
                   </a>
                 </div>
@@ -209,10 +212,10 @@ function BuilderSectionBlock({ section, expert, isVisible, delay, router }) {
                 <div className="flex items-stretch gap-0 flex-wrap max-[425px]:overflow-x-auto max-[425px]:pb-1">
                   {statItems.map((item, i) => (
                     <div key={i} className="flex items-center">
-                      {i > 0 && <span className="w-px h-5 max-[425px]:h-4 bg-gray-200 self-center flex-shrink-0 max-[425px]:mx-0" />}
+                      {i > 0 && <span className={`w-px h-5 max-[425px]:h-4 self-center flex-shrink-0 max-[425px]:mx-0 ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />}
                       <div className="flex flex-col items-center justify-center px-1.5 max-[425px]:px-1 min-w-0">
-                        <span className="text-[10px] max-[425px]:text-[9px] font-bold text-gray-800 leading-tight">{item.value}</span>
-                        <span className="text-[8px] max-[425px]:text-[7px] text-gray-500 mt-0.5">{item.label}</span>
+                        <span className={`text-[10px] max-[425px]:text-[9px] font-bold leading-tight ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{item.value}</span>
+                        <span className={`text-[8px] max-[425px]:text-[7px] mt-0.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{item.label}</span>
                       </div>
                     </div>
                   ))}
@@ -222,7 +225,7 @@ function BuilderSectionBlock({ section, expert, isVisible, delay, router }) {
 
             {/* Description + Read more: follows description, not bottom-aligned */}
             <div className="flex-1 min-h-0 mt-4 max-[425px]:mt-3">
-              <p className="text-gray-600 text-xs max-[425px]:text-[11px] leading-relaxed" style={{ lineHeight: 1.5 }}>
+              <p className={`text-xs max-[425px]:text-[11px] leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-600'}`} style={{ lineHeight: 1.5 }}>
                 {descriptionExpanded || !section.description || section.description.length <= DESCRIPTION_PREVIEW_LENGTH
                   ? section.description
                   : `${section.description.slice(0, DESCRIPTION_PREVIEW_LENGTH)}...`}
@@ -231,7 +234,7 @@ function BuilderSectionBlock({ section, expert, isVisible, delay, router }) {
                 <button
                   type="button"
                   onClick={() => setDescriptionExpanded((prev) => !prev)}
-                  className="text-blue-600 font-semibold text-xs hover:underline mt-1 inline-block text-left"
+                  className="text-blue-400 font-semibold text-xs hover:underline mt-1 inline-block text-left"
                 >
                   {descriptionExpanded ? 'Read less' : 'Read more'}
                 </button>
@@ -240,7 +243,7 @@ function BuilderSectionBlock({ section, expert, isVisible, delay, router }) {
             <button
               type="button"
               onClick={() => section.id && router.push(`/builders/${section.id}`)}
-              className="inline-flex items-center gap-1 text-blue-600 font-medium text-xs max-[425px]:text-[11px] hover:underline mt-auto pt-4 max-[425px]:pt-3 text-left cursor-pointer"
+              className="inline-flex items-center gap-1 text-blue-400 font-medium text-xs max-[425px]:text-[11px] hover:underline mt-auto pt-4 max-[425px]:pt-3 text-left cursor-pointer"
             >
               Interested in {section.name}? Connect with us <ChevronRight className="w-3.5 h-3.5 shrink-0" />
             </button>
@@ -248,10 +251,10 @@ function BuilderSectionBlock({ section, expert, isVisible, delay, router }) {
 
           {/* Right section */}
           <div className="lg:flex-1 lg:min-w-0 min-w-0">
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-5 max-[425px]:p-3">
+            <div className={`rounded-xl border shadow-sm p-4 sm:p-5 max-[425px]:p-3 ${isDark ? 'bg-[#1f2229] border-gray-600' : 'bg-white border-gray-200'}`}>
               {/* Tabs + Filters in one row */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 max-[425px]:mb-3">
-                <div className="flex gap-4 max-[425px]:gap-2 border-b border-gray-200 pb-2 overflow-x-auto max-[425px]:-mx-1 max-[425px]:px-1">
+                <div className={`flex gap-4 max-[425px]:gap-2 border-b pb-2 overflow-x-auto max-[425px]:-mx-1 max-[425px]:px-1 ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
                   {tabs.map((t) => (
                     <button
                       key={t.id}
@@ -259,8 +262,8 @@ function BuilderSectionBlock({ section, expert, isVisible, delay, router }) {
                       onClick={() => setActiveTab(t.id)}
                       className={`pb-1.5 text-xs max-[425px]:text-[10px] font-medium border-b-2 transition-colors -mb-[2px] whitespace-nowrap shrink-0 ${
                         activeTab === t.id
-                          ? 'text-gray-900 font-bold border-blue-600'
-                          : 'text-gray-400 border-transparent hover:text-gray-600'
+                          ? isDark ? 'text-blue-400 font-bold border-blue-500' : 'text-gray-900 font-bold border-blue-600'
+                          : isDark ? 'text-gray-400 border-transparent hover:text-gray-300' : 'text-gray-400 border-transparent hover:text-gray-600'
                       }`}
                     >
                       {t.label}
@@ -288,18 +291,18 @@ function BuilderSectionBlock({ section, expert, isVisible, delay, router }) {
 
               {/* Property cards: 3 per row on larger, 1–2 on small */}
               {displayProjects.length === 0 ? (
-                <p className="text-gray-500 text-xs max-[425px]:text-[11px] py-4">No projects match your filters. Try different criteria.</p>
+                <p className={`text-xs max-[425px]:text-[11px] py-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No projects match your filters. Try different criteria.</p>
               ) : showGrid ? (
                 <div className="grid grid-cols-1 max-[425px]:grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-4 max-[425px]:mb-3">
                   {displayProjects.map((proj, i) => (
-                    <div key={i} className="flex gap-3 bg-white rounded-lg border border-gray-100 shadow-sm p-2.5 max-[425px]:p-2 hover:shadow-md transition-shadow min-w-0">
-                      <div className="w-14 h-14 max-[425px]:w-12 max-[425px]:h-12 sm:w-20 sm:h-20 flex-shrink-0 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-200">
-                        <Home className="w-7 h-7 max-[425px]:w-6 max-[425px]:h-6 sm:w-10 sm:h-10 text-gray-400" />
+                    <div key={i} className={`flex gap-3 rounded-lg border shadow-sm p-2.5 max-[425px]:p-2 hover:shadow-md transition-shadow min-w-0 ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-100'}`}>
+                      <div className={`w-14 h-14 max-[425px]:w-12 max-[425px]:h-12 sm:w-20 sm:h-20 flex-shrink-0 rounded-md overflow-hidden flex items-center justify-center border ${isDark ? 'bg-[#1f2229] border-gray-600' : 'bg-gray-100 border-gray-200'}`}>
+                        <Home className={`w-7 h-7 max-[425px]:w-6 max-[425px]:h-6 sm:w-10 sm:h-10 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                       </div>
                       <div className="min-w-0 flex-1 flex flex-col justify-center">
-                        <p className="font-semibold text-gray-900 text-[10px] sm:text-xs max-[425px]:text-[10px] truncate">{proj.name}</p>
-                        <p className="text-[9px] sm:text-[10px] max-[425px]:text-[9px] text-gray-500 truncate mt-0.5">{proj.location}</p>
-                        <p className="text-blue-600 text-[9px] sm:text-[10px] font-bold mt-1">{proj.status}</p>
+                        <p className={`font-semibold text-[10px] sm:text-xs max-[425px]:text-[10px] truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{proj.name}</p>
+                        <p className={`text-[9px] sm:text-[10px] max-[425px]:text-[9px] truncate mt-0.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{proj.location}</p>
+                        <p className="text-blue-400 text-[9px] sm:text-[10px] font-bold mt-1">{proj.status}</p>
                       </div>
                     </div>
                   ))}
@@ -314,14 +317,14 @@ function BuilderSectionBlock({ section, expert, isVisible, delay, router }) {
               ) : (
                 <div className="grid grid-cols-1 max-[425px]:grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-4 max-[425px]:mb-3">
                   {displayProjects.map((proj, i) => (
-                    <div key={i} className="flex gap-3 bg-white rounded-lg border border-gray-100 shadow-sm p-3 max-[425px]:p-2 min-w-0">
-                      <div className="w-14 h-14 max-[425px]:w-12 max-[425px]:h-12 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center flex-shrink-0 border border-gray-200">
-                        <Home className="w-7 h-7 max-[425px]:w-6 max-[425px]:h-6 text-gray-400" />
+                    <div key={i} className={`flex gap-3 rounded-lg border shadow-sm p-3 max-[425px]:p-2 min-w-0 ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-100'}`}>
+                      <div className={`w-14 h-14 max-[425px]:w-12 max-[425px]:h-12 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0 border ${isDark ? 'bg-[#1f2229] border-gray-600' : 'bg-gray-100 border-gray-200'}`}>
+                        <Home className={`w-7 h-7 max-[425px]:w-6 max-[425px]:h-6 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-gray-900 text-xs max-[425px]:text-[10px] truncate">{proj.name}</p>
-                        <p className="text-[10px] max-[425px]:text-[9px] text-gray-500 truncate mt-0.5">{proj.location}</p>
-                        <p className="text-blue-600 text-[10px] max-[425px]:text-[9px] font-bold mt-1">{proj.status}</p>
+                        <p className={`font-semibold text-xs max-[425px]:text-[10px] truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{proj.name}</p>
+                        <p className={`text-[10px] max-[425px]:text-[9px] truncate mt-0.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{proj.location}</p>
+                        <p className="text-blue-400 text-[10px] max-[425px]:text-[9px] font-bold mt-1">{proj.status}</p>
                       </div>
                     </div>
                   ))}
@@ -331,24 +334,24 @@ function BuilderSectionBlock({ section, expert, isVisible, delay, router }) {
               {/* Contact Agent + Benefit cards - Contact = 1.5x one property card, rest = benefits, equal heights */}
               <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1.5fr] gap-4 max-[425px]:gap-3 items-stretch">
                 <div className="min-w-0">
-                  <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-3 max-[425px]:p-2.5 h-full">
+                  <div className={`rounded-lg border shadow-sm p-3 max-[425px]:p-2.5 h-full ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-200'}`}>
                     <div className="flex items-start gap-2 mb-2 max-[425px]:gap-1.5 max-[425px]:mb-1.5">
-                      <div className="w-10 h-10 max-[425px]:w-9 max-[425px]:h-9 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden flex items-center justify-center border border-gray-200">
-                        <User className="w-5 h-5 max-[425px]:w-4 max-[425px]:h-4 text-gray-400" />
+                      <div className={`w-10 h-10 max-[425px]:w-9 max-[425px]:h-9 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center border ${isDark ? 'bg-[#1f2229] border-gray-600' : 'bg-gray-100 border-gray-200'}`}>
+                        <User className={`w-5 h-5 max-[425px]:w-4 max-[425px]:h-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="font-bold text-gray-900 text-xs max-[425px]:text-[11px]">Say Hi To {expert.name}</p>
-                        <p className="text-[10px] max-[425px]:text-[9px] text-gray-600 font-medium mt-0.5">{expert.phone}</p>
+                        <p className={`font-bold text-xs max-[425px]:text-[11px] ${isDark ? 'text-white' : 'text-gray-900'}`}>Say Hi To {expert.name}</p>
+                        <p className={`text-[10px] max-[425px]:text-[9px] font-medium mt-0.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{expert.phone}</p>
                         <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-green-500 text-white text-[9px] max-[425px]:text-[8px] font-medium">{expert.tag}</span>
                       </div>
                       <div className="flex items-center gap-1 flex-shrink-0 ml-auto">
-                        <button type="button" className="w-7 h-7 max-[425px]:w-6 max-[425px]:h-6 rounded-full border border-green-500 text-green-600 flex items-center justify-center hover:bg-green-50 transition-colors" style={{ backgroundColor: '#dcfce7' }}>
+                        <button type="button" className={`w-7 h-7 max-[425px]:w-6 max-[425px]:h-6 rounded-full border border-green-500 text-green-500 flex items-center justify-center transition-colors ${isDark ? 'hover:bg-green-500/20' : 'hover:bg-green-50'}`} style={isDark ? {} : { backgroundColor: '#dcfce7' }}>
                           <Phone className="w-3.5 h-3.5 max-[425px]:w-3 max-[425px]:h-3" />
                         </button>
-                        <button type="button" className="w-7 h-7 max-[425px]:w-6 max-[425px]:h-6 rounded-full border border-green-500 text-green-600 flex items-center justify-center hover:bg-green-50 transition-colors" style={{ backgroundColor: '#dcfce7' }}>
+                        <button type="button" className={`w-7 h-7 max-[425px]:w-6 max-[425px]:h-6 rounded-full border border-green-500 text-green-500 flex items-center justify-center transition-colors ${isDark ? 'hover:bg-green-500/20' : 'hover:bg-green-50'}`} style={isDark ? {} : { backgroundColor: '#dcfce7' }}>
                           <Mail className="w-3.5 h-3.5 max-[425px]:w-3 max-[425px]:h-3" />
                         </button>
-                        <button type="button" className="w-7 h-7 max-[425px]:w-6 max-[425px]:h-6 rounded-full border border-green-500 text-green-600 flex items-center justify-center hover:bg-green-50 transition-colors" style={{ backgroundColor: '#dcfce7' }}>
+                        <button type="button" className={`w-7 h-7 max-[425px]:w-6 max-[425px]:h-6 rounded-full border border-green-500 text-green-500 flex items-center justify-center transition-colors ${isDark ? 'hover:bg-green-500/20' : 'hover:bg-green-50'}`} style={isDark ? {} : { backgroundColor: '#dcfce7' }}>
                           <MessageCircle className="w-3.5 h-3.5 max-[425px]:w-3 max-[425px]:h-3" />
                         </button>
                       </div>
@@ -359,22 +362,22 @@ function BuilderSectionBlock({ section, expert, isVisible, delay, router }) {
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 max-[425px]:gap-1.5 min-w-0">
-                  <div className="flex items-start gap-2 max-[425px]:gap-1.5 rounded-lg border border-gray-200 p-2 max-[425px]:p-1.5 shadow-sm flex-1 min-h-0" style={{ backgroundColor: '#e2e9f7' }}>
-                    <div className="w-8 h-8 max-[425px]:w-7 max-[425px]:h-7 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0">
-                      <span className="text-blue-600 font-bold text-sm max-[425px]:text-xs">Z</span>
+                  <div className={`flex items-start gap-2 max-[425px]:gap-1.5 rounded-lg border p-2 max-[425px]:p-1.5 shadow-sm flex-1 min-h-0 ${isDark ? 'border-gray-600 bg-blue-900/20' : 'border-gray-200'}`} style={isDark ? {} : { backgroundColor: '#e2e9f7' }}>
+                    <div className={`w-8 h-8 max-[425px]:w-7 max-[425px]:h-7 rounded-full border flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-blue-500/20 border-blue-500/40' : 'bg-blue-50 border-blue-100'}`}>
+                      <span className="text-blue-500 font-bold text-sm max-[425px]:text-xs">Z</span>
                     </div>
                     <div className="min-w-0">
-                      <p className="font-semibold text-gray-900 text-[10px] max-[425px]:text-[9px]">Zero Brokerage</p>
-                      <p className="text-[9px] max-[425px]:text-[8px] text-gray-600 leading-tight mt-0.5">100% Service, 0% Brokerage</p>
+                      <p className={`font-semibold text-[10px] max-[425px]:text-[9px] ${isDark ? 'text-white' : 'text-gray-900'}`}>Zero Brokerage</p>
+                      <p className={`text-[9px] max-[425px]:text-[8px] leading-tight mt-0.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>100% Service, 0% Brokerage</p>
                     </div>
                   </div>
-                  <div className="flex items-start gap-2 max-[425px]:gap-1.5 rounded-lg border border-gray-200 p-2 max-[425px]:p-1.5 shadow-sm flex-1 min-h-0" style={{ backgroundColor: '#e2e9f7' }}>
-                    <div className="w-8 h-8 max-[425px]:w-7 max-[425px]:h-7 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0">
-                      <TrendingUp className="w-4 h-4 max-[425px]:w-3.5 max-[425px]:h-3.5 text-blue-600" />
+                  <div className={`flex items-start gap-2 max-[425px]:gap-1.5 rounded-lg border p-2 max-[425px]:p-1.5 shadow-sm flex-1 min-h-0 ${isDark ? 'border-gray-600 bg-blue-900/20' : 'border-gray-200'}`} style={isDark ? {} : { backgroundColor: '#e2e9f7' }}>
+                    <div className={`w-8 h-8 max-[425px]:w-7 max-[425px]:h-7 rounded-full border flex items-center justify-center flex-shrink-0 ${isDark ? 'bg-blue-500/20 border-blue-500/40' : 'bg-blue-50 border-blue-100'}`}>
+                      <TrendingUp className={`w-4 h-4 max-[425px]:w-3.5 max-[425px]:h-3.5 text-blue-500`} />
                     </div>
                     <div className="min-w-0">
-                      <p className="font-semibold text-gray-900 text-[10px] max-[425px]:text-[9px]">Lowest Price Guaranteed</p>
-                      <p className="text-[9px] max-[425px]:text-[8px] text-gray-600 leading-tight mt-0.5">Highly unlikely, but if you find a lower price anywhere, tell us and we will match it.</p>
+                      <p className={`font-semibold text-[10px] max-[425px]:text-[9px] ${isDark ? 'text-white' : 'text-gray-900'}`}>Lowest Price Guaranteed</p>
+                      <p className={`text-[9px] max-[425px]:text-[8px] leading-tight mt-0.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Highly unlikely, but if you find a lower price anywhere, tell us and we will match it.</p>
                     </div>
                   </div>
                 </div>
@@ -389,6 +392,7 @@ function BuilderSectionBlock({ section, expert, isVisible, delay, router }) {
 
 export default function BuildersPage() {
   const router = useRouter();
+  const { isDark } = useTheme();
   const [isVisible, setIsVisible] = useState(false);
   const [builders, setBuilders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -414,21 +418,32 @@ export default function BuildersPage() {
 
       if (data.success) {
         // Transform MongoDB data to match UI structure
-        const transformedBuilders = data.data.map((builder, index) => ({
-          id: builder._id,
-          name: builder.builderName || 'N/A',
-          tagline: builder.tagline || '',
-          founded: builder.foundedYear || 'N/A',
-          headquarters: builder.headquarters || 'N/A',
-          projectsCompleted: builder.projectsCompleted?.toString() || '0',
-          ongoingProjects: builder.ongoingProjects?.toString() || '0',
-          upcomingProjects: builder.upcomingProjects?.toString() || '0',
-          experience: builder.yearsOfExperience ? `${builder.yearsOfExperience}+` : 'N/A',
-          cities: builder.citiesPresence || 'N/A',
-          logo: builder.builderLogo?.url || SUBSCRIBER_IMAGES[index % SUBSCRIBER_IMAGES.length],
-          gradient: ['from-emerald-500 via-teal-500 to-cyan-600', 'from-blue-500 via-indigo-500 to-purple-600', 'from-orange-500 via-red-500 to-pink-600'][index % 3],
-          accentColor: ['emerald', 'blue', 'orange'][index % 3],
-        }));
+        const transformedBuilders = data.data.map((builder, index) => {
+          const name = builder.name || builder.builderName || 'N/A';
+          const stats = builder.stats || {};
+          return {
+            id: builder._id,
+            name,
+            tagline: builder.tagline || '',
+            founded: builder.founded || builder.foundedYear || 'N/A',
+            headquarters: builder.headquarters || '',
+            description: builder.description || '',
+            stats: {
+              projects: stats.projects ?? builder.projectsCompleted?.toString() ?? '0',
+              cities: stats.cities ?? builder.citiesPresence ?? '0',
+              sqft: stats.sqft ?? '1.8+',
+              clients: stats.clients ?? '1000+',
+              experience: stats.experience ?? (builder.yearsOfExperience ? `${builder.yearsOfExperience}+` : 'N/A'),
+              experienceNum: stats.experienceNum ?? builder.yearsOfExperience ?? undefined,
+              projectsNum: stats.projectsNum ?? builder.projectsCompleted ?? (builder.projects?.length),
+            },
+            logo: builder.logo || builder.builderLogo?.url || SUBSCRIBER_IMAGES[index % SUBSCRIBER_IMAGES.length],
+            isBrigade: !!builder.isBrigade,
+            projects: builder.projects || [],
+            gradient: ['from-emerald-500 via-teal-500 to-cyan-600', 'from-blue-500 via-indigo-500 to-purple-600', 'from-orange-500 via-red-500 to-pink-600'][index % 3],
+            accentColor: ['emerald', 'blue', 'orange'][index % 3],
+          };
+        });
         setBuilders(transformedBuilders);
       }
     } catch (err) {
@@ -488,7 +503,9 @@ export default function BuildersPage() {
     return match ? parseInt(match[1], 10) : (section.projects?.length ?? 0);
   };
 
-  const sortedBuilders = [...DUMMY_BUILDER_SECTIONS].sort((a, b) => {
+  // Data comes from API (for now API returns dummy; later switch route to DB and remove fallback)
+  const listSource = builders.length > 0 ? builders : DUMMY_BUILDER_SECTIONS;
+  const sortedBuilders = [...listSource].sort((a, b) => {
     if (sortBy === 'Property') return (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' });
     if (sortBy === 'Experience') return getExperienceNum(b) - getExperienceNum(a); // desc: highest first
     if (sortBy === 'Total Projects') return getProjectsNum(b) - getProjectsNum(a); // desc: highest first
@@ -654,17 +671,17 @@ export default function BuildersPage() {
       </section>
 
       {/* Builders Section - Two-column layout per builder */}
-      <div className="bg-gray-100 min-h-screen overflow-x-hidden">
+      <div className={`min-h-screen overflow-x-hidden transition-colors ${isDark ? 'bg-[#1f2229]' : 'bg-gray-100'}`}>
         <div className="max-w-7xl mx-auto px-3 sm:px-4 max-[425px]:px-2 py-4 sm:py-6 max-[425px]:py-3">
           {/* Top bar: results + Sort by + view toggle — small */}
           <div className="flex flex-wrap items-center justify-between gap-2 mb-4 max-[425px]:mb-3">
-            <p className="text-gray-700 text-xs max-[425px]:text-[11px] font-medium">{sortedBuilders.length} results found</p>
+            <p className={`text-xs max-[425px]:text-[11px] font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{sortedBuilders.length} results found</p>
             <div className="flex items-center gap-2 max-[425px]:gap-1.5 flex-wrap">
-              <span className="text-xs max-[425px]:text-[10px] text-gray-600">Sort by:</span>
+              <span className={`text-xs max-[425px]:text-[10px] ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Sort by:</span>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="bg-white border border-gray-200 rounded-lg px-3 py-2 max-[425px]:px-2 max-[425px]:py-1.5 text-xs max-[425px]:text-[10px] font-medium text-gray-900 hover:bg-gray-50 transition-colors min-w-[120px] max-[425px]:min-w-[100px] appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500 pr-8"
+                className={`border rounded-lg px-3 py-2 max-[425px]:px-2 max-[425px]:py-1.5 text-xs max-[425px]:text-[10px] font-medium transition-colors min-w-[120px] max-[425px]:min-w-[100px] appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500 pr-8 ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-200 hover:bg-[#3a3f4b]' : 'bg-white border-gray-200 text-gray-900 hover:bg-gray-50'}`}
                 style={{
                   backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
                   backgroundRepeat: 'no-repeat',
@@ -679,15 +696,15 @@ export default function BuildersPage() {
               <button
                 type="button"
                 onClick={() => router.push('/builders/new')}
-                className="w-8 h-8 max-[425px]:w-7 max-[425px]:h-7 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-900 hover:bg-gray-50 transition-colors shrink-0 cursor-pointer"
+                className={`w-8 h-8 max-[425px]:w-7 max-[425px]:h-7 rounded-full border flex items-center justify-center transition-colors shrink-0 cursor-pointer ${isDark ? 'border-gray-600 bg-[#282c34] text-white hover:bg-[#3a3f4b]' : 'border-gray-200 bg-white text-gray-900 hover:bg-gray-50'}`}
               >
                 <Plus className="w-4 h-4 max-[425px]:w-3.5 max-[425px]:h-3.5" />
               </button>
-              <div className="flex rounded-lg bg-gray-200 p-0.5 w-[72px] max-[425px]:w-[64px] overflow-hidden shrink-0">
+              <div className={`flex rounded-lg p-0.5 w-[72px] max-[425px]:w-[64px] overflow-hidden shrink-0 ${isDark ? 'bg-[#282c34]' : 'bg-gray-200'}`}>
                 <button
                   type="button"
                   onClick={() => setViewMode('list')}
-                  className={`w-8 h-8 max-[425px]:w-7 max-[425px]:h-7 flex items-center justify-center rounded-md transition-all cursor-pointer ${viewMode === 'list' ? 'bg-white text-gray-900 shadow-sm' : 'bg-transparent text-gray-600 hover:bg-gray-100/50'}`}
+                  className={`w-8 h-8 max-[425px]:w-7 max-[425px]:h-7 flex items-center justify-center rounded-md transition-all cursor-pointer ${viewMode === 'list' ? (isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-900 shadow-sm') : (isDark ? 'text-gray-400 hover:bg-white/10' : 'bg-transparent text-gray-600 hover:bg-gray-100/50')}`}
                   title="List view"
                 >
                   <List className="w-4 h-4 max-[425px]:w-3.5 max-[425px]:h-3.5" />
@@ -695,7 +712,7 @@ export default function BuildersPage() {
                 <button
                   type="button"
                   onClick={() => setViewMode('grid')}
-                  className={`w-8 h-8 max-[425px]:w-7 max-[425px]:h-7 flex items-center justify-center rounded-md transition-all cursor-pointer ${viewMode === 'grid' ? 'bg-white text-gray-900 shadow-sm' : 'bg-transparent text-gray-600 hover:bg-gray-100/50'}`}
+                  className={`w-8 h-8 max-[425px]:w-7 max-[425px]:h-7 flex items-center justify-center rounded-md transition-all cursor-pointer ${viewMode === 'grid' ? (isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-900 shadow-sm') : (isDark ? 'text-gray-400 hover:bg-white/10' : 'bg-transparent text-gray-600 hover:bg-gray-100/50')}`}
                   title="Grid view"
                 >
                   <LayoutGrid className="w-4 h-4 max-[425px]:w-3.5 max-[425px]:h-3.5" />
@@ -707,12 +724,12 @@ export default function BuildersPage() {
           {viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-[425px]:gap-3 pt-2 max-[425px]:pt-1">
               {sortedBuilders.map((section) => (
-                <BuilderGridCard key={section.id} section={section} router={router} />
+                <BuilderGridCard key={section.id} section={section} router={router} isDark={isDark} />
               ))}
             </div>
           ) : (
             sortedBuilders.map((section, idx) => (
-              <BuilderSectionBlock key={section.id} section={section} expert={EXPERT_CONTACT} isVisible={isVisible} delay={idx * 100} router={router} />
+              <BuilderSectionBlock key={section.id} section={section} expert={EXPERT_CONTACT} isVisible={isVisible} delay={idx * 100} router={router} isDark={isDark} />
             ))
           )}
         </div>

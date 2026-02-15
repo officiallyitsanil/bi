@@ -147,8 +147,7 @@ const CommercialPropertySchema = new mongoose.Schema({
   featuredImage: FileSchema,
   publishedAt: Date,
   updatedBy: mongoose.Schema.Types.ObjectId,
-  
-  // Legacy fields for backward compatibility
+
   state_name: String,
   city: String,
   name: String,

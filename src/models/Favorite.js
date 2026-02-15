@@ -23,7 +23,6 @@ const FavoriteSchema = new mongoose.Schema(
   }
 );
 
-// Create compound index to ensure unique combination
 FavoriteSchema.index({ userPhoneNumber: 1, propertyId: 1 }, { unique: true });
 
 export default mongoose.models.Favorite || mongoose.model("Favorite", FavoriteSchema);
