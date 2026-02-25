@@ -1,0 +1,775 @@
+[
+    {
+        "_id": "65a1b2c3d4e5f6a7b8c9d001",
+        "name": "Prestige Primrose Hills",
+        "propertyName": "Prestige Primrose Hills",
+        "propertyType": "residential",
+        "listingType": "sale",
+        "category": "Apartment",
+        "underManagement": false,
+        "availableFloors": "2nd Floor",
+        "builderName": "Sobha Developers",
+        "agentName": "Priya Singh",
+        "agentPhone": "+91 9988776655",
+        "agentImage": "https://i.pravatar.cc/150?img=9",
+        "brandLogo": "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=96",
+        "selectedType": "apartment",
+        "apartmentType": "Flat",
+        "bhkType": "3 BHK",
+        "propertySize": "1850",
+        "carpetArea": "1450",
+        "size": "1850 sqft",
+        "floor": "7",
+        "totalFloors": "22",
+        "selectedFloors": [
+            "7",
+            "8",
+            "9",
+            "10"
+        ],
+        "floors_available": [
+            "7",
+            "8",
+            "10",
+            "12",
+            "15",
+            "18"
+        ],
+        "facing": "East",
+        "propertyAge": "Under Construction",
+        "availableFor": "Sale",
+        "furnishing": "Semi-Furnished",
+        "parking": "2 Covered",
+        "bathrooms": 3,
+        "washrooms": 3,
+        "balconies": 2,
+        "expectedRent": null,
+        "expectedDeposit": null,
+        "monthlyMaintenance": "₹5,000",
+        "isNegotiable": true,
+        "originalPrice": "₹1,85,00,000",
+        "discountedPrice": "₹1,75,00,000",
+        "additionalPrice": "₹2,00,000",
+        "totalPrice": "₹1,77,00,000",
+        "pricePerAcre": null,
+        "pricePerSqft": 9459,
+        "pricePerDesk": null,
+        "status": "active",
+        "verificationStatus": "approved",
+        "isVerified": true,
+        "badge": "RERA Verified",
+        "isTopRated": true,
+        "reraRegistered": true,
+        "saleType": "New Booking",
+        "constructionStatus": "Under Construction",
+        "possessionStatus": "Dec 2026",
+        "listedBy": "Builder",
+        "postedBy": "Prestige Group",
+        "propertiesWithOffers": true,
+        "availableFrom": "Dec 2026",
+        "whoWillShow": "Builder's Sales Team",
+        "currentSituation": "Under Construction",
+        "waterSupply": "24/7 Municipal + Borewell",
+        "nonVegAllowed": true,
+        "gatedSecurity": true,
+        "gym": true,
+        "amenities": [
+            {
+                "_id": "65a1b2c3d4e5f6a7b8c9e001",
+                "name": "Swimming Pool",
+                "image": "https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?w=100"
+            },
+            {
+                "_id": "65a1b2c3d4e5f6a7b8c9e002",
+                "name": "Gym",
+                "image": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=100"
+            },
+            {
+                "_id": "65a1b2c3d4e5f6a7b8c9e003",
+                "name": "Clubhouse",
+                "image": "https://images.unsplash.com/photo-1521783988139-89397d761dce?w=100"
+            },
+            {
+                "_id": "65a1b2c3d4e5f6a7b8c9e004",
+                "name": "Children's Play Area",
+                "image": "https://images.unsplash.com/photo-1576610616656-d3aa5d1f4534?w=100"
+            },
+            {
+                "_id": "65a1b2c3d4e5f6a7b8c9e005",
+                "name": "Jogging Track",
+                "image": "https://images.unsplash.com/photo-1468359601543-843bfaef291a?w=100"
+            }
+        ],
+        "facilities": [
+            "Power Backup",
+            "Security",
+            "CCTV",
+            "Lift",
+            "Rainwater Harvesting",
+            "Solar Power"
+        ],
+        "address": {
+            "country": "India",
+            "state": "Karnataka",
+            "district": "Bangalore South",
+            "city": "Bangalore",
+            "locality": "Kanakapura Road",
+            "street": "Kanakapura Main Road, Off Banaswadi",
+            "pincode": "560111",
+            "landmark": "Near Vajarahalli Metro Station"
+        },
+        "location": "Kanakapura Road, Bangalore",
+        "stateName": "Karnataka",
+        "cityName": "Bangalore",
+        "layerLocation": "South Bangalore",
+        "locationDistrict": "Bangalore South",
+        "directionsTip": "Take Ring Road towards Kanakapura Road. Exit at Vajarahalli and follow signs to Primrose Hills.",
+        "coordinates": {
+            "latitude": 12.8563,
+            "longitude": 77.5667,
+            "lat": 12.8563,
+            "lng": 77.5667
+        },
+        "position": {
+            "lat": 12.8563,
+            "lng": 77.5667
+        },
+        "images": [
+            "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800",
+            "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800",
+            "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800",
+            "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800"
+        ],
+        "featuredImageUrl": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800",
+        "featuredImage": {
+            "fileId": "65a1b2c3d4e5f6a7b8c9f001",
+            "filename": "primrose-featured.jpg",
+            "originalName": "primrose-featured.jpg",
+            "contentType": "image/jpeg",
+            "size": 320000,
+            "uploadDate": "2024-03-01T10:00:00.000Z",
+            "url": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800",
+            "description": "Aerial view of Prestige Primrose Hills",
+            "tags": [
+                "exterior",
+                "aerial",
+                "featured"
+            ]
+        },
+        "interiorImages": [
+            {
+                "fileId": "65a1b2c3d4e5f6a7b8c9f002",
+                "filename": "primrose-interior-1.jpg",
+                "originalName": "living-room.jpg",
+                "contentType": "image/jpeg",
+                "size": 280000,
+                "uploadDate": "2024-03-01T10:00:00.000Z",
+                "url": "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800",
+                "description": "Spacious living room",
+                "tags": [
+                    "interior",
+                    "living-room"
+                ]
+            }
+        ],
+        "propertyVideos": [],
+        "floorPlans": {
+            "3BHK": [
+                "https://images.unsplash.com/photo-1574359411659-23fc3bd3440d?w=800"
+            ],
+            "2BHK": [
+                "https://images.unsplash.com/photo-1576493519080-2f2a6c1b5e0c?w=800"
+            ]
+        },
+        "floorConfigurations": [],
+        "brandName": "Prestige Group",
+        "brandStats": {
+            "cities": "12",
+            "clients": "50000+",
+            "spaces": "285+",
+            "seats": null
+        },
+        "brandDescription": "Prestige Group – India's premier real estate developer since 1986.",
+        "nearbyPlaces": {
+            "school": [
+                {
+                    "_id": "65a1np001",
+                    "name": "Delhi Public School",
+                    "location": "Kanakapura Road",
+                    "distance": "1.5 km"
+                },
+                {
+                    "_id": "65a1np002",
+                    "name": "National Public School",
+                    "location": "JP Nagar",
+                    "distance": "3 km"
+                }
+            ],
+            "hospital": [
+                {
+                    "_id": "65a1np003",
+                    "name": "Apollo Hospital",
+                    "location": "Jayanagar",
+                    "distance": "4 km"
+                },
+                {
+                    "_id": "65a1np004",
+                    "name": "Fortis",
+                    "location": "Banashankari",
+                    "distance": "5.5 km"
+                }
+            ],
+            "hotel": [
+                {
+                    "_id": "65a1np005",
+                    "name": "Hotel Empire",
+                    "location": "JP Nagar",
+                    "distance": "3.5 km"
+                }
+            ],
+            "business": [
+                {
+                    "_id": "65a1np006",
+                    "name": "Gopalan Innovation Mall",
+                    "location": "Banashankari",
+                    "distance": "6 km"
+                }
+            ]
+        },
+        "views": 1245,
+        "visitorCount": 892,
+        "inquiries": 67,
+        "ratings": {
+            "overall": 4.5,
+            "totalRatings": 28,
+            "breakdown": {
+                "1": 0,
+                "2": 1,
+                "3": 3,
+                "4": 8,
+                "5": 16
+            },
+            "whatsGood": [
+                "Great amenities",
+                "South-facing units available",
+                "Metro connectivity"
+            ],
+            "whatsBad": [
+                "Under construction noise",
+                "Limited parking visitor spots"
+            ]
+        },
+        "reviews": [
+            {
+                "_id": "65a1rv001",
+                "user": "Arun Vishwanath",
+                "rating": 5,
+                "date": "2024-05-10",
+                "comment": "Excellent project with world-class amenities. The location is very convenient.",
+                "goodThings": "Swimming pool, gym, and clubhouse are top-notch.",
+                "badThings": "Construction is still going on, bit noisy on weekends.",
+                "userPhoneNumber": "+917012345678"
+            },
+            {
+                "_id": "65a1rv002",
+                "user": "Meera Singh",
+                "rating": 4,
+                "date": "2024-04-22",
+                "comment": "Good investment. Prestige has a strong brand and the project looks premium.",
+                "goodThings": "Great connectivity to metro and good school nearby.",
+                "badThings": "Slight price increase compared to early booking.",
+                "userPhoneNumber": "+919876543210"
+            }
+        ],
+        "sellerPhoneNumber": "+91-80-25591147",
+        "isUnderManagement": "No",
+        "dateAdded": "2024-01-15",
+        "uploadedDate": "2024-01-15",
+        "publishedAt": "2024-01-15T00:00:00.000Z",
+        "noOfSeats": null,
+        "createdAt": "2024-01-15T00:00:00.000Z",
+        "updatedAt": "2024-06-15T12:00:00.000Z"
+    },
+    {
+        "_id": "65a1b2c3d4e5f6a7b8c9d002",
+        "name": "Sobha Dream Acres",
+        "propertyName": "Sobha Dream Acres",
+        "propertyType": "residential",
+        "listingType": "sale",
+        "category": "Apartment",
+        "underManagement": false,
+        "availableFloors": "2nd Floor",
+        "builderName": "Sobha Developers",
+        "agentName": "Priya Singh",
+        "agentPhone": "+91 9988776655",
+        "agentImage": "https://i.pravatar.cc/150?img=9",
+        "brandLogo": "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=96",
+        "selectedType": "apartment",
+        "apartmentType": "Flat",
+        "bhkType": "1 BHK",
+        "propertySize": "650",
+        "carpetArea": "520",
+        "size": "650 sqft",
+        "floor": "3",
+        "totalFloors": "18",
+        "selectedFloors": [
+            "3",
+            "5",
+            "7",
+            "9"
+        ],
+        "floors_available": [
+            "3",
+            "5",
+            "7",
+            "12",
+            "16"
+        ],
+        "facing": "North-East",
+        "propertyAge": "0-1 Year",
+        "availableFor": "Sale",
+        "furnishing": "Unfurnished",
+        "parking": "1 Covered",
+        "bathrooms": 1,
+        "washrooms": 1,
+        "balconies": 1,
+        "expectedRent": null,
+        "expectedDeposit": null,
+        "monthlyMaintenance": "₹3,500",
+        "isNegotiable": false,
+        "originalPrice": "₹62,00,000",
+        "discountedPrice": "₹62,00,000",
+        "additionalPrice": null,
+        "totalPrice": "₹62,00,000",
+        "pricePerAcre": null,
+        "pricePerSqft": 9538,
+        "pricePerDesk": null,
+        "status": "active",
+        "verificationStatus": "approved",
+        "isVerified": true,
+        "badge": "Super Seller",
+        "isTopRated": false,
+        "reraRegistered": true,
+        "saleType": "Resale",
+        "constructionStatus": "Ready to Move",
+        "possessionStatus": "Immediate",
+        "listedBy": "Owner",
+        "postedBy": "Private Seller",
+        "propertiesWithOffers": false,
+        "availableFrom": "Immediate",
+        "whoWillShow": "Owner",
+        "currentSituation": "Ready",
+        "waterSupply": "24/7 Corporation",
+        "nonVegAllowed": false,
+        "gatedSecurity": true,
+        "gym": true,
+        "amenities": [
+            {
+                "_id": "65a2e001",
+                "name": "Swimming Pool",
+                "image": "https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?w=100"
+            },
+            {
+                "_id": "65a2e002",
+                "name": "Gym",
+                "image": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=100"
+            },
+            {
+                "_id": "65a2e003",
+                "name": "Badminton Court",
+                "image": "https://images.unsplash.com/photo-1521783988139-89397d761dce?w=100"
+            },
+            {
+                "_id": "65a2e004",
+                "name": "Kids Play Area",
+                "image": "https://images.unsplash.com/photo-1576610616656-d3aa5d1f4534?w=100"
+            }
+        ],
+        "facilities": [
+            "Power Backup",
+            "24x7 Security",
+            "CCTV",
+            "Lift",
+            "Intercom"
+        ],
+        "address": {
+            "country": "India",
+            "state": "Karnataka",
+            "district": "Bangalore East",
+            "city": "Bangalore",
+            "locality": "Panathur",
+            "street": "Panathur Main Road",
+            "pincode": "560087",
+            "landmark": "Near Kadubeesanahalli Metro"
+        },
+        "location": "Panathur, Bangalore",
+        "stateName": "Karnataka",
+        "cityName": "Bangalore",
+        "layerLocation": "East Bangalore",
+        "locationDistrict": "Bangalore East",
+        "directionsTip": "From Marathahalli, take Outer Ring Road towards Panathur. Dream Acres is on the left after Kadubeesanahalli signal.",
+        "coordinates": {
+            "latitude": 12.9352,
+            "longitude": 77.6873,
+            "lat": 12.9352,
+            "lng": 77.6873
+        },
+        "position": {
+            "lat": 12.9352,
+            "lng": 77.6873
+        },
+        "images": [
+            "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800",
+            "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800",
+            "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=800"
+        ],
+        "featuredImageUrl": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800",
+        "featuredImage": {
+            "fileId": "65a2f001",
+            "filename": "dream-acres-featured.jpg",
+            "originalName": "dream-acres-featured.jpg",
+            "contentType": "image/jpeg",
+            "size": 295000,
+            "uploadDate": "2024-02-10T10:00:00.000Z",
+            "url": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800",
+            "description": "Sobha Dream Acres Tower View",
+            "tags": [
+                "exterior",
+                "tower",
+                "featured"
+            ]
+        },
+        "interiorImages": [],
+        "propertyVideos": [],
+        "floorPlans": {
+            "1BHK": [
+                "https://images.unsplash.com/photo-1574359411659-23fc3bd3440d?w=800"
+            ]
+        },
+        "floorConfigurations": [],
+        "brandName": "Sobha Limited",
+        "brandStats": {
+            "cities": "24",
+            "clients": "35000+",
+            "spaces": "170+",
+            "seats": null
+        },
+        "brandDescription": "Sobha Limited – Backward integrated quality real estate.",
+        "nearbyPlaces": {
+            "school": [
+                {
+                    "_id": "65a2np001",
+                    "name": "Greenwood High",
+                    "location": "Kadubeesanahalli",
+                    "distance": "1 km"
+                }
+            ],
+            "hospital": [
+                {
+                    "_id": "65a2np002",
+                    "name": "Manipal Hospital",
+                    "location": "Old Airport Road",
+                    "distance": "6 km"
+                }
+            ],
+            "hotel": [
+                {
+                    "_id": "65a2np003",
+                    "name": "JW Marriott",
+                    "location": "Whitefield",
+                    "distance": "8 km"
+                }
+            ],
+            "business": [
+                {
+                    "_id": "65a2np004",
+                    "name": "Ecospace Tech Park",
+                    "location": "Kadubeesanahalli",
+                    "distance": "0.5 km"
+                }
+            ]
+        },
+        "views": 876,
+        "visitorCount": 543,
+        "inquiries": 42,
+        "ratings": {
+            "overall": 4.2,
+            "totalRatings": 15,
+            "breakdown": {
+                "1": 0,
+                "2": 1,
+                "3": 2,
+                "4": 4,
+                "5": 8
+            },
+            "whatsGood": [
+                "Ready to move",
+                "Tech hub location",
+                "Sobha quality"
+            ],
+            "whatsBad": [
+                "Small size for 1 BHK",
+                "Limited visitor parking"
+            ]
+        },
+        "reviews": [
+            {
+                "_id": "65a2rv001",
+                "user": "Rajesh Kumar",
+                "rating": 4,
+                "date": "2024-04-15",
+                "comment": "Good starter home in a great IT corridor. Sobha quality is top-notch.",
+                "goodThings": "Close to tech parks, great connectivity.",
+                "badThings": "Size is a bit compact for a family.",
+                "userPhoneNumber": "+918765432109"
+            }
+        ],
+        "sellerPhoneNumber": "+919876543210",
+        "isUnderManagement": "No",
+        "dateAdded": "2024-02-10",
+        "uploadedDate": "2024-02-10",
+        "publishedAt": "2024-02-10T00:00:00.000Z",
+        "noOfSeats": null,
+        "createdAt": "2024-02-10T00:00:00.000Z",
+        "updatedAt": "2024-06-20T12:00:00.000Z"
+    },
+    {
+        "_id": "65a1b2c3d4e5f6a7b8c9d003",
+        "name": "Luxury Villa – Whitefield",
+        "propertyName": "Luxury Villa – Whitefield",
+        "propertyType": "residential",
+        "listingType": "rent",
+        "category": "Villa",
+        "underManagement": true,
+        "availableFloors": "Ground + 1",
+        "builderName": "Prestige Group",
+        "agentName": "Neha K",
+        "agentPhone": "+91 8877665544",
+        "agentImage": "https://i.pravatar.cc/150?img=5",
+        "brandLogo": "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=96",
+        "selectedType": "villa",
+        "apartmentType": "Villa",
+        "bhkType": "4 BHK",
+        "propertySize": "3500",
+        "carpetArea": "2800",
+        "size": "3500 sqft",
+        "floor": "G",
+        "totalFloors": "2",
+        "selectedFloors": [
+            "G",
+            "1"
+        ],
+        "floors_available": [
+            "G"
+        ],
+        "facing": "West",
+        "propertyAge": "5-10 Years",
+        "availableFor": "Rent",
+        "furnishing": "Fully Furnished",
+        "parking": "3 Covered",
+        "bathrooms": 4,
+        "washrooms": 4,
+        "balconies": 3,
+        "expectedRent": "₹85,000/month",
+        "expectedDeposit": "₹5,10,000",
+        "monthlyMaintenance": "₹8,000",
+        "isNegotiable": true,
+        "originalPrice": null,
+        "discountedPrice": null,
+        "additionalPrice": null,
+        "totalPrice": null,
+        "pricePerAcre": null,
+        "pricePerSqft": null,
+        "pricePerDesk": null,
+        "status": "active",
+        "verificationStatus": "approved",
+        "isVerified": true,
+        "badge": "Verified Owner",
+        "isTopRated": true,
+        "reraRegistered": false,
+        "saleType": null,
+        "constructionStatus": "Ready to Move",
+        "possessionStatus": "Immediate",
+        "listedBy": "Owner",
+        "postedBy": "Individual Owner",
+        "propertiesWithOffers": false,
+        "availableFrom": "Immediate",
+        "whoWillShow": "Owner",
+        "currentSituation": "Ready",
+        "waterSupply": "Borewell + Corporation",
+        "nonVegAllowed": true,
+        "gatedSecurity": true,
+        "gym": false,
+        "amenities": [
+            {
+                "_id": "65a3e001",
+                "name": "Private Garden",
+                "image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=100"
+            },
+            {
+                "_id": "65a3e002",
+                "name": "Private Pool",
+                "image": "https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?w=100"
+            },
+            {
+                "_id": "65a3e003",
+                "name": "Home Theatre",
+                "image": "https://images.unsplash.com/photo-1627445235796-6d3c1ecc7e2a?w=100"
+            }
+        ],
+        "facilities": [
+            "Power Backup",
+            "Security Guard",
+            "CCTV",
+            "Servant Room",
+            "Modular Kitchen"
+        ],
+        "address": {
+            "country": "India",
+            "state": "Karnataka",
+            "district": "Bangalore East",
+            "city": "Bangalore",
+            "locality": "Whitefield",
+            "street": "Palm Meadows Road",
+            "pincode": "560066",
+            "landmark": "Near Palm Meadows Club"
+        },
+        "location": "Palm Meadows, Whitefield, Bangalore",
+        "stateName": "Karnataka",
+        "cityName": "Bangalore",
+        "layerLocation": "East Bangalore",
+        "locationDistrict": "Bangalore East",
+        "directionsTip": "Enter Whitefield from ITPL Road, take a right at Palm Meadows junction.",
+        "coordinates": {
+            "latitude": 12.9847,
+            "longitude": 77.7499,
+            "lat": 12.9847,
+            "lng": 77.7499
+        },
+        "position": {
+            "lat": 12.9847,
+            "lng": 77.7499
+        },
+        "images": [
+            "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800",
+            "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=800",
+            "https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?w=800",
+            "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800"
+        ],
+        "featuredImageUrl": "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800",
+        "featuredImage": {
+            "fileId": "65a3f001",
+            "filename": "villa-whitefield-featured.jpg",
+            "originalName": "villa-featured.jpg",
+            "contentType": "image/jpeg",
+            "size": 450000,
+            "uploadDate": "2024-03-20T10:00:00.000Z",
+            "url": "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800",
+            "description": "Luxury Villa front view",
+            "tags": [
+                "exterior",
+                "front",
+                "villa"
+            ]
+        },
+        "interiorImages": [
+            {
+                "fileId": "65a3f002",
+                "filename": "villa-interior-living.jpg",
+                "originalName": "living.jpg",
+                "contentType": "image/jpeg",
+                "size": 380000,
+                "uploadDate": "2024-03-20T10:00:00.000Z",
+                "url": "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800",
+                "description": "Spacious living room",
+                "tags": [
+                    "interior",
+                    "living-room"
+                ]
+            }
+        ],
+        "propertyVideos": [],
+        "floorPlans": {},
+        "floorConfigurations": [],
+        "brandName": null,
+        "brandStats": null,
+        "brandDescription": null,
+        "nearbyPlaces": {
+            "school": [
+                {
+                    "_id": "65a3np001",
+                    "name": "Indus International School",
+                    "location": "Whitefield",
+                    "distance": "2 km"
+                }
+            ],
+            "hospital": [
+                {
+                    "_id": "65a3np002",
+                    "name": "Columbia Asia Hospital",
+                    "location": "Whitefield",
+                    "distance": "3 km"
+                }
+            ],
+            "hotel": [
+                {
+                    "_id": "65a3np003",
+                    "name": "The Taj Vivanta",
+                    "location": "Whitefield",
+                    "distance": "4 km"
+                }
+            ],
+            "business": [
+                {
+                    "_id": "65a3np004",
+                    "name": "ITPL",
+                    "location": "Whitefield",
+                    "distance": "1.5 km"
+                }
+            ]
+        },
+        "views": 532,
+        "visitorCount": 341,
+        "inquiries": 18,
+        "ratings": {
+            "overall": 4.8,
+            "totalRatings": 8,
+            "breakdown": {
+                "1": 0,
+                "2": 0,
+                "3": 0,
+                "4": 1,
+                "5": 7
+            },
+            "whatsGood": [
+                "Luxury interiors",
+                "Private pool",
+                "Premium neighbourhood"
+            ],
+            "whatsBad": [
+                "High rent",
+                "Far from city centre"
+            ]
+        },
+        "reviews": [
+            {
+                "_id": "65a3rv001",
+                "user": "Vivek Menon",
+                "rating": 5,
+                "date": "2024-05-20",
+                "comment": "Absolutely stunning villa. The private pool and garden are perfect for a family.",
+                "goodThings": "Spacious rooms, private pool, very safe neighbourhood.",
+                "badThings": "Rent is on the higher side but worth it.",
+                "userPhoneNumber": "+917654321098"
+            }
+        ],
+        "sellerPhoneNumber": "+919988776655",
+        "isUnderManagement": "No",
+        "dateAdded": "2024-03-20",
+        "uploadedDate": "2024-03-20",
+        "publishedAt": "2024-03-20T00:00:00.000Z",
+        "noOfSeats": null,
+        "createdAt": "2024-03-20T00:00:00.000Z",
+        "updatedAt": "2024-06-25T12:00:00.000Z"
+    }
+]

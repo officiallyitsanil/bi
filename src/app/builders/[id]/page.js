@@ -24,6 +24,53 @@ export default function BuilderDetailPage() {
   const [teamDirection, setTeamDirection] = useState('next');
   const [scrolled, setScrolled] = useState(false);
   const [touchModalOpen, setTouchModalOpen] = useState(false);
+  const [showDownloadBrochureModal, setShowDownloadBrochureModal] = useState(false);
+  const [pendingBrochureUrl, setPendingBrochureUrl] = useState("");
+  const [contactFormData, setContactFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    message: '',
+  });
+  const [isSubmittingContact, setIsSubmittingContact] = useState(false);
+
+  const handleContactInputChange = (e) => {
+    const { name, value } = e.target;
+    setContactFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleContactSubmit = async (e) => {
+    if (e) e.preventDefault();
+    if (!contactFormData.name) {
+      alert('Please fill in the Name field, it is mandatory.');
+      return;
+    }
+    try {
+      setIsSubmittingContact(true);
+      const res = await fetch('/api/builders/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...contactFormData,
+          builderId: builder?.id,
+          builderName: builder?.name,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Submitted successfully!');
+        setTouchModalOpen(false);
+        setContactFormData({ name: '', email: '', phone: '', message: '' });
+      } else {
+        alert('Failed: ' + data.error);
+      }
+    } catch (err) {
+      console.error('Error submitting contact:', err);
+      alert('An error occurred.');
+    } finally {
+      setIsSubmittingContact(false);
+    }
+  };
 
   useEffect(() => {
     fetchBuilderData();
@@ -161,8 +208,8 @@ export default function BuilderDetailPage() {
     <div className={`min-h-screen overflow-x-hidden transition-colors ${isDark ? 'bg-[#1f2229]' : 'bg-gray-50'}`}>
       {/* Sticky header on scroll - desktop only */}
       {scrolled && (
-        <div className={`hidden md:block fixed top-20 left-0 right-0 z-30 backdrop-blur-sm border-b shadow-sm ${isDark ? 'bg-[#1f2229]/95 border-gray-700' : 'bg-white/95 border-gray-200'}`}>
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-[425px]:px-3 h-16 flex justify-between items-center">
+        <div className={`hidden md:block fixed top-[48px] left-0 right-0 z-40 backdrop-blur-sm border-t border-b shadow-sm ${isDark ? 'bg-[#1f2229]/95 border-gray-700 border-t-gray-700' : 'bg-white/95 border-gray-200 border-t-gray-100'}`}>
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-[425px]:px-3 py-3 flex justify-between items-center">
             <div className="flex items-center gap-4">
               <div className={`relative w-10 h-10 rounded-full overflow-hidden border shrink-0 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
                 {builder.logo ? (
@@ -206,11 +253,11 @@ export default function BuilderDetailPage() {
             <ArrowLeft className={`w-5 h-5 max-[425px]:w-4 max-[425px]:h-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
           </button>
           <div className={`hidden md:flex items-center text-sm max-[425px]:text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-          <Link href="/" className="hover:text-blue-400">Home</Link>
-          <ChevronRight className="h-4 w-4 mx-1" />
-          <Link href="/builders" className="hover:text-blue-400">Builders</Link>
-          <ChevronRight className="h-4 w-4 mx-1" />
-          <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{builder.name}</span>
+            <Link href="/" className="hover:text-blue-400">Home</Link>
+            <ChevronRight className="h-4 w-4 mx-1" />
+            <Link href="/builders" className="hover:text-blue-400">Builders</Link>
+            <ChevronRight className="h-4 w-4 mx-1" />
+            <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{builder.name}</span>
           </div>
         </div>
 
@@ -342,135 +389,142 @@ export default function BuilderDetailPage() {
           {/* Right half - Gallery + Featured Project (Brigade Horizon) in one card - same row height as left */}
           <div className="lg:col-span-6 h-full min-h-0 flex flex-col min-w-0">
             {(builder.galleryImages?.length > 0 || builder.featuredProject) && (
-            <div className={`rounded-lg border shadow-sm overflow-hidden flex-1 min-h-0 flex flex-col ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-200'}`}>
-              {/* Gallery */}
-              {builder.galleryImages?.length > 0 && (
-                <div className="p-3 max-[425px]:p-2">
-                  <div className="grid grid-cols-1 md:grid-cols-3 md:grid-rows-2 gap-1.5 max-[425px]:gap-1 md:h-[220px]">
-                    <div className="relative md:col-span-2 md:row-span-2 rounded-lg overflow-hidden aspect-[4/3] md:aspect-auto min-h-[120px] max-[425px]:min-h-[100px] md:min-h-0">
-                      <Image src={builder.galleryImages[0]?.url || builder.galleryImages[0]} alt="Featured" fill className="object-cover" sizes="(max-width:768px) 100vw, 33vw" />
-                    </div>
-                    {builder.galleryImages[1] && (
-                      <div className="relative md:col-span-1 md:row-span-1 rounded-lg overflow-hidden aspect-[4/3] md:aspect-auto min-h-[60px] md:min-h-0">
-                        <Image src={builder.galleryImages[1]?.url || builder.galleryImages[1]} alt="Gallery" fill className="object-cover" sizes="16vw" />
-                        <div className="absolute top-1 right-1">
-                          <button className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium rounded bg-black/50 text-white hover:bg-black/70">
-                            <Download className="w-2.5 h-2.5" />
-                            PDF FILE
-                          </button>
-                        </div>
+              <div className={`rounded-lg border shadow-sm overflow-hidden flex-1 min-h-0 flex flex-col ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-200'}`}>
+                {/* Gallery */}
+                {builder.galleryImages?.length > 0 && (
+                  <div className="p-3 max-[425px]:p-2">
+                    <div className="grid grid-cols-1 md:grid-cols-3 md:grid-rows-2 gap-1.5 max-[425px]:gap-1 md:h-[220px]">
+                      <div className="relative md:col-span-2 md:row-span-2 rounded-lg overflow-hidden aspect-[4/3] md:aspect-auto min-h-[120px] max-[425px]:min-h-[100px] md:min-h-0">
+                        <Image src={builder.galleryImages[0]?.url || builder.galleryImages[0]} alt="Featured" fill className="object-cover" sizes="(max-width:768px) 100vw, 33vw" />
                       </div>
-                    )}
-                    {builder.galleryImages[2] && (
-                      <div className="relative md:col-span-1 md:row-span-1 rounded-lg overflow-hidden aspect-[4/3] md:aspect-auto min-h-[60px] md:min-h-0 group cursor-pointer">
-                        <Image src={builder.galleryImages[2]?.url || builder.galleryImages[2]} alt="Video" fill className="object-cover" sizes="16vw" />
-                        <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center">
-                          <CirclePlay className="w-8 h-8 text-white/80" />
-                          <span className="text-white text-[10px] font-medium mt-1 underline">WATCH VIDEO</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex gap-1.5 max-[425px]:gap-1 mt-2 overflow-x-auto pb-1 max-[425px]:-mx-2 max-[425px]:px-2">
-                    {builder.galleryImages.slice(0, 5).map((img, i) => (
-                      <div key={i} className="relative w-20 h-14 max-[425px]:w-16 max-[425px]:h-12 rounded overflow-hidden shrink-0 cursor-pointer">
-                        <Image src={img?.url || img} alt={img?.alt || 'Gallery'} fill className="object-cover" sizes="80px" />
-                      </div>
-                    ))}
-                    <div className="relative w-20 h-14 max-[425px]:w-16 max-[425px]:h-12 rounded overflow-hidden shrink-0 cursor-pointer flex items-center justify-center bg-black/60">
-                      <div className="flex flex-col items-center justify-center text-white text-center p-0.5">
-                        <Camera className="w-4 h-4 max-[425px]:w-3.5 max-[425px]:h-3.5 mb-0.5" />
-                        <p className="text-[9px] max-[425px]:text-[8px] font-semibold leading-tight">Show all {builder.galleryImages?.length || 6} photos</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {/* Featured Project (e.g. Brigade Horizon) - merged into same card */}
-              {builder.featuredProject && (
-                <>
-                  {builder.galleryImages?.length > 0 && <div className={`h-px w-full mx-3 max-[425px]:mx-2 ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />}
-                  <div className="p-4 max-[425px]:p-3">
-                    <h2 className={`text-sm max-[425px]:text-xs font-bold truncate ${isDark ? 'text-white' : ''}`}>{builder.featuredProject.name}</h2>
-                    <p className={`text-xs max-[425px]:text-[11px] truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{builder.featuredProject.location}</p>
-                    <div className="grid grid-cols-2 max-[425px]:grid-cols-2 md:grid-cols-4 gap-4 max-[425px]:gap-2 mt-4 max-[425px]:mt-3 text-sm max-[425px]:text-xs">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="h-5 w-5 text-blue-500 shrink-0" />
-                        <div>
-                          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Project Units</p>
-                          <p className={`font-semibold ${isDark ? 'text-white' : ''}`}>{builder.featuredProject.units}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <ChartArea className="h-5 w-5 text-blue-500 shrink-0" />
-                        <div>
-                          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Project Size</p>
-                          <p className={`font-semibold ${isDark ? 'text-white' : ''}`}>{builder.featuredProject.size}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <CalendarDays className="h-5 w-5 text-blue-500 shrink-0" />
-                        <div>
-                          <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Launch Date</p>
-                          <p className={`font-semibold ${isDark ? 'text-white' : ''}`}>{builder.featuredProject.launchDate}</p>
-                        </div>
-                      </div>
-                    </div>
-                    {builder.featuredProject.configurations?.length > 0 && (
-                      <div className="flex gap-1.5 mt-3 flex-wrap">
-                        {builder.featuredProject.configurations.map((c, i) => (
-                          <span key={i} className="px-2.5 py-0.5 rounded-lg border text-xs font-semibold">{c}</span>
-                        ))}
-                      </div>
-                    )}
-                    {/* Deal Bar card - between configurations and Total Range */}
-                    <div className="rounded-lg border shadow-sm mt-4 max-[425px]:mt-3 bg-yellow-50 border-yellow-200 dark:bg-yellow-900/30 dark:border-yellow-800/50">
-                      <div className="p-3 max-[425px]:p-2">
-                        <div className="flex justify-between items-center text-sm max-[425px]:text-xs mb-2 max-[425px]:mb-1">
-                          <p className="font-semibold text-yellow-800 dark:text-yellow-200">Deal Bar</p>
-                          <a className="text-blue-600 font-semibold hover:underline" href="#">›</a>
-                        </div>
-                        <div className="flex flex-col max-[425px]:flex-col sm:flex-row items-stretch sm:items-center gap-2 max-[425px]:gap-1 sm:gap-4">
-                          <p className="text-xs max-[425px]:text-[10px] text-gray-500 whitespace-nowrap">42 Closed Deals</p>
-                          <div className="relative w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700 h-2 min-w-0" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={24}>
-                            <div className="h-full rounded-full bg-blue-600 transition-all" style={{ width: '24%' }} />
+                      {builder.galleryImages[1] && (
+                        <div className="relative md:col-span-1 md:row-span-1 rounded-lg overflow-hidden aspect-[4/3] md:aspect-auto min-h-[60px] md:min-h-0">
+                          <Image src={builder.galleryImages[1]?.url || builder.galleryImages[1]} alt="Gallery" fill className="object-cover" sizes="16vw" />
+                          <div className="absolute top-1 right-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPendingBrochureUrl(builder.brochureUrl || "#"); // Fallback to # or handle appropriately
+                                setShowDownloadBrochureModal(true);
+                              }}
+                              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium rounded bg-black/50 text-white hover:bg-black/70"
+                            >
+                              <Download className="w-2.5 h-2.5" />
+                              PDF FILE
+                            </button>
                           </div>
-                          <p className="text-xs max-[425px]:text-[10px] text-gray-500 whitespace-nowrap">132 In Progress</p>
+                        </div>
+                      )}
+                      {builder.galleryImages[2] && (
+                        <div className="relative md:col-span-1 md:row-span-1 rounded-lg overflow-hidden aspect-[4/3] md:aspect-auto min-h-[60px] md:min-h-0 group cursor-pointer">
+                          <Image src={builder.galleryImages[2]?.url || builder.galleryImages[2]} alt="Video" fill className="object-cover" sizes="16vw" />
+                          <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center">
+                            <CirclePlay className="w-8 h-8 text-white/80" />
+                            <span className="text-white text-[10px] font-medium mt-1 underline">WATCH VIDEO</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-1.5 max-[425px]:gap-1 mt-2 overflow-x-auto pb-1 max-[425px]:-mx-2 max-[425px]:px-2">
+                      {builder.galleryImages.slice(0, 5).map((img, i) => (
+                        <div key={i} className="relative w-20 h-14 max-[425px]:w-16 max-[425px]:h-12 rounded overflow-hidden shrink-0 cursor-pointer">
+                          <Image src={img?.url || img} alt={img?.alt || 'Gallery'} fill className="object-cover" sizes="80px" />
+                        </div>
+                      ))}
+                      <div className="relative w-20 h-14 max-[425px]:w-16 max-[425px]:h-12 rounded overflow-hidden shrink-0 cursor-pointer flex items-center justify-center bg-black/60">
+                        <div className="flex flex-col items-center justify-center text-white text-center p-0.5">
+                          <Camera className="w-4 h-4 max-[425px]:w-3.5 max-[425px]:h-3.5 mb-0.5" />
+                          <p className="text-[9px] max-[425px]:text-[8px] font-semibold leading-tight">Show all {builder.galleryImages?.length || 6} photos</p>
                         </div>
                       </div>
                     </div>
-                    {/* Possession / Plot / Propscore row */}
-                    <div className="grid grid-cols-3 max-[425px]:grid-cols-3 gap-4 max-[425px]:gap-2 mt-4 max-[425px]:mt-3 text-sm max-[425px]:text-xs text-center">
-                      <div>
-                        <p className={`text-xs max-[425px]:text-[10px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Possession</p>
-                        <p className={`font-semibold max-[425px]:text-[11px] ${isDark ? 'text-white' : ''}`}>{builder.featuredProject.possession || 'Sep 2028'}</p>
+                  </div>
+                )}
+                {/* Featured Project (e.g. Brigade Horizon) - merged into same card */}
+                {builder.featuredProject && (
+                  <>
+                    {builder.galleryImages?.length > 0 && <div className={`h-px w-full mx-3 max-[425px]:mx-2 ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />}
+                    <div className="p-4 max-[425px]:p-3">
+                      <h2 className={`text-sm max-[425px]:text-xs font-bold truncate ${isDark ? 'text-white' : ''}`}>{builder.featuredProject.name}</h2>
+                      <p className={`text-xs max-[425px]:text-[11px] truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{builder.featuredProject.location}</p>
+                      <div className="grid grid-cols-2 max-[425px]:grid-cols-2 md:grid-cols-4 gap-4 max-[425px]:gap-2 mt-4 max-[425px]:mt-3 text-sm max-[425px]:text-xs">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-5 w-5 text-blue-500 shrink-0" />
+                          <div>
+                            <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Project Units</p>
+                            <p className={`font-semibold ${isDark ? 'text-white' : ''}`}>{builder.featuredProject.units}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <ChartArea className="h-5 w-5 text-blue-500 shrink-0" />
+                          <div>
+                            <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Project Size</p>
+                            <p className={`font-semibold ${isDark ? 'text-white' : ''}`}>{builder.featuredProject.size}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CalendarDays className="h-5 w-5 text-blue-500 shrink-0" />
+                          <div>
+                            <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Launch Date</p>
+                            <p className={`font-semibold ${isDark ? 'text-white' : ''}`}>{builder.featuredProject.launchDate}</p>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <p className={`text-xs max-[425px]:text-[10px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Plot</p>
-                        <p className={`font-semibold max-[425px]:text-[11px] truncate ${isDark ? 'text-white' : ''}`}>{builder.featuredProject.plotSize || '1,200 - 3,000 sqft'}</p>
-                      </div>
-                      <div>
-                        <p className={`text-xs max-[425px]:text-[10px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Propscore</p>
-                        <div className="flex items-center justify-center gap-0.5 mt-0.5">
-                          {[1, 2, 3, 4, 5].map((i) => (
-                            <Star key={i} className={`h-4 w-4 max-[425px]:h-3 max-[425px]:w-3 ${i <= 4 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'}`} />
+                      {builder.featuredProject.configurations?.length > 0 && (
+                        <div className="flex gap-1.5 mt-3 flex-wrap">
+                          {builder.featuredProject.configurations.map((c, i) => (
+                            <span key={i} className="px-2.5 py-0.5 rounded-lg border text-xs font-semibold">{c}</span>
                           ))}
                         </div>
+                      )}
+                      {/* Deal Bar card - between configurations and Total Range */}
+                      <div className="rounded-lg border shadow-sm mt-4 max-[425px]:mt-3 bg-yellow-50 border-yellow-200 dark:bg-yellow-900/30 dark:border-yellow-800/50">
+                        <div className="p-3 max-[425px]:p-2">
+                          <div className="flex justify-between items-center text-sm max-[425px]:text-xs mb-2 max-[425px]:mb-1">
+                            <p className="font-semibold text-yellow-800 dark:text-yellow-200">Deal Bar</p>
+                            <a className="text-blue-600 font-semibold hover:underline" href="#">›</a>
+                          </div>
+                          <div className="flex flex-col max-[425px]:flex-col sm:flex-row items-stretch sm:items-center gap-2 max-[425px]:gap-1 sm:gap-4">
+                            <p className="text-xs max-[425px]:text-[10px] text-gray-500 whitespace-nowrap">42 Closed Deals</p>
+                            <div className="relative w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700 h-2 min-w-0" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={24}>
+                              <div className="h-full rounded-full bg-blue-600 transition-all" style={{ width: '24%' }} />
+                            </div>
+                            <p className="text-xs max-[425px]:text-[10px] text-gray-500 whitespace-nowrap">132 In Progress</p>
+                          </div>
+                        </div>
+                      </div>
+                      {/* Possession / Plot / Propscore row */}
+                      <div className="grid grid-cols-3 max-[425px]:grid-cols-3 gap-4 max-[425px]:gap-2 mt-4 max-[425px]:mt-3 text-sm max-[425px]:text-xs text-center">
+                        <div>
+                          <p className={`text-xs max-[425px]:text-[10px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Possession</p>
+                          <p className={`font-semibold max-[425px]:text-[11px] ${isDark ? 'text-white' : ''}`}>{builder.featuredProject.possession || 'Sep 2028'}</p>
+                        </div>
+                        <div>
+                          <p className={`text-xs max-[425px]:text-[10px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Plot</p>
+                          <p className={`font-semibold max-[425px]:text-[11px] truncate ${isDark ? 'text-white' : ''}`}>{builder.featuredProject.plotSize || '1,200 - 3,000 sqft'}</p>
+                        </div>
+                        <div>
+                          <p className={`text-xs max-[425px]:text-[10px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Propscore</p>
+                          <div className="flex items-center justify-center gap-0.5 mt-0.5">
+                            {[1, 2, 3, 4, 5].map((i) => (
+                              <Star key={i} className={`h-4 w-4 max-[425px]:h-3 max-[425px]:w-3 ${i <= 4 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'}`} />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-4 max-[425px]:mt-3 flex flex-col max-[425px]:flex-col sm:flex-row justify-between items-stretch max-[425px]:items-stretch sm:items-center gap-3">
+                        <div>
+                          <p className={`text-[10px] max-[425px]:text-[9px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Total Range</p>
+                          <p className="text-base max-[425px]:text-sm font-bold text-blue-400">{builder.featuredProject.priceRange}</p>
+                        </div>
+                        <button className="bg-blue-600 text-white text-xs max-[425px]:text-[11px] font-medium px-5 py-1.5 max-[425px]:py-2 rounded-lg hover:bg-blue-700 shrink-0">
+                          Contact Builder
+                        </button>
                       </div>
                     </div>
-                    <div className="mt-4 max-[425px]:mt-3 flex flex-col max-[425px]:flex-col sm:flex-row justify-between items-stretch max-[425px]:items-stretch sm:items-center gap-3">
-                      <div>
-                        <p className={`text-[10px] max-[425px]:text-[9px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Total Range</p>
-                        <p className="text-base max-[425px]:text-sm font-bold text-blue-400">{builder.featuredProject.priceRange}</p>
-                      </div>
-                      <button className="bg-blue-600 text-white text-xs max-[425px]:text-[11px] font-medium px-5 py-1.5 max-[425px]:py-2 rounded-lg hover:bg-blue-700 shrink-0">
-                        Contact Builder
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
+                  </>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -954,15 +1008,51 @@ export default function BuilderDetailPage() {
               </div>
               <div className={`shrink-0 h-px w-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
               <div className="p-3 pt-2">
-                <form className="space-y-2.5" onSubmit={(e) => { e.preventDefault(); setTouchModalOpen(false); }}>
-                  <input type="text" placeholder="Name" className={`flex h-8 w-full rounded-md border px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${isDark ? 'border-gray-600 bg-[#1f2229] text-white placeholder:text-gray-500' : 'border-gray-300 bg-white placeholder:text-gray-500'}`} />
-                  <input type="email" placeholder="Email ID" className={`flex h-8 w-full rounded-md border px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${isDark ? 'border-gray-600 bg-[#1f2229] text-white placeholder:text-gray-500' : 'border-gray-300 bg-white placeholder:text-gray-500'}`} />
+                <form className="space-y-2.5" onSubmit={handleContactSubmit}>
+                  <input
+                    type="text"
+                    name="name"
+                    value={contactFormData.name}
+                    onChange={handleContactInputChange}
+                    placeholder="Name"
+                    required
+                    className={`flex h-8 w-full rounded-md border px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${isDark ? 'border-gray-600 bg-[#1f2229] text-white placeholder:text-gray-500' : 'border-gray-300 bg-white placeholder:text-gray-500'}`}
+                  />
+                  <input
+                    type="email"
+                    name="email"
+                    value={contactFormData.email}
+                    onChange={handleContactInputChange}
+                    placeholder="Email ID"
+                    required
+                    className={`flex h-8 w-full rounded-md border px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${isDark ? 'border-gray-600 bg-[#1f2229] text-white placeholder:text-gray-500' : 'border-gray-300 bg-white placeholder:text-gray-500'}`}
+                  />
                   <div className="flex">
                     <span className={`inline-flex items-center px-2 text-xs border border-r-0 rounded-l-md ${isDark ? 'text-gray-200 bg-[#1f2229] border-gray-600' : 'text-gray-900 bg-gray-200 border-gray-300'}`}>+91</span>
-                    <input type="tel" placeholder="Phone" className={`flex h-8 flex-1 min-w-0 rounded-r-md border px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded-l-none ${isDark ? 'border-gray-600 bg-[#1f2229] text-white placeholder:text-gray-500' : 'border-gray-300 bg-white placeholder:text-gray-500'}`} />
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={contactFormData.phone}
+                      onChange={handleContactInputChange}
+                      placeholder="Phone"
+                      required
+                      className={`flex h-8 flex-1 min-w-0 rounded-r-md border px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded-l-none ${isDark ? 'border-gray-600 bg-[#1f2229] text-white placeholder:text-gray-500' : 'border-gray-300 bg-white placeholder:text-gray-500'}`}
+                    />
                   </div>
-                  <button type="submit" className="inline-flex items-center justify-center w-full rounded-md text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 h-8 px-3 py-1.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1">
-                    Contact Now
+                  <textarea
+                    name="message"
+                    value={contactFormData.message}
+                    onChange={handleContactInputChange}
+                    placeholder="Message"
+                    rows={3}
+                    className={`flex w-full rounded-md border px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 resize-none ${isDark ? 'border-gray-600 bg-[#1f2229] text-white placeholder:text-gray-500' : 'border-gray-300 bg-white placeholder:text-gray-500'}`}
+                  />
+                  <button
+                    type="submit"
+                    disabled={isSubmittingContact}
+                    className="inline-flex items-center justify-center w-full rounded-md text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 h-8 px-3 py-1.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-50"
+                  >
+                    {isSubmittingContact ? 'Sending...' : 'Contact Now'}
                   </button>
                 </form>
               </div>
@@ -984,6 +1074,44 @@ export default function BuilderDetailPage() {
       {/* Backdrop when modal open - click to close */}
       {touchModalOpen && (
         <div className="fixed inset-0 z-40 bg-black/30" onClick={() => setTouchModalOpen(false)} aria-hidden="true" />
+      )}
+
+      {/* Download Brochure Modal */}
+      {showDownloadBrochureModal && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/10 backdrop-blur-[1px]" onClick={() => setShowDownloadBrochureModal(false)} />
+          <div className={`relative rounded-[32px] p-6 w-full max-w-[380px] shadow-2xl animate-in fade-in zoom-in duration-300 ${isDark ? 'bg-[#282c34] border border-gray-700' : 'bg-white'}`}>
+            <div className="space-y-2">
+              <h2 className={`text-xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>Download Brochure</h2>
+              <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                Do you want to download the property brochure?
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-8">
+              <button
+                onClick={() => setShowDownloadBrochureModal(false)}
+                className={`px-6 py-2 rounded-full border font-bold transition-all active:scale-95 text-xs ${isDark ? 'border-gray-600 text-gray-300 hover:bg-white/5' : 'border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  const url = pendingBrochureUrl?.url || pendingBrochureUrl;
+                  if (url && url !== "#") {
+                    window.open(url, '_blank');
+                  } else {
+                    alert("Brochure not available for this builder yet.");
+                  }
+                  setShowDownloadBrochureModal(false);
+                }}
+                className="px-6 py-2 rounded-full bg-[#0052cc] text-white font-bold hover:bg-[#0047b3] transition-all active:scale-95 shadow-lg shadow-blue-100 text-xs"
+              >
+                Download
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

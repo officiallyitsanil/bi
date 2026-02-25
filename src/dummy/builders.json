@@ -1,0 +1,779 @@
+[
+    {
+        "_id": "64f1a2b3c4d5e6f7a8b9c001",
+        "name": "Prestige Group",
+        "builderName": "Prestige Estates Projects Ltd.",
+        "tagline": "Premium Spaces, Extraordinary Lives",
+        "founded": "1986",
+        "foundedYear": "1986",
+        "headquarters": "Bangalore, Karnataka",
+        "description": "Prestige Group is one of India's leading real estate developers with over three decades of expertise in building premium residential and commercial spaces.",
+        "shortDescription": "India's premier real estate developer since 1986.",
+        "detailedDescription": "Prestige Group has transformed the Indian real estate landscape with landmark projects spanning residential apartments, villas, commercial offices, retail malls, and hospitality ventures across major cities.",
+        "keyDifferentiators": [
+            "38+ years of trust",
+            "RERA compliant projects",
+            "ISO 9001:2015 certified",
+            "Award-winning designs"
+        ],
+        "stats": {
+            "projects": "285",
+            "cities": "12",
+            "sqft": "150M+",
+            "clients": "50000+",
+            "experience": "38 Years",
+            "experienceNum": 38,
+            "projectsNum": 285
+        },
+        "projectsCompleted": 285,
+        "ongoingProjects": 45,
+        "upcomingProjects": 20,
+        "yearsOfExperience": 38,
+        "citiesPresence": "12 Cities",
+        "ongoingCount": 45,
+        "upcomingCount": 20,
+        "totalCenters": "12",
+        "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Prestige_Group_Logo.png/200px-Prestige_Group_Logo.png",
+        "isBrigade": false,
+        "builderLogo": {
+            "fileId": "64f1a2b3c4d5e6f7a8b9c099",
+            "filename": "prestige-logo.png",
+            "originalName": "prestige-logo.png",
+            "contentType": "image/png",
+            "size": 45200,
+            "uploadDate": "2024-01-15T10:00:00.000Z",
+            "url": "https://res.cloudinary.com/demo/image/upload/prestige-logo.png"
+        },
+        "category": "Premium",
+        "builderCategory": "Luxury Residential & Commercial",
+        "licenseNumber": "RERA/KA/2024/00123",
+        "certificate": "ISO 9001:2015",
+        "mission": "To deliver world-class real estate that enhances quality of life.",
+        "vision": "To be the most admired real estate developer in India.",
+        "missionStatement": "We create exceptional spaces that inspire and endure for generations.",
+        "visionStatement": "Building tomorrow's landmarks with integrity and innovation.",
+        "phone": "+91-80-25591147",
+        "phoneNumber": "+91-80-25591147",
+        "email": "info@prestigeconstructions.com",
+        "contactEmail": "sales@prestigeconstructions.com",
+        "corporateOfficeAddress": "The Falcon House, No.1 Main Guard Cross Road, Bangalore - 560001",
+        "officialWebsite": "https://www.prestigeconstructions.com",
+        "specialties": [
+            "Luxury Apartments",
+            "Villas",
+            "Commercial Offices",
+            "Retail Malls",
+            "Hospitality"
+        ],
+        "operatingRegions": [
+            "Bangalore",
+            "Chennai",
+            "Hyderabad",
+            "Mumbai",
+            "Kochi",
+            "Goa"
+        ],
+        "moreDetails": [
+            {
+                "label": "RERA Number",
+                "value": "RERA/KA/2024/00123"
+            },
+            {
+                "label": "GST Number",
+                "value": "29AABCP1234A1Z5"
+            },
+            {
+                "label": "CIN",
+                "value": "L45200KA1997PLC022322"
+            }
+        ],
+        "operationalSegments": [
+            {
+                "name": "South India",
+                "cities": [
+                    "Bangalore",
+                    "Chennai",
+                    "Hyderabad",
+                    "Kochi"
+                ]
+            },
+            {
+                "name": "West India",
+                "cities": [
+                    "Mumbai",
+                    "Goa",
+                    "Pune"
+                ]
+            }
+        ],
+        "projects": [
+            {
+                "name": "Prestige Primrose Hills",
+                "location": "Kanakapura Road, Bangalore",
+                "area": "2200 sqft",
+                "status": "Ready to Move",
+                "type": "readyToMove",
+                "price": 8500000,
+                "seats": null
+            },
+            {
+                "name": "Prestige Tech Platina",
+                "location": "Marathahalli, Bangalore",
+                "area": "100000 sqft",
+                "status": "Upcoming",
+                "type": "upcoming",
+                "price": 12000000,
+                "seats": 500
+            }
+        ],
+        "featuredProject": {
+            "name": "Prestige City",
+            "location": "Sarjapur Road, Bangalore",
+            "image": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800",
+            "units": "5000+",
+            "size": "180 Acres",
+            "launchDate": "Jan 2023",
+            "possession": "Dec 2026",
+            "plotSize": "1200–2400 sqft",
+            "configurations": [
+                "1 BHK",
+                "2 BHK",
+                "3 BHK",
+                "4 BHK",
+                "Villa"
+            ],
+            "priceRange": "₹65 L – ₹3.5 Cr",
+            "dealsClosed": 2300,
+            "inProgress": 1800
+        },
+        "keyProjects": [
+            {
+                "name": "Prestige Falcon City",
+                "location": "Kanakapura Road, Bangalore",
+                "image": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400",
+                "href": "/property-details/64f1a2b3c4d5e6f7a8b9d001"
+            },
+            {
+                "name": "Prestige Shantiniketan",
+                "location": "Whitefield, Bangalore",
+                "image": "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=400",
+                "href": "/property-details/64f1a2b3c4d5e6f7a8b9d002"
+            }
+        ],
+        "relationshipManager": {
+            "name": "Rahul Sharma",
+            "title": "Senior Relationship Manager",
+            "tag": "Top Performer",
+            "avatar": "https://randomuser.me/api/portraits/men/32.jpg",
+            "assisted": "500+ clients",
+            "companyLogos": [
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Prestige_Group_Logo.png/200px-Prestige_Group_Logo.png"
+            ]
+        },
+        "team": [
+            {
+                "name": "Irfan Razack",
+                "role": "Chairman & Managing Director",
+                "image": "https://randomuser.me/api/portraits/men/60.jpg",
+                "quote": "We build spaces that stand the test of time.",
+                "bio": "Irfan Razack has led Prestige Group to become one of India's most respected real estate brands over four decades."
+            },
+            {
+                "name": "Rezwan Razack",
+                "role": "Joint Managing Director",
+                "image": "https://randomuser.me/api/portraits/men/61.jpg",
+                "quote": "Innovation is at the core of every project we undertake.",
+                "bio": "Rezwan Razack oversees all major projects and strategic expansions across regions."
+            }
+        ],
+        "keyPeople": [
+            {
+                "name": "Irfan Razack",
+                "designation": "Chairman & Managing Director",
+                "shortBio": "Visionary leader with 40+ years in real estate.",
+                "photo": {
+                    "uploadDate": "2024-01-01T00:00:00.000Z",
+                    "url": "https://randomuser.me/api/portraits/men/60.jpg"
+                }
+            }
+        ],
+        "directorName": "Irfan Razack",
+        "directorPosition": "Chairman & Managing Director",
+        "directorQuote": "We don't just build buildings; we build legacies.",
+        "awards": [
+            {
+                "title": "Best Real Estate Developer – South India",
+                "organisation": "CREDAI",
+                "image": "https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=200"
+            },
+            {
+                "title": "Excellence in Luxury Housing",
+                "organisation": "Realty+ Excellence Awards",
+                "image": "https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=200"
+            }
+        ],
+        "clientTestimonial": "Prestige delivered our dream home on time and exceeded every expectation.",
+        "testimonials": [
+            {
+                "quote": "Prestige Group's attention to detail and quality of construction is unmatched. My apartment is everything I dreamed of.",
+                "author": "Meera Nair",
+                "avatar": "https://randomuser.me/api/portraits/women/44.jpg"
+            },
+            {
+                "quote": "The after-sales service is exceptional. They care about customers even after the sale is done.",
+                "author": "Karthik Reddy",
+                "avatar": "https://randomuser.me/api/portraits/men/45.jpg"
+            }
+        ],
+        "faqs": [
+            {
+                "q": "Are Prestige properties RERA registered?",
+                "a": "Yes, all Prestige projects are registered with RERA and comply with all regulatory requirements."
+            },
+            {
+                "q": "What is the typical possession timeline?",
+                "a": "Depending on the project stage, possession typically ranges from immediate (ready-to-move) to 36 months for under-construction properties."
+            },
+            {
+                "q": "Does Prestige Group offer home loans?",
+                "a": "Yes, we have tie-ups with major banks and NBFCs to offer competitive home loan options."
+            }
+        ],
+        "socialLinks": {
+            "facebook": "https://www.facebook.com/PrestigeGroup",
+            "twitter": "https://twitter.com/PrestigeGroup",
+            "linkedin": "https://www.linkedin.com/company/prestige-group",
+            "instagram": "https://www.instagram.com/prestigegroup",
+            "youtube": "https://www.youtube.com/user/PrestigeGroup"
+        },
+        "socialMedia": {
+            "facebook": "https://www.facebook.com/PrestigeGroup",
+            "linkedin": "https://www.linkedin.com/company/prestige-group",
+            "instagram": "https://www.instagram.com/prestigegroup",
+            "youtube": "https://www.youtube.com/user/PrestigeGroup"
+        },
+        "galleryImages": [
+            {
+                "fileId": "64f1a2b3c4d5e6f7a8b9c101",
+                "filename": "prestige-gallery-1.jpg",
+                "originalName": "gallery-1.jpg",
+                "contentType": "image/jpeg",
+                "size": 320000,
+                "uploadDate": "2024-01-15T10:00:00.000Z",
+                "url": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800",
+                "alt": "Prestige City Aerial View",
+                "_id": "64f1a2b3c4d5e6f7a8b9c201"
+            },
+            {
+                "fileId": "64f1a2b3c4d5e6f7a8b9c102",
+                "filename": "prestige-gallery-2.jpg",
+                "originalName": "gallery-2.jpg",
+                "contentType": "image/jpeg",
+                "size": 280000,
+                "uploadDate": "2024-01-15T10:00:00.000Z",
+                "url": "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800",
+                "alt": "Prestige Lobby Interior",
+                "_id": "64f1a2b3c4d5e6f7a8b9c202"
+            }
+        ],
+        "promotionalVideoUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        "brochureUrl": "https://www.prestigeconstructions.com/brochure/prestige-city.pdf",
+        "seo": {
+            "metaTitle": "Prestige Group – Premium Real Estate Developer in India",
+            "urlSlug": "prestige-group",
+            "metaDescription": "Explore luxury residential and commercial properties by Prestige Group. 38+ years of excellence across 12 cities in India.",
+            "keywords": "prestige group, luxury apartments, commercial offices, bangalore real estate"
+        },
+        "isActive": true,
+        "status": "active",
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "updatedAt": "2024-06-15T12:00:00.000Z"
+    },
+    {
+        "_id": "64f1a2b3c4d5e6f7a8b9c002",
+        "name": "Brigade Group",
+        "builderName": "Brigade Enterprises Ltd.",
+        "tagline": "Building a Better Future",
+        "founded": "1986",
+        "foundedYear": "1986",
+        "headquarters": "Bangalore, Karnataka",
+        "description": "Brigade Group is a leading property developer in South India with expertise in residential, commercial, retail and hospitality sectors.",
+        "shortDescription": "Trusted South India real estate developer since 1986.",
+        "detailedDescription": "Brigade Group has built a strong reputation for quality, innovation, and timely delivery across Bangalore, Chennai, Hyderabad, Kochi, and other cities.",
+        "keyDifferentiators": [
+            "37+ years of innovation",
+            "Multiple award-winning projects",
+            "Pan South India presence",
+            "Diversified portfolio"
+        ],
+        "stats": {
+            "projects": "250+",
+            "cities": "8",
+            "sqft": "80M+",
+            "clients": "40000+",
+            "experience": "37 Years",
+            "experienceNum": 37,
+            "projectsNum": 250
+        },
+        "projectsCompleted": 250,
+        "ongoingProjects": 35,
+        "upcomingProjects": 15,
+        "yearsOfExperience": 37,
+        "citiesPresence": "8 Cities",
+        "ongoingCount": 35,
+        "upcomingCount": 15,
+        "totalCenters": "8",
+        "logo": "https://upload.wikimedia.org/wikipedia/en/thumb/b/b7/Brigade_Group_Logo.png/200px-Brigade_Group_Logo.png",
+        "isBrigade": true,
+        "builderLogo": {
+            "fileId": "64f1a2b3c4d5e6f7a8b9c098",
+            "filename": "brigade-logo.png",
+            "originalName": "brigade-logo.png",
+            "contentType": "image/png",
+            "size": 38000,
+            "uploadDate": "2024-01-10T10:00:00.000Z",
+            "url": "https://res.cloudinary.com/demo/image/upload/brigade-logo.png"
+        },
+        "category": "Premium",
+        "builderCategory": "Residential & Commercial",
+        "licenseNumber": "RERA/KA/2024/00456",
+        "certificate": "ISO 9001:2015",
+        "mission": "To create value by developing superior quality real estate.",
+        "vision": "To be the most recognized real estate brand in India.",
+        "missionStatement": "Delivering spaces that make people's lives better every day.",
+        "visionStatement": "Shaping India's skyline with integrity, quality, and passion.",
+        "phone": "+91-80-41379200",
+        "phoneNumber": "+91-80-41379200",
+        "email": "info@brigadegroup.com",
+        "contactEmail": "sales@brigadegroup.com",
+        "corporateOfficeAddress": "29th & 30th Floor, World Trade Center, Brigade Gateway, Bangalore – 560055",
+        "officialWebsite": "https://www.brigadegroup.com",
+        "specialties": [
+            "Residential Townships",
+            "IT Parks",
+            "Retail Malls",
+            "Hotels",
+            "Education"
+        ],
+        "operatingRegions": [
+            "Bangalore",
+            "Chennai",
+            "Hyderabad",
+            "Mysuru",
+            "Kochi",
+            "Ahmedabad"
+        ],
+        "moreDetails": [
+            {
+                "label": "RERA Number",
+                "value": "RERA/KA/2024/00456"
+            },
+            {
+                "label": "GST Number",
+                "value": "29AABCB5678A1Z2"
+            }
+        ],
+        "operationalSegments": [
+            {
+                "name": "Karnataka",
+                "cities": [
+                    "Bangalore",
+                    "Mysuru",
+                    "Mangalore"
+                ]
+            },
+            {
+                "name": "Tamil Nadu & Andhra",
+                "cities": [
+                    "Chennai",
+                    "Hyderabad"
+                ]
+            }
+        ],
+        "projects": [
+            {
+                "name": "Brigade Oasis",
+                "location": "Devanahalli, Bangalore",
+                "area": "19 Acres",
+                "status": "New Launch",
+                "type": "newLaunch",
+                "price": 7500000,
+                "seats": null
+            },
+            {
+                "name": "Brigade Tech Garden",
+                "location": "Brookefield, Bangalore",
+                "area": "1.6M sqft",
+                "status": "Ready to Move",
+                "type": "readyToMove",
+                "price": null,
+                "seats": 8000
+            }
+        ],
+        "featuredProject": {
+            "name": "Brigade Valencia",
+            "location": "Hosur Road, Bangalore",
+            "image": "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=800",
+            "units": "1500+",
+            "size": "42 Acres",
+            "launchDate": "Mar 2023",
+            "possession": "Jun 2027",
+            "plotSize": "1400–2800 sqft",
+            "configurations": [
+                "2 BHK",
+                "3 BHK",
+                "4 BHK",
+                "Penthouse"
+            ],
+            "priceRange": "₹85 L – ₹2.8 Cr",
+            "dealsClosed": 800,
+            "inProgress": 600
+        },
+        "keyProjects": [
+            {
+                "name": "Brigade Metropolis",
+                "location": "Whitefield, Bangalore",
+                "image": "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=400",
+                "href": "/property-details/64f1a2b3c4d5e6f7a8b9d003"
+            }
+        ],
+        "relationshipManager": {
+            "name": "Priya Krishnan",
+            "title": "Relationship Manager",
+            "tag": "Verified Expert",
+            "avatar": "https://randomuser.me/api/portraits/women/32.jpg",
+            "assisted": "300+ clients",
+            "companyLogos": []
+        },
+        "team": [
+            {
+                "name": "M.R. Jaishankar",
+                "role": "Chairman & Managing Director",
+                "image": "https://randomuser.me/api/portraits/men/70.jpg",
+                "quote": "Quality and customer satisfaction are non-negotiable.",
+                "bio": "M.R. Jaishankar founded Brigade Group and has steered it to become one of South India's most trusted real estate brands."
+            }
+        ],
+        "keyPeople": [
+            {
+                "name": "M.R. Jaishankar",
+                "designation": "Chairman & MD",
+                "shortBio": "Founder of Brigade Group with 37+ years of real estate experience.",
+                "photo": {
+                    "uploadDate": "2024-01-01T00:00:00.000Z",
+                    "url": "https://randomuser.me/api/portraits/men/70.jpg"
+                }
+            }
+        ],
+        "directorName": "M.R. Jaishankar",
+        "directorPosition": "Chairman & Managing Director",
+        "directorQuote": "Every project we build reflects our commitment to quality and community.",
+        "awards": [
+            {
+                "title": "Best Mixed-Use Development",
+                "organisation": "NAR India Awards",
+                "image": "https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=200"
+            }
+        ],
+        "clientTestimonial": "Brigade's projects have consistently delivered superior living experiences.",
+        "testimonials": [
+            {
+                "quote": "The quality of Brigade Seasons was outstanding. The amenities are world-class.",
+                "author": "Arun Vishwanath",
+                "avatar": "https://randomuser.me/api/portraits/men/50.jpg"
+            }
+        ],
+        "faqs": [
+            {
+                "q": "Does Brigade Group have RERA approvals?",
+                "a": "All Brigade projects are RERA registered and we maintain full transparency in our transactions."
+            },
+            {
+                "q": "What payment plans are available?",
+                "a": "We offer construction-linked plans, down payment plans, and subvention schemes depending on the project."
+            }
+        ],
+        "socialLinks": {
+            "facebook": "https://www.facebook.com/BrigadeGroup",
+            "twitter": "https://twitter.com/BrigadeGroup",
+            "linkedin": "https://www.linkedin.com/company/brigade-group",
+            "instagram": "https://www.instagram.com/brigadegroup",
+            "youtube": "https://www.youtube.com/user/BrigadeGroup"
+        },
+        "socialMedia": {
+            "facebook": "https://www.facebook.com/BrigadeGroup",
+            "linkedin": "https://www.linkedin.com/company/brigade-group",
+            "instagram": "https://www.instagram.com/brigadegroup",
+            "youtube": "https://www.youtube.com/user/BrigadeGroup"
+        },
+        "galleryImages": [
+            {
+                "fileId": "64f1a2b3c4d5e6f7a8b9c103",
+                "filename": "brigade-gallery-1.jpg",
+                "originalName": "gallery-1.jpg",
+                "contentType": "image/jpeg",
+                "size": 310000,
+                "uploadDate": "2024-01-15T10:00:00.000Z",
+                "url": "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=800",
+                "alt": "Brigade World Trade Center",
+                "_id": "64f1a2b3c4d5e6f7a8b9c203"
+            }
+        ],
+        "promotionalVideoUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        "brochureUrl": "https://www.brigadegroup.com/brochure/brigade-valencia.pdf",
+        "seo": {
+            "metaTitle": "Brigade Group – Trusted Real Estate Developer in South India",
+            "urlSlug": "brigade-group",
+            "metaDescription": "Discover residential and commercial projects by Brigade Group. Quality construction across Bangalore, Chennai, and Hyderabad.",
+            "keywords": "brigade group, bangalore apartments, commercial real estate, south india builder"
+        },
+        "isActive": true,
+        "status": "active",
+        "createdAt": "2024-01-02T00:00:00.000Z",
+        "updatedAt": "2024-06-20T12:00:00.000Z"
+    },
+    {
+        "_id": "64f1a2b3c4d5e6f7a8b9c003",
+        "name": "Sobha Limited",
+        "builderName": "Sobha Ltd.",
+        "tagline": "We Are Creating a Better World",
+        "founded": "1995",
+        "foundedYear": "1995",
+        "headquarters": "Bangalore, Karnataka",
+        "description": "Sobha Limited is a backward-integrated real estate company with a unique business model that delivers quality projects with in-house manufacturing of all key components.",
+        "shortDescription": "Backward-integrated real estate developer known for quality.",
+        "detailedDescription": "Sobha Limited is renowned for its quality of construction, design excellence and customer-centric approach. The company has presence in 9 states and 24 cities.",
+        "keyDifferentiators": [
+            "Backward integration model",
+            "In-house manufacturing",
+            "Zero defect policy",
+            "27+ years expertise"
+        ],
+        "stats": {
+            "projects": "170+",
+            "cities": "24",
+            "sqft": "120M+",
+            "clients": "35000+",
+            "experience": "27 Years",
+            "experienceNum": 27,
+            "projectsNum": 170
+        },
+        "projectsCompleted": 170,
+        "ongoingProjects": 30,
+        "upcomingProjects": 12,
+        "yearsOfExperience": 27,
+        "citiesPresence": "24 Cities",
+        "ongoingCount": 30,
+        "upcomingCount": 12,
+        "totalCenters": "24",
+        "logo": "https://upload.wikimedia.org/wikipedia/en/thumb/b/bf/Sobha_Limited_logo.jpg/200px-Sobha_Limited_logo.jpg",
+        "isBrigade": false,
+        "builderLogo": {
+            "fileId": "64f1a2b3c4d5e6f7a8b9c097",
+            "filename": "sobha-logo.png",
+            "originalName": "sobha-logo.png",
+            "contentType": "image/png",
+            "size": 42000,
+            "uploadDate": "2024-01-12T10:00:00.000Z",
+            "url": "https://res.cloudinary.com/demo/image/upload/sobha-logo.png"
+        },
+        "category": "Luxury",
+        "builderCategory": "Luxury Residential",
+        "licenseNumber": "RERA/KA/2024/00789",
+        "certificate": "ISO 14001:2015",
+        "mission": "To create a positive impact in our customers' lives through superior quality.",
+        "vision": "To be the most reliable and trustworthy real estate brand in India.",
+        "missionStatement": "Zero compromise on quality, always.",
+        "visionStatement": "Delivering world-class spaces built on trust and innovation.",
+        "phone": "+91-80-67650000",
+        "phoneNumber": "+91-80-67650000",
+        "email": "info@sobha.com",
+        "contactEmail": "sales@sobha.com",
+        "corporateOfficeAddress": "Sobha Corporate Office, Bellary Road, Bangalore - 560097",
+        "officialWebsite": "https://www.sobha.com",
+        "specialties": [
+            "Luxury Villas",
+            "Premium Apartments",
+            "Row Houses",
+            "Dream Series",
+            "Commercial Spaces"
+        ],
+        "operatingRegions": [
+            "Bangalore",
+            "Thrissur",
+            "Calicut",
+            "Kochi",
+            "Pune",
+            "Gurugram",
+            "Chennai",
+            "Hyderabad"
+        ],
+        "moreDetails": [
+            {
+                "label": "RERA Number",
+                "value": "RERA/KA/2024/00789"
+            },
+            {
+                "label": "Listed on BSE/NSE",
+                "value": "Yes (SOBHA)"
+            }
+        ],
+        "operationalSegments": [
+            {
+                "name": "Kerala",
+                "cities": [
+                    "Thrissur",
+                    "Calicut",
+                    "Kochi",
+                    "Palakkad"
+                ]
+            },
+            {
+                "name": "Karnataka",
+                "cities": [
+                    "Bangalore"
+                ]
+            }
+        ],
+        "projects": [
+            {
+                "name": "Sobha Dream Acres",
+                "location": "Panathur, Bangalore",
+                "area": "81 Acres",
+                "status": "Ready to Move",
+                "type": "readyToMove",
+                "price": 6200000,
+                "seats": null
+            },
+            {
+                "name": "Sobha Neopolis",
+                "location": "Panathur, Bangalore",
+                "area": "25 Acres",
+                "status": "New Launch",
+                "type": "newLaunch",
+                "price": 14000000,
+                "seats": null
+            }
+        ],
+        "featuredProject": {
+            "name": "Sobha Neopolis",
+            "location": "Panathur Road, Bangalore",
+            "image": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800",
+            "units": "2000+",
+            "size": "25 Acres",
+            "launchDate": "Oct 2023",
+            "possession": "Dec 2027",
+            "plotSize": "1900–4000 sqft",
+            "configurations": [
+                "3 BHK",
+                "4 BHK",
+                "Duplex"
+            ],
+            "priceRange": "₹1.4 Cr – ₹4.2 Cr",
+            "dealsClosed": 900,
+            "inProgress": 950
+        },
+        "keyProjects": [
+            {
+                "name": "Sobha Dream Acres",
+                "location": "Panathur, Bangalore",
+                "image": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400",
+                "href": "/property-details/64f1a2b3c4d5e6f7a8b9d004"
+            }
+        ],
+        "relationshipManager": {
+            "name": "Sunil Kumar",
+            "title": "Senior Sales Manager",
+            "tag": "Gold Partner",
+            "avatar": "https://randomuser.me/api/portraits/men/40.jpg",
+            "assisted": "450+ clients",
+            "companyLogos": []
+        },
+        "team": [
+            {
+                "name": "Ravi Menon",
+                "role": "Managing Director & CEO",
+                "image": "https://randomuser.me/api/portraits/men/65.jpg",
+                "quote": "Quality is not an accident; it is the result of intelligent effort.",
+                "bio": "Ravi Menon has led Sobha's expansion into new geographies while maintaining the company's zero-defect quality standards."
+            }
+        ],
+        "keyPeople": [
+            {
+                "name": "Ravi Menon",
+                "designation": "MD & CEO",
+                "shortBio": "Leading Sobha's growth with a focus on quality and customer satisfaction.",
+                "photo": {
+                    "uploadDate": "2024-01-01T00:00:00.000Z",
+                    "url": "https://randomuser.me/api/portraits/men/65.jpg"
+                }
+            }
+        ],
+        "directorName": "Ravi Menon",
+        "directorPosition": "Managing Director & CEO",
+        "directorQuote": "Every Sobha home is built like it's our own.",
+        "awards": [
+            {
+                "title": "Best Luxury Residential Project",
+                "organisation": "CNBC Awaaz Real Estate Awards",
+                "image": "https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=200"
+            }
+        ],
+        "clientTestimonial": "Sobha homes are built with unmatched quality - we've noticed every detail.",
+        "testimonials": [
+            {
+                "quote": "The quality of Sobha's construction is on a different level. Every corner is perfectly done.",
+                "author": "Deepa Iyer",
+                "avatar": "https://randomuser.me/api/portraits/women/55.jpg"
+            }
+        ],
+        "faqs": [
+            {
+                "q": "What makes Sobha's construction quality different?",
+                "a": "Sobha is a backward-integrated company - we manufacture doors, windows, furniture, concrete products and more in-house, ensuring the highest quality control."
+            },
+            {
+                "q": "Does Sobha offer customization in apartments?",
+                "a": "Yes, Sobha offers customization options in select projects under our Dream Series for personalizing interiors."
+            }
+        ],
+        "socialLinks": {
+            "facebook": "https://www.facebook.com/SobhaLimited",
+            "twitter": "https://twitter.com/SobhaLimited",
+            "linkedin": "https://www.linkedin.com/company/sobha-limited",
+            "instagram": "https://www.instagram.com/sobbhalimited",
+            "youtube": "https://www.youtube.com/user/SobhaLimited"
+        },
+        "socialMedia": {
+            "facebook": "https://www.facebook.com/SobhaLimited",
+            "linkedin": "https://www.linkedin.com/company/sobha-limited",
+            "instagram": "https://www.instagram.com/sobbhalimited",
+            "youtube": "https://www.youtube.com/user/SobhaLimited"
+        },
+        "galleryImages": [
+            {
+                "fileId": "64f1a2b3c4d5e6f7a8b9c104",
+                "filename": "sobha-gallery-1.jpg",
+                "originalName": "gallery-1.jpg",
+                "contentType": "image/jpeg",
+                "size": 295000,
+                "uploadDate": "2024-01-15T10:00:00.000Z",
+                "url": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800",
+                "alt": "Sobha Neopolis",
+                "_id": "64f1a2b3c4d5e6f7a8b9c204"
+            }
+        ],
+        "promotionalVideoUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        "brochureUrl": "https://www.sobha.com/brochure/sobha-neopolis.pdf",
+        "seo": {
+            "metaTitle": "Sobha Limited – Luxury Real Estate Developer in India",
+            "urlSlug": "sobha-limited",
+            "metaDescription": "Explore premium apartments and villas by Sobha Limited. Unmatched quality construction across 24 cities in India.",
+            "keywords": "sobha limited, luxury villas, premium apartments, bangalore real estate, sobha dream acres"
+        },
+        "isActive": true,
+        "status": "active",
+        "createdAt": "2024-01-03T00:00:00.000Z",
+        "updatedAt": "2024-06-25T12:00:00.000Z"
+    }
+]

@@ -37,6 +37,8 @@ const ReviewSchema = new mongoose.Schema({
   },
   date: String,
   comment: String,
+  goodThings: String,
+  badThings: String,
   userPhoneNumber: String,
 }, { _id: true });
 
@@ -85,16 +87,67 @@ const OpeningHoursSchema = new mongoose.Schema({
 }, { _id: false });
 
 const CommercialPropertySchema = new mongoose.Schema({
+  // Core Info
+  name: String,
+  propertyName: String,
   propertyType: {
     type: String,
     enum: ['commercial', 'techpark', 'office', 'retail', 'warehouse'],
+    default: 'commercial'
   },
+  listingType: String,
+  propertyCategoryType: String,
+  category: String,
+
+  // UI rendering specifics
+  underManagement: Boolean,
+  availableFloors: String,
+  officeSpaceSolutions: String,
+  builderName: String,
+  agentName: String,
+  agentPhone: String,
+  agentImage: String,
+  furnishing: String,
+  brandLogo: String,
+  carpetArea: String,
+
+  // Stats & Features
   isUnderManagement: String,
   selectedFloors: [String],
   facilities: [FacilitySchema],
-  propertyName: String,
-  category: String,
-  Category: String,
+  amenities: [AmenitySchema],
+  seatLayoutOptions: [String],
+  openingHours: OpeningHoursSchema,
+  floorConfigurations: [FloorConfigurationSchema],
+  washrooms: Number,
+  propertyAge: String,
+  facing: String,
+  parking: String,
+
+  // Pricing
+  originalPrice: String,
+  discountedPrice: String,
+  additionalPrice: String,
+  totalPrice: String,
+  pricePerDesk: Number,
+  pricePerSqft: Number,
+
+  // Status & Verification
+  status: String,
+  verificationStatus: { type: String, default: 'pending' },
+  isVerified: { type: Boolean, default: false },
+  badge: String,
+  isTopRated: Boolean,
+  reraRegistered: Boolean,
+  saleType: String,
+  constructionStatus: String,
+  possessionStatus: String,
+  listedBy: String,
+  postedBy: String,
+  propertiesWithOffers: Boolean,
+  furnishingStatus: String,
+
+  // Address & Location
   address: {
     country: String,
     flat: String,
@@ -104,65 +157,78 @@ const CommercialPropertySchema = new mongoose.Schema({
     state: String,
     pincode: String,
   },
+  location: String,
+  stateName: String,
+  cityName: String,
+  layerLocation: String,
+  locationDistrict: String,
+
+  // Coordinates
   coordinates: {
     latitude: Number,
     longitude: Number,
     lat: Number,
     lng: Number,
   },
-  openingHours: OpeningHoursSchema,
-  floorConfigurations: [FloorConfigurationSchema],
-  amenities: [AmenitySchema],
-  seatLayoutOptions: [String],
-  originalPrice: String,
-  discountedPrice: String,
-  additionalPrice: String,
-  badge: String,
-  date_added: String,
-  verificationStatus: String,
+  position: {
+    lat: Number,
+    lng: Number,
+  },
+
+  // Media
+  images: [String],
+  featuredImageUrl: String,
+  featuredImage: FileSchema,
+  interiorImages: [FileSchema],
+  seatLayoutImages: [FileSchema],
+  seatLayoutPDFs: [FileSchema],
+  propertyVideos: [FileSchema],
+
+  // Floor Plans
+  floorPlans: {
+    type: Map,
+    of: [String],
+  },
+
+  // Brand Info (from UI)
+  brandName: String,
+  brandStats: {
+    cities: String,
+    clients: String,
+    spaces: String,
+    seats: String,
+  },
+  brandDescription: String,
+
+  // Nearby & Social
   nearbyPlaces: {
     school: [NearbyPlaceSchema],
     hospital: [NearbyPlaceSchema],
     hotel: [NearbyPlaceSchema],
     business: [NearbyPlaceSchema],
   },
+
+  // Engagement
+  views: { type: Number, default: 0 },
+  visitorCount: { type: Number, default: 0 },
+  inquiries: { type: Number, default: 0 },
   ratings: {
-    overall: Number,
-    totalRatings: Number,
+    overall: { type: Number, default: 0 },
+    totalRatings: { type: Number, default: 0 },
     breakdown: Object,
     whatsGood: [String],
     whatsBad: [String],
   },
   reviews: [ReviewSchema],
-  status: String,
-  createdBy: mongoose.Schema.Types.ObjectId,
-  views: Number,
-  inquiries: Number,
-  location: String,
-  sellerPhoneNumber: String,
-  interiorImages: [FileSchema],
-  seatLayoutImages: [FileSchema],
-  seatLayoutPDFs: [FileSchema],
-  propertyVideos: [FileSchema],
-  featuredImage: FileSchema,
-  publishedAt: Date,
-  updatedBy: mongoose.Schema.Types.ObjectId,
 
-  state_name: String,
-  city: String,
-  name: String,
-  images: [String],
-  featuredImageUrl: String,
-  is_verified: Boolean,
-  layer_location: String,
-  location_district: String,
-  floorPlans: {
-    type: Map,
-    of: [String],
-  },
-  price_per_desk: Number,
-  price_per_sqft: Number,
-  no_of_seats: Number,
+  // Meta
+  sellerPhoneNumber: String,
+  createdBy: mongoose.Schema.Types.ObjectId,
+  updatedBy: mongoose.Schema.Types.ObjectId,
+  dateAdded: String,
+  uploadedDate: String,
+  publishedAt: Date,
+  noOfSeats: Number,
 }, {
   timestamps: true,
   strict: false,

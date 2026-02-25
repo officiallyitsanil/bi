@@ -1,0 +1,46 @@
+[
+    {
+        "_id": "72a1b2c3d4e5f6a7b8c9d001",
+        "propertyName": "Prestige Primrose Hills",
+        "name": "Arjun Sharma",
+        "email": "arjun.sharma@example.com",
+        "phone": "+919900112233",
+        "message": "I'm very interested in a 3 BHK unit. Please let me know if any east-facing units are available on higher floors.",
+        "status": "pending",
+        "createdAt": "2024-06-20T09:00:00.000Z",
+        "updatedAt": "2024-06-20T09:00:00.000Z"
+    },
+    {
+        "_id": "72a1b2c3d4e5f6a7b8c9d002",
+        "propertyName": "Prestige Tech Cloud",
+        "name": "Ritu Sharma",
+        "email": "ritu.sharma@example.com",
+        "phone": "+919123456789",
+        "message": "We are a 25-person team looking for a dedicated floor. Please provide pricing details.",
+        "status": "contacted",
+        "createdAt": "2024-06-22T11:30:00.000Z",
+        "updatedAt": "2024-06-23T10:00:00.000Z"
+    },
+    {
+        "_id": "72a1b2c3d4e5f6a7b8c9d003",
+        "propertyName": "Luxury Villa – Whitefield",
+        "name": "Vivek Menon",
+        "email": "vivek.menon@example.com",
+        "phone": "+917654321098",
+        "message": "We are a family looking for a premium rental. Is the villa pet-friendly?",
+        "status": "closed",
+        "createdAt": "2024-06-25T14:00:00.000Z",
+        "updatedAt": "2024-06-28T16:00:00.000Z"
+    },
+    {
+        "_id": "72a1b2c3d4e5f6a7b8c9d004",
+        "propertyName": "WeWork Galaxy",
+        "name": "Kiran Bhat",
+        "email": "kiran.bhat@example.com",
+        "phone": "+918012345678",
+        "message": "Interested in a private cabin for 6 people. Please share availability and pricing.",
+        "status": "pending",
+        "createdAt": "2024-06-28T10:30:00.000Z",
+        "updatedAt": "2024-06-28T10:30:00.000Z"
+    }
+]

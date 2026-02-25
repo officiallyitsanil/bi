@@ -1,0 +1,41 @@
+[
+    {
+        "_id": "71a1b2c3d4e5f6a7b8c9d001",
+        "propertyId": "65a1b2c3d4e5f6a7b8c9d001",
+        "propertyName": "Prestige Primrose Hills",
+        "reporterName": "Vikram Sethi",
+        "reporterEmail": "vikram.sethi@example.com",
+        "reporterPhone": "+918901234567",
+        "reason": "incorrect_info",
+        "details": "The listed square footage is incorrect. The actual carpet area is 1200 sqft, not 1450 sqft as mentioned.",
+        "status": "pending",
+        "createdAt": "2024-06-20T10:00:00.000Z",
+        "updatedAt": "2024-06-20T10:00:00.000Z"
+    },
+    {
+        "_id": "71a1b2c3d4e5f6a7b8c9d002",
+        "propertyId": "66c1d2e3f4a5b6c7d8e9f002",
+        "propertyName": "WeWork Galaxy",
+        "reporterName": "Ananya Kapoor",
+        "reporterEmail": "ananya.kapoor@example.com",
+        "reporterPhone": "+919012345678",
+        "reason": "sold",
+        "details": "This property is no longer available. The seats were fully taken 2 months ago and no new seats are being offered currently.",
+        "status": "reviewed",
+        "createdAt": "2024-06-22T14:30:00.000Z",
+        "updatedAt": "2024-06-24T09:00:00.000Z"
+    },
+    {
+        "_id": "71a1b2c3d4e5f6a7b8c9d003",
+        "propertyId": "65a1b2c3d4e5f6a7b8c9d002",
+        "propertyName": "Sobha Dream Acres",
+        "reporterName": "Siddharth Nair",
+        "reporterEmail": "siddharth.nair@example.com",
+        "reporterPhone": "+918765678901",
+        "reason": "duplicate",
+        "details": "This listing appears to be a duplicate. There is another listing for the same property at a different price.",
+        "status": "resolved",
+        "createdAt": "2024-06-25T11:00:00.000Z",
+        "updatedAt": "2024-06-28T15:00:00.000Z"
+    }
+]

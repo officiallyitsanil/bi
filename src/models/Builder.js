@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const BuilderSchema = new mongoose.Schema(
   {
+    // Basic Info
     name: { type: String, required: true },
     builderName: { type: String },
     tagline: String,
@@ -9,7 +10,11 @@ const BuilderSchema = new mongoose.Schema(
     foundedYear: String,
     headquarters: String,
     description: String,
+    shortDescription: String,
+    detailedDescription: String,
+    keyDifferentiators: [String],
 
+    // Stats
     stats: {
       projects: { type: String, default: '0' },
       cities: String,
@@ -19,7 +24,16 @@ const BuilderSchema = new mongoose.Schema(
       experienceNum: Number,
       projectsNum: Number,
     },
+    projectsCompleted: Number,
+    ongoingProjects: Number,
+    upcomingProjects: Number,
+    yearsOfExperience: Number,
+    citiesPresence: String,
+    ongoingCount: Number,
+    upcomingCount: Number,
+    totalCenters: String,
 
+    // Identity
     logo: String,
     isBrigade: { type: Boolean, default: false },
     builderLogo: {
@@ -31,25 +45,26 @@ const BuilderSchema = new mongoose.Schema(
       uploadDate: Date,
       url: String,
     },
+    category: String,
+    builderCategory: String,
+    licenseNumber: String,
+    certificate: String,
 
+    // Mission & Vision
     mission: String,
     vision: String,
     missionStatement: String,
     visionStatement: String,
 
-
+    // Contact Info
     phone: String,
-    email: String,
     phoneNumber: String,
+    email: String,
     contactEmail: String,
     corporateOfficeAddress: String,
     officialWebsite: String,
-    licenseNumber: String,
-    certificate: String,
-    category: String,
-    builderCategory: String,
-    totalCenters: String,
 
+    // Specialties & Regions
     specialties: [String],
     operatingRegions: [String],
     moreDetails: [
@@ -58,7 +73,14 @@ const BuilderSchema = new mongoose.Schema(
         value: String,
       },
     ],
+    operationalSegments: [
+      {
+        name: String,
+        cities: [String],
+      },
+    ],
 
+    // Projects
     projects: [
       {
         name: String,
@@ -68,77 +90,6 @@ const BuilderSchema = new mongoose.Schema(
         type: { type: String, enum: ['newLaunch', 'upcoming', 'readyToMove'] },
         price: Number,
         seats: Number,
-      },
-    ],
-
-    ongoingCount: Number,
-    upcomingCount: Number,
-    projectsCompleted: Number,
-    ongoingProjects: Number,
-    upcomingProjects: Number,
-    yearsOfExperience: Number,
-    citiesPresence: String,
-
-    relationshipManager: {
-      name: String,
-      title: String,
-      tag: String,
-      avatar: String,
-      assisted: String,
-      companyLogos: [String],
-    },
-
-    directorName: String,
-    directorPosition: String,
-    directorQuote: String,
-
-    awards: [
-      {
-        title: String,
-        organisation: String,
-        image: String,
-      },
-    ],
-    clientTestimonial: String,
-    testimonials: [
-      {
-        quote: String,
-        author: String,
-        avatar: String,
-      },
-    ],
-    faqs: [
-      {
-        q: String,
-        a: String,
-      },
-    ],
-
-    socialLinks: {
-      facebook: String,
-      twitter: String,
-      linkedin: String,
-      instagram: String,
-      youtube: String,
-    },
-    socialMedia: {
-      facebook: String,
-      linkedin: String,
-      instagram: String,
-      youtube: String,
-    },
-
-    galleryImages: [
-      {
-        fileId: mongoose.Schema.Types.ObjectId,
-        filename: String,
-        originalName: String,
-        contentType: String,
-        size: Number,
-        uploadDate: Date,
-        url: String,
-        alt: String,
-        _id: mongoose.Schema.Types.ObjectId,
       },
     ],
     featuredProject: {
@@ -164,10 +115,15 @@ const BuilderSchema = new mongoose.Schema(
       },
     ],
 
-    shortDescription: String,
-    detailedDescription: String,
-    keyDifferentiators: [String],
-
+    // People
+    relationshipManager: {
+      name: String,
+      title: String,
+      tag: String,
+      avatar: String,
+      assisted: String,
+      companyLogos: [String],
+    },
     team: [
       {
         name: String,
@@ -185,16 +141,64 @@ const BuilderSchema = new mongoose.Schema(
         photo: { uploadDate: Date, url: String },
       },
     ],
+    directorName: String,
+    directorPosition: String,
+    directorQuote: String,
 
-    operationalSegments: [
+    // Social & Recognition
+    awards: [
       {
-        name: String,
-        cities: [String],
+        title: String,
+        organisation: String,
+        image: String,
       },
     ],
+    clientTestimonial: String,
+    testimonials: [
+      {
+        quote: String,
+        author: String,
+        avatar: String,
+      },
+    ],
+    faqs: [
+      {
+        q: String,
+        a: String,
+      },
+    ],
+    socialLinks: {
+      facebook: String,
+      twitter: String,
+      linkedin: String,
+      instagram: String,
+      youtube: String,
+    },
+    socialMedia: {
+      facebook: String,
+      linkedin: String,
+      instagram: String,
+      youtube: String,
+    },
 
+    // Media
+    galleryImages: [
+      {
+        fileId: mongoose.Schema.Types.ObjectId,
+        filename: String,
+        originalName: String,
+        contentType: String,
+        size: Number,
+        uploadDate: Date,
+        url: String,
+        alt: String,
+        _id: mongoose.Schema.Types.ObjectId,
+      },
+    ],
     promotionalVideoUrl: String,
     brochureUrl: String,
+
+    // SEO
     seo: {
       metaTitle: String,
       urlSlug: String,
@@ -202,6 +206,7 @@ const BuilderSchema = new mongoose.Schema(
       keywords: String,
     },
 
+    // Meta
     createdBy: mongoose.Schema.Types.ObjectId,
     updatedBy: mongoose.Schema.Types.ObjectId,
     isActive: { type: Boolean, default: true },

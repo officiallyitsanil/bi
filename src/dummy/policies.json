@@ -1,0 +1,47 @@
+[
+    {
+        "_id": "75a1b2c3d4e5f6a7b8c9d001",
+        "identifier": "privacy_intro",
+        "title": "Introduction",
+        "content": "Welcome to our Privacy Policy. This policy describes how we collect, use, and protect your personal information when you use our real estate platform. By using our services, you agree to the collection and use of information in accordance with this policy.",
+        "order": 1,
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+        "_id": "75a1b2c3d4e5f6a7b8c9d002",
+        "identifier": "privacy_data_collection",
+        "title": "Information We Collect",
+        "content": "We collect information you provide directly to us, such as when you create an account, list a property, or contact a builder. This includes: your name, phone number, email address, and location data. We also collect information automatically when you use our services, including log data, device information, and usage patterns.",
+        "order": 2,
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+        "_id": "75a1b2c3d4e5f6a7b8c9d003",
+        "identifier": "privacy_data_use",
+        "title": "How We Use Your Information",
+        "content": "We use the information we collect to: provide, maintain, and improve our services; process property inquiries and tour bookings; send notifications about properties you have favorited; personalize your experience; and communicate with you about our services. We do not sell your personal information to third parties.",
+        "order": 3,
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+        "_id": "75a1b2c3d4e5f6a7b8c9d004",
+        "identifier": "privacy_data_security",
+        "title": "Data Security",
+        "content": "We implement appropriate technical and organizational security measures to protect your information against unauthorized access, alteration, disclosure, or destruction. However, no method of transmission over the Internet or electronic storage is 100% secure.",
+        "order": 4,
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+        "_id": "75a1b2c3d4e5f6a7b8c9d005",
+        "identifier": "privacy_contact",
+        "title": "Contact Us",
+        "content": "If you have any questions about this Privacy Policy, please contact us at: privacy@yourplatform.com or call us at +91-80-12345678. Our privacy team will respond within 5 business days.",
+        "order": 5,
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+]

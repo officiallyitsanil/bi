@@ -1,0 +1,625 @@
+[
+    {
+        "_id": "66c1d2e3f4a5b6c7d8e9f001",
+        "name": "Prestige Tech Cloud",
+        "propertyName": "Prestige Tech Cloud",
+        "propertyType": "commercial",
+        "listingType": "rent",
+        "category": "Commercial Office",
+        "underManagement": true,
+        "availableFloors": "1st to 5th Floor",
+        "officeSpaceSolutions": "Private Cabins, Dedicated Desks",
+        "builderName": "Prestige Group",
+        "agentName": "Amit Sharma",
+        "agentPhone": "+91 9876543210",
+        "agentImage": "https://i.pravatar.cc/150?img=11",
+        "brandLogo": "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=96",
+        "selectedFloors": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+        ],
+        "facilities": [
+            {
+                "_id": "66c1fac001",
+                "name": "High-Speed Internet",
+                "image": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=100"
+            },
+            {
+                "_id": "66c1fac002",
+                "name": "Conference Rooms",
+                "image": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=100"
+            },
+            {
+                "_id": "66c1fac003",
+                "name": "Reception",
+                "image": "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=100"
+            },
+            {
+                "_id": "66c1fac004",
+                "name": "Cafeteria",
+                "image": "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=100"
+            },
+            {
+                "_id": "66c1fac005",
+                "name": "Printing & Scanning",
+                "image": "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=100"
+            }
+        ],
+        "amenities": [
+            {
+                "_id": "66c1ame001",
+                "name": "Parking",
+                "image": "https://images.unsplash.com/photo-1590674899484-d5640e854abe?w=100"
+            },
+            {
+                "_id": "66c1ame002",
+                "name": "Power Backup",
+                "image": "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=100"
+            },
+            {
+                "_id": "66c1ame003",
+                "name": "Security",
+                "image": "https://images.unsplash.com/photo-1461773518188-b3e86f98242f?w=100"
+            },
+            {
+                "_id": "66c1ame004",
+                "name": "CCTV",
+                "image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=100"
+            }
+        ],
+        "seatLayoutOptions": [
+            "Open Desk",
+            "Dedicated Cabin",
+            "Dedicated Floor",
+            "Full Floor"
+        ],
+        "openingHours": {
+            "mondayFriday": {
+                "enabled": true,
+                "open": "08:00",
+                "close": "20:00"
+            },
+            "saturday": {
+                "enabled": true,
+                "open": "09:00",
+                "close": "17:00"
+            },
+            "sunday": {
+                "enabled": false,
+                "open": null,
+                "close": null
+            }
+        },
+        "floorConfigurations": [
+            {
+                "_id": "66c1fc001",
+                "floor": "2",
+                "dedicatedCabin": {
+                    "enabled": true,
+                    "readyToMove": true,
+                    "readyForFitOut": false,
+                    "availableFrom": "2024-07-01T00:00:00.000Z",
+                    "timeline": "Immediate",
+                    "seats": "6",
+                    "pricePerSeat": "₹12,000",
+                    "pricePerSqft": "₹85",
+                    "billableUnits": "6 seats"
+                },
+                "dedicatedFloor": {
+                    "enabled": true,
+                    "readyToMove": false,
+                    "readyForFitOut": true,
+                    "availableFrom": "2024-08-01T00:00:00.000Z",
+                    "timeline": "1 Month",
+                    "seats": "50",
+                    "pricePerSeat": "₹10,000",
+                    "pricePerSqft": "₹80",
+                    "billableUnits": "Full Floor"
+                }
+            },
+            {
+                "_id": "66c1fc002",
+                "floor": "4",
+                "dedicatedCabin": {
+                    "enabled": true,
+                    "readyToMove": true,
+                    "readyForFitOut": false,
+                    "availableFrom": "2024-07-15T00:00:00.000Z",
+                    "timeline": "Immediate",
+                    "seats": "8",
+                    "pricePerSeat": "₹13,000",
+                    "pricePerSqft": "₹90",
+                    "billableUnits": "8 seats"
+                },
+                "dedicatedFloor": {
+                    "enabled": false,
+                    "readyToMove": false,
+                    "readyForFitOut": false,
+                    "availableFrom": null,
+                    "timeline": null,
+                    "seats": null,
+                    "pricePerSeat": null,
+                    "pricePerSqft": null,
+                    "billableUnits": null
+                }
+            }
+        ],
+        "originalPrice": "₹10,000/seat/month",
+        "discountedPrice": "₹9,500/seat/month",
+        "additionalPrice": "₹1,500 (electricity)",
+        "totalPrice": "₹11,000/seat/month",
+        "pricePerDesk": 10000,
+        "pricePerSqft": 85,
+        "washrooms": 4,
+        "propertyAge": "1to5",
+        "facing": "east",
+        "parking": "reserved",
+        "status": "active",
+        "verificationStatus": "approved",
+        "isVerified": true,
+        "badge": "Premium Coworking",
+        "isTopRated": true,
+        "reraRegistered": true,
+        "saleType": null,
+        "constructionStatus": "Ready to Move",
+        "possessionStatus": "Immediate",
+        "listedBy": "Builder",
+        "postedBy": "Prestige Group",
+        "propertiesWithOffers": true,
+        "address": {
+            "country": "India",
+            "flat": "Ground Floor to 5th Floor",
+            "street": "Outer Ring Road",
+            "city": "Bangalore",
+            "locality": "Marathahalli",
+            "state": "Karnataka",
+            "pincode": "560037"
+        },
+        "location": "Marathahalli, Outer Ring Road, Bangalore",
+        "stateName": "Karnataka",
+        "cityName": "Bangalore",
+        "layerLocation": "East Bangalore",
+        "locationDistrict": "Bangalore East",
+        "coordinates": {
+            "latitude": 12.9561,
+            "longitude": 77.6973,
+            "lat": 12.9561,
+            "lng": 77.6973
+        },
+        "position": {
+            "lat": 12.9561,
+            "lng": 77.6973
+        },
+        "images": [
+            "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800",
+            "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800",
+            "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800",
+            "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800"
+        ],
+        "featuredImageUrl": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800",
+        "featuredImage": {
+            "fileId": "66c1f001",
+            "filename": "prestige-tech-cloud-featured.jpg",
+            "originalName": "office-featured.jpg",
+            "contentType": "image/jpeg",
+            "size": 410000,
+            "uploadDate": "2024-04-01T10:00:00.000Z",
+            "url": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800",
+            "description": "Prestige Tech Cloud Office",
+            "tags": [
+                "exterior",
+                "office",
+                "featured"
+            ]
+        },
+        "interiorImages": [
+            {
+                "fileId": "66c1f002",
+                "filename": "interior-open-desk.jpg",
+                "originalName": "open-desk.jpg",
+                "contentType": "image/jpeg",
+                "size": 340000,
+                "uploadDate": "2024-04-01T10:00:00.000Z",
+                "url": "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800",
+                "description": "Open desk coworking area",
+                "tags": [
+                    "interior",
+                    "workstation"
+                ]
+            }
+        ],
+        "seatLayoutImages": [
+            {
+                "fileId": "66c1s001",
+                "filename": "floor-2-layout.jpg",
+                "originalName": "floor-2-seat-layout.jpg",
+                "contentType": "image/jpeg",
+                "size": 220000,
+                "uploadDate": "2024-04-01T10:00:00.000Z",
+                "url": "https://images.unsplash.com/photo-1574359411659-23fc3bd3440d?w=800",
+                "description": "Floor 2 seat layout",
+                "tags": [
+                    "layout",
+                    "floor-plan"
+                ]
+            }
+        ],
+        "seatLayoutPDFs": [],
+        "propertyVideos": [],
+        "floorPlans": {
+            "floor2": [
+                "https://images.unsplash.com/photo-1574359411659-23fc3bd3440d?w=800"
+            ],
+            "floor4": [
+                "https://images.unsplash.com/photo-1576493519080-2f2a6c1b5e0c?w=800"
+            ]
+        },
+        "brandName": "Prestige Group",
+        "brandStats": {
+            "cities": "12",
+            "clients": "500+",
+            "spaces": "15 Commercial",
+            "seats": "10,000+"
+        },
+        "brandDescription": "Prestige Group's commercial portfolio includes world-class IT parks and office spaces.",
+        "nearbyPlaces": {
+            "school": [
+                {
+                    "_id": "66c1np001",
+                    "name": "Ryan International",
+                    "location": "Marathahalli",
+                    "distance": "2 km"
+                }
+            ],
+            "hospital": [
+                {
+                    "_id": "66c1np002",
+                    "name": "Chinmaya Mission Hospital",
+                    "location": "Indiranagar",
+                    "distance": "5 km"
+                }
+            ],
+            "hotel": [
+                {
+                    "_id": "66c1np003",
+                    "name": "Courtyard Marriott",
+                    "location": "Marathahalli",
+                    "distance": "1.5 km"
+                }
+            ],
+            "business": [
+                {
+                    "_id": "66c1np004",
+                    "name": "ITPL",
+                    "location": "Whitefield",
+                    "distance": "3 km"
+                },
+                {
+                    "_id": "66c1np005",
+                    "name": "RMZ Infinity",
+                    "location": "Old Madras Road",
+                    "distance": "6 km"
+                }
+            ]
+        },
+        "views": 2154,
+        "visitorCount": 1432,
+        "inquiries": 118,
+        "ratings": {
+            "overall": 4.6,
+            "totalRatings": 34,
+            "breakdown": {
+                "1": 0,
+                "2": 1,
+                "3": 3,
+                "4": 8,
+                "5": 22
+            },
+            "whatsGood": [
+                "Prime ORR location",
+                "Modern infrastructure",
+                "Flexible seating options"
+            ],
+            "whatsBad": [
+                "Parking can get full during peak hours",
+                "Slightly expensive"
+            ]
+        },
+        "reviews": [
+            {
+                "_id": "66c1rv001",
+                "user": "Ananya Kapoor",
+                "rating": 5,
+                "date": "2024-05-15",
+                "comment": "Excellent coworking space. High-speed internet, great ambiance, and very professional environment.",
+                "goodThings": "Super fast internet, great conference rooms, helpful staff.",
+                "badThings": "Parking is a bit of a challenge during peak hours.",
+                "userPhoneNumber": "+919012345678"
+            },
+            {
+                "_id": "66c1rv002",
+                "user": "Siddharth Nair",
+                "rating": 4,
+                "date": "2024-04-28",
+                "comment": "Good office infrastructure but a bit pricey. Worth it for the ORR location.",
+                "goodThings": "Central location, modern facilities.",
+                "badThings": "Cost is on the higher end.",
+                "userPhoneNumber": "+918765678901"
+            }
+        ],
+        "sellerPhoneNumber": "+91-80-25591147",
+        "dateAdded": "2024-04-01",
+        "uploadedDate": "2024-04-01",
+        "publishedAt": "2024-04-01T00:00:00.000Z",
+        "noOfSeats": 200,
+        "createdAt": "2024-04-01T00:00:00.000Z",
+        "updatedAt": "2024-06-30T12:00:00.000Z"
+    },
+    {
+        "_id": "66c1d2e3f4a5b6c7d8e9f002",
+        "name": "WeWork Galaxy",
+        "propertyName": "WeWork Galaxy",
+        "propertyType": "office",
+        "listingType": "rent",
+        "selectedFloors": [
+            "G",
+            "1",
+            "2"
+        ],
+        "facilities": [
+            {
+                "_id": "66c2fac001",
+                "name": "High-Speed WiFi",
+                "image": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=100"
+            },
+            {
+                "_id": "66c2fac002",
+                "name": "Meeting Rooms",
+                "image": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=100"
+            },
+            {
+                "_id": "66c2fac003",
+                "name": "Printer / Scanner",
+                "image": "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=100"
+            },
+            {
+                "_id": "66c2fac004",
+                "name": "Tea & Coffee",
+                "image": "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=100"
+            },
+            {
+                "_id": "66c2fac005",
+                "name": "Lounge Area",
+                "image": "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=100"
+            }
+        ],
+        "amenities": [
+            {
+                "_id": "66c2ame001",
+                "name": "Bike Parking",
+                "image": "https://images.unsplash.com/photo-1590674899484-d5640e854abe?w=100"
+            },
+            {
+                "_id": "66c2ame002",
+                "name": "24/7 Access",
+                "image": "https://images.unsplash.com/photo-1461773518188-b3e86f98242f?w=100"
+            },
+            {
+                "_id": "66c2ame003",
+                "name": "Mail Handling",
+                "image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=100"
+            }
+        ],
+        "seatLayoutOptions": [
+            "Hot Desk",
+            "Dedicated Desk",
+            "Private Cabin",
+            "Team Suite"
+        ],
+        "openingHours": {
+            "mondayFriday": {
+                "enabled": true,
+                "open": "24:00",
+                "close": "24:00"
+            },
+            "saturday": {
+                "enabled": true,
+                "open": "24:00",
+                "close": "24:00"
+            },
+            "sunday": {
+                "enabled": true,
+                "open": "24:00",
+                "close": "24:00"
+            }
+        },
+        "floorConfigurations": [
+            {
+                "_id": "66c2fc001",
+                "floor": "G",
+                "dedicatedCabin": {
+                    "enabled": true,
+                    "readyToMove": true,
+                    "readyForFitOut": false,
+                    "availableFrom": "2024-07-01T00:00:00.000Z",
+                    "timeline": "Immediate",
+                    "seats": "4",
+                    "pricePerSeat": "₹15,000",
+                    "pricePerSqft": "₹110",
+                    "billableUnits": "4 seats"
+                },
+                "dedicatedFloor": {
+                    "enabled": false,
+                    "readyToMove": false,
+                    "readyForFitOut": false,
+                    "availableFrom": null,
+                    "timeline": null,
+                    "seats": null,
+                    "pricePerSeat": null,
+                    "pricePerSqft": null,
+                    "billableUnits": null
+                }
+            }
+        ],
+        "originalPrice": "₹8,000/desk/month",
+        "discountedPrice": "₹7,500/desk/month",
+        "additionalPrice": null,
+        "totalPrice": "₹7,500/desk/month",
+        "pricePerDesk": 8000,
+        "pricePerSqft": 95,
+        "washrooms": 5,
+        "propertyAge": "5to10",
+        "facing": "north",
+        "parking": "public",
+        "status": "active",
+        "verificationStatus": "approved",
+        "isVerified": true,
+        "badge": "WeWork Premium",
+        "isTopRated": true,
+        "reraRegistered": false,
+        "saleType": null,
+        "constructionStatus": "Ready to Move",
+        "possessionStatus": "Immediate",
+        "listedBy": "Developer",
+        "postedBy": "WeWork India",
+        "propertiesWithOffers": true,
+        "address": {
+            "country": "India",
+            "flat": "Galaxy, UB City",
+            "street": "Vittal Mallya Road",
+            "city": "Bangalore",
+            "locality": "UB City",
+            "state": "Karnataka",
+            "pincode": "560001"
+        },
+        "location": "UB City, Vittal Mallya Road, Bangalore",
+        "stateName": "Karnataka",
+        "cityName": "Bangalore",
+        "layerLocation": "Central Bangalore",
+        "locationDistrict": "Bangalore Central",
+        "coordinates": {
+            "latitude": 12.9716,
+            "longitude": 77.5946,
+            "lat": 12.9716,
+            "lng": 77.5946
+        },
+        "position": {
+            "lat": 12.9716,
+            "lng": 77.5946
+        },
+        "images": [
+            "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800",
+            "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800",
+            "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800"
+        ],
+        "featuredImageUrl": "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800",
+        "featuredImage": {
+            "fileId": "66c2f001",
+            "filename": "wework-galaxy-featured.jpg",
+            "originalName": "wework-featured.jpg",
+            "contentType": "image/jpeg",
+            "size": 380000,
+            "uploadDate": "2024-05-01T10:00:00.000Z",
+            "url": "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800",
+            "description": "WeWork Galaxy UB City",
+            "tags": [
+                "exterior",
+                "office",
+                "featured"
+            ]
+        },
+        "interiorImages": [],
+        "seatLayoutImages": [],
+        "seatLayoutPDFs": [],
+        "propertyVideos": [],
+        "floorPlans": {},
+        "brandName": "WeWork",
+        "brandStats": {
+            "cities": "8",
+            "clients": "5000+",
+            "spaces": "30+",
+            "seats": "25,000+"
+        },
+        "brandDescription": "WeWork provides flexible coworking spaces with world-class amenities across India.",
+        "nearbyPlaces": {
+            "school": [
+                {
+                    "_id": "66c2np001",
+                    "name": "Bishop Cotton Boys School",
+                    "location": "Central Bangalore",
+                    "distance": "1.5 km"
+                }
+            ],
+            "hospital": [
+                {
+                    "_id": "66c2np002",
+                    "name": "St. Martha's Hospital",
+                    "location": "Nrupathunga Road",
+                    "distance": "0.8 km"
+                }
+            ],
+            "hotel": [
+                {
+                    "_id": "66c2np003",
+                    "name": "Taj West End",
+                    "location": "Race Course Road",
+                    "distance": "1 km"
+                }
+            ],
+            "business": [
+                {
+                    "_id": "66c2np004",
+                    "name": "UB City Mall",
+                    "location": "Vittal Mallya Road",
+                    "distance": "0.1 km"
+                }
+            ]
+        },
+        "views": 3210,
+        "visitorCount": 2150,
+        "inquiries": 245,
+        "ratings": {
+            "overall": 4.7,
+            "totalRatings": 52,
+            "breakdown": {
+                "1": 0,
+                "2": 1,
+                "3": 3,
+                "4": 12,
+                "5": 36
+            },
+            "whatsGood": [
+                "Prime CBD location",
+                "24/7 access",
+                "Community events",
+                "Premium ambiance"
+            ],
+            "whatsBad": [
+                "Expensive for startups",
+                "Parking limited in UB City area"
+            ]
+        },
+        "reviews": [
+            {
+                "_id": "66c2rv001",
+                "user": "Ritu Sharma",
+                "rating": 5,
+                "date": "2024-06-01",
+                "comment": "Best coworking space in Bangalore. The location at UB City is prestigious and the facilities are top-tier.",
+                "goodThings": "Stunning location, great networking opportunities, excellent support staff.",
+                "badThings": "On the pricier side.",
+                "userPhoneNumber": "+919123456789"
+            }
+        ],
+        "sellerPhoneNumber": "+91-80-47100000",
+        "dateAdded": "2024-05-01",
+        "uploadedDate": "2024-05-01",
+        "publishedAt": "2024-05-01T00:00:00.000Z",
+        "noOfSeats": 350,
+        "createdAt": "2024-05-01T00:00:00.000Z",
+        "updatedAt": "2024-06-30T12:00:00.000Z"
+    }
+]

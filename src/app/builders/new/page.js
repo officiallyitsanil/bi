@@ -57,10 +57,119 @@ const SectionCard = ({ id, title, subtitle, children, isDark }) => (
 export default function NewBuilderPage() {
   const router = useRouter();
   const { isDark } = useTheme();
+  const [formData, setFormData] = useState({
+    companyName: '',
+    tagline: '',
+    headquarters: '',
+    yearOfEstablishment: '',
+    projectsCompleted: '',
+    ongoingProjects: '',
+    upcomingProjects: '',
+    totalYearsExperience: '',
+    logo: '',
+    builderCategory: '',
+    citiesOfOperation: '',
+    totalCenters: '',
+    totalBuiltupArea: '',
+    totalClientsServed: '',
+    licenseNumber: '',
+    certificate: '',
+    shortDescription: '',
+    detailedDescription: '',
+    missionStatement: '',
+    visionStatement: '',
+    keyDifferentiators: '',
+    largestCampusDetails: '',
+    flagshipLocations: '',
+    minimumLockinPeriod: '',
+    expansionFlexibility: true,
+    officialWebsite: '',
+    facebookUrl: '',
+    linkedinUrl: '',
+    instagramUrl: '',
+    youtubeUrl: '',
+    centerName: '',
+    micromarket: '',
+    city: '',
+    fullAddress: '',
+    mapLink: '',
+    contactEmail: '',
+    phoneNumber: '',
+    centerImages: [],
+    promotionalVideoUrl: '',
+    specialties: [],
+    listingCategory: 'readyToMove',
+    directorName: '',
+    directorPosition: '',
+    directorQuote: '',
+    keyPeople: [],
+    relationshipManager: {
+      name: '',
+      designation: '',
+      photo: '',
+      contactNumber: '',
+      whatsappNumber: '',
+      email: '',
+    },
+    awards: [],
+    testimonials: [],
+    faqs: [],
+    seo: {
+      metaTitle: '',
+      urlSlug: '',
+      metaDescription: '',
+      keywords: '',
+    },
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [personsCount, setPersonsCount] = useState(1);
   const [awardsCount, setAwardsCount] = useState(1);
   const [testimonialsCount, setTestimonialsCount] = useState(1);
   const [faqsCount, setFaqsCount] = useState(1);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleArrayChange = (arrayName, index, field, value) => {
+    setFormData((prev) => {
+      const newArray = [...prev[arrayName]];
+      if (!newArray[index]) {
+        newArray[index] = {};
+      }
+      newArray[index] = { ...newArray[index], [field]: value };
+      return { ...prev, [arrayName]: newArray };
+    });
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.companyName) {
+      alert("Please fill in the Brand / Company Name field, it is mandatory.");
+      return;
+    }
+    try {
+      setIsSubmitting(true);
+      const res = await fetch('/api/builders/new', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Submitted successfully!');
+        router.push('/builders');
+      } else {
+        alert('Failed to submit: ' + data.error);
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert('An error occurred. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const inputClass = getInputClass(isDark);
   const textareaClass = getTextareaClass(isDark);
@@ -118,35 +227,41 @@ export default function NewBuilderPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-[425px]:gap-3">
                 <div className="space-y-1.5">
                   <label className={labelClass}>Brand / Company Name</label>
-                  <input className={inputClass} placeholder="e.g., Prestige Group" />
+                  <input
+                    name="companyName"
+                    value={formData.companyName}
+                    onChange={handleInputChange}
+                    className={inputClass}
+                    placeholder="e.g., Prestige Group"
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Tagline/Slogan</label>
-                  <input className={inputClass} placeholder="Enter Tagline or Slogan" />
+                  <input name="tagline" value={formData.tagline} onChange={handleInputChange} className={inputClass} placeholder="Enter Tagline or Slogan" />
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Headquarters</label>
-                  <input className={inputClass} placeholder="Enter Headquarters Location" />
+                  <input name="headquarters" value={formData.headquarters} onChange={handleInputChange} className={inputClass} placeholder="Enter Headquarters Location" />
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Year of Establishment</label>
-                  <input className={inputClass} placeholder="e.g., 1986" type="number" />
+                  <input name="yearOfEstablishment" value={formData.yearOfEstablishment} onChange={handleInputChange} className={inputClass} placeholder="e.g., 1986" type="number" />
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Projects Completed</label>
-                  <input className={inputClass} placeholder="e.g., 280" type="number" />
+                  <input name="projectsCompleted" value={formData.projectsCompleted} onChange={handleInputChange} className={inputClass} placeholder="e.g., 280" type="number" />
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Ongoing Projects</label>
-                  <input className={inputClass} placeholder="e.g., 20" type="number" />
+                  <input name="ongoingProjects" value={formData.ongoingProjects} onChange={handleInputChange} className={inputClass} placeholder="e.g., 20" type="number" />
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Upcoming Projects</label>
-                  <input className={inputClass} placeholder="e.g., 10" type="number" />
+                  <input name="upcomingProjects" value={formData.upcomingProjects} onChange={handleInputChange} className={inputClass} placeholder="e.g., 10" type="number" />
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Total Years of Experience</label>
-                  <input className={inputClass} placeholder="e.g., 35" type="number" />
+                  <input name="totalYearsExperience" value={formData.totalYearsExperience} onChange={handleInputChange} className={inputClass} placeholder="e.g., 35" type="number" />
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className={labelClass}>Company Logo (PNG/SVG)</label>
@@ -166,37 +281,41 @@ export default function NewBuilderPage() {
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Builder Category</label>
-                  <button
-                    type="button"
+                  <select
+                    name="builderCategory"
+                    value={formData.builderCategory}
+                    onChange={handleInputChange}
                     className={`flex h-8 w-full items-center justify-between rounded-md border px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'}`}
                   >
-                    <span>Select Category</span>
-                    <ChevronDown className="h-3.5 w-3.5 opacity-50" />
-                  </button>
+                    <option value="">Select Category</option>
+                    <option value="commercial">Commercial</option>
+                    <option value="residential">Residential</option>
+                    <option value="industrial">Industrial</option>
+                  </select>
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Cities of Operation (Comma separated)</label>
-                  <input className={inputClass} placeholder="e.g., Bangalore, Chennai, Hyderabad" />
+                  <input name="citiesOfOperation" value={formData.citiesOfOperation} onChange={handleInputChange} className={inputClass} placeholder="e.g., Bangalore, Chennai, Hyderabad" />
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Total Number of Centers</label>
-                  <input className={inputClass} placeholder="e.g., 250" type="number" />
+                  <input name="totalCenters" value={formData.totalCenters} onChange={handleInputChange} className={inputClass} placeholder="e.g., 250" type="number" />
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Total Built-up Area (in million sq. ft.)</label>
-                  <input className={inputClass} placeholder="e.g., 150" type="number" />
+                  <input name="totalBuiltupArea" value={formData.totalBuiltupArea} onChange={handleInputChange} className={inputClass} placeholder="e.g., 150" type="number" />
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Total Clients Served</label>
-                  <input className={inputClass} placeholder="e.g., 5000" type="number" />
+                  <input name="totalClientsServed" value={formData.totalClientsServed} onChange={handleInputChange} className={inputClass} placeholder="e.g., 5000" type="number" />
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>License Number</label>
-                  <input className={inputClass} placeholder="e.g., RERA-KAR-2021-0012345" />
+                  <input name="licenseNumber" value={formData.licenseNumber} onChange={handleInputChange} className={inputClass} placeholder="e.g., RERA-KAR-2021-0012345" />
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Certificate</label>
-                  <input className={inputClass} placeholder="e.g., ISO 9001:2015 Certified" />
+                  <input name="certificate" value={formData.certificate} onChange={handleInputChange} className={inputClass} placeholder="e.g., ISO 9001:2015 Certified" />
                 </div>
               </div>
             </SectionCard>
@@ -206,11 +325,14 @@ export default function NewBuilderPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-[425px]:gap-3">
                 <div className="space-y-2 md:col-span-2">
                   <label className={labelClass}>Short Description (100-120 words)</label>
-                  <textarea className={textareaClass} placeholder="A brief introduction to the company..." />
+                  <textarea name="shortDescription" value={formData.shortDescription} onChange={handleInputChange} className={textareaClass} placeholder="A brief introduction to the company..." />
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className={labelClass}>Detailed Description (200-300 words)</label>
                   <textarea
+                    name="detailedDescription"
+                    value={formData.detailedDescription}
+                    onChange={handleInputChange}
                     className={textareaClass}
                     placeholder="More details about the company's history, vision, and values..."
                     rows={5}
@@ -218,15 +340,18 @@ export default function NewBuilderPage() {
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Mission Statement</label>
-                  <textarea className={textareaClass} placeholder="Enter mission statement" />
+                  <textarea name="missionStatement" value={formData.missionStatement} onChange={handleInputChange} className={textareaClass} placeholder="Enter mission statement" />
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Vision Statement</label>
-                  <textarea className={textareaClass} placeholder="Enter vision statement" />
+                  <textarea name="visionStatement" value={formData.visionStatement} onChange={handleInputChange} className={textareaClass} placeholder="Enter vision statement" />
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className={labelClass}>Key Differentiators / USPs (Bullet points)</label>
                   <textarea
+                    name="keyDifferentiators"
+                    value={formData.keyDifferentiators}
+                    onChange={handleInputChange}
                     className={textareaClass}
                     placeholder="- Focus on quality - Customer-centric approach - Innovative designs"
                     rows={4}
@@ -234,25 +359,37 @@ export default function NewBuilderPage() {
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Largest Campus Details</label>
-                  <input className={inputClass} placeholder="Location + Seating Capacity" />
+                  <input name="largestCampusDetails" value={formData.largestCampusDetails} onChange={handleInputChange} className={inputClass} placeholder="Location + Seating Capacity" />
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Other Flagship Locations (optional)</label>
-                  <input className={inputClass} placeholder="e.g., Location 1, Location 2" />
+                  <input name="flagshipLocations" value={formData.flagshipLocations} onChange={handleInputChange} className={inputClass} placeholder="e.g., Location 1, Location 2" />
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Minimum Lock-in Period</label>
-                  <input className={inputClass} placeholder="e.g., 12 Months" />
+                  <input name="minimumLockinPeriod" value={formData.minimumLockinPeriod} onChange={handleInputChange} className={inputClass} placeholder="e.g., 12 Months" />
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Expansion / Contraction Flexibility</label>
                   <div className="flex items-center gap-3">
                     <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="radio" name="flex" defaultChecked className="rounded-full" />
+                      <input
+                        type="radio"
+                        name="expansionFlexibility"
+                        checked={formData.expansionFlexibility === true}
+                        onChange={() => setFormData(prev => ({ ...prev, expansionFlexibility: true }))}
+                        className="rounded-full"
+                      />
                       <span className="text-xs font-medium">Yes</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="radio" name="flex" className="rounded-full" />
+                      <input
+                        type="radio"
+                        name="expansionFlexibility"
+                        checked={formData.expansionFlexibility === false}
+                        onChange={() => setFormData(prev => ({ ...prev, expansionFlexibility: false }))}
+                        className="rounded-full"
+                      />
                       <span className="text-xs font-medium">No</span>
                     </label>
                   </div>
@@ -267,35 +404,35 @@ export default function NewBuilderPage() {
                   <label className={labelClass}>Official Website</label>
                   <div className="relative">
                     <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <input className={`${inputClass} pl-8`} placeholder="https://www.builder.com" type="url" />
+                    <input name="officialWebsite" value={formData.officialWebsite} onChange={handleInputChange} className={`${inputClass} pl-8`} placeholder="https://www.builder.com" type="url" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Facebook URL</label>
                   <div className="relative">
                     <Facebook className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <input className={`${inputClass} pl-8`} placeholder="https://facebook.com/builder" type="url" />
+                    <input name="facebookUrl" value={formData.facebookUrl} onChange={handleInputChange} className={`${inputClass} pl-8`} placeholder="https://facebook.com/builder" type="url" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>LinkedIn URL</label>
                   <div className="relative">
                     <Linkedin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <input className={`${inputClass} pl-8`} placeholder="https://linkedin.com/company/builder" type="url" />
+                    <input name="linkedinUrl" value={formData.linkedinUrl} onChange={handleInputChange} className={`${inputClass} pl-8`} placeholder="https://linkedin.com/company/builder" type="url" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Instagram URL</label>
                   <div className="relative">
                     <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <input className={`${inputClass} pl-8`} placeholder="https://instagram.com/builder" type="url" />
+                    <input name="instagramUrl" value={formData.instagramUrl} onChange={handleInputChange} className={`${inputClass} pl-8`} placeholder="https://instagram.com/builder" type="url" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>YouTube URL</label>
                   <div className="relative">
                     <Youtube className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <input className={`${inputClass} pl-8`} placeholder="https://youtube.com/@builder" type="url" />
+                    <input name="youtubeUrl" value={formData.youtubeUrl} onChange={handleInputChange} className={`${inputClass} pl-8`} placeholder="https://youtube.com/@builder" type="url" />
                   </div>
                 </div>
               </div>
@@ -306,31 +443,31 @@ export default function NewBuilderPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-[425px]:gap-3">
                 <div className="space-y-1.5">
                   <label className={labelClass}>Center Name</label>
-                  <input className={inputClass} placeholder="e.g., Prestige Tech Park" />
+                  <input name="centerName" value={formData.centerName} onChange={handleInputChange} className={inputClass} placeholder="e.g., Prestige Tech Park" />
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Micromarket / Area</label>
-                  <input className={inputClass} placeholder="e.g., Marathahalli-Sarjapur Outer Ring Road" />
+                  <input name="micromarket" value={formData.micromarket} onChange={handleInputChange} className={inputClass} placeholder="e.g., Marathahalli-Sarjapur Outer Ring Road" />
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>City</label>
-                  <input className={inputClass} placeholder="e.g., Bangalore" />
+                  <input name="city" value={formData.city} onChange={handleInputChange} className={inputClass} placeholder="e.g., Bangalore" />
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className={labelClass}>Full Address</label>
-                  <textarea className={textareaClass} placeholder="Enter the full address" />
+                  <textarea name="fullAddress" value={formData.fullAddress} onChange={handleInputChange} className={textareaClass} placeholder="Enter the full address" />
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Google Map Location Link</label>
-                  <input className={inputClass} placeholder="https://maps.google.com/..." type="url" />
+                  <input name="mapLink" value={formData.mapLink} onChange={handleInputChange} className={inputClass} placeholder="https://maps.google.com/..." type="url" />
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Contact Email*</label>
-                  <input className={inputClass} placeholder="contact@builder.com" type="email" />
+                  <input name="contactEmail" value={formData.contactEmail} onChange={handleInputChange} className={inputClass} placeholder="contact@builder.com" type="email" />
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Phone Number*</label>
-                  <input className={inputClass} placeholder="+91 XXXXXXXXXX" type="tel" />
+                  <input name="phoneNumber" value={formData.phoneNumber} onChange={handleInputChange} className={inputClass} placeholder="+91 XXXXXXXXXX" type="tel" />
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className={labelClass}>Center Images (5-8 photos)</label>
@@ -350,7 +487,7 @@ export default function NewBuilderPage() {
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className={labelClass}>Promotional Video URL</label>
-                  <input className={inputClass} placeholder="https://youtube.com/watch?v=..." type="url" />
+                  <input name="promotionalVideoUrl" value={formData.promotionalVideoUrl} onChange={handleInputChange} className={inputClass} placeholder="https://youtube.com/watch?v=..." type="url" />
                   <p className="text-[10px] text-gray-400 mt-0.5">YouTube, Vimeo, or other video URL</p>
                 </div>
               </div>
@@ -361,7 +498,18 @@ export default function NewBuilderPage() {
               <div className="grid grid-cols-2 max-[425px]:grid-cols-2 md:grid-cols-4 gap-4 max-[425px]:gap-3">
                 {['Residential', 'Commercial', 'Hospitality', 'Retail'].map((s) => (
                   <label key={s} className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                    <input
+                      type="checkbox"
+                      checked={formData.specialties.includes(s)}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setFormData((prev) => {
+                          if (checked) return { ...prev, specialties: [...prev.specialties, s] };
+                          return { ...prev, specialties: prev.specialties.filter(item => item !== s) };
+                        });
+                      }}
+                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
                     <span className={`text-xs font-medium ${isDark ? 'text-gray-300' : ''}`}>{s}</span>
                   </label>
                 ))}
@@ -374,15 +522,33 @@ export default function NewBuilderPage() {
                 <span className={`text-xs max-[425px]:text-[11px] font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Listing Category:</span>
                 <div className="flex flex-wrap items-center gap-3 max-[425px]:gap-2">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="availability" className="rounded-full" />
+                    <input
+                      type="radio"
+                      name="listingCategory"
+                      checked={formData.listingCategory === 'newLaunch'}
+                      onChange={() => setFormData(prev => ({ ...prev, listingCategory: 'newLaunch' }))}
+                      className="rounded-full"
+                    />
                     <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : ''}`}>New Launch</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="availability" className="rounded-full" />
+                    <input
+                      type="radio"
+                      name="listingCategory"
+                      checked={formData.listingCategory === 'upcoming'}
+                      onChange={() => setFormData(prev => ({ ...prev, listingCategory: 'upcoming' }))}
+                      className="rounded-full"
+                    />
                     <span className={`text-xs font-medium ${isDark ? 'text-gray-300' : ''}`}>Upcoming</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="availability" defaultChecked className="rounded-full" />
+                    <input
+                      type="radio"
+                      name="listingCategory"
+                      checked={formData.listingCategory === 'readyToMove'}
+                      onChange={() => setFormData(prev => ({ ...prev, listingCategory: 'readyToMove' }))}
+                      className="rounded-full"
+                    />
                     <span className={`text-xs font-medium ${isDark ? 'text-gray-300' : ''}`}>Ready to Move In</span>
                   </label>
                 </div>
@@ -394,15 +560,15 @@ export default function NewBuilderPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-[425px]:gap-3">
                 <div className="space-y-1.5">
                   <label className={labelClass}>Director Name</label>
-                  <input className={inputClass} placeholder="Enter Director's Name" />
+                  <input name="directorName" value={formData.directorName} onChange={handleInputChange} className={inputClass} placeholder="Enter Director's Name" />
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Position</label>
-                  <input className={inputClass} placeholder="e.g., CEO, Managing Director" />
+                  <input name="directorPosition" value={formData.directorPosition} onChange={handleInputChange} className={inputClass} placeholder="e.g., CEO, Managing Director" />
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className={labelClass}>Quote/Profile</label>
-                  <textarea className={textareaClass} placeholder="Enter director's quote or brief profile" />
+                  <textarea name="directorQuote" value={formData.directorQuote} onChange={handleInputChange} className={textareaClass} placeholder="Enter director's quote or brief profile" />
                 </div>
               </div>
             </SectionCard>
@@ -428,15 +594,30 @@ export default function NewBuilderPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                           <label className={labelClass}>Name</label>
-                          <input className={inputClass} placeholder="Enter name" />
+                          <input
+                            value={formData.keyPeople[i]?.name || ''}
+                            onChange={(e) => handleArrayChange('keyPeople', i, 'name', e.target.value)}
+                            className={inputClass}
+                            placeholder="Enter name"
+                          />
                         </div>
                         <div className="space-y-1.5">
                           <label className={labelClass}>Designation</label>
-                          <input className={inputClass} placeholder="e.g., Chief Architect" />
+                          <input
+                            value={formData.keyPeople[i]?.designation || ''}
+                            onChange={(e) => handleArrayChange('keyPeople', i, 'designation', e.target.value)}
+                            className={inputClass}
+                            placeholder="e.g., Chief Architect"
+                          />
                         </div>
                         <div className="space-y-1.5 md:col-span-2">
                           <label className={labelClass}>Short Bio</label>
-                          <textarea className={textareaClass} placeholder="Enter a brief biography" />
+                          <textarea
+                            value={formData.keyPeople[i]?.shortBio || ''}
+                            onChange={(e) => handleArrayChange('keyPeople', i, 'shortBio', e.target.value)}
+                            className={textareaClass}
+                            placeholder="Enter a brief biography"
+                          />
                         </div>
                       </div>
                     </div>
@@ -458,11 +639,11 @@ export default function NewBuilderPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className={labelClass}>RM Name</label>
-                  <input className={inputClass} placeholder="e.g., Jane Doe" />
+                  <input name="relationshipManager.name" value={formData.relationshipManager.name} onChange={(e) => setFormData(prev => ({ ...prev, relationshipManager: { ...prev.relationshipManager, name: e.target.value } }))} className={inputClass} placeholder="e.g., Jane Doe" />
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>RM Designation</label>
-                  <input className={inputClass} placeholder="e.g., Senior Manager" />
+                  <input name="relationshipManager.designation" value={formData.relationshipManager.designation} onChange={(e) => setFormData(prev => ({ ...prev, relationshipManager: { ...prev.relationshipManager, designation: e.target.value } }))} className={inputClass} placeholder="e.g., Senior Manager" />
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label className={labelClass}>RM Profile Photo</label>
@@ -477,15 +658,15 @@ export default function NewBuilderPage() {
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Contact Number (Call)</label>
-                  <input className={inputClass} placeholder="+91 98765 43210" type="tel" />
+                  <input name="relationshipManager.contactNumber" value={formData.relationshipManager.contactNumber} onChange={(e) => setFormData(prev => ({ ...prev, relationshipManager: { ...prev.relationshipManager, contactNumber: e.target.value } }))} className={inputClass} placeholder="+91 98765 43210" type="tel" />
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>WhatsApp Number</label>
-                  <input className={inputClass} placeholder="+91 98765 43210" type="tel" />
+                  <input name="relationshipManager.whatsappNumber" value={formData.relationshipManager.whatsappNumber} onChange={(e) => setFormData(prev => ({ ...prev, relationshipManager: { ...prev.relationshipManager, whatsappNumber: e.target.value } }))} className={inputClass} placeholder="+91 98765 43210" type="tel" />
                 </div>
                 <div className="space-y-1.5">
                   <label className={labelClass}>Email ID</label>
-                  <input className={inputClass} placeholder="jane.doe@example.com" type="email" />
+                  <input name="relationshipManager.email" value={formData.relationshipManager.email} onChange={(e) => setFormData(prev => ({ ...prev, relationshipManager: { ...prev.relationshipManager, email: e.target.value } }))} className={inputClass} placeholder="jane.doe@example.com" type="email" />
                 </div>
               </div>
             </SectionCard>
@@ -512,11 +693,21 @@ export default function NewBuilderPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                           <label className={labelClass}>Award Title</label>
-                          <input className={inputClass} placeholder="Enter award title" />
+                          <input
+                            value={formData.awards[i]?.title || ''}
+                            onChange={(e) => handleArrayChange('awards', i, 'title', e.target.value)}
+                            className={inputClass}
+                            placeholder="Enter award title"
+                          />
                         </div>
                         <div className="space-y-1.5">
                           <label className={labelClass}>Award Organisation</label>
-                          <input className={inputClass} placeholder="Enter awarding organisation" />
+                          <input
+                            value={formData.awards[i]?.organisation || ''}
+                            onChange={(e) => handleArrayChange('awards', i, 'organisation', e.target.value)}
+                            className={inputClass}
+                            placeholder="Enter awarding organisation"
+                          />
                         </div>
                       </div>
                     </div>
@@ -554,11 +745,18 @@ export default function NewBuilderPage() {
                       </div>
                       <div className="space-y-1.5">
                         <label className={labelClass}>Client Name</label>
-                        <input className={inputClass} placeholder="Enter client's name" />
+                        <input
+                          value={formData.testimonials[i]?.clientName || ''}
+                          onChange={(e) => handleArrayChange('testimonials', i, 'clientName', e.target.value)}
+                          className={inputClass}
+                          placeholder="Enter client's name"
+                        />
                       </div>
                       <div className="space-y-1.5">
                         <label className={labelClass}>Testimonial</label>
                         <textarea
+                          value={formData.testimonials[i]?.testimonial || ''}
+                          onChange={(e) => handleArrayChange('testimonials', i, 'testimonial', e.target.value)}
                           className={textareaClass}
                           placeholder="Enter the client testimonial or review"
                           rows={4}
@@ -586,11 +784,21 @@ export default function NewBuilderPage() {
                     <h4 className={`text-xs font-semibold ${isDark ? 'text-white' : ''}`}>FAQ {i + 1}</h4>
                     <div className="space-y-1.5">
                       <label className={labelClass}>Question</label>
-                      <input className={inputClass} placeholder="Enter question" />
+                      <input
+                        value={formData.faqs[i]?.question || ''}
+                        onChange={(e) => handleArrayChange('faqs', i, 'question', e.target.value)}
+                        className={inputClass}
+                        placeholder="Enter question"
+                      />
                     </div>
                     <div className="space-y-1.5">
                       <label className={labelClass}>Answer</label>
-                      <textarea className={textareaClass} placeholder="Enter answer" />
+                      <textarea
+                        value={formData.faqs[i]?.answer || ''}
+                        onChange={(e) => handleArrayChange('faqs', i, 'answer', e.target.value)}
+                        className={textareaClass}
+                        placeholder="Enter answer"
+                      />
                     </div>
                   </div>
                 ))}
@@ -610,7 +818,7 @@ export default function NewBuilderPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-[425px]:gap-3">
                 <div className="space-y-2 md:col-span-2">
                   <label className={labelClass}>Meta Title</label>
-                  <input className={inputClass} placeholder="Auto-generated from Builder Name" />
+                  <input name="seo.metaTitle" value={formData.seo.metaTitle} onChange={(e) => setFormData(prev => ({ ...prev, seo: { ...prev.seo, metaTitle: e.target.value } }))} className={inputClass} placeholder="Auto-generated from Builder Name" />
                   <p className="text-[10px] text-gray-400 text-right mt-0.5">0 characters</p>
                 </div>
                 <div className="space-y-2 md:col-span-2">
@@ -620,6 +828,9 @@ export default function NewBuilderPage() {
                       /builders/
                     </span>
                     <input
+                      name="seo.urlSlug"
+                      value={formData.seo.urlSlug}
+                      onChange={(e) => setFormData(prev => ({ ...prev, seo: { ...prev.seo, urlSlug: e.target.value } }))}
                       className={`${inputClass} rounded-l-none`}
                       placeholder="auto-generated-slug"
                     />
@@ -628,6 +839,9 @@ export default function NewBuilderPage() {
                 <div className="space-y-2 md:col-span-2">
                   <label className={labelClass}>Meta Description</label>
                   <textarea
+                    name="seo.metaDescription"
+                    value={formData.seo.metaDescription}
+                    onChange={(e) => setFormData(prev => ({ ...prev, seo: { ...prev.seo, metaDescription: e.target.value } }))}
                     className={textareaClass}
                     placeholder="Enter meta description (max 160 characters)"
                   />
@@ -636,6 +850,9 @@ export default function NewBuilderPage() {
                 <div className="space-y-2 md:col-span-2">
                   <label className={labelClass}>Keywords</label>
                   <input
+                    name="seo.keywords"
+                    value={formData.seo.keywords}
+                    onChange={(e) => setFormData(prev => ({ ...prev, seo: { ...prev.seo, keywords: e.target.value } }))}
                     className={inputClass}
                     placeholder="real estate, builder, construction (comma separated)"
                   />
@@ -654,9 +871,11 @@ export default function NewBuilderPage() {
               </button>
               <button
                 type="button"
-                className="inline-flex items-center justify-center h-9 max-[425px]:h-8 rounded-md px-6 max-[425px]:px-4 text-xs max-[425px]:text-[11px] font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors w-full sm:w-auto"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className={`inline-flex items-center justify-center h-9 max-[425px]:h-8 rounded-md px-6 max-[425px]:px-4 text-xs max-[425px]:text-[11px] font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors w-full sm:w-auto ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                Submit Builder
+                {isSubmitting ? 'Submitting...' : 'Submit Builder'}
               </button>
             </div>
           </main>

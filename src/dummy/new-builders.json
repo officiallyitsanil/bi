@@ -1,0 +1,232 @@
+[
+    {
+        "_id": "67d1e2f3a4b5c6d7e8f9a001",
+        "companyName": "IndiQube Spaces",
+        "tagline": "Smart Spaces for Smart Businesses",
+        "headquarters": "Bangalore, Karnataka",
+        "yearOfEstablishment": 2015,
+        "projectsCompleted": 45,
+        "ongoingProjects": 12,
+        "upcomingProjects": 8,
+        "totalYearsExperience": 9,
+        "logo": "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=200",
+        "builderCategory": "Coworking & Managed Offices",
+        "citiesOfOperation": "Bangalore, Hyderabad, Chennai, Pune, Mumbai",
+        "totalCenters": 50,
+        "totalBuiltupArea": 10000000,
+        "totalClientsServed": 800,
+        "licenseNumber": "MSME/KA/2015/00234",
+        "certificate": "ISO 9001:2015",
+        "shortDescription": "IndiQube provides premium managed coworking and flexible workspace solutions across India.",
+        "detailedDescription": "IndiQube Spaces is one of India's fastest growing managed workspace companies, offering flexible office spaces, dedicated desks, private cabins, and full-floor solutions to startups, SMEs, and large enterprises. With state-of-the-art infrastructure and a community-driven approach, IndiQube makes work productive and inspiring.",
+        "missionStatement": "To create inspiring work environments that enable businesses to perform at their best.",
+        "visionStatement": "To be India's most preferred flexible workspace brand by 2027.",
+        "keyDifferentiators": "Technology-enabled smart offices, flexible contracts, rapid expansion, community events",
+        "largestCampusDetails": "IndiQube Edge, Marathahalli – 2.5 lakh sqft, 2500 seats",
+        "flagshipLocations": "Koramangala, Marathahalli, Indiranagar – Bangalore",
+        "minimumLockinPeriod": "1 Month",
+        "expansionFlexibility": true,
+        "officialWebsite": "https://www.indiqube.com",
+        "facebookUrl": "https://www.facebook.com/IndiQube",
+        "linkedinUrl": "https://www.linkedin.com/company/indiqube",
+        "instagramUrl": "https://www.instagram.com/indiqube_spaces",
+        "youtubeUrl": "https://www.youtube.com/c/IndiQube",
+        "centerName": "IndiQube Koramangala",
+        "micromarket": "Koramangala 5th Block",
+        "city": "Bangalore",
+        "fullAddress": "IndiQube Koramangala, 80 Feet Road, 5th Block, Koramangala, Bangalore – 560095",
+        "mapLink": "https://maps.google.com/?q=IndiQube+Koramangala",
+        "contactEmail": "koramangala@indiqube.com",
+        "phoneNumber": "+91-80-40967000",
+        "centerImages": [
+            "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800",
+            "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800",
+            "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800"
+        ],
+        "promotionalVideoUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        "specialties": [
+            "Coworking",
+            "Managed Offices",
+            "Virtual Offices",
+            "Event Spaces",
+            "Training Rooms"
+        ],
+        "listingCategory": "readyToMove",
+        "directorName": "Rishi Das",
+        "directorPosition": "Co-Founder & CEO",
+        "directorQuote": "We believe the future of work is flexible, collaborative, and inspiring.",
+        "keyPeople": [
+            {
+                "photo": "https://randomuser.me/api/portraits/men/35.jpg",
+                "name": "Rishi Das",
+                "designation": "Co-Founder & CEO",
+                "shortBio": "Serial entrepreneur with 15+ years in real estate and technology."
+            },
+            {
+                "photo": "https://randomuser.me/api/portraits/women/35.jpg",
+                "name": "Meghna Agarwal",
+                "designation": "Co-Founder & COO",
+                "shortBio": "Operational excellence expert driving IndiQube's rapid pan-India expansion."
+            }
+        ],
+        "relationshipManager": {
+            "name": "Kartik Patel",
+            "designation": "Enterprise Sales Manager",
+            "photo": "https://randomuser.me/api/portraits/men/42.jpg",
+            "contactNumber": "+91-80-40967001",
+            "whatsappNumber": "+917012345678",
+            "email": "kartik.patel@indiqube.com"
+        },
+        "awards": [
+            {
+                "image": "https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=200",
+                "title": "Best Coworking Operator – South India",
+                "organisation": "NASSCOM"
+            },
+            {
+                "image": "https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=200",
+                "title": "Fastest Growing Workspace Brand 2023",
+                "organisation": "CII Real Estate Awards"
+            }
+        ],
+        "testimonials": [
+            {
+                "clientPhoto": "https://randomuser.me/api/portraits/men/55.jpg",
+                "clientName": "Kiran Bhat",
+                "testimonial": "IndiQube gave us the flexibility we needed to scale. We moved from 10 seats to 100 in 6 months seamlessly."
+            },
+            {
+                "clientPhoto": "https://randomuser.me/api/portraits/women/48.jpg",
+                "clientName": "Sneha Reddy",
+                "testimonial": "The community at IndiQube is incredible. We've forged great partnerships with other companies here."
+            }
+        ],
+        "faqs": [
+            {
+                "question": "What is the minimum duration for a desk at IndiQube?",
+                "answer": "We offer monthly plans with a minimum commitment of 1 month. Longer terms attract better pricing."
+            },
+            {
+                "question": "Do you offer virtual office services?",
+                "answer": "Yes, we provide virtual office plans with registered address, mail handling, and call answering services."
+            },
+            {
+                "question": "Can we scale up seats during a contract period?",
+                "answer": "Absolutely! Our flexible model allows you to add or reduce seats based on your needs."
+            }
+        ],
+        "seo": {
+            "metaTitle": "IndiQube Spaces – Flexible Coworking & Managed Offices in India",
+            "urlSlug": "indiqube-spaces",
+            "metaDescription": "Explore IndiQube's premium coworking and managed office spaces across 50+ centers in India's major cities.",
+            "keywords": "indiqube, coworking bangalore, managed offices, flexible workspace, shared office"
+        },
+        "status": "approved",
+        "createdAt": "2024-03-15T00:00:00.000Z",
+        "updatedAt": "2024-06-28T12:00:00.000Z"
+    },
+    {
+        "_id": "67d1e2f3a4b5c6d7e8f9a002",
+        "companyName": "Smartworks Coworking",
+        "tagline": "Where Ideas Come to Work",
+        "headquarters": "Gurugram, Haryana",
+        "yearOfEstablishment": 2016,
+        "projectsCompleted": 30,
+        "ongoingProjects": 8,
+        "upcomingProjects": 5,
+        "totalYearsExperience": 8,
+        "logo": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=200",
+        "builderCategory": "Managed Coworking Spaces",
+        "citiesOfOperation": "Gurugram, Delhi, Noida, Bangalore, Hyderabad, Pune",
+        "totalCenters": 35,
+        "totalBuiltupArea": 8000000,
+        "totalClientsServed": 600,
+        "licenseNumber": "MSME/HR/2016/00567",
+        "certificate": "ISO 9001:2015",
+        "shortDescription": "Smartworks offers premium enterprise coworking and managed office solutions across North and South India.",
+        "detailedDescription": "Smartworks Coworking Spaces is a premium managed workspace brand known for its enterprise-grade infrastructure, technology integration, and long-term flexible leases. Trusted by Fortune 500 companies and fast-growing startups alike.",
+        "missionStatement": "Empowering businesses with smart, flexible, and technology-driven workspaces.",
+        "visionStatement": "To become India's most comprehensive smart workspace ecosystem.",
+        "keyDifferentiators": "Enterprise-grade infrastructure, LEED-certified buildings, IoT smart offices, pan-India network",
+        "largestCampusDetails": "Smartworks Cybercity, Gurugram – 3 lakh sqft, 3500 seats",
+        "flagshipLocations": "Cyber City Gurugram, Connaught Place Delhi, HITEC City Hyderabad",
+        "minimumLockinPeriod": "3 Months",
+        "expansionFlexibility": true,
+        "officialWebsite": "https://www.smartworkscoworking.com",
+        "facebookUrl": "https://www.facebook.com/SmartworksCoworking",
+        "linkedinUrl": "https://www.linkedin.com/company/smartworks-coworking",
+        "instagramUrl": "https://www.instagram.com/smartworkscoworking",
+        "youtubeUrl": "https://www.youtube.com/c/SmartworksCoworking",
+        "centerName": "Smartworks HITEC City",
+        "micromarket": "HITEC City Hyderabad",
+        "city": "Hyderabad",
+        "fullAddress": "Smartworks HITEC City, Road No. 2, Banjara Hills, Hyderabad – 500034",
+        "mapLink": "https://maps.google.com/?q=Smartworks+HITEC+City",
+        "contactEmail": "hitec@smartworkscoworking.com",
+        "phoneNumber": "+91-40-66104444",
+        "centerImages": [
+            "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800",
+            "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800"
+        ],
+        "promotionalVideoUrl": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        "specialties": [
+            "Enterprise Offices",
+            "Dedicated Floors",
+            "Conference Suites",
+            "Incubation Centers"
+        ],
+        "listingCategory": "readyToMove",
+        "directorName": "Neetish Sarda",
+        "directorPosition": "Founder & MD",
+        "directorQuote": "Smart workspaces drive smart businesses — that's our philosophy.",
+        "keyPeople": [
+            {
+                "photo": "https://randomuser.me/api/portraits/men/48.jpg",
+                "name": "Neetish Sarda",
+                "designation": "Founder & MD",
+                "shortBio": "Visionary entrepreneur revolutionizing workspaces across India."
+            }
+        ],
+        "relationshipManager": {
+            "name": "Vikram Sethi",
+            "designation": "Senior Accounts Manager",
+            "photo": "https://randomuser.me/api/portraits/men/52.jpg",
+            "contactNumber": "+91-40-66104445",
+            "whatsappNumber": "+918901234567",
+            "email": "vikram.sethi@smartworkscoworking.com"
+        },
+        "awards": [
+            {
+                "image": "https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=200",
+                "title": "Best Managed Workspace Provider 2023",
+                "organisation": "ET Real Estate Awards"
+            }
+        ],
+        "testimonials": [
+            {
+                "clientPhoto": "https://randomuser.me/api/portraits/women/60.jpg",
+                "clientName": "Priyanka Sharma",
+                "testimonial": "Smartworks gave us the enterprise feel at a fraction of the cost of traditional offices. Brilliant!"
+            }
+        ],
+        "faqs": [
+            {
+                "question": "Is Smartworks suitable for large enterprise teams?",
+                "answer": "Yes, we specialize in enterprise solutions. We've accommodated teams from 50 to 2,000+ employees in single locations."
+            },
+            {
+                "question": "Do your centers have dedicated server rooms?",
+                "answer": "Yes, most Smartworks centers have dedicated server rooms and 100 Mbps dedicated internet leased lines."
+            }
+        ],
+        "seo": {
+            "metaTitle": "Smartworks Coworking – Premium Managed Offices Across India",
+            "urlSlug": "smartworks-coworking",
+            "metaDescription": "Smartworks offers enterprise-grade managed offices and coworking spaces across major Indian cities.",
+            "keywords": "smartworks, managed offices, enterprise coworking, Gurugram office, Hyderabad coworking"
+        },
+        "status": "approved",
+        "createdAt": "2024-04-01T00:00:00.000Z",
+        "updatedAt": "2024-06-30T12:00:00.000Z"
+    }
+]

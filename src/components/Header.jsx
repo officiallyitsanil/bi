@@ -32,23 +32,23 @@ export default function Header() {
     }, []);
 
     const navLinks = [
-        { 
-            href: '/', 
-            label: 'Map-View', 
+        {
+            href: '/',
+            label: 'Map-View',
             icon: 'circle',
         },
-        { 
-            href: '/commercial', 
+        {
+            href: '/commercial',
             label: 'Commercial',
             icon: 'building',
         },
-        { 
-            href: '/residential', 
+        {
+            href: '/residential',
             label: 'Residential',
             icon: 'home',
         },
-        { 
-            href: '/builders', 
+        {
+            href: '/builders',
             label: 'Builders',
             icon: 'crown',
         },
@@ -61,8 +61,8 @@ export default function Header() {
 
     const getIcon = (link) => {
         const isActive = pathname === link.href;
-        const iconClass = isActive 
-            ? 'text-blue-600' 
+        const iconClass = isActive
+            ? 'text-blue-600'
             : isDark ? 'text-gray-400' : 'text-gray-600';
         const iconSize = 20;
 
@@ -89,8 +89,8 @@ export default function Header() {
             <header
                 className={`
                     ${pathname === '/' ? 'hidden md:block' : 'block'} 
-                    sticky top-0 z-50 py-1.5 transition-colors duration-300
-                    ${isDark ? 'bg-[#1f2229]' : 'bg-white'}
+                    sticky top-0 z-50 py-1.5 transition-colors duration-300 border-b
+                    ${isDark ? 'bg-[#1f2229] border-gray-800' : 'bg-white border-gray-100'}
                 `}
             >
                 <div className="container mx-auto px-4 md:px-8">
@@ -116,12 +116,12 @@ export default function Header() {
                                         href={link.href}
                                         className={`
                                             flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all
-                                            ${isActive 
-                                                ? isDark 
-                                                    ? 'bg-blue-600/20 text-blue-400' 
+                                            ${isActive
+                                                ? isDark
+                                                    ? 'bg-blue-600/20 text-blue-400'
                                                     : 'bg-blue-50 text-blue-700'
-                                                : isDark 
-                                                    ? 'text-gray-400 hover:text-white hover:bg-white/10' 
+                                                : isDark
+                                                    ? 'text-gray-400 hover:text-white hover:bg-white/10'
                                                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                                             }
                                         `}
@@ -138,13 +138,12 @@ export default function Header() {
                         {/* Right: Theme Toggle + Menu + Profile Pill Button */}
                         <div className="flex items-center gap-2">
                             {/* Theme Toggle Button */}
-                            <button 
+                            <button
                                 onClick={toggleTheme}
-                                className={`hover:cursor-pointer p-1.5 rounded-full transition-colors ${
-                                    isDark 
-                                        ? 'hover:bg-white/10 text-yellow-400' 
+                                className={`hover:cursor-pointer p-1.5 rounded-full transition-colors ${isDark
+                                        ? 'hover:bg-white/10 text-yellow-400'
                                         : 'hover:bg-gray-100 text-gray-700'
-                                }`}
+                                    }`}
                                 title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                             >
                                 {isDark ? (
@@ -153,20 +152,18 @@ export default function Header() {
                                     <Moon className="w-4 h-4" strokeWidth={1.5} />
                                 )}
                             </button>
-                            
+
                             {/* Menu + Profile Pill Button - both open right drawer, hover on whole container */}
                             <button
                                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                                className={`flex items-center gap-2 px-2.5 py-1.5 border rounded-full transition-colors cursor-pointer ${
-                                    isDark 
-                                        ? 'border-gray-600 bg-[#282c34] hover:bg-white/10' 
+                                className={`flex items-center gap-2 px-2.5 py-1.5 border rounded-full transition-colors cursor-pointer ${isDark
+                                        ? 'border-gray-600 bg-[#282c34] hover:bg-white/10'
                                         : 'border-gray-300 bg-white hover:bg-gray-100'
-                                }`}
+                                    }`}
                             >
                                 <Menu className={`w-4 h-4 ${isDark ? 'text-white' : 'text-black'}`} strokeWidth={1.5} />
-                                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                                    isDark ? 'bg-gray-700' : 'bg-gray-200'
-                                }`}>
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${isDark ? 'bg-gray-700' : 'bg-gray-200'
+                                    }`}>
                                     <User className="w-3.5 h-3.5 text-blue-600" strokeWidth={2} fill="none" />
                                 </div>
                             </button>
@@ -176,8 +173,8 @@ export default function Header() {
             </header>
 
             {isMenuOpen && (
-                <MenuSideBar 
-                    onClose={() => setIsMenuOpen(false)} 
+                <MenuSideBar
+                    onClose={() => setIsMenuOpen(false)}
                     onLogout={logoutUser}
                 />
             )}

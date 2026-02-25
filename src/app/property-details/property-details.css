@@ -1,0 +1,96 @@
+/**
+ * Property Details Page - Local styles (not in globals.css)
+ * Design tokens and utilities for this page only.
+ * Imported by property-details/page.js
+ */
+
+/* Design tokens (shadcn-style) */
+.text-muted-foreground { color: var(--text-muted); }
+.text-foreground { color: var(--text-primary); }
+.bg-card { background-color: var(--bg-card); }
+.text-card-foreground { color: var(--text-primary); }
+.text-primary { color: var(--accent-primary); }
+.bg-primary { background-color: var(--accent-primary); }
+.text-primary-foreground { color: #ffffff; }
+.border-input { border-color: var(--border-primary); }
+.bg-accent { background-color: var(--bg-tertiary); }
+.text-accent-foreground { color: var(--text-primary); }
+.bg-secondary { background-color: var(--bg-secondary); }
+.text-secondary-foreground { color: var(--text-primary); }
+.bg-destructive { background-color: var(--accent-error); }
+.text-destructive-foreground { color: #ffffff; }
+.hover\:bg-accent:hover { background-color: var(--bg-tertiary); }
+.hover\:bg-primary\/90:hover { background-color: var(--accent-primary-hover); }
+.ring-ring { --tw-ring-color: var(--accent-primary); }
+.ring-offset-background { --tw-ring-offset-color: var(--bg-primary); }
+.bg-muted { background-color: var(--bg-tertiary); }
+.bg-background { background-color: var(--bg-primary); }
+
+/* Horizontal scroll categories - hide scrollbar */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* ============================================
+   Property Details - Compact layout (smaller fonts, images, content)
+   ============================================ */
+.property-details-compact {
+  font-size: 85%;
+}
+.property-details-compact .text-xl { font-size: 1rem; }
+.property-details-compact .text-2xl { font-size: 1.125rem; }
+.property-details-compact .text-3xl { font-size: 1.25rem; }
+.property-details-compact .text-4xl { font-size: 1.5rem; }
+.property-details-compact h1, .property-details-compact .text-3xl { font-size: 1.25rem !important; }
+.property-details-compact h2, .property-details-compact .text-2xl { font-size: 1.125rem !important; }
+.property-details-compact h3, .property-details-compact .text-lg { font-size: 0.95rem !important; }
+.property-details-compact .text-base { font-size: 0.85rem; }
+.property-details-compact .text-sm { font-size: 0.75rem; }
+.property-details-compact .text-xs { font-size: 0.65rem; }
+
+/* Reduce image gallery height */
+@media (min-width: 768px) {
+  .property-details-compact .property-details-gallery { height: 320px !important; min-height: 320px !important; }
+}
+
+/* Reduce thumbnail size */
+.property-details-compact .h-20 { height: 3.5rem !important; }
+.property-details-compact .w-28 { width: 5rem !important; }
+
+/* Smaller icons */
+.property-details-compact .h-16 { height: 3rem !important; }
+.property-details-compact .w-16 { width: 3rem !important; }
+.property-details-compact .h-12 { height: 2.25rem !important; }
+.property-details-compact .w-12 { width: 2.25rem !important; }
+.property-details-compact .h-10 { height: 2rem !important; }
+.property-details-compact .w-10 { width: 2rem !important; }
+.property-details-compact .h-8 { height: 1.5rem !important; }
+.property-details-compact .w-8 { width: 1.5rem !important; }
+.property-details-compact .h-5 { height: 1.125rem !important; }
+.property-details-compact .w-5 { width: 1.125rem !important; }
+
+/* Reduce padding and gaps */
+.property-details-compact .p-6 { padding: 1rem !important; }
+.property-details-compact .p-4 { padding: 0.75rem !important; }
+.property-details-compact .px-8 { padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
+.property-details-compact .gap-6 { gap: 1rem !important; }
+.property-details-compact .gap-4 { gap: 0.75rem !important; }
+.property-details-compact .space-y-6 > * + * { margin-top: 1rem !important; }
+.property-details-compact .space-y-4 > * + * { margin-top: 0.75rem !important; }
+
+/* Agent/image avatars */
+.property-details-compact .w-24.h-24 { width: 4rem !important; height: 4rem !important; }
+.property-details-compact .w-10.h-10 { width: 2rem !important; height: 2rem !important; }
+.property-details-compact img[class*="md:w-7"],
+.property-details-compact img[class*="md:h-7"] { width: 1.5rem !important; height: 1.5rem !important; }
+.property-details-compact .w-6.h-6 { width: 1.25rem !important; height: 1.25rem !important; }
+
+/* Nearby map height */
+.property-details-compact .h-60 { height: 11rem !important; }
+
+/* Section spacing */
+.property-details-compact .space-y-4 { --tw-space-y-reverse: 0; }
+.property-details-compact .py-12 { padding-top: 2rem !important; padding-bottom: 2rem !important; }
+.property-details-compact .py-16 { padding-top: 2.5rem !important; padding-bottom: 2.5rem !important; }

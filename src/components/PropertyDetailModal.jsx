@@ -36,7 +36,8 @@ import {
     Check,
     Edit,
     Trash2,
-    Building2
+    Building2,
+    Users
 } from "lucide-react";
 import Image from "next/image";
 
@@ -103,11 +104,11 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
         const checkFavoriteStatus = async () => {
             try {
                 const propertyId = property._id || property.id;
-                
+
                 // Check localStorage first
                 const favourites = JSON.parse(localStorage.getItem('favorites') || '[]');
                 const isFavoritedLocal = favourites.some(fav => (fav._id || fav.id) === propertyId);
-                
+
                 if (isFavoritedLocal) {
                     setIsFavourite(true);
                 }
@@ -117,11 +118,11 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                     try {
                         const response = await fetch(`/api/favorites?userPhoneNumber=${encodeURIComponent(currentUser.phoneNumber)}`);
                         const data = await response.json();
-                        
+
                         if (data.success) {
                             const isFavoritedDB = data.data.some(fav => fav.propertyId === propertyId);
                             setIsFavourite(isFavoritedDB);
-                            
+
                             // Sync localStorage with DB
                             if (isFavoritedDB && !isFavoritedLocal) {
                                 const updatedFavorites = [...favourites, { _id: propertyId, id: propertyId }];
@@ -161,7 +162,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
     // Uses phoneNumber as primary field (matching dashboard pattern)
     const isReviewByCurrentUser = (review) => {
         if (!review) return false;
-        
+
         // Always get the latest user data from localStorage
         let latestUser = currentUser;
         try {
@@ -172,30 +173,30 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
         } catch (e) {
             console.error('Error reading user from localStorage in isReviewByCurrentUser:', e);
         }
-        
+
         if (!latestUser) return false;
-        
+
         // Get user phone number - try multiple possible field names and formats
-        const userPhone = latestUser?.phoneNumber || 
-                         latestUser?.phone || 
-                         latestUser?.userPhoneNumber || 
-                         (latestUser?.user && latestUser.user.phoneNumber) ||
-                         null;
-        
+        const userPhone = latestUser?.phoneNumber ||
+            latestUser?.phone ||
+            latestUser?.userPhoneNumber ||
+            (latestUser?.user && latestUser.user.phoneNumber) ||
+            null;
+
         const reviewPhone = review.userPhoneNumber || review.userPhone || review.phoneNumber || review.phone;
-        
+
         if (!userPhone || !reviewPhone) return false;
-        
+
         const normalizedUserPhone = normalizePhone(userPhone);
         const normalizedReviewPhone = normalizePhone(reviewPhone);
-        
+
         return normalizedUserPhone === normalizedReviewPhone;
     };
 
     // Helper function to check if user has submitted a review
     const checkUserReview = (propertyToCheck = null) => {
         const propToCheck = propertyToCheck || property;
-        
+
         // Always get the latest user data from localStorage to ensure we have the phone number
         let latestUser = currentUser;
         try {
@@ -206,7 +207,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
         } catch (e) {
             console.error('Error reading user from localStorage in checkUserReview:', e);
         }
-        
+
         if (!propToCheck || !propToCheck.reviews || !Array.isArray(propToCheck.reviews) || !latestUser) {
             setHasUserSubmittedReview(false);
             setUserReview(null);
@@ -214,18 +215,18 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
         }
 
         // Get user phone number - try multiple possible field names and formats
-        const userPhone = latestUser?.phoneNumber || 
-                         latestUser?.phone || 
-                         latestUser?.userPhoneNumber || 
-                         (latestUser?.user && latestUser.user.phoneNumber) ||
-                         null;
-        
+        const userPhone = latestUser?.phoneNumber ||
+            latestUser?.phone ||
+            latestUser?.userPhoneNumber ||
+            (latestUser?.user && latestUser.user.phoneNumber) ||
+            null;
+
         if (!userPhone) {
             setHasUserSubmittedReview(false);
             setUserReview(null);
             return;
         }
-        
+
         const normalizedUserPhone = normalizePhone(userPhone);
 
         // Check reviews - handle different possible field names in review schema
@@ -259,7 +260,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
             ...userData,
             phoneNumber: userData.phoneNumber || userData.phone || userData.userPhoneNumber || null
         };
-        
+
         loginUser(userWithPhone);
         setCurrentUser(userWithPhone);
         setIsLoginModalOpen(false);
@@ -293,7 +294,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
     const handleDeleteReview = async (reviewToDelete = null) => {
         const review = reviewToDelete || userReview;
         if (!review) return;
-        
+
         if (!confirm('Are you sure you want to delete your review?')) {
             return;
         }
@@ -302,7 +303,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
             const propertyId = property._id || property.id;
             const propertyType = property.propertyType || 'commercial';
             const reviewId = review._id || review.id;
-            
+
             // Always get the latest user data from localStorage to ensure we have the phone number
             let latestUser = currentUser;
             try {
@@ -313,13 +314,13 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
             } catch (e) {
                 console.error('Error reading user from localStorage:', e);
             }
-            
+
             // Get phone number - try multiple possible field names and formats
-            let userPhoneNumber = latestUser?.phoneNumber || 
-                                 latestUser?.phone || 
-                                 latestUser?.userPhoneNumber || 
-                                 (latestUser?.user && latestUser.user.phoneNumber) ||
-                                 null;
+            let userPhoneNumber = latestUser?.phoneNumber ||
+                latestUser?.phone ||
+                latestUser?.userPhoneNumber ||
+                (latestUser?.user && latestUser.user.phoneNumber) ||
+                null;
 
             // If phone number has + prefix, keep it; otherwise ensure it's properly formatted
             if (userPhoneNumber && typeof userPhoneNumber === 'string') {
@@ -340,17 +341,17 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
             if (data.success) {
                 setHasUserSubmittedReview(false);
                 setUserReview(null);
-                
+
                 // Refresh property data to update the review list
                 try {
                     const propResponse = await fetch(`/api/properties?id=${propertyId}&type=${propertyType}`);
                     const propData = await propResponse.json();
-                    
+
                     if (propData.success && propData.property) {
                         // Update the property object with fresh data
                         property.reviews = propData.property.reviews || [];
                         property.ratings = propData.property.ratings || property.ratings;
-                        
+
                         // Re-check if user has review (should be false now)
                         checkUserReview(propData.property);
                     }
@@ -459,10 +460,30 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
         }
     };
 
+    const handleViewDetailsClick = async () => {
+        try {
+            const propertyId = property._id || property.id;
+            const propertyType = property.propertyType || 'commercial';
+
+            await fetch('/api/properties/visitor-count', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: propertyId,
+                    type: propertyType
+                }),
+            });
+        } catch (error) {
+            console.error('Error incrementing visitor count:', error);
+        }
+    };
+
     // Calculate prices based on property type
     const calculatePrices = (property) => {
         let originalPriceValue = 0;
-        
+
         if (property.propertyType === 'residential') {
             // For residential: use expectedRent
             const expectedRent = property.expectedRent || '0';
@@ -475,10 +496,10 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                     // Extract lower values from ranges like "70 - 90" and "6000-8000"
                     const seatsStr = firstFloor.dedicatedCabin.seats.toString();
                     const pricePerSeatStr = firstFloor.dedicatedCabin.pricePerSeat.toString();
-                    
+
                     const seatsMatch = seatsStr.match(/(\d+)/);
                     const pricePerSeatMatch = pricePerSeatStr.match(/(\d+)/);
-                    
+
                     if (seatsMatch && pricePerSeatMatch) {
                         const seatsLower = parseFloat(seatsMatch[1]);
                         const pricePerSeatLower = parseFloat(pricePerSeatMatch[1]);
@@ -487,16 +508,16 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                 }
             }
         }
-        
+
         // Calculate discounted price (5% off = 95% of original)
         const discountedPriceValue = originalPriceValue * 0.95;
-        
+
         // Format prices
         const formatPrice = (price) => {
             if (price === 0) return '₹XX';
             return `₹${Math.round(price).toLocaleString('en-IN')}`;
         };
-        
+
         return {
             originalPrice: formatPrice(originalPriceValue),
             discountedPrice: formatPrice(discountedPriceValue)
@@ -518,7 +539,8 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
         ratings = {},
         reviews = [],
         floorPlans = {},
-        propertyType
+        propertyType,
+        visitorCount = 0
     } = property;
 
     const originalPrice = prices.originalPrice;
@@ -553,7 +575,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
         >
             {/* Backdrop */}
             <div className="absolute inset-0 bg-black/40" onClick={onClose}></div>
-            
+
             {/* Modal Content */}
             <div className={`relative pb-32 w-full rounded-t-3xl overflow-hidden transition-colors ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`} style={{ maxHeight: '90vh' }}>
                 {/* Drag Handle */}
@@ -594,13 +616,13 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                         >
                             {images.length > 0 ? images.map((img, i) => (
                                 <SwiperSlide key={i}>
-                                    <Image 
-                                        alt="Property" 
-                                        width={400} 
+                                    <Image
+                                        alt="Property"
+                                        width={400}
                                         height={200}
-                                        className="h-full w-full object-cover" 
-                                        src={img} 
-                                        unoptimized 
+                                        className="h-full w-full object-cover"
+                                        src={img}
+                                        unoptimized
                                     />
                                 </SwiperSlide>
                             )) : (
@@ -611,7 +633,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                 </SwiperSlide>
                             )}
                         </Swiper>
-                        
+
                         {/* Navigation Arrows */}
                         <button className={`mobile-prop-prev absolute top-1/2 -translate-y-1/2 left-2 h-8 w-8 rounded-full flex items-center justify-center z-10 shadow ${isDark ? 'bg-[#282c34]/90' : 'bg-white/90'}`}>
                             <ChevronLeft className={`h-5 w-5 ${isDark ? 'text-gray-200' : 'text-gray-700'}`} />
@@ -694,19 +716,15 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                         </div>
 
                         {/* Info Boxes */}
-                        <div className="grid grid-cols-3 gap-3 mb-5">
+                        <div className="grid grid-cols-2 gap-3 mb-5">
                             <div className={`border rounded-xl py-3 px-2 text-center ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
                                 <p className={`text-[11px] mb-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Price</p>
                                 <p className="text-base font-bold text-blue-600">₹120</p>
                                 <p className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>/sq.ft</p>
                             </div>
                             <div className={`border rounded-xl py-3 px-2 text-center ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-                                <p className={`text-[11px] mb-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Status</p>
-                                <p className={`text-base font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>Available</p>
-                            </div>
-                            <div className={`border rounded-xl py-3 px-2 text-center ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
                                 <p className={`text-[11px] mb-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Reviews</p>
-                                <p className={`text-base font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>{reviews.length || 120}</p>
+                                <p className={`text-base font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>{reviews.length}</p>
                             </div>
                         </div>
 
@@ -742,8 +760,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                 <div className={`p-4 pb-20 mt-5 border-t transition-colors ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-white border-gray-100'}`}>
                     <a
                         href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        onClick={handleViewDetailsClick}
                         className="block w-full bg-blue-600 text-white py-4 rounded-xl text-center font-semibold text-base"
                     >
                         View Full Details
@@ -786,7 +803,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                 </div>
                             </div>
                         )}
-                        
+
                         {/* Action Icons - Top Left */}
                         <div className="absolute top-1.5 left-1.5 z-20 flex gap-0.5">
                             <button
@@ -811,8 +828,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                             </a>
                             <a
                                 href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                onClick={handleViewDetailsClick}
                                 className={`w-5 h-5 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-md ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}
                             >
                                 <SquareArrowOutUpRight className={`w-2.5 h-2.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} />
@@ -835,14 +851,14 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                 {images.length > 0 ? images.map((img, i) => (
                                     <SwiperSlide key={i}>
                                         <div className="relative h-full w-full">
-                                            <Image 
-                                                alt="Property image" 
-                                                width={260} 
+                                            <Image
+                                                alt="Property image"
+                                                width={260}
                                                 height={260}
-                                                className="h-full w-full object-cover" 
-                                                loading="lazy" 
-                                                src={img} 
-                                                unoptimized 
+                                                className="h-full w-full object-cover"
+                                                loading="lazy"
+                                                src={img}
+                                                unoptimized
                                             />
                                         </div>
                                     </SwiperSlide>
@@ -854,7 +870,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                     </SwiperSlide>
                                 )}
                             </Swiper>
-                            
+
                             {/* Navigation Arrows */}
                             <button className={`prop-prev absolute top-1/2 -translate-y-1/2 left-1 h-5 w-5 rounded-full backdrop-blur-sm items-center justify-center flex z-10 shadow-lg transition-colors ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}>
                                 <ChevronLeft className={`h-2.5 w-2.5 ${isDark ? 'text-gray-200' : 'text-gray-800'}`} />
@@ -882,9 +898,11 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                 <div className="flex-1">
                                     <div className="flex items-center gap-1.5 mb-0.5">
                                         <h1 className={`text-base font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(name)}</h1>
-                                        <div className="flex items-center gap-0.5">
-                                            <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
-                                            <span className={`text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{rating.toFixed(1)}</span>
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-0.5">
+                                                <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+                                                <span className={`text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{rating.toFixed(1)}</span>
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-1 mb-0.5">
@@ -929,89 +947,87 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
 
                         {/* Bottom Section - Amenities and About Brand Side by Side - Aligned to bottom */}
                         <div className="flex gap-2 mt-auto">
-                                {/* Left Column - Amenities */}
-                                <section className="flex-1">
-                                    <div className="grid grid-cols-4 gap-1.5">
-                                        {(displayedAmenities.length > 0 ? displayedAmenities.slice(0, 8) : [
-                                            { name: "Guest Check-in", icon: "👤" },
-                                            { name: "Delivery Acceptance", icon: "🔔" },
-                                            { name: "Package Notification", icon: "📦" },
-                                            { name: "Fire Safety", icon: "🚨" },
-                                            { name: "Guest Management", icon: "⚙️" },
-                                            { name: "Video Surveillance", icon: "📹" },
-                                            { name: "Keycard Access", icon: "🔑" },
-                                            { name: "Tea", icon: "☕" }
-                                        ]).map((amenity, index) => (
-                                            <div key={index} className="flex flex-col items-center gap-0.5">
-                                                <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
-                                                    {amenity.image ? (
-                                                        <Image
-                                                            src={amenity.image}
-                                                            alt={amenity.name}
-                                                            width={18}
-                                                            height={18}
-                                                            className="object-contain"
-                                                            unoptimized
-                                                        />
-                                                    ) : (
-                                                        <span className="text-xs">{amenity.icon || '📦'}</span>
-                                                    )}
-                                                </div>
-                                                <span className={`text-[8px] text-center leading-tight ${isDark ? 'text-gray-400' : 'text-gray-700'}`}>{amenity.name}</span>
+                            {/* Left Column - Amenities */}
+                            <section className="flex-1">
+                                <div className="grid grid-cols-4 gap-1.5">
+                                    {(displayedAmenities.length > 0 ? displayedAmenities.slice(0, 8) : [
+                                        { name: "Guest Check-in", icon: "👤" },
+                                        { name: "Delivery Acceptance", icon: "🔔" },
+                                        { name: "Package Notification", icon: "📦" },
+                                        { name: "Fire Safety", icon: "🚨" },
+                                        { name: "Guest Management", icon: "⚙️" },
+                                        { name: "Video Surveillance", icon: "📹" },
+                                        { name: "Keycard Access", icon: "🔑" },
+                                        { name: "Tea", icon: "☕" }
+                                    ]).map((amenity, index) => (
+                                        <div key={index} className="flex flex-col items-center gap-0.5">
+                                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                                                {amenity.image ? (
+                                                    <Image
+                                                        src={amenity.image}
+                                                        alt={amenity.name}
+                                                        width={18}
+                                                        height={18}
+                                                        className="object-contain"
+                                                        unoptimized
+                                                    />
+                                                ) : (
+                                                    <span className="text-xs">{amenity.icon || '📦'}</span>
+                                                )}
                                             </div>
-                                        ))}
-                                    </div>
-                                </section>
+                                            <span className={`text-[8px] text-center leading-tight ${isDark ? 'text-gray-400' : 'text-gray-700'}`}>{amenity.name}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
 
-                                {/* Right Column - About the Brand */}
-                                <section className="flex-1">
-                                    <h3 className={`text-[9px] font-semibold mb-0.5 uppercase pb-0.5 border-b-2 ${isDark ? 'text-gray-400 border-blue-500' : 'text-gray-600 border-blue-500'}`}>ABOUT THE BRAND</h3>
-                                    <h4 className={`text-[10px] font-semibold mb-0.5 ${isDark ? 'text-white' : 'text-gray-900'}`}>{brandName}</h4>
-                                    <p className={`text-[9px] mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Workspace</p>
-                                    <div className="grid grid-cols-2 gap-1 mb-1">
-                                        <div className="flex items-center gap-0.5">
-                                            <Building2 className={`w-2.5 h-2.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
-                                            <span className={`text-[9px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{brandStats.cities}</span>
-                                        </div>
-                                        <div className="flex items-center gap-0.5">
-                                            <svg className={`w-2.5 h-2.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                            </svg>
-                                            <span className={`text-[9px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{brandStats.clients}</span>
-                                        </div>
-                                        <div className="flex items-center gap-0.5">
-                                            <Building2 className={`w-2.5 h-2.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
-                                            <span className={`text-[9px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{brandStats.spaces}</span>
-                                        </div>
-                                        <div className="flex items-center gap-0.5">
-                                            <svg className={`w-2.5 h-2.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                            </svg>
-                                            <span className={`text-[9px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{brandStats.seats}</span>
-                                        </div>
+                            {/* Right Column - About the Brand */}
+                            <section className="flex-1">
+                                <h3 className={`text-[9px] font-semibold mb-0.5 uppercase pb-0.5 border-b-2 ${isDark ? 'text-gray-400 border-blue-500' : 'text-gray-600 border-blue-500'}`}>ABOUT THE BRAND</h3>
+                                <h4 className={`text-[10px] font-semibold mb-0.5 ${isDark ? 'text-white' : 'text-gray-900'}`}>{brandName}</h4>
+                                <p className={`text-[9px] mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Workspace</p>
+                                <div className="grid grid-cols-2 gap-1 mb-1">
+                                    <div className="flex items-center gap-0.5">
+                                        <Building2 className={`w-2.5 h-2.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
+                                        <span className={`text-[9px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{brandStats.cities}</span>
                                     </div>
-                                    <p className={`text-[9px] leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                                        {brandDescription.length > 80 ? brandDescription.substring(0, 80) + '...' : brandDescription}
-                                        <a
-                                            href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-blue-600 hover:underline ml-1"
-                                        >
-                                            Read more
-                                        </a>
-                                    </p>
-                                </section>
+                                    <div className="flex items-center gap-0.5">
+                                        <svg className={`w-2.5 h-2.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                        </svg>
+                                        <span className={`text-[9px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{brandStats.clients}</span>
+                                    </div>
+                                    <div className="flex items-center gap-0.5">
+                                        <Building2 className={`w-2.5 h-2.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
+                                        <span className={`text-[9px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{brandStats.spaces}</span>
+                                    </div>
+                                    <div className="flex items-center gap-0.5">
+                                        <svg className={`w-2.5 h-2.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                        </svg>
+                                        <span className={`text-[9px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{brandStats.seats}</span>
+                                    </div>
+                                </div>
+                                <p className={`text-[9px] leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                    {brandDescription.length > 80 ? brandDescription.substring(0, 80) + '...' : brandDescription}
+                                    <a
+                                        href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
+                                        onClick={handleViewDetailsClick}
+                                        className="text-blue-600 hover:underline ml-1"
+                                    >
+                                        Read more
+                                    </a>
+                                </p>
+                            </section>
                         </div>
                     </div>
                 </div>
-                
+
                 {/* View Details Button - Right Edge (Vertical) - Part of modal structure */}
                 <div className="w-7 flex-shrink-0 h-full">
                     <a
                         href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        onClick={handleViewDetailsClick}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-1 rounded-l-lg shadow-lg transition-colors cursor-pointer writing-vertical-rl text-[9px] font-medium h-full w-full flex items-center justify-center"
                         style={{ writingMode: 'vertical-rl' }}
                     >
@@ -1161,7 +1177,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                     try {
                                         const propertyId = property._id || property.id;
                                         const propertyType = property.propertyType || 'commercial';
-                                        
+
                                         // Always get the latest user data from localStorage to ensure we have the phone number
                                         let latestUser = currentUser;
                                         try {
@@ -1172,13 +1188,13 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                         } catch (e) {
                                             console.error('Error reading user from localStorage:', e);
                                         }
-                                        
+
                                         // Get phone number - try multiple possible field names and formats
-                                        let userPhoneNumber = latestUser?.phoneNumber || 
-                                                             latestUser?.phone || 
-                                                             latestUser?.userPhoneNumber || 
-                                                             (latestUser?.user && latestUser.user.phoneNumber) ||
-                                                             null;
+                                        let userPhoneNumber = latestUser?.phoneNumber ||
+                                            latestUser?.phone ||
+                                            latestUser?.userPhoneNumber ||
+                                            (latestUser?.user && latestUser.user.phoneNumber) ||
+                                            null;
 
                                         // If phone number has + prefix, keep it; otherwise ensure it's properly formatted
                                         if (userPhoneNumber && typeof userPhoneNumber === 'string') {
@@ -1202,13 +1218,13 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                             comment: reviewText.trim(),
                                             userPhoneNumber: userPhoneNumber
                                         };
-                                        
+
                                         if (isEditingReview && userReview) {
                                             requestBody.reviewId = userReview._id || userReview.id;
                                         }
-                                        
+
                                         console.log('Review Submit - Sending to API:', requestBody);
-                                        
+
                                         let response;
                                         if (isEditingReview && userReview) {
                                             // Edit existing review
@@ -1234,22 +1250,22 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
 
                                         if (data.success) {
                                             setReviewSubmitSuccess(true);
-                                            
+
                                             // Refresh property data to get updated reviews
                                             try {
                                                 const propResponse = await fetch(`/api/properties?id=${propertyId}&type=${propertyType}`);
                                                 const propData = await propResponse.json();
-                                                
+
                                                 if (propData.success && propData.property) {
                                                     // Update the property object with fresh data (since it's passed by reference)
                                                     property.reviews = propData.property.reviews || [];
                                                     property.ratings = propData.property.ratings || property.ratings;
-                                                    
+
                                                     // Force a re-render by updating a dependency
                                                     // Immediately check for user review with updated property data
                                                     // This will set hasUserSubmittedReview to true if review exists
                                                     checkUserReview(propData.property);
-                                                    
+
                                                     // Also force a re-check after a brief delay to ensure state is updated
                                                     setTimeout(() => {
                                                         checkUserReview(propData.property);
@@ -1266,7 +1282,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                             } catch (error) {
                                                 console.error('Error refreshing property data:', error);
                                             }
-                                            
+
                                             setTimeout(() => {
                                                 setShowRatingModal(false);
                                                 setIsEditingReview(false);

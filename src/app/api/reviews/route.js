@@ -12,20 +12,20 @@ function normalizePhone(phone) {
 // Helper function to recalculate ratings
 function recalculateRatings(reviews) {
   const breakdown = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
-  
+
   reviews.forEach(review => {
     const ratingKey = String(review.rating);
     breakdown[ratingKey] = (breakdown[ratingKey] || 0) + 1;
   });
-  
+
   const totalRatings = reviews.length;
-  
+
   let totalScore = 0;
   for (let star = 1; star <= 5; star++) {
     totalScore += star * (breakdown[String(star)] || 0);
   }
   const overall = totalRatings > 0 ? parseFloat((totalScore / totalRatings).toFixed(1)) : 0;
-  
+
   return { overall, totalRatings, breakdown };
 }
 
@@ -33,18 +33,18 @@ function recalculateRatings(reviews) {
 export async function POST(request) {
   try {
     await dbConnect();
-    
+
     const body = await request.json();
-    const { propertyId, propertyType, user, rating, comment, userPhoneNumber } = body;
+    const { propertyId, propertyType, user, rating, comment, goodThings, badThings, userPhoneNumber } = body;
 
     // Debug logging
     console.log('POST Review - Received userPhoneNumber:', userPhoneNumber);
     console.log('POST Review - Full body:', JSON.stringify(body, null, 2));
 
     // Validation
-    if (!propertyId || !user || !user.trim() || !rating || rating < 1 || rating > 5 || !comment || !comment.trim()) {
+    if (!propertyId || !user || !user.trim() || !rating || rating < 1 || rating > 5) {
       return NextResponse.json(
-        { success: false, message: 'Invalid review data. Please provide property ID, user name, rating (1-5), and comment.' },
+        { success: false, message: 'Invalid review data. Please provide property ID, user name, and rating (1-5).' },
         { status: 400 }
       );
     }
@@ -71,7 +71,7 @@ export async function POST(request) {
       // If no type specified, search both
       property = await ResidentialProperty.findById(propertyId);
       PropertyModel = ResidentialProperty;
-      
+
       if (!property) {
         property = await CommercialProperty.findById(propertyId);
         PropertyModel = CommercialProperty;
@@ -94,7 +94,7 @@ export async function POST(request) {
         const normalizedReviewPhone = normalizePhone(r.userPhoneNumber);
         return normalizedReviewPhone === normalizedUserPhone;
       });
-      
+
       if (existingUserReview) {
         return NextResponse.json(
           { success: false, message: 'You have already submitted a review for this property. Please edit or delete your existing review.' },
@@ -107,14 +107,16 @@ export async function POST(request) {
     const newReview = {
       user,
       rating,
-      comment: comment.trim(),
-      date: new Date().toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
+      comment: (comment || '').trim() || (goodThings || '').trim(),
+      goodThings: (goodThings || '').trim(),
+      badThings: (badThings || '').trim(),
+      date: new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
       })
     };
-    
+
     // Only add userPhoneNumber if it exists (don't set undefined)
     if (userPhoneNumber && userPhoneNumber.trim()) {
       newReview.userPhoneNumber = userPhoneNumber.trim();
@@ -128,11 +130,11 @@ export async function POST(request) {
 
     // Recalculate ratings
     const ratingsData = recalculateRatings(updatedReviews);
-    
+
     // Get existing whatsGood and whatsBad
     const existingWhatsGood = property.ratings?.whatsGood || [];
     const existingWhatsBad = property.ratings?.whatsBad || [];
-    
+
     // Prepare update object
     const updateData = {
       reviews: updatedReviews,
@@ -159,11 +161,11 @@ export async function POST(request) {
 
     // Get the saved review with _id
     const savedReview = updatedProperty.reviews[0];
-    
+
     // Debug: Check if phone number was saved
     console.log('POST Review - Saved review userPhoneNumber:', savedReview.userPhoneNumber);
     console.log('POST Review - Saved review:', JSON.stringify(savedReview, null, 2));
-    
+
     // Return plain object for ratings to avoid serialization issues
     return NextResponse.json({
       success: true,
@@ -173,6 +175,8 @@ export async function POST(request) {
         user: savedReview.user,
         rating: savedReview.rating,
         comment: savedReview.comment,
+        goodThings: savedReview.goodThings,
+        badThings: savedReview.badThings,
         date: savedReview.date,
         userPhoneNumber: savedReview.userPhoneNumber || null
       },
@@ -198,14 +202,14 @@ export async function POST(request) {
 export async function PUT(request) {
   try {
     await dbConnect();
-    
+
     const body = await request.json();
-    const { propertyId, propertyType, reviewId, user, rating, comment, userPhoneNumber } = body;
+    const { propertyId, propertyType, reviewId, user, rating, comment, goodThings, badThings, userPhoneNumber } = body;
 
     // Validation
-    if (!propertyId || !reviewId || !user || !user.trim() || !rating || rating < 1 || rating > 5 || !comment || !comment.trim()) {
+    if (!propertyId || !reviewId || !user || !user.trim() || !rating || rating < 1 || rating > 5) {
       return NextResponse.json(
-        { success: false, message: 'Invalid review data. Please provide property ID, review ID, user name, rating (1-5), and comment.' },
+        { success: false, message: 'Invalid review data. Please provide property ID, review ID, user name, and rating (1-5).' },
         { status: 400 }
       );
     }
@@ -222,7 +226,7 @@ export async function PUT(request) {
     } else {
       property = await ResidentialProperty.findById(propertyId);
       PropertyModel = ResidentialProperty;
-      
+
       if (!property) {
         property = await CommercialProperty.findById(propertyId);
         PropertyModel = CommercialProperty;
@@ -251,7 +255,7 @@ export async function PUT(request) {
       const normalizedUserPhone = normalizePhone(userPhoneNumber);
       const reviewPhone = existingReviews[reviewIndex].userPhoneNumber;
       const normalizedReviewPhone = normalizePhone(reviewPhone);
-      
+
       if (normalizedReviewPhone && normalizedReviewPhone !== normalizedUserPhone) {
         return NextResponse.json(
           { success: false, message: 'You can only edit your own reviews' },
@@ -263,7 +267,9 @@ export async function PUT(request) {
     // Update the review
     existingReviews[reviewIndex].user = user;
     existingReviews[reviewIndex].rating = rating;
-    existingReviews[reviewIndex].comment = comment.trim();
+    existingReviews[reviewIndex].comment = (comment || '').trim() || (goodThings || '').trim();
+    existingReviews[reviewIndex].goodThings = (goodThings || '').trim();
+    existingReviews[reviewIndex].badThings = (badThings || '').trim();
     // Always update phone number if provided (for logged-in users)
     if (userPhoneNumber && userPhoneNumber.trim()) {
       existingReviews[reviewIndex].userPhoneNumber = userPhoneNumber.trim();
@@ -271,18 +277,18 @@ export async function PUT(request) {
     } else {
       console.log('PUT Review - WARNING: userPhoneNumber is missing or empty!');
     }
-    existingReviews[reviewIndex].date = new Date().toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    existingReviews[reviewIndex].date = new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     });
 
     // Recalculate ratings
     const ratingsData = recalculateRatings(existingReviews);
-    
+
     const existingWhatsGood = property.ratings?.whatsGood || [];
     const existingWhatsBad = property.ratings?.whatsBad || [];
-    
+
     const updateData = {
       reviews: existingReviews,
       ratings: {
@@ -315,6 +321,8 @@ export async function PUT(request) {
         user: updatedReview.user,
         rating: updatedReview.rating,
         comment: updatedReview.comment,
+        goodThings: updatedReview.goodThings,
+        badThings: updatedReview.badThings,
         date: updatedReview.date,
         userPhoneNumber: updatedReview.userPhoneNumber || null
       },
@@ -339,7 +347,7 @@ export async function PUT(request) {
 export async function DELETE(request) {
   try {
     await dbConnect();
-    
+
     const { searchParams } = new URL(request.url);
     const propertyId = searchParams.get('propertyId');
     const propertyType = searchParams.get('propertyType');
@@ -365,7 +373,7 @@ export async function DELETE(request) {
     } else {
       property = await ResidentialProperty.findById(propertyId);
       PropertyModel = ResidentialProperty;
-      
+
       if (!property) {
         property = await CommercialProperty.findById(propertyId);
         PropertyModel = CommercialProperty;
@@ -394,7 +402,7 @@ export async function DELETE(request) {
       const normalizedUserPhone = normalizePhone(userPhoneNumber);
       const reviewPhone = existingReviews[reviewIndex].userPhoneNumber;
       const normalizedReviewPhone = normalizePhone(reviewPhone);
-      
+
       if (normalizedReviewPhone && normalizedReviewPhone !== normalizedUserPhone) {
         return NextResponse.json(
           { success: false, message: 'You can only delete your own reviews' },
@@ -408,10 +416,10 @@ export async function DELETE(request) {
 
     // Recalculate ratings
     const ratingsData = recalculateRatings(existingReviews);
-    
+
     const existingWhatsGood = property.ratings?.whatsGood || [];
     const existingWhatsBad = property.ratings?.whatsBad || [];
-    
+
     const updateData = {
       reviews: existingReviews,
       ratings: {

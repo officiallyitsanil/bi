@@ -1,0 +1,56 @@
+[
+    {
+        "_id": "76a1b2c3d4e5f6a7b8c9d001",
+        "identifier": "terms_acceptance",
+        "title": "Acceptance of Terms",
+        "content": "By accessing or using our real estate platform, you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use our services. These terms apply to all visitors, users, and others who access or use our service.",
+        "order": 1,
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+        "_id": "76a1b2c3d4e5f6a7b8c9d002",
+        "identifier": "terms_user_accounts",
+        "title": "User Accounts",
+        "content": "When you create an account with us, you must provide accurate, complete, and current information. You are responsible for safeguarding the password and for all activities that occur under your account. You must notify us immediately upon becoming aware of any breach of security or unauthorized use of your account.",
+        "order": 2,
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+        "_id": "76a1b2c3d4e5f6a7b8c9d003",
+        "identifier": "terms_property_listings",
+        "title": "Property Listings",
+        "content": "All property listings on our platform are provided for informational purposes only. While we strive to ensure accuracy, we do not guarantee the accuracy, completeness, or reliability of any listing. Users are advised to independently verify all information before making any real estate decisions. We are not responsible for any discrepancies between listed and actual property details.",
+        "order": 3,
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+        "_id": "76a1b2c3d4e5f6a7b8c9d004",
+        "identifier": "terms_prohibited_use",
+        "title": "Prohibited Uses",
+        "content": "You may not use our platform for any unlawful purpose or in violation of these terms. Prohibited activities include: posting false or misleading property information, scraping data without permission, impersonating any person or entity, engaging in fraudulent activities, and attempting to gain unauthorized access to our systems.",
+        "order": 4,
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+        "_id": "76a1b2c3d4e5f6a7b8c9d005",
+        "identifier": "terms_liability",
+        "title": "Limitation of Liability",
+        "content": "Our platform and services are provided 'as is' without any warranties. We shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of or inability to use our services. Our total liability shall not exceed the amount paid by you, if any, for using our services.",
+        "order": 5,
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+        "_id": "76a1b2c3d4e5f6a7b8c9d006",
+        "identifier": "terms_governing_law",
+        "title": "Governing Law",
+        "content": "These Terms shall be governed and construed in accordance with the laws of India, without regard to its conflict of law provisions. Any disputes arising under these terms shall be subject to the exclusive jurisdiction of the courts located in Bangalore, Karnataka, India.",
+        "order": 6,
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+]
