@@ -105,6 +105,37 @@ export default function PDFViewerContent({ pdf, onClose }) {
         }
     }, [pdf]);
 
+    const handleDownload = async () => {
+        const filename = (pdf.originalName || pdf.filename || 'document').replace(/\.[^.]+$/, '') + '.pdf';
+        const isBlobOrLocal = pdfBlobUrl && (pdfBlobUrl.startsWith('blob:') || pdfBlobUrl.startsWith('/') || pdfBlobUrl.includes('localhost') || pdfBlobUrl.includes('127.0.0.1'));
+        if (isBlobOrLocal) {
+            const a = document.createElement('a');
+            a.href = pdfBlobUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        } else if (pdf.url) {
+            const proxyUrl = `/api/pdf-proxy?url=${encodeURIComponent(pdf.url)}`;
+            try {
+                const res = await fetch(proxyUrl);
+                if (!res.ok) throw new Error('Download failed');
+                const blob = await res.blob();
+                if (blob.type !== 'application/pdf' && !blob.type) throw new Error('Invalid response');
+                const blobUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(blobUrl);
+            } catch (e) {
+                window.open(proxyUrl, '_blank');
+            }
+        }
+    };
+
     if (!pdf) return null;
 
     return (
@@ -124,13 +155,13 @@ export default function PDFViewerContent({ pdf, onClose }) {
                                 Page {pageNumber} of {numPages}
                             </span>
                         )}
-                        <a
-                            href={pdf.url}
-                            download
+                        <button
+                            type="button"
+                            onClick={handleDownload}
                             className="px-3 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
                         >
                             Download
-                        </a>
+                        </button>
                         <button
                             onClick={onClose}
                             className="w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-700 text-xl font-bold transition-colors"
@@ -176,13 +207,13 @@ export default function PDFViewerContent({ pdf, onClose }) {
                     {pdfError && (
                         <div className="text-center p-8">
                             <p className="text-red-600 mb-4">Error loading PDF: {pdfError}</p>
-                            <a
-                                href={pdf.url}
-                                download
+                            <button
+                                type="button"
+                                onClick={handleDownload}
                                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer inline-block"
                             >
                                 Download PDF Instead
-                            </a>
+                            </button>
                         </div>
                     )}
                     {!pdfError && !useIframe && pdfBlobUrl && (
@@ -214,13 +245,13 @@ export default function PDFViewerContent({ pdf, onClose }) {
                                         >
                                             Use Simple Viewer
                                         </button>
-                                        <a
-                                            href={pdf.url}
-                                            download
+                                        <button
+                                            type="button"
+                                            onClick={handleDownload}
                                             className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors cursor-pointer inline-block"
                                         >
                                             Download PDF
-                                        </a>
+                                        </button>
                                     </div>
                                 }
                             >

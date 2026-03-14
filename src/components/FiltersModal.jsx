@@ -163,7 +163,7 @@ export default function FiltersModal({
 
   return (
 
-    <div className="w-full flex flex-col h-full max-h-[90vh] md:max-h-[67vh]">
+    <div className="w-full flex flex-col h-full max-h-[min(90vh,90svh)] md:max-h-[67vh]">
 
       <div className="flex items-center justify-between border-b p-1 border-gray-300">
 
@@ -173,7 +173,7 @@ export default function FiltersModal({
 
 
 
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-4 pb-32 max-[525px]:pb-36">
 
         <div className="space-y-6">
 

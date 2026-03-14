@@ -304,38 +304,32 @@ export default function MapView({ center, markers, selectedMarker, onMarkerClick
             return formatted ? `₹${formatted}` : null;
           };
 
-          // Calculate price from property data (similar to PropertyDetailModal)
+          // Calculate price from property data - schema: totalPrice, discountPercent, pricePerSeat
           const calculatePriceFromProperty = (property) => {
             let originalPriceValue = 0;
-            
-            if (property.propertyType === 'residential') {
-              // For residential: use expectedRent
-              const expectedRent = property.expectedRent || '0';
-              originalPriceValue = parseFloat(expectedRent.toString().replace(/[₹,]/g, '')) || 0;
-            } else if (property.propertyType === 'commercial') {
-              // For commercial: calculate from floorConfigurations
-              if (property.floorConfigurations && property.floorConfigurations.length > 0) {
-                const firstFloor = property.floorConfigurations[0];
-                if (firstFloor.dedicatedCabin && firstFloor.dedicatedCabin.seats && firstFloor.dedicatedCabin.pricePerSeat) {
-                  // Extract lower values from ranges like "70 - 90" and "6000-8000"
-                  const seatsStr = firstFloor.dedicatedCabin.seats.toString();
-                  const pricePerSeatStr = firstFloor.dedicatedCabin.pricePerSeat.toString();
-                  
-                  const seatsMatch = seatsStr.match(/(\d+)/);
-                  const pricePerSeatMatch = pricePerSeatStr.match(/(\d+)/);
-                  
-                  if (seatsMatch && pricePerSeatMatch) {
-                    const seatsLower = parseFloat(seatsMatch[1]);
-                    const pricePerSeatLower = parseFloat(pricePerSeatMatch[1]);
-                    originalPriceValue = seatsLower * pricePerSeatLower;
-                  }
-                }
+            const cat = property?.propertyCategory || property?.propertyType;
+
+            // Schema: totalPrice is the original/base price
+            if (property?.totalPrice) {
+              originalPriceValue = parseFloat(String(property.totalPrice).replace(/[₹,]/g, '')) || 0;
+            }
+            if (originalPriceValue === 0 && cat === 'residential' && property?.expectedRent) {
+              originalPriceValue = parseFloat(String(property.expectedRent).replace(/[₹,]/g, '')) || 0;
+            }
+            if (originalPriceValue === 0 && cat === 'commercial') {
+              const seats = property?.numberOfSeats || property?.floorConfigurations?.[0]?.dedicatedCabin?.seats;
+              const pricePerSeat = property?.pricePerSeat || property?.floorConfigurations?.[0]?.dedicatedCabin?.pricePerSeat;
+              if (seats && pricePerSeat) {
+                const s = String(seats).match(/(\d+)/)?.[1];
+                const p = String(pricePerSeat).match(/(\d+)/)?.[1];
+                if (s && p) originalPriceValue = parseFloat(s) * parseFloat(p);
               }
             }
-            
-            // Calculate discounted price (5% off = 95% of original) - same as PropertyDetailModal
-            const discountedPriceValue = originalPriceValue * 0.95;
-            
+
+            const discountedPriceValue = property?.discountPercent
+              ? originalPriceValue * (1 - property.discountPercent / 100)
+              : originalPriceValue > 0 ? originalPriceValue * 0.95 : 0;
+
             return discountedPriceValue;
           };
 
@@ -348,13 +342,16 @@ export default function MapView({ center, markers, selectedMarker, onMarkerClick
               if (formatted && formatted !== '₹XX') return formatted;
             }
 
-            // List of all possible price fields to check (in priority order)
+            // List of all possible price fields to check (in priority order) - schema: totalPrice first
             const priceFields = [
               'discountedPrice',
+              'totalPrice',
               'total_price',
               'expectedRent',
               'price_per_acre',
+              'pricePerSqft',
               'price_per_sqft',
+              'pricePerSeat',
               'price_per_desk',
               'originalPrice',
               'additionalPrice'

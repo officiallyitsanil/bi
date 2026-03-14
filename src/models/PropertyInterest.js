@@ -6,6 +6,9 @@ const PropertyInterestSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    propertyId: {
+      type: String,
+    },
     name: {
       type: String,
       required: true,

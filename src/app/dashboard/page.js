@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { logoutUser } from '@/utils/auth';
+import { calculatePrices } from '@/utils/priceUtils';
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { auth } from "@/components/FirebaseConfig";
 import PhoneInput from "react-phone-input-2";
@@ -121,53 +122,14 @@ export default function DashboardPage() {
                             const propertyData = await propertyResponse.json();
 
                             if (propertyData.success && propertyData.property) {
-                                // Calculate prices
-                                const calculatePrices = (property) => {
-                                    let originalPriceValue = 0;
-                                    
-                                    if (property.propertyType === 'residential') {
-                                        const expectedRent = property.expectedRent || '0';
-                                        originalPriceValue = parseFloat(expectedRent.toString().replace(/[₹,]/g, '')) || 0;
-                                    } else if (property.propertyType === 'commercial') {
-                                        if (property.floorConfigurations && property.floorConfigurations.length > 0) {
-                                            const firstFloor = property.floorConfigurations[0];
-                                            if (firstFloor.dedicatedCabin && firstFloor.dedicatedCabin.seats && firstFloor.dedicatedCabin.pricePerSeat) {
-                                                const seatsStr = firstFloor.dedicatedCabin.seats.toString();
-                                                const pricePerSeatStr = firstFloor.dedicatedCabin.pricePerSeat.toString();
-                                                
-                                                const seatsMatch = seatsStr.match(/(\d+)/);
-                                                const pricePerSeatMatch = pricePerSeatStr.match(/(\d+)/);
-                                                
-                                                if (seatsMatch && pricePerSeatMatch) {
-                                                    const seatsLower = parseFloat(seatsMatch[1]);
-                                                    const pricePerSeatLower = parseFloat(pricePerSeatMatch[1]);
-                                                    originalPriceValue = seatsLower * pricePerSeatLower;
-                                                }
-                                            }
-                                        }
-                                    }
-                                    
-                                    const discountedPriceValue = originalPriceValue * 0.95;
-                                    
-                                    const formatPrice = (price) => {
-                                        if (price === 0) return '₹XX';
-                                        return `₹${Math.round(price).toLocaleString('en-IN')}`;
-                                    };
-                                    
-                                    return {
-                                        originalPrice: formatPrice(originalPriceValue),
-                                        discountedPrice: formatPrice(discountedPriceValue)
-                                    };
-                                };
-
-                                const prices = calculatePrices(propertyData.property);
-                                
+                                const p = propertyData.property;
+                                const prices = calculatePrices(p);
                                 return {
-                                    ...propertyData.property,
-                                    _id: propertyData.property._id || propertyData.property.id,
-                                    id: propertyData.property._id || propertyData.property.id,
-                                    originalPrice: prices.originalPrice,
-                                    discountedPrice: prices.discountedPrice,
+                                    ...p,
+                                    _id: p._id || p.id,
+                                    id: p._id || p.id,
+                                    originalPrice: p.originalPrice ?? prices.originalPrice ?? null,
+                                    discountedPrice: p.discountedPrice ?? prices.discountedPrice ?? null,
                                 };
                             }
                             return null;

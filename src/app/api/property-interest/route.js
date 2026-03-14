@@ -7,23 +7,22 @@ export async function POST(request) {
     await dbConnect();
 
     const body = await request.json();
-    const { propertyName, name, email, phone, message } = body;
+    const { propertyName, propertyId, name, email, phone, message } = body;
 
-    // Validate required fields
-    if (!propertyName || !name || !email || !phone) {
+    if (!propertyName || !name?.trim() || !email?.trim() || !phone?.trim()) {
       return NextResponse.json(
-        { success: false, message: "Missing required fields" },
+        { success: false, message: "Name, email, and phone are required." },
         { status: 400 }
       );
     }
 
-    // Create new interest
     const newInterest = await PropertyInterest.create({
       propertyName,
-      name,
-      email,
-      phone,
-      message,
+      propertyId: propertyId || undefined,
+      name: name.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+      message: message ? message.trim() : "",
     });
 
     return NextResponse.json(

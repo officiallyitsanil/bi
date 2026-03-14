@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import LoginModal from "../../components/LoginModal";
 import { loginUser } from "../../utils/auth";
+import { calculatePrices } from "@/utils/priceUtils";
 
 // Helper function to safely display database values
 const safeDisplay = (value, fallback = "-") => {
@@ -294,50 +295,7 @@ function PropertiesSearchContent() {
             property.verificationStatus === 'confirmed'
           );
 
-          // Calculate prices based on property category
-          const calculatePrices = (property) => {
-            let originalPriceValue = 0;
-            const category = determineCategory();
-            
-            if (category === 'residential') {
-              // For residential: use expectedRent
-              const expectedRent = property.expectedRent || '0';
-              originalPriceValue = parseFloat(expectedRent.toString().replace(/[₹,]/g, '')) || 0;
-            } else if (category === 'commercial') {
-              // For commercial: calculate from floorConfigurations
-              if (property.floorConfigurations && property.floorConfigurations.length > 0) {
-                const firstFloor = property.floorConfigurations[0];
-                if (firstFloor.dedicatedCabin && firstFloor.dedicatedCabin.seats && firstFloor.dedicatedCabin.pricePerSeat) {
-                  // Extract lower values from ranges like "70 - 90" and "6000-8000"
-                  const seatsStr = firstFloor.dedicatedCabin.seats.toString();
-                  const pricePerSeatStr = firstFloor.dedicatedCabin.pricePerSeat.toString();
-                  
-                  const seatsMatch = seatsStr.match(/(\d+)/);
-                  const pricePerSeatMatch = pricePerSeatStr.match(/(\d+)/);
-                  
-                  if (seatsMatch && pricePerSeatMatch) {
-                    const seatsLower = parseFloat(seatsMatch[1]);
-                    const pricePerSeatLower = parseFloat(pricePerSeatMatch[1]);
-                    originalPriceValue = seatsLower * pricePerSeatLower;
-                  }
-                }
-              }
-            }
-            
-            // Calculate discounted price (5% off = 95% of original)
-            const discountedPriceValue = originalPriceValue * 0.95;
-            
-            // Format prices
-            const formatPrice = (price) => {
-              if (price === 0) return '₹XX';
-              return `₹${Math.round(price).toLocaleString('en-IN')}`;
-            };
-            
-            return {
-              originalPrice: formatPrice(originalPriceValue),
-              discountedPrice: formatPrice(discountedPriceValue)
-            };
-          };
+          // Use raw prices from schema/dummy - no calculation (admin handles in future)
 
           // Calculate badge based on isPremium and publishedAt
           const calculateBadge = (property) => {
@@ -354,14 +312,14 @@ function PropertiesSearchContent() {
           };
 
           const properties = confirmedProperties.map(property => {
-            const prices = calculatePrices(property);
             const badge = calculateBadge(property);
+            const prices = calculatePrices(property);
             return {
               ...property,
               _id: property._id || property.id,
               id: property._id || property.id,
-              originalPrice: prices.originalPrice,
-              discountedPrice: prices.discountedPrice,
+              originalPrice: property.originalPrice ?? prices.originalPrice ?? null,
+              discountedPrice: property.discountedPrice ?? prices.discountedPrice ?? null,
               badge: badge,
             };
           });

@@ -178,3 +178,10 @@ body {
   transition: none !important;
 }
 
+/* Responsive scroll padding for small screens (< 525px) - ensures content fully scrollable */
+@media (max-width: 525px) {
+  .mobile-modal-scroll {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+}
+

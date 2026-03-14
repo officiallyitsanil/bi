@@ -14,6 +14,7 @@ export default function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isLoginOpen, setIsLoginOpen] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
+    const [globalConfig, setGlobalConfig] = useState({ isFullNavVisible: false });
     const pathname = usePathname();
     const { theme, toggleTheme, isDark } = useTheme();
 
@@ -31,28 +32,26 @@ export default function Header() {
         };
     }, []);
 
-    const navLinks = [
-        {
-            href: '/',
-            label: 'Map-View',
-            icon: 'circle',
-        },
-        {
-            href: '/commercial',
-            label: 'Commercial',
-            icon: 'building',
-        },
-        {
-            href: '/residential',
-            label: 'Residential',
-            icon: 'home',
-        },
-        {
-            href: '/builders',
-            label: 'Builders',
-            icon: 'crown',
-        },
+    useEffect(() => {
+        fetch('/api/global-config')
+            .then((res) => res.json())
+            .then((data) => {
+                if (data?.success && data?.config) {
+                    setGlobalConfig(data.config);
+                }
+            })
+            .catch(() => {});
+    }, []);
+
+    const allNavLinks = [
+        { href: '/', label: 'Map-View', icon: 'circle', alwaysShow: true },
+        { href: '/commercial', label: 'Commercial', icon: 'building', alwaysShow: false },
+        { href: '/residential', label: 'Residential', icon: 'home', alwaysShow: false },
+        { href: '/builders', label: 'Builders', icon: 'crown', alwaysShow: false },
     ];
+    const navLinks = allNavLinks.filter(
+        (link) => link.alwaysShow || globalConfig.isFullNavVisible
+    );
 
     const handleLoginSuccess = (userData) => {
         loginUser(userData);

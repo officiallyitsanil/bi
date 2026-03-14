@@ -228,7 +228,7 @@ export default function SelectCityBox({ title = "Select by City", cities = [], i
           onClick={() => setIsSeeAllModalOpen(false)}
         >
           <div
-            className="bg-white rounded-2xl w-full max-w-2xl max-h-[70vh] flex flex-col shadow-2xl"
+            className="bg-white rounded-2xl w-full max-w-2xl max-h-[min(70vh,70svh)] flex flex-col shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header - Fixed */}
@@ -247,7 +247,7 @@ export default function SelectCityBox({ title = "Select by City", cities = [], i
             </div>
 
             {/* Cities Grid - Scrollable */}
-            <div className="flex-1 overflow-y-auto p-4 md:p-6">
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-32 max-[525px]:pb-36">
               <div className="grid grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">
                 {cities.map((city) => (
                   <div

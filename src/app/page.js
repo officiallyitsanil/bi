@@ -1,7 +1,7 @@
 "use client";
 import MenuSideBar from '@/components/MenuSideBar';
 import LoginModal from '@/components/LoginModal';
-import { Search, X, Plus, SlidersHorizontal, Menu, List, Check, Heart, Building2, Home, MapPin, ChevronDown, ChevronRight, ChevronLeft, LayoutGrid, Map as MapIcon, Globe, ZoomIn, LocateFixed, Layers, Minus, Sun, Moon, User, FileText, Grid3x3, ChevronUp, Bus, Target, Clock } from 'lucide-react';
+import { Search, X, Plus, SlidersHorizontal, Menu, List, Check, Heart, Building2, Home, MapPin, ChevronDown, ChevronRight, ChevronLeft, LayoutGrid, Map as MapIcon, Globe, ZoomIn, LocateFixed, Layers, Minus, Sun, Moon, User, FileText, Grid3x3, ChevronUp, Bus, Target, Clock, Loader2 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -9,10 +9,14 @@ import dynamic from "next/dynamic";
 import { usePathname } from 'next/navigation';
 import PropertyDetailModal from '@/components/PropertyDetailModal';
 import VisitorTracker from '@/components/VisitorTracker';
+import CollapsedDrawerSearch from '@/components/CollapsedDrawerSearch';
+import PlacesAutocompleteInput from '@/components/PlacesAutocompleteInput';
 import { getUserLocation } from '@/utils/geolocation';
 import { loginUser } from '@/utils/auth';
 import { indianCities } from '@/utils/indianCities';
+import { sortCitiesByDistance } from '@/utils/cityCoordinates';
 import { useTheme } from '@/context/ThemeContext';
+import { calculatePrices } from '@/utils/priceUtils';
 
 const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 
@@ -52,6 +56,7 @@ export default function HomePage() {
   const [isDrawerCollapsed, setIsDrawerCollapsed] = useState(false); // Track drawer collapse state
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [globalConfig, setGlobalConfig] = useState({ isFullNavVisible: false });
   const [propertyFavorites, setPropertyFavorites] = useState({}); // Track favorites for each property
 
   const [mapCenter, setMapCenter] = useState({ lat: 20.5937, lng: 78.9629 }); // Center of India as initial
@@ -90,8 +95,11 @@ export default function HomePage() {
   const [citySearchQuery, setCitySearchQuery] = useState('');
   const [showLayerMenu, setShowLayerMenu] = useState(false);
   const [showAddPropertyModal, setShowAddPropertyModal] = useState(false);
-  const [showLocateModal, setShowLocateModal] = useState(false);
-  const [locateModalStep, setLocateModalStep] = useState(1); // 1 for declaration, 2 for layers
+  const [showLayersDeclarationModal, setShowLayersDeclarationModal] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  const [detectedUserLocation, setDetectedUserLocation] = useState(null); // { lat, lng } when user detects location
+  const [zoomingCityName, setZoomingCityName] = useState(null); // Show "Zooming on {city}" overlay
+  const [isApplyingFilters, setIsApplyingFilters] = useState(false); // Show "Loading..." overlay when Apply Filters
   const [mapType, setMapType] = useState('hybrid'); // 'roadmap', 'satellite', 'hybrid', 'terrain'
   const [showTraffic, setShowTraffic] = useState(false);
   const [searchType, setSearchType] = useState('locality'); // 'locality', 'metro', 'travel'
@@ -202,6 +210,47 @@ export default function HomePage() {
 
   // Applied filters: only used for filtering when user clicks "Apply Filters" (not on every checkbox/radio change)
   const [appliedFilters, setAppliedFilters] = useState(null);
+
+  // Default snapshot = no filters from the panel; use when user has not clicked "Apply Filters" yet
+  const getDefaultFilterSnapshot = () => ({
+    buildingType: 'commercial',
+    filterLocalitySearch: '',
+    propertyTypeFilter: 'all',
+    filters: { type: { commercial: false, residential: false }, listedBy: { owner: false, agent: false, iacre: false }, budget: [0, 30], size: [0, 50000] },
+    propertyTypes: { officeSpace: false, coWorking: false, shop: false, showroom: false, godownWarehouse: false, industrialShed: false, industrialBuilding: false, otherBusiness: false, restaurantCafe: false },
+    budgetLumpsum: { min: '', max: '' },
+    budgetPerSeat: { min: '', max: '' },
+    sizeFilter: { min: '', max: '' },
+    furnishing: { full: false, none: false, semi: false },
+    buildingTypeOptions: { independentHouse: false, mall: false, independentShop: false, businessPark: false, standaloneBuilding: false },
+    availability: '',
+    parking: { public: false, reserved: false },
+    showOnly: { withPhotos: false, removeSeen: false },
+    amenities: { powerBackup: false, lift: false },
+    amenitiesPills: { security24x7: false, powerBackup: false, visitorParking: false, attachedMarket: false, swimmingPool: false, clubhouse: false, centralAC: false, kidsPlayArea: false, intercom: false, vaastuCompliant: false, airConditioned: false, lift: false },
+    floors: { ground: false, '1to3': false, '4to6': false, '7to9': false, '10above': false, custom: false },
+    propertyAge: { lessThan1: false, '1to5': false, '5to10': false, moreThan10: false },
+    residentialPropertyType: '',
+    residentialLocalitySearch: '',
+    residentialLocalities: { mysoreRoad: false, sampangiRamaNagar: false, hebbal: false, banashankari: false },
+    residentialSocietySearch: '',
+    residentialSocieties: { godrejTiara: false, sobhaInfinia: false, snnClermont: false, lntRaintreeBoulevard: false },
+    bedrooms: '',
+    saleType: '',
+    constructionStatus: '',
+    washrooms: '',
+    floorFilter: '',
+    facing: '',
+    reraRegistered: false,
+    propertiesWithOffers: false,
+    furnishingStatus: '',
+    postedBy: '',
+    possessionStatus: '',
+    commercialLocalitySearch: '',
+    commercialLocalities: { mysoreRoad: false, sampangiRamaNagar: false, hebbal: false, banashankari: false },
+    commercialSocietySearch: '',
+    commercialSocieties: { godrejTiara: false, sobhaInfinia: false, snnClermont: false, lntRaintreeBoulevard: false },
+  });
 
   // Snapshot current filter panel state (for applying on button click)
   const getFilterSnapshot = () => ({
@@ -329,6 +378,15 @@ export default function HomePage() {
 
   // Check favorite status for all properties
   useEffect(() => {
+    fetch('/api/global-config')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.success && data?.config) setGlobalConfig(data.config);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
     const checkFavorites = async () => {
       const favoritesMap = {};
 
@@ -400,89 +458,27 @@ export default function HomePage() {
         if (result.success && result.data) {
           console.log("Total properties fetched:", result.data.length);
 
-          // Filter only confirmed properties
+          // Filter verified/confirmed properties (schema uses verificationStatus: "verified")
           const confirmedProperties = result.data.filter(property =>
-            property.verificationStatus === 'confirmed'
+            property.verificationStatus === 'verified' || property.verificationStatus === 'confirmed'
           );
 
           console.log("Confirmed properties:", confirmedProperties.length);
 
-          // Dummy data arrays for random assignment
-          const listingTypes = ['For Sale', 'For Rent', 'Ready to Move', 'New Projects'];
-          const propertyCategoryTypes = [
-            'Office Space', 'Co-Working', 'Shop', 'Showroom',
-            'Godown/Warehouse', 'Industrial Shed', 'Industrial Building',
-            'Other business', 'Restaurant/Cafe'
-          ];
-
           const properties = confirmedProperties.map((property, index) => {
-            // Ensure coordinates are in the correct format
-            let position = property.position || property.coordinates;
-            let parsedPosition = null;
-
-            // Handle different coordinate formats from database
-            if (position && (position.latitude || position.lat)) {
-              const lat = parseFloat(position.lat || position.latitude);
-              const lng = parseFloat(position.lng || position.longitude);
-
-              if (!isNaN(lat) && !isNaN(lng)) {
-                parsedPosition = { lat, lng };
-              }
+            const coord = property.coordinates || property.position;
+            const lat = coord?.latitude ?? coord?.lat;
+            const lng = coord?.longitude ?? coord?.lng;
+            const position = lat != null && lng != null ? { lat: parseFloat(lat), lng: parseFloat(lng) } : null;
+            if (!position) {
+              console.warn(`Property ${property.propertyName || property._id} (Index: ${index}) has no valid coordinates.`);
             }
-
-            if (!parsedPosition) {
-              console.warn(`Property ${property.name || property._id} (Index: ${index}) has no valid coordinates.`);
-            }
-
-            // Assign dummy listing_type and property_category_type
-            // Use index to ensure consistent assignment
-            const listingType = property.listing_type || property.listingType || listingTypes[index % listingTypes.length];
-            const propertyCategoryType = property.property_category_type || property.propertyCategoryType ||
-              (property.propertyType === 'commercial'
-                ? propertyCategoryTypes[index % propertyCategoryTypes.length]
-                : 'Residential Property');
-
-            // Generate dummy uploaded date - spread dates over the last 6 months
-            const now = Date.now();
-            const sixMonthsAgo = now - (180 * 24 * 60 * 60 * 1000); // 6 months in milliseconds
-            const randomDate = new Date(sixMonthsAgo + (index * 2 * 24 * 60 * 60 * 1000)); // Spread dates
-            const uploadedDate = property.uploadedDate || property.date_added || randomDate.toISOString();
-
             return {
               ...property,
-              id: property._id || `temp-id-${index}-${Date.now()}`,
-              name: property.name || property.propertyName || 'Property Name',
-              propertyType: property.propertyType || property.Category?.toLowerCase() || 'residential',
-              listing_type: listingType,
-              listingType: listingType, // Keep both for compatibility
-              property_category_type: propertyCategoryType,
-              propertyCategoryType: propertyCategoryType, // Keep both for compatibility
-              state_name: property.state_name || property.address?.state || 'Location',
-              layer_location: property.layer_location || property.address?.locality || 'Area',
-              location_district: property.location_district || property.address?.district || property.address?.city || 'District',
-              position: parsedPosition,
-              coordinates: parsedPosition,
-              images: property.images || ['/placeholder.png'],
-              featuredImageUrl: property.featuredImageUrl || property.featuredImage?.url || '/placeholder.png',
-              // Don't default to '₹XX' - keep original value (null/undefined) so price extraction can check other fields
-              originalPrice: property.originalPrice,
-              discountedPrice: property.discountedPrice,
-              date_added: property.date_added || 'N/A',
-              uploadedDate: uploadedDate, // ISO string for sorting
-              is_verified: property.is_verified || property.verificationStatus === 'confirmed' || false,
-              sellerPhoneNumber: property.sellerPhoneNumber || '+91 XXXXXXXXXX',
-              address: typeof property.address === 'string' ? property.address : 'Address not available',
-              amenities: property.amenities || [],
-              nearbyPlaces: property.nearbyPlaces || { school: [], hospital: [], hotel: [], business: [] },
-              floorPlans: property.floorPlans || {},
-              ratings: property.ratings || { overall: 0, totalRatings: 0, breakdown: {}, whatsGood: [], whatsBad: [] },
-              reviews: property.reviews || [],
-              size: property.size || property.propertySize || property.carpetArea || 'N/A',
-              price_per_acre: property.price_per_acre || property.price_per_sqft,
-              // Try to get total_price from various sources
-              total_price: property.total_price || property.originalPrice || property.discountedPrice || property.expectedRent,
-              // Also preserve expectedRent for residential properties
-              expectedRent: property.expectedRent
+              id: String(property._id || property.id || `temp-id-${index}`),
+              position,
+              coordinates: position ?? coord,
+              isVerified: property.verificationStatus === 'verified' || property.verificationStatus === 'confirmed' || property.isVerified === true
             };
           });
 
@@ -519,12 +515,12 @@ export default function HomePage() {
       if (marker.isSearchResult) return;
 
       // Check property name
-      const name = marker.name || marker.propertyName || '';
+      const name = marker.propertyName || marker.name || '';
       if (name && name.toLowerCase().includes(queryLower)) {
         const key = `name-${name.toLowerCase()}`;
         if (!uniqueSuggestions.has(key)) {
           uniqueSuggestions.set(key, true);
-          const location = marker.layer_location || marker.location_district || '';
+          const location = marker.address?.locality || marker.address?.district || '';
           filteredSuggestions.push({
             text: name,
             displayText: location ? `${name}, ${location}` : name,
@@ -534,13 +530,13 @@ export default function HomePage() {
         }
       }
 
-      // Check property location (layer_location, location_district, address) - but NOT state_name
-      const layerLocation = marker.layer_location || '';
+      // Check property location (schema: address.locality)
+      const layerLocation = marker.address?.locality || marker.layerLocation || '';
       if (layerLocation && layerLocation.toLowerCase().includes(queryLower)) {
         const key = `location-${layerLocation.toLowerCase()}`;
         if (!uniqueSuggestions.has(key)) {
           uniqueSuggestions.set(key, true);
-          const propertyName = marker.name || marker.propertyName || 'Property';
+          const propertyName = marker.propertyName || marker.name || 'Property';
           filteredSuggestions.push({
             text: layerLocation,
             displayText: `${propertyName}, ${layerLocation}`,
@@ -550,13 +546,13 @@ export default function HomePage() {
         }
       }
 
-      // Check location_district (but not state)
-      const locationDistrict = marker.location_district || '';
+      // Check locationDistrict (schema: address.district)
+      const locationDistrict = marker.address?.district || marker.locationDistrict || '';
       if (locationDistrict && locationDistrict.toLowerCase().includes(queryLower)) {
         const key = `district-${locationDistrict.toLowerCase()}`;
         if (!uniqueSuggestions.has(key)) {
           uniqueSuggestions.set(key, true);
-          const propertyName = marker.name || marker.propertyName || 'Property';
+          const propertyName = marker.propertyName || marker.name || 'Property';
           filteredSuggestions.push({
             text: locationDistrict,
             displayText: `${propertyName}, ${locationDistrict}`,
@@ -566,13 +562,13 @@ export default function HomePage() {
         }
       }
 
-      // Check address if it's a string
-      const address = typeof marker.address === 'string' ? marker.address : '';
+      // Check address (schema: displayAddress)
+      const address = marker.displayAddress || marker.addressDisplay || marker.location || '';
       if (address && address.toLowerCase().includes(queryLower)) {
         const key = `address-${address.toLowerCase()}`;
         if (!uniqueSuggestions.has(key)) {
           uniqueSuggestions.set(key, true);
-          const propertyName = marker.name || marker.propertyName || 'Property';
+          const propertyName = marker.propertyName || marker.name || 'Property';
           filteredSuggestions.push({
             text: address,
             displayText: `${propertyName}, ${address}`,
@@ -617,15 +613,13 @@ export default function HomePage() {
     const matchingProperties = markers.filter(marker => {
       if (marker.isSearchResult) return false;
       const query = searchQuery.toLowerCase().trim();
-      const name = (marker.name || '').toLowerCase();
-      const propertyName = (marker.propertyName || '').toLowerCase();
-      const layerLocation = (marker.layer_location || '').toLowerCase();
-      const locationDistrict = (marker.location_district || '').toLowerCase();
-      const stateName = (marker.state_name || '').toLowerCase();
-      const address = (typeof marker.address === 'string' ? marker.address : '').toLowerCase();
+      const name = (marker.propertyName || marker.name || '').toLowerCase();
+      const layerLocation = (marker.address?.locality || marker.layerLocation || '').toLowerCase();
+      const locationDistrict = (marker.address?.district || marker.locationDistrict || '').toLowerCase();
+      const stateName = (marker.address?.state || marker.stateName || '').toLowerCase();
+      const address = (marker.displayAddress || marker.addressDisplay || marker.location || '').toLowerCase();
 
       return name.includes(query) ||
-        propertyName.includes(query) ||
         layerLocation.includes(query) ||
         locationDistrict.includes(query) ||
         stateName.includes(query) ||
@@ -651,6 +645,46 @@ export default function HomePage() {
   const closeCityModal = () => {
     setSelectedCity(null);
     setSelectedMarker(null);
+  };
+
+  const zoomToCity = async (cityName, options = {}) => {
+    setZoomingCityName(cityName);
+    try {
+      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(cityName + ', India')}&key=${apiKey}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.status === "OK" && data.results?.length > 0) {
+        const { lat, lng } = data.results[0].geometry.location;
+        const offset = options.offset ?? 0.15;
+        setMapCenter({ lat: lat - offset, lng });
+        setZoomLevel(options.zoomLevel ?? 10);
+        if (options.clearSearch) setCitySearchQuery('');
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 480;
+        if (options.closeSelector || isMobile) {
+          setShowCitySelector(false);
+          if (isMobile) { setSelectedMarker(null); setSelectedCity(null); }
+        }
+      }
+      await new Promise(r => setTimeout(r, 1000)); // 1s delay so overlay is visible
+    } catch (err) {
+      console.error("Error geocoding city:", err);
+      await new Promise(r => setTimeout(r, 1000));
+    } finally {
+      setZoomingCityName(null);
+    }
+  };
+
+  const handleApplyFilters = async () => {
+    setIsApplyingFilters(true);
+    try {
+      await new Promise(r => setTimeout(r, 1000)); // 1s delay
+      setAppliedFilters(getFilterSnapshot());
+      setShowFiltersView(false);
+      if (typeof window !== 'undefined' && window.innerWidth < 480) setShowCitySelector(false);
+    } finally {
+      setIsApplyingFilters(false);
+    }
   };
 
   const handleLoginSuccess = (userData) => {
@@ -738,135 +772,44 @@ export default function HomePage() {
   };
 
 
-  // Calculate prices based on property type (same logic as PropertyDetailModal)
-  const calculatePropertyPrices = (property) => {
-    let originalPriceValue = 0;
-
-    if (property.propertyType === 'residential') {
-      // For residential: use expectedRent
-      const expectedRent = property.expectedRent || '0';
-      originalPriceValue = parseFloat(expectedRent.toString().replace(/[₹,]/g, '')) || 0;
-    } else if (property.propertyType === 'commercial') {
-      // For commercial: calculate from floorConfigurations
-      if (property.floorConfigurations && property.floorConfigurations.length > 0) {
-        const firstFloor = property.floorConfigurations[0];
-        if (firstFloor.dedicatedCabin && firstFloor.dedicatedCabin.seats && firstFloor.dedicatedCabin.pricePerSeat) {
-          const seatsStr = firstFloor.dedicatedCabin.seats.toString();
-          const pricePerSeatStr = firstFloor.dedicatedCabin.pricePerSeat.toString();
-
-          const seatsMatch = seatsStr.match(/(\d+)/);
-          const pricePerSeatMatch = pricePerSeatStr.match(/(\d+)/);
-
-          if (seatsMatch && pricePerSeatMatch) {
-            const seatsLower = parseFloat(seatsMatch[1]);
-            const pricePerSeatLower = parseFloat(pricePerSeatMatch[1]);
-            originalPriceValue = seatsLower * pricePerSeatLower;
-          }
-        }
-      }
-    }
-
-    // If still no price, try to use existing price fields
-    if (originalPriceValue === 0) {
-      if (property.originalPrice && property.originalPrice !== '₹XX' && property.originalPrice !== 'N/A') {
-        const priceMatch = property.originalPrice.toString().match(/[\d,]+/);
-        if (priceMatch) {
-          originalPriceValue = parseFloat(priceMatch[0].replace(/,/g, '')) || 0;
-        }
-      } else if (property.total_price && property.total_price !== 'N/A') {
-        const priceMatch = property.total_price.toString().match(/[\d,]+/);
-        if (priceMatch) {
-          originalPriceValue = parseFloat(priceMatch[0].replace(/,/g, '')) || 0;
-        }
-      }
-    }
-
-    // Calculate discounted price (5% off = 95% of original)
-    const discountedPriceValue = originalPriceValue * 0.95;
-
-    // Format prices
-    const formatPrice = (price) => {
-      if (price === 0) return null;
-      return `₹${Math.round(price).toLocaleString('en-IN')}`;
-    };
-
-    return {
-      originalPrice: formatPrice(originalPriceValue),
-      discountedPrice: formatPrice(discountedPriceValue)
-    };
-  };
-
-  // Helper function to get numeric price value for sorting
+  // Helper function to get numeric price value for sorting - schema: totalPrice, discountPercent
   const getPriceValue = (marker) => {
-    const prices = calculatePropertyPrices(marker);
-    if (prices.discountedPrice) {
-      // Extract numeric value from discounted price
-      const priceStr = prices.discountedPrice.toString().replace(/[₹,]/g, '');
-      return parseFloat(priceStr) || 0;
-    }
-    // Fallback to other price fields
-    if (marker.total_price && marker.total_price !== 'N/A') {
-      const priceStr = marker.total_price.toString().replace(/[₹,]/g, '');
-      return parseFloat(priceStr) || 0;
-    }
-    if (marker.originalPrice && marker.originalPrice !== '₹XX' && marker.originalPrice !== 'N/A') {
-      const priceStr = marker.originalPrice.toString().replace(/[₹,]/g, '');
-      return parseFloat(priceStr) || 0;
-    }
-    return 0;
+    const prices = calculatePrices(marker);
+    const p = prices.discountedPrice || marker.discountedPrice || marker.totalPrice || marker.originalPrice;
+    if (!p || p === '₹XX' || p === 'N/A') return 0;
+    const priceStr = String(p).replace(/[₹,]/g, '');
+    return parseFloat(priceStr) || 0;
   };
 
   // Helper function to get numeric size value for sorting
   const getSizeValue = (marker) => {
-    const sizeStr = marker.size || '0';
-    const size = parseFloat(sizeStr.replace(/[^0-9.]/g, '')) || 0;
+    const raw = marker.propertySize ?? marker.size ?? 0;
+    const size = typeof raw === 'number' ? raw : parseFloat(String(raw).replace(/[^0-9.]/g, '')) || 0;
 
-    // Convert to square feet for consistent comparison
-    if (sizeStr.toLowerCase().includes('sq ft') || sizeStr.toLowerCase().includes('sqft')) {
-      return size; // Already in square feet
-    } else {
-      return size * 9; // Convert square yards to square feet
-    }
+    // Schema: propertySize (number, sq ft in dummy) or size string; convert to square feet for comparison
+    const sizeStr = String(marker.size || '');
+    if (typeof raw === 'number') return size; // propertySize from schema is typically sq ft
+    if (sizeStr.toLowerCase().includes('sq ft') || sizeStr.toLowerCase().includes('sqft')) return size;
+    return size * 9; // Assume square yards -> square feet
   };
 
   // Helper function to get total price value for sorting
   const getTotalPriceValue = (marker) => {
-    // Try total_price first
-    if (marker.total_price && marker.total_price !== 'N/A') {
-      const priceStr = marker.total_price.toString().replace(/[₹,]/g, '');
+    if (marker.totalPrice && marker.totalPrice !== 'N/A') {
+      const priceStr = marker.totalPrice.toString().replace(/[₹,]/g, '');
       return parseFloat(priceStr) || 0;
     }
     // Fallback to calculated price
     return getPriceValue(marker);
   };
 
-  // Helper function to get price per seat for commercial properties
+  // Helper: get price per seat for commercial (schema: pricePerSeat at top level or floorConfigurations)
   const getPricePerSeat = (marker) => {
-    if (marker.propertyType === 'commercial' && marker.floorConfigurations && marker.floorConfigurations.length > 0) {
-      const firstFloor = marker.floorConfigurations[0];
-      if (firstFloor.dedicatedCabin && firstFloor.dedicatedCabin.pricePerSeat) {
-        const pricePerSeatStr = firstFloor.dedicatedCabin.pricePerSeat.toString();
-        const priceMatch = pricePerSeatStr.match(/(\d+)/);
-        if (priceMatch) {
-          return parseFloat(priceMatch[1]) || 0;
-        }
-      }
-    }
-    // Fallback: calculate from total price if available
-    const prices = calculatePropertyPrices(marker);
-    if (prices.discountedPrice) {
-      const totalPrice = parseFloat(prices.discountedPrice.toString().replace(/[₹,]/g, '')) || 0;
-      // If we have seats info, calculate per seat
-      if (marker.floorConfigurations && marker.floorConfigurations.length > 0) {
-        const firstFloor = marker.floorConfigurations[0];
-        if (firstFloor.dedicatedCabin && firstFloor.dedicatedCabin.seats) {
-          const seatsStr = firstFloor.dedicatedCabin.seats.toString();
-          const seatsMatch = seatsStr.match(/(\d+)/);
-          if (seatsMatch) {
-            const seats = parseFloat(seatsMatch[1]) || 1;
-            return totalPrice / seats;
-          }
-        }
+    if (marker.propertyCategory === 'commercial' || marker.propertyType === 'commercial') {
+      const priceStr = marker.pricePerSeat ?? marker.floorConfigurations?.[0]?.dedicatedCabin?.pricePerSeat;
+      if (priceStr) {
+        const m = String(priceStr).match(/(\d+)/);
+        return m ? parseFloat(m[1]) || 0 : 0;
       }
     }
     return 0;
@@ -875,22 +818,22 @@ export default function HomePage() {
   const getFilteredMarkers = () => {
     let filtered = markers.filter(marker => !marker.isSearchResult); // Exclude search result markers
 
-    // Use applied filters (set when user clicks "Apply Filters") or current draft if none applied yet
-    const f = appliedFilters !== null ? appliedFilters : getFilterSnapshot();
+    // Use applied filters only when user has clicked "Apply Filters"; otherwise no panel filters apply
+    const baseFilters = appliedFilters !== null ? appliedFilters : getDefaultFilterSnapshot();
+    // Left drawer filters (property type: All/Commercial/Residential) are always live - use current state when no applied snapshot
+    const f = appliedFilters !== null ? baseFilters : { ...baseFilters, propertyTypeFilter };
 
     // Apply search query filter - consistently filter properties in ALL views (initial, filters, country)
     if (searchQuery && searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       filtered = filtered.filter(marker => {
-        const name = (marker.name || '').toLowerCase();
-        const propertyName = (marker.propertyName || '').toLowerCase();
-        const layerLocation = (marker.layer_location || '').toLowerCase();
-        const locationDistrict = (marker.location_district || '').toLowerCase();
-        const stateName = (marker.state_name || '').toLowerCase();
-        const address = (typeof marker.address === 'string' ? marker.address : '').toLowerCase();
+        const name = (marker.propertyName || marker.name || '').toLowerCase();
+        const layerLocation = (marker.address?.locality || marker.layerLocation || '').toLowerCase();
+        const locationDistrict = (marker.address?.district || marker.locationDistrict || '').toLowerCase();
+        const stateName = (marker.address?.state || marker.stateName || '').toLowerCase();
+        const address = (marker.displayAddress || marker.addressDisplay || marker.location || '').toLowerCase();
 
         return name.includes(query) ||
-          propertyName.includes(query) ||
           layerLocation.includes(query) ||
           locationDistrict.includes(query) ||
           stateName.includes(query) ||
@@ -901,19 +844,19 @@ export default function HomePage() {
     if (f.filterLocalitySearch && f.filterLocalitySearch.trim()) {
       const locQuery = f.filterLocalitySearch.toLowerCase().trim();
       filtered = filtered.filter(marker => {
-        const name = (marker.name || '').toLowerCase();
-        const layerLocation = (marker.layer_location || '').toLowerCase();
-        const locationDistrict = (marker.location_district || '').toLowerCase();
-        const address = (typeof marker.address === 'string' ? marker.address : '').toLowerCase();
+        const name = (marker.propertyName || marker.name || '').toLowerCase();
+        const layerLocation = (marker.address?.locality || marker.layerLocation || '').toLowerCase();
+        const locationDistrict = (marker.address?.district || marker.locationDistrict || '').toLowerCase();
+        const address = (marker.displayAddress || marker.addressDisplay || marker.location || '').toLowerCase();
         return name.includes(locQuery) || layerLocation.includes(locQuery) ||
           locationDistrict.includes(locQuery) || address.includes(locQuery);
       });
     }
 
-    // Apply building type filter (Commercial/Residential) - always apply if set
+    // Apply building type filter (Commercial/Residential) - schema uses propertyCategory
     if (f.propertyTypeFilter !== 'all') {
       filtered = filtered.filter(marker => {
-        const markerType = marker.propertyType || 'residential';
+        const markerType = marker.propertyCategory || marker.propertyType || 'residential';
         return markerType === f.propertyTypeFilter;
       });
     }
@@ -921,7 +864,7 @@ export default function HomePage() {
     // Apply listing type filter (For Sale, For Rent, Ready to Move, New Projects, Verified, Video)
     if (listingTypeFilter && listingTypeFilter !== 'all') {
       filtered = filtered.filter(marker => {
-        const markerListingType = marker.listing_type || marker.listingType || '';
+        const markerListingType = marker.listingType || '';
         // Map filter values to property values
         const filterMapping = {
           'forSale': 'For Sale',
@@ -931,7 +874,7 @@ export default function HomePage() {
           'verified': 'Verified'
         };
         const expectedValue = filterMapping[listingTypeFilter] || listingTypeFilter;
-        if (listingTypeFilter === 'verified') return marker.is_verified;
+        if (listingTypeFilter === 'verified') return marker.isVerified || marker.verificationStatus === 'verified' || marker.verificationStatus === 'confirmed';
         if (listingTypeFilter === 'video') return !!(marker.video_url || marker.video || marker.has_video);
         return markerListingType === expectedValue;
       });
@@ -964,7 +907,7 @@ export default function HomePage() {
         };
         const expectedResType = resTypeMap[f.residentialPropertyType] || f.residentialPropertyType;
         filtered = filtered.filter(marker => {
-          const mType = (marker.property_category_type || marker.propertyType || marker.property_type || '').toString();
+          const mType = (marker.propertyCategoryType || marker.propertyType || '').toString();
           if (!mType) return true;
           return mType.toLowerCase().includes(expectedResType.toLowerCase());
         });
@@ -982,7 +925,7 @@ export default function HomePage() {
           .map(([key]) => (localityLabels[key] || '').toLowerCase());
         const searchTerm = (f.residentialLocalitySearch || '').trim().toLowerCase();
         filtered = filtered.filter(marker => {
-          const loc = (marker.layer_location || marker.location_district || marker.address || '').toLowerCase();
+          const loc = (marker.address?.locality || marker.address?.district || marker.displayAddress || marker.layerLocation || marker.locationDistrict || marker.location || '').toLowerCase();
           if (searchTerm && loc.includes(searchTerm)) return true;
           if (selectedLocalities.length === 0) return true;
           return selectedLocalities.some(s => loc.includes(s));
@@ -1002,7 +945,7 @@ export default function HomePage() {
           .map(([key]) => (societyLabels[key] || '').toLowerCase());
         const searchTerm = (f.residentialSocietySearch || '').trim().toLowerCase();
         filtered = filtered.filter(marker => {
-          const loc = (marker.layer_location || marker.location_district || marker.address || marker.society || marker.name || '').toLowerCase();
+          const loc = (marker.address?.locality || marker.address?.district || marker.displayAddress || marker.layerLocation || marker.locationDistrict || marker.location || marker.society || marker.propertyName || '').toLowerCase();
           if (searchTerm && loc.includes(searchTerm)) return true;
           if (selectedSocieties.length === 0) return true;
           return selectedSocieties.some(s => loc.includes(s));
@@ -1036,7 +979,7 @@ export default function HomePage() {
       // Apply residential-only filters: Sale Type, Construction Status, Washrooms, Floor, Facing, RERA, Offers, Furnishing Status, Posted by, Possession Status, Amenities pills
       if (hasResidentialSaleTypeFilter) {
         filtered = filtered.filter(marker => {
-          const sale = (marker.saleType || marker.listing_type || '').toLowerCase();
+          const sale = (marker.saleType || marker.listingType || '').toLowerCase();
           if (!sale) return true;
           if (f.saleType === 'new') return sale.includes('new') || sale.includes('primary');
           if (f.saleType === 'resale') return sale.includes('resale') || sale.includes('secondary');
@@ -1099,12 +1042,12 @@ export default function HomePage() {
         filtered = filtered.filter(marker => {
           if (f.furnishingStatus === 'gatedCommunities') {
             const amenities = (marker.amenities || marker.amenitiesList || '').toString().toLowerCase();
-            const name = (marker.name || '').toLowerCase();
+            const name = (marker.propertyName || marker.name || '').toLowerCase();
             const desc = (marker.description || '').toLowerCase();
             return amenities.includes('gated') || name.includes('gated') || desc.includes('gated') ||
               amenities.includes('gated community') || name.includes('gated community') || desc.includes('gated community');
           }
-          const mFurn = (marker.furnishing || '').toLowerCase();
+          const mFurn = (marker.furnishingLevel || marker.furnishing || '').toLowerCase();
           if (!mFurn) return true;
           if (f.furnishingStatus === 'furnished') return mFurn.includes('full') || mFurn.includes('furnished');
           if (f.furnishingStatus === 'semiFurnished') return mFurn.includes('semi');
@@ -1162,19 +1105,22 @@ export default function HomePage() {
     const hasPropertyAgeFilter = Object.values(f.propertyAge).some(v => v === true);
 
     const hasFurnishingFilter = Object.values(f.furnishing).some(v => v === true);
+    const hasCommercialLocality = Object.values(f.commercialLocalities || {}).some(v => v === true) || (f.commercialLocalitySearch && f.commercialLocalitySearch.trim());
+    const hasCommercialSociety = Object.values(f.commercialSocieties || {}).some(v => v === true) || (f.commercialSocietySearch && f.commercialSocietySearch.trim());
     const hasAnyModalFilters = hasTypeFilters || hasListedByFilters || hasBudgetFilters ||
       hasSizeFilters || hasPropertyTypeFilters || hasBudgetLumpsumFilters ||
       hasBudgetPerSeatFilters || hasSizeFilterDropdown || hasFurnishingFilter ||
       hasBuildingTypeOptions || f.availability !== '' || f.parking.public || f.parking.reserved ||
       f.amenities.powerBackup || f.amenities.lift || hasFloorsFilter || hasPropertyAgeFilter ||
-      f.showOnly.withPhotos || f.showOnly.removeSeen;
+      f.showOnly.withPhotos || f.showOnly.removeSeen ||
+      hasCommercialLocality || hasCommercialSociety;
 
     // Apply commercial modal filters only when not in residential mode
     if (f.propertyTypeFilter !== 'residential' && hasAnyModalFilters) {
       // Apply type filters (commercial/residential from modal)
       if (hasTypeFilters) {
         filtered = filtered.filter(marker => {
-          const markerType = marker.propertyType || 'residential';
+          const markerType = marker.propertyCategory || marker.propertyType || 'residential';
           return (
             (f.filters.type.commercial && markerType === 'commercial') ||
             (f.filters.type.residential && markerType === 'residential')
@@ -1182,10 +1128,50 @@ export default function HomePage() {
         });
       }
 
+      // Apply commercial locality filter
+      if (hasCommercialLocality && f.propertyTypeFilter === 'commercial') {
+        const localityLabels = {
+          mysoreRoad: 'Mysore Road',
+          sampangiRamaNagar: 'Sampangi Rama Nagar',
+          hebbal: 'Hebbal',
+          banashankari: 'Banashankari',
+        };
+        const selectedLocalities = Object.entries(f.commercialLocalities || {})
+          .filter(([, sel]) => sel)
+          .map(([key]) => (localityLabels[key] || '').toLowerCase());
+        const searchTerm = (f.commercialLocalitySearch || '').trim().toLowerCase();
+        filtered = filtered.filter(marker => {
+          const loc = (marker.address?.locality || marker.address?.district || marker.displayAddress || marker.layerLocation || marker.locationDistrict || marker.location || '').toLowerCase();
+          if (searchTerm && loc.includes(searchTerm)) return true;
+          if (selectedLocalities.length === 0) return true;
+          return selectedLocalities.some(s => loc.includes(s));
+        });
+      }
+
+      // Apply commercial society filter
+      if (hasCommercialSociety && f.propertyTypeFilter === 'commercial' && f.commercialSocieties) {
+        const societyLabels = {
+          godrejTiara: 'Godrej Tiara',
+          sobhaInfinia: 'Sobha Infinia',
+          snnClermont: 'SNN Clermont',
+          lntRaintreeBoulevard: 'LnT Raintree Boulevard',
+        };
+        const selectedSocieties = Object.entries(f.commercialSocieties)
+          .filter(([, sel]) => sel)
+          .map(([key]) => (societyLabels[key] || '').toLowerCase());
+        const searchTerm = (f.commercialSocietySearch || '').trim().toLowerCase();
+        filtered = filtered.filter(marker => {
+          const loc = (marker.address?.locality || marker.address?.district || marker.displayAddress || marker.layerLocation || marker.locationDistrict || marker.location || marker.society || marker.propertyName || '').toLowerCase();
+          if (searchTerm && loc.includes(searchTerm)) return true;
+          if (selectedSocieties.length === 0) return true;
+          return selectedSocieties.some(s => loc.includes(s));
+        });
+      }
+
       // Apply property category type filters (Office Space, Co-Working, etc.)
       if (hasPropertyTypeFilters) {
         filtered = filtered.filter(marker => {
-          const categoryType = marker.property_category_type || marker.propertyCategoryType || '';
+          const categoryType = marker.propertyCategoryType || '';
           const categoryMapping = {
             'officeSpace': 'Office Space',
             'coWorking': 'Co-Working',
@@ -1210,7 +1196,9 @@ export default function HomePage() {
       // Apply listed by filter
       if (hasListedByFilters) {
         filtered = filtered.filter(marker => {
-          const listedBy = marker.listed_by?.toLowerCase() || 'agent';
+          const raw = (marker.listed_by || marker.listedBy || '').toLowerCase();
+          const tag = (marker.agentDetails?.tag || '').toLowerCase();
+          const listedBy = raw || (tag.includes('builderinfo') ? 'buildersinfo' : 'agent');
           return (
             (f.filters.listedBy.owner && listedBy === 'owner') ||
             (f.filters.listedBy.agent && listedBy === 'agent') ||
@@ -1222,9 +1210,8 @@ export default function HomePage() {
       // Apply budget lumpsum filter
       if (hasBudgetLumpsumFilters) {
         filtered = filtered.filter(marker => {
-          const prices = calculatePropertyPrices(marker);
-          const priceValue = prices.discountedPrice
-            ? parseFloat(prices.discountedPrice.toString().replace(/[₹,]/g, '')) || 0
+          const priceValue = marker.discountedPrice
+            ? parseFloat(marker.discountedPrice.toString().replace(/[₹,]/g, '')) || 0
             : getPriceValue(marker);
 
           const minBudget = f.budgetLumpsum.min ? parseFloat(f.budgetLumpsum.min) * 100000 : 0; // Convert lacs to actual price
@@ -1252,9 +1239,8 @@ export default function HomePage() {
       // Apply budget filter (old filter - in crores)
       if (hasBudgetFilters) {
         filtered = filtered.filter(marker => {
-          const prices = calculatePropertyPrices(marker);
-          const priceValue = prices.discountedPrice
-            ? parseFloat(prices.discountedPrice.toString().replace(/[₹,]/g, '')) || 0
+          const priceValue = marker.discountedPrice
+            ? parseFloat(marker.discountedPrice.toString().replace(/[₹,]/g, '')) || 0
             : getPriceValue(marker);
           const minBudget = f.filters.budget[0] * 10000000; // Convert crores to actual price (1 crore = 10,000,000)
           const maxBudget = f.filters.budget[1] * 10000000;
@@ -1265,27 +1251,19 @@ export default function HomePage() {
       // Apply size filter
       if (hasSizeFilters) {
         filtered = filtered.filter(marker => {
-          const sizeStr = marker.size || '0';
-          const size = parseFloat(sizeStr.replace(/[^0-9.]/g, '')) || 0;
+          const raw = marker.propertySize ?? marker.size ?? 0;
+          const size = typeof raw === 'number' ? raw : parseFloat(String(raw).replace(/[^0-9.]/g, '')) || 0;
+          const sizeStr = String(marker.size || '');
+          const isSqFt = typeof raw === 'number' || sizeStr.toLowerCase().includes('sq ft') || sizeStr.toLowerCase().includes('sqft');
           const minSize = f.filters.size[0];
           const maxSize = f.filters.size[1];
 
-          // Handle different size units based on the selected unit in the filter
           let sizeInFilterUnit = size;
-          if (sizeStr.toLowerCase().includes('sq ft') || sizeStr.toLowerCase().includes('sqft')) {
-            // Data is in square feet, convert to filter unit
-            if (sizeUnit === 'Square Yards') {
-              sizeInFilterUnit = size / 9; // Convert square feet to square yards
-            }
-            // If filter unit is also square feet, no conversion needed
+          if (isSqFt) {
+            if (sizeUnit === 'Square Yards') sizeInFilterUnit = size / 9;
           } else {
-            // Data is in square yards, convert to filter unit
-            if (sizeUnit === 'Square Feet') {
-              sizeInFilterUnit = size * 9; // Convert square yards to square feet
-            }
-            // If filter unit is also square yards, no conversion needed
+            if (sizeUnit === 'Square Feet') sizeInFilterUnit = size * 9;
           }
-
           return sizeInFilterUnit >= minSize && sizeInFilterUnit <= maxSize;
         });
       }
@@ -1304,7 +1282,7 @@ export default function HomePage() {
       // Apply furnishing filter (multi-select checkboxes)
       if (hasFurnishingFilter) {
         filtered = filtered.filter(marker => {
-          const mFurnishing = (marker.furnishing || '').toLowerCase().replace(/\s/g, '');
+          const mFurnishing = (marker.furnishingLevel || marker.furnishing || '').toLowerCase().replace(/\s/g, '');
           if (!mFurnishing) return true;
           const fMap = { full: 'full', none: 'none', semi: 'semi' };
           return Object.entries(f.furnishing).some(([key, sel]) => sel && mFurnishing.includes(fMap[key]));
@@ -1616,13 +1594,17 @@ export default function HomePage() {
                       e.preventDefault();
                       setSearchQuery(suggestion.text);
                       setShowSuggestions(false);
+                      if (typeof window !== 'undefined' && window.innerWidth < 480) {
+                        setShowFiltersView(false);
+                        setShowCitySelector(false);
+                      }
 
                       // If suggestion has a marker (property), zoom to it
                       if (suggestion.marker && suggestion.marker.position) {
                         setMapCenter(suggestion.marker.position);
                         setZoomLevel(10); // Less zoom so city name is visible
                         setSearchQuery(suggestion.text);
-                        // The search query will filter properties via getFilteredMarkers
+                        if (typeof window !== 'undefined' && window.innerWidth < 480) setSelectedMarker(null);
                         return;
                       }
 
@@ -1644,17 +1626,17 @@ export default function HomePage() {
         </form>
       </div>
 
-      <main className="flex-1 relative flex pb-16 md:pb-0 min-h-0">
-        <div className="hidden md:block relative h-full min-h-0">
-          <div className={`left-drawer-panel ${isDrawerCollapsed ? 'w-0 overflow-hidden' : 'w-[328px]'} shadow-lg flex flex-col transition-all duration-300 h-full min-h-0 overflow-hidden ${isDark ? 'bg-[#1f2229]' : 'bg-gray-50'} ${isLoadingProperties ? 'opacity-30 pointer-events-none' : ''}`}>
-            <div className={`flex-shrink-0 z-20 px-3 pt-3 ${showFiltersView || showCitySelector ? 'pb-0' : 'pb-3'} ${isDrawerCollapsed ? 'hidden' : ''} ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}>
+      <main className="flex-1 relative flex pb-20 max-[525px]:pb-24 md:pb-0 min-h-0">
+        <div className="hidden md:flex md:shrink-0 relative h-full min-h-0 overflow-hidden" style={{ maxWidth: isDrawerCollapsed ? 0 : 328, transition: 'max-width 300ms ease-in-out' }}>
+          <div className={`left-drawer-panel w-[328px] shadow-lg flex flex-col h-full min-h-0 overflow-hidden shrink-0 ${isDark ? 'bg-[#1f2229]' : 'bg-gray-50'} ${isLoadingProperties ? 'opacity-30 pointer-events-none' : ''}`}>
+            <div className={`flex-shrink-0 z-20 px-3 pt-3 ${showFiltersView || showCitySelector ? 'pb-0' : 'pb-3'} ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}>
               <form onSubmit={handleSearch} className={showFiltersView || showCitySelector ? 'mb-2' : 'mb-3'}>
                 <div className="relative search-container">
                   <div className={`rounded-lg pl-3 pr-2.5 py-2.5 w-full flex items-center gap-2 ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
                     <Search className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-                    <div className="flex-1 flex items-center gap-1.5 min-w-0 relative">
-                      <span className={`text-sm font-medium whitespace-nowrap ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Search</span>
-                      <div className="flex-1 relative min-w-0" onClick={() => {
+                    <div
+                      className="flex-1 flex items-center gap-1.5 min-w-0 relative cursor-text"
+                      onClick={() => {
                         if (!isSearchFocused) {
                           const input = document.querySelector('.search-input-field');
                           if (input) {
@@ -1662,7 +1644,10 @@ export default function HomePage() {
                             setIsSearchFocused(true);
                           }
                         }
-                      }}>
+                      }}
+                    >
+                      <span className={`text-sm font-medium whitespace-nowrap ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Search</span>
+                      <div className="flex-1 relative min-w-0">
                         {searchQuery && !isSearchFocused && (
                           <span className={`text-sm font-medium cursor-text pointer-events-none ${isDark ? 'text-white' : 'text-gray-700'}`}>"{searchQuery}"</span>
                         )}
@@ -1729,17 +1714,19 @@ export default function HomePage() {
                               e.preventDefault();
                               setSearchQuery(suggestion.text);
                               setShowSuggestions(false);
+                              if (typeof window !== 'undefined' && window.innerWidth < 480) {
+                                setShowFiltersView(false);
+                                setShowCitySelector(false);
+                              }
 
                               // If suggestion has a marker (property), zoom to it
                               if (suggestion.marker && suggestion.marker.position) {
                                 setMapCenter(suggestion.marker.position);
                                 setZoomLevel(10); // Less zoom so city name is visible
                                 setSearchQuery(suggestion.text);
-                                // The search query will filter properties via getFilteredMarkers
                                 return;
                               }
 
-                              // If no marker, just set the search query to filter properties
                               setSearchQuery(suggestion.text);
                             }}
                             className={`px-4 py-2.5 cursor-pointer border-b last:border-b-0 transition-all duration-200 ${isDark ? 'hover:bg-gray-700 border-gray-700' : 'hover:bg-gray-100 border-gray-100'}`}
@@ -1820,7 +1807,7 @@ export default function HomePage() {
                       disabled={isLoadingProperties}
                       className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'forSale'
                         ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
-                        : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                        : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
                         } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                     >
                       For Sale
@@ -1830,7 +1817,7 @@ export default function HomePage() {
                       disabled={isLoadingProperties}
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'forRent'
                         ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
-                        : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                        : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
                         } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                     >
                       For Rent
@@ -1840,7 +1827,7 @@ export default function HomePage() {
                       disabled={isLoadingProperties}
                       className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'readyToMove'
                         ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
-                        : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                        : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
                         } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                     >
                       Ready to Move
@@ -1850,7 +1837,7 @@ export default function HomePage() {
                       disabled={isLoadingProperties}
                       className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'newProjects'
                         ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
-                        : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                        : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
                         } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                     >
                       New Projects
@@ -1860,7 +1847,7 @@ export default function HomePage() {
                       disabled={isLoadingProperties}
                       className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'verified'
                         ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
-                        : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                        : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
                         } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                     >
                       Verified
@@ -1870,7 +1857,7 @@ export default function HomePage() {
                       disabled={isLoadingProperties}
                       className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'video'
                         ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
-                        : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                        : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
                         } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                     >
                       Video
@@ -1888,7 +1875,7 @@ export default function HomePage() {
                         <button
                           onClick={() => setShowSortDropdown(!showSortDropdown)}
                           disabled={isLoadingProperties}
-                          className={`flex items-center gap-1 text-sm transition-colors ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'} ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                          className={`flex items-center gap-1 text-sm transition-colors px-2 py-1 rounded ${isDark ? 'text-gray-400 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-600 hover:bg-yellow-100 hover:text-yellow-900'} ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                         >
                           <span>Sort by</span>
                           <ChevronDown className={`w-4 h-4 transition-transform ${showSortDropdown ? 'rotate-180' : ''}`} />
@@ -1972,7 +1959,7 @@ export default function HomePage() {
 
             {/* City Selector View */}
             {showCitySelector ? (
-              <div className={`flex-1 min-h-0 overflow-y-auto drawer-scroll ${isDark ? 'bg-[#1f2229]' : 'bg-white'} ${isDrawerCollapsed ? 'hidden' : ''}`}>
+              <div className={`flex-1 min-h-0 overflow-y-auto drawer-scroll ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}>
                 {/* City Selector Header */}
                 <div className={`flex items-center gap-3 px-4 py-3 border-b sticky top-0 z-10 -mt-2 ${isDark ? 'border-gray-700 bg-[#1f2229]' : 'border-gray-200 bg-white'}`}>
                   <button
@@ -1984,81 +1971,71 @@ export default function HomePage() {
                   <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>Country/City</h2>
                 </div>
 
-                {/* Search Input */}
+                {/* Search Input - Google Places Autocomplete for cities */}
                 <div className={`px-4 py-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-                  <div className={`flex items-center gap-2 px-3 py-2.5 border rounded-lg ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-300 bg-white'}`}>
-                    <Search className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-                    <input
-                      type="text"
-                      value={citySearchQuery}
-                      onChange={(e) => setCitySearchQuery(e.target.value)}
-                      placeholder="Select or type your city"
-                      className={`flex-1 text-sm outline-none bg-transparent ${isDark ? 'text-white placeholder-gray-500' : 'text-gray-700 placeholder-gray-400'}`}
-                    />
-                  </div>
+                  <PlacesAutocompleteInput
+                    value={citySearchQuery}
+                    onChange={setCitySearchQuery}
+                    onSelect={({ description, lat, lng }) => {
+                      setMapCenter({ lat, lng });
+                      setZoomLevel(10);
+                      setCitySearchQuery(description.split(',')[0].trim());
+                      if (typeof window !== 'undefined' && window.innerWidth < 480) {
+                        setShowFiltersView(false);
+                        setShowCitySelector(false);
+                      }
+                    }}
+                    placeholder="Select or type your city"
+                    mapCenter={mapCenter}
+                    type="city"
+                    isDark={isDark}
+                    iconLeft={Search}
+                  />
                 </div>
 
-                {/* Detect Location and Reset City */}
+                {/* Detect Location and Reset City - same logic as Locate Me (bottom right) */}
                 <div className={`px-4 py-3 flex items-center justify-between border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
                   <button
                     onClick={async () => {
                       if (isDetectingLocation || isLoadingProperties) return;
 
+                      setIsDetectingLocation(true);
                       try {
-                        setIsDetectingLocation(true);
-                        const locationData = await getUserLocation();
+                        const loc = await getUserLocation();
+                        // Core behavior: same as Locate Me - center map and zoom
+                        setMapCenter({ lat: loc.lat, lng: loc.lng });
+                        setZoomLevel(loc.isFallback ? 5 : loc.isApproximate ? 10 : 13);
+                        setDetectedUserLocation({ lat: loc.lat, lng: loc.lng });
+                        if (typeof window !== 'undefined' && window.innerWidth < 480) setShowCitySelector(false);
 
-                        // Reverse geocode to get city name
+                        // Optional: reverse geocode to show city name in search
                         const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-                        const reverseGeocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${locationData.lat},${locationData.lng}&key=${apiKey}`;
+                        if (apiKey) {
+                          try {
+                            const reverseGeocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${loc.lat},${loc.lng}&key=${apiKey}`;
+                            const geocodeRes = await fetch(reverseGeocodeUrl);
+                            const geocodeData = await geocodeRes.json();
 
-                        const geocodeRes = await fetch(reverseGeocodeUrl);
-                        const geocodeData = await geocodeRes.json();
-
-                        let cityName = null;
-                        if (geocodeData.status === "OK" && geocodeData.results && geocodeData.results.length > 0) {
-                          // Extract city name from address components
-                          const addressComponents = geocodeData.results[0].address_components;
-                          for (const component of addressComponents) {
-                            if (component.types.includes('locality')) {
-                              cityName = component.long_name;
-                              break;
-                            } else if (component.types.includes('administrative_area_level_2')) {
-                              cityName = component.long_name;
+                            let cityName = null;
+                            if (geocodeData.status === "OK" && geocodeData.results?.length > 0) {
+                              const addressComponents = geocodeData.results[0].address_components;
+                              for (const component of addressComponents) {
+                                if (component.types.includes('locality')) {
+                                  cityName = component.long_name;
+                                  break;
+                                } else if (component.types.includes('administrative_area_level_2')) {
+                                  cityName = component.long_name;
+                                }
+                              }
                             }
-                          }
-                        }
-
-                        // If we found a city, use it; otherwise use coordinates
-                        if (cityName) {
-                          // Geocode the city name to get its center
-                          const cityGeocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(cityName + ', India')}&key=${apiKey}`;
-                          const cityRes = await fetch(cityGeocodeUrl);
-                          const cityData = await cityRes.json();
-
-                          if (cityData.status === "OK" && cityData.results && cityData.results.length > 0) {
-                            const { lat, lng } = cityData.results[0].geometry.location;
-                            // Offset latitude to position city towards top of map
-                            const offsetLat = lat - 0.15;
-                            setMapCenter({ lat: offsetLat, lng });
-                            setZoomLevel(10);
-                            setCitySearchQuery(cityName); // Set city name in search
-                          } else {
-                            // Fallback to coordinates
-                            const offsetLat = locationData.lat - 0.15;
-                            setMapCenter({ lat: offsetLat, lng: locationData.lng });
-                            setZoomLevel(10);
+                            if (cityName) setCitySearchQuery(cityName);
+                            else setCitySearchQuery('');
+                          } catch {
                             setCitySearchQuery('');
                           }
                         } else {
-                          // No city found, use coordinates
-                          const offsetLat = locationData.lat - 0.15;
-                          setMapCenter({ lat: offsetLat, lng: locationData.lng });
-                          setZoomLevel(10);
                           setCitySearchQuery('');
                         }
-
-                        // Don't close country view - stay in country view
                       } catch (error) {
                         console.error('Error detecting location:', error);
                       } finally {
@@ -2068,7 +2045,7 @@ export default function HomePage() {
                     disabled={isLoadingProperties || isDetectingLocation}
                     className={`flex items-center gap-2 text-blue-500 hover:text-blue-600 transition-colors ${(isLoadingProperties || isDetectingLocation) ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                   >
-                    <MapPin className="w-4 h-4" />
+                    {isDetectingLocation ? <Loader2 className="w-4 h-4 animate-spin" /> : <LocateFixed className="w-4 h-4" />}
                     <span className="text-sm font-medium">{isDetectingLocation ? 'Detecting...' : 'Detect my location'}</span>
                   </button>
                   <button
@@ -2077,8 +2054,8 @@ export default function HomePage() {
                       setSelectedMarker(null);
                       setMapCenter({ lat: 20.5937, lng: 78.9629 });
                       setZoomLevel(5);
-                      setCitySearchQuery(''); // Clear city search
-                      // Don't close country view on reset - stay in country view
+                      setCitySearchQuery('');
+                      setDetectedUserLocation(null);
                     }}
                     disabled={isLoadingProperties}
                     className={`text-sm transition-colors ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
@@ -2087,39 +2064,43 @@ export default function HomePage() {
                   </button>
                 </div>
 
-                {/* Top Cities Section */}
+                {/* Closer Cities - shown when user has detected their location */}
+                {detectedUserLocation && (
+                  <div className={`px-4 py-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Closer Cities</h3>
+                    <div className="grid grid-cols-3 gap-4">
+                      {sortCitiesByDistance(
+                        [...new Set(indianCities)],
+                        detectedUserLocation.lat,
+                        detectedUserLocation.lng,
+                        6
+                      ).map(city => (
+                        <button
+                          key={city}
+                          onClick={() => zoomToCity(city, { clearSearch: true })}
+                          className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-colors cursor-pointer ${isDark ? 'hover:bg-[#282c34]' : 'hover:bg-gray-50'}`}
+                        >
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                            <MapPin className="w-6 h-6 text-blue-500" />
+                          </div>
+                          <span className={`text-xs text-center font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{city}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Top Cities Section - always visible for quick selection */}
                 <div className={`px-4 py-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
                   <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Top Cities</h3>
                   <div className="grid grid-cols-3 gap-4">
                     {[
                       'Bangalore', 'Chennai', 'Delhi', 'Gurgaon', 'Hyderabad', 'Kolkata',
                       'Lucknow', 'Mumbai', 'Navi Mumbai', 'Noida', 'Pune', 'Thane'
-                    ].filter(city =>
-                      !citySearchQuery || city.toLowerCase().includes(citySearchQuery.toLowerCase())
-                    ).map(city => (
+                    ].map(city => (
                       <button
                         key={city}
-                        onClick={async () => {
-                          const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-                          const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(city + ', India')}&key=${apiKey}`;
-
-                          try {
-                            const res = await fetch(url);
-                            const data = await res.json();
-
-                            if (data.status === "OK" && data.results && data.results.length > 0) {
-                              const { lat, lng } = data.results[0].geometry.location;
-                              // Offset latitude to position city towards top of map (subtract to move center down)
-                              const offsetLat = lat - 0.15; // Moves center down more, making city appear higher on map
-                              setMapCenter({ lat: offsetLat, lng });
-                              setZoomLevel(10); // Less zoom so city name is visible
-                              // Don't close country view - stay in country view
-                              setCitySearchQuery('');
-                            }
-                          } catch (err) {
-                            console.error("Error geocoding city:", err);
-                          }
-                        }}
+                        onClick={() => zoomToCity(city, { clearSearch: true })}
                         className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-colors cursor-pointer ${isDark ? 'hover:bg-[#282c34]' : 'hover:bg-gray-50'}`}
                       >
                         <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
@@ -2135,37 +2116,23 @@ export default function HomePage() {
                 <div className="px-4 py-4">
                   <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Other Cities</h3>
                   <div className="space-y-0 max-h-[400px] overflow-y-auto">
-                    {[...new Set(indianCities)]
-                      .filter(city =>
+                    {(() => {
+                      const filtered = [...new Set(indianCities)].filter(city =>
                         !citySearchQuery || city.toLowerCase().includes(citySearchQuery.toLowerCase())
-                      )
-                      .filter(city =>
+                      ).filter(city =>
                         !['Bangalore', 'Chennai', 'Delhi', 'Gurgaon', 'Hyderabad', 'Kolkata',
                           'Lucknow', 'Mumbai', 'Navi Mumbai', 'Noida', 'Pune', 'Thane'].includes(city)
-                      )
-                      .sort((a, b) => a.localeCompare(b))
+                      );
+                      const list = filtered.length > 0 ? filtered : [...new Set(indianCities)].filter(city =>
+                        !['Bangalore', 'Chennai', 'Delhi', 'Gurgaon', 'Hyderabad', 'Kolkata',
+                          'Lucknow', 'Mumbai', 'Navi Mumbai', 'Noida', 'Pune', 'Thane'].includes(city)
+                      );
+                      return list.sort((a, b) => a.localeCompare(b));
+                    })()
                       .map(city => (
                         <button
                           key={city}
-                          onClick={async () => {
-                            const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-                            const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(city + ', India')}&key=${apiKey}`;
-
-                            try {
-                              const res = await fetch(url);
-                              const data = await res.json();
-
-                              if (data.status === "OK" && data.results && data.results.length > 0) {
-                                const { lat, lng } = data.results[0].geometry.location;
-                                setMapCenter({ lat, lng });
-                                setZoomLevel(12);
-                                setShowCitySelector(false);
-                                setCitySearchQuery('');
-                              }
-                            } catch (err) {
-                              console.error("Error geocoding city:", err);
-                            }
-                          }}
+                          onClick={() => zoomToCity(city, { offset: 0, zoomLevel: 12, clearSearch: true, closeSelector: false })}
                           className={`w-full px-0 py-3 text-left text-sm transition-colors cursor-pointer border-b last:border-b-0 ${isDark ? 'text-gray-300 hover:text-white hover:bg-[#282c34] border-gray-700' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50 border-gray-100'}`}
                         >
                           {city}
@@ -2175,7 +2142,7 @@ export default function HomePage() {
                 </div>
               </div>
             ) : showFiltersView ? (
-              <div className={`flex-1 min-h-0 overflow-y-auto drawer-scroll ${isDark ? 'bg-[#1f2229]' : 'bg-white'} ${isDrawerCollapsed ? 'hidden' : ''}`}>
+              <div className={`flex-1 min-h-0 overflow-y-auto drawer-scroll ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}>
                 {/* Filters Header */}
                 <div className={`flex items-center justify-between px-4 py-3 border-b sticky top-0 z-10 -mt-2 ${isDark ? 'border-gray-700 bg-[#1f2229]' : 'border-gray-200 bg-white'}`}>
                   <div className="flex items-center gap-3">
@@ -2265,55 +2232,63 @@ export default function HomePage() {
 
                 {/* Filters Content */}
                 <div className="p-4 space-y-6">
-                  {/* Search Type - at top, for both Commercial and Residential */}
+                  {/* Search Type - segmented control (single bar, selected segment highlighted) */}
                   <div>
-                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Search Type</h3>
-                    <div className="flex gap-2">
+                    <h3 className={`text-xs font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>Search Type</h3>
+                    <div className={`flex rounded-lg p-0.5 ${isDark ? 'bg-[#282c34]' : 'bg-gray-200'}`}>
                       <button
                         onClick={() => setSearchType('locality')}
-                        className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-[10px] font-medium transition-all ${searchType === 'locality'
-                          ? 'bg-blue-500 text-white'
-                          : isDark ? 'bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-medium transition-all ${searchType === 'locality'
+                          ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
+                          : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
                           }`}
                       >
-                        <MapPin className="w-3.5 h-3.5" />
+                        <MapPin className="w-3 h-3 flex-shrink-0" />
                         Locality
                       </button>
                       <button
                         onClick={() => setSearchType('metro')}
-                        className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-[10px] font-medium transition-all ${searchType === 'metro'
-                          ? 'bg-blue-500 text-white'
-                          : isDark ? 'bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-medium transition-all ${searchType === 'metro'
+                          ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
+                          : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
                           }`}
                       >
-                        <Building2 className="w-3.5 h-3.5" />
+                        <Building2 className="w-3 h-3 flex-shrink-0" />
                         Along Metro
                       </button>
                       <button
                         onClick={() => setSearchType('travel')}
-                        className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-[10px] font-medium transition-all ${searchType === 'travel'
-                          ? 'bg-blue-500 text-white'
-                          : isDark ? 'bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-medium transition-all ${searchType === 'travel'
+                          ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
+                          : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
                           }`}
                       >
-                        <Clock className="w-3.5 h-3.5" />
+                        <Clock className="w-3 h-3 flex-shrink-0" />
                         Travel time
                       </button>
                     </div>
                   </div>
 
-                  {/* Search Localities Input */}
-                  <div className={`flex items-center gap-2 px-3 py-2.5 border rounded-lg ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200'}`}>
-                    <MapPin className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-                    <input
-                      type="text"
-                      value={filterLocalitySearch}
-                      onChange={(e) => setFilterLocalitySearch(e.target.value)}
-                      placeholder="Search upto 3 localities or landmarks"
-                      className={`flex-1 text-sm outline-none bg-transparent min-w-0 ${isDark ? 'text-white placeholder-gray-500' : 'text-gray-600 placeholder-gray-400'}`}
-                    />
-                    <Target className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-                  </div>
+                  {/* Search Localities Input - Google Places Autocomplete */}
+                  <PlacesAutocompleteInput
+                    value={filterLocalitySearch}
+                    onChange={setFilterLocalitySearch}
+                    onSelect={({ lat, lng }) => {
+                      setMapCenter({ lat, lng });
+                      setZoomLevel(14);
+                      if (typeof window !== 'undefined' && window.innerWidth < 480) {
+                        setShowFiltersView(false);
+                        setShowCitySelector(false);
+                      }
+                    }}
+                    placeholder={searchType === 'locality' ? 'Search upto 3 localities or landmarks' : searchType === 'metro' ? 'Search metro stations' : 'Search office or destination'}
+                    mapCenter={mapCenter}
+                    type={searchType === 'locality' ? 'locality' : searchType === 'metro' ? 'metro' : 'travel'}
+                    isDark={isDark}
+                    iconLeft={MapPin}
+                    iconRight={Target}
+                    disabled={isLoadingProperties}
+                  />
 
                   {/* Building Type */}
                   <div>
@@ -2722,6 +2697,96 @@ export default function HomePage() {
                           ))}
                         </div>
                       </div>
+
+                      {/* Localities (Commercial) - Google Places Autocomplete */}
+                      <div>
+                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Localities</h3>
+                        <div className="mb-3">
+                          <PlacesAutocompleteInput
+                            value={commercialLocalitySearch}
+                            onChange={setCommercialLocalitySearch}
+                            onSelect={({ lat, lng }) => {
+                              setMapCenter({ lat, lng });
+                              setZoomLevel(14);
+                              if (typeof window !== 'undefined' && window.innerWidth < 480) {
+                                setShowFiltersView(false);
+                                setShowCitySelector(false);
+                              }
+                            }}
+                            placeholder="Search localities"
+                            mapCenter={mapCenter}
+                            type="locality"
+                            isDark={isDark}
+                            iconLeft={Search}
+                            disabled={isLoadingProperties}
+                          />
+                        </div>
+                        <div className={`rounded-lg border p-3 space-y-2 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
+                          {[
+                            { key: 'mysoreRoad', label: 'Mysore Road' },
+                            { key: 'sampangiRamaNagar', label: 'Sampangi Rama Nagar' },
+                            { key: 'hebbal', label: 'Hebbal' },
+                            { key: 'banashankari', label: 'Banashankari' },
+                          ].map(item => (
+                            <label key={item.key} className="flex items-center gap-2 cursor-pointer">
+                              <div
+                                onClick={() => setCommercialLocalities(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                                className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${commercialLocalities[item.key] ? 'bg-blue-500 border-blue-500' : 'border-blue-500'}`}
+                              >
+                                {commercialLocalities[item.key] && (
+                                  <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                                )}
+                              </div>
+                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Societies (Commercial) - Google Places Autocomplete */}
+                      <div>
+                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Societies</h3>
+                        <div className="mb-3">
+                          <PlacesAutocompleteInput
+                            value={commercialSocietySearch}
+                            onChange={setCommercialSocietySearch}
+                            onSelect={({ lat, lng }) => {
+                              setMapCenter({ lat, lng });
+                              setZoomLevel(14);
+                              if (typeof window !== 'undefined' && window.innerWidth < 480) {
+                                setShowFiltersView(false);
+                                setShowCitySelector(false);
+                              }
+                            }}
+                            placeholder="Search societies"
+                            mapCenter={mapCenter}
+                            type="society"
+                            isDark={isDark}
+                            iconLeft={Search}
+                            disabled={isLoadingProperties}
+                          />
+                        </div>
+                        <div className={`rounded-lg border p-3 space-y-2 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
+                          {[
+                            { key: 'godrejTiara', label: 'Godrej Tiara' },
+                            { key: 'sobhaInfinia', label: 'Sobha Infinia' },
+                            { key: 'snnClermont', label: 'SNN Clermont' },
+                            { key: 'lntRaintreeBoulevard', label: 'LnT Raintree Boulevard' },
+                          ].map(item => (
+                            <label key={item.key} className="flex items-center gap-2 cursor-pointer">
+                              <div
+                                onClick={() => setCommercialSocieties(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                                className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${commercialSocieties[item.key] ? 'bg-blue-500 border-blue-500' : 'border-blue-500'}`}
+                              >
+                                {commercialSocieties[item.key] && (
+                                  <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                                )}
+                              </div>
+                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
                     </>
                   )}
 
@@ -2761,14 +2826,24 @@ export default function HomePage() {
                       {/* Localities (Residential) - search + checkboxes */}
                       <div>
                         <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Localities</h3>
-                        <div className={`flex items-center gap-2 px-3 py-2.5 border rounded-2xl mb-3 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
-                          <Search className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-                          <input
-                            type="text"
+                        <div className="mb-3">
+                          <PlacesAutocompleteInput
                             value={residentialLocalitySearch}
-                            onChange={(e) => setResidentialLocalitySearch(e.target.value)}
-                            placeholder="Search"
-                            className={`flex-1 text-sm outline-none bg-transparent min-w-0 ${isDark ? 'text-white placeholder-gray-500' : 'text-gray-600 placeholder-gray-400'}`}
+                            onChange={setResidentialLocalitySearch}
+                            onSelect={({ lat, lng }) => {
+                              setMapCenter({ lat, lng });
+                              setZoomLevel(14);
+                              if (typeof window !== 'undefined' && window.innerWidth < 480) {
+                                setShowFiltersView(false);
+                                setShowCitySelector(false);
+                              }
+                            }}
+                            placeholder="Search localities"
+                            mapCenter={mapCenter}
+                            type="locality"
+                            isDark={isDark}
+                            iconLeft={Search}
+                            disabled={isLoadingProperties}
                           />
                         </div>
                         <div className={`rounded-lg border p-3 space-y-2 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
@@ -2797,14 +2872,24 @@ export default function HomePage() {
                       {/* Societies (Residential) - search + checkboxes (image-style) */}
                       <div>
                         <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Societies</h3>
-                        <div className={`flex items-center gap-2 px-3 py-2.5 border rounded-2xl mb-3 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
-                          <Search className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-                          <input
-                            type="text"
+                        <div className="mb-3">
+                          <PlacesAutocompleteInput
                             value={residentialSocietySearch}
-                            onChange={(e) => setResidentialSocietySearch(e.target.value)}
-                            placeholder="Search"
-                            className={`flex-1 text-sm outline-none bg-transparent min-w-0 ${isDark ? 'text-white placeholder-gray-500' : 'text-gray-600 placeholder-gray-400'}`}
+                            onChange={setResidentialSocietySearch}
+                            onSelect={({ lat, lng }) => {
+                              setMapCenter({ lat, lng });
+                              setZoomLevel(14);
+                              if (typeof window !== 'undefined' && window.innerWidth < 480) {
+                                setShowFiltersView(false);
+                                setShowCitySelector(false);
+                              }
+                            }}
+                            placeholder="Search societies"
+                            mapCenter={mapCenter}
+                            type="society"
+                            isDark={isDark}
+                            iconLeft={Search}
+                            disabled={isLoadingProperties}
                           />
                         </div>
                         <div className={`rounded-lg border p-3 space-y-2 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
@@ -3134,11 +3219,9 @@ export default function HomePage() {
                 {/* Apply Filters Button - only apply filter data when clicked, not on every checkbox/radio change */}
                 <div className={`sticky bottom-0 p-4 border-t ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-white border-gray-200'}`}>
                   <button
-                    onClick={() => {
-                      setAppliedFilters(getFilterSnapshot());
-                      setShowFiltersView(false);
-                    }}
-                    className="w-full py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
+                    onClick={handleApplyFilters}
+                    disabled={isApplyingFilters}
+                    className="w-full py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
                   >
                     Apply Filters
                   </button>
@@ -3146,18 +3229,28 @@ export default function HomePage() {
               </div>
             ) : !showCitySelector ? (
               /* Property List */
-              <div className={`flex-1 min-h-0 overflow-y-auto drawer-scroll p-2.5 space-y-2 ${isDark ? 'bg-[#1f2229]' : 'bg-gray-50'} ${isDrawerCollapsed ? 'hidden' : ''}`}>
-                {getFilteredMarkers().map(marker => (
+              <div className={`flex-1 min-h-0 overflow-y-auto drawer-scroll p-2.5 space-y-2 ${isDark ? 'bg-[#1f2229]' : 'bg-gray-50'}`}>
+                {getFilteredMarkers().length === 0 ? (
+                  <div className={`flex flex-col items-center justify-center py-12 px-4 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-3 ${isDark ? 'bg-[#282c34]' : 'bg-gray-200'}`}>
+                      <Search className={`w-7 h-7 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                    </div>
+                    <p className="font-medium text-sm mb-0.5">No property found</p>
+                    <p className="text-xs">Try changing your search or filters.</p>
+                  </div>
+                ) : getFilteredMarkers().map((marker, index) => {
+                  const isActive = selectedCity && (String(marker._id || marker.id) === String(selectedCity._id || selectedCity.id));
+                  return (
                   <div
-                    key={marker.id}
-                    className={`rounded-lg p-2 cursor-pointer transition-all shadow-sm ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-white hover:bg-[#fff3c5] hover:shadow-md'}`}
+                    key={`${marker.id}-${marker.propertyCategory || 'c'}-${index}`}
+                    className={`rounded-lg p-2 cursor-pointer transition-all shadow-sm ${isActive ? 'border-2 border-blue-500' : 'border border-transparent'} ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-white hover:bg-[#fff3c5] hover:shadow-md'}`}
                     onClick={() => handleMarkerClick(marker)}
                   >
                     <div className="flex gap-2">
                       <div className="relative flex-shrink-0">
                         <Image
                           src={marker.featuredImageUrl || marker.images?.[0] || '/placeholder.png'}
-                          alt={marker.name || "Property Image"}
+                          alt={marker.propertyName || "Property Image"}
                           width={56}
                           height={56}
                           className="rounded-md object-cover w-14 h-14"
@@ -3168,9 +3261,9 @@ export default function HomePage() {
                         <div className="flex items-start justify-between gap-1 mb-0.5">
                           <div className="flex items-center gap-1 min-w-0">
                             <h3 className={`font-semibold text-xs leading-tight truncate ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                              {marker.name || 'Property Name'}
+                              {marker.propertyName || 'Property Name'}
                             </h3>
-                            {marker.is_verified && (
+                            {marker.isVerified && (
                               <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none">
                                 <path d="M12 1L14.4 4.2L18.3 3.4L18.1 7.4L21.6 9.2L19.4 12.5L21.6 15.8L18.1 17.6L18.3 21.6L14.4 20.8L12 24L9.6 20.8L5.7 21.6L5.9 17.6L2.4 15.8L4.6 12.5L2.4 9.2L5.9 7.4L5.7 3.4L9.6 4.2L12 1Z" fill="#FBBF24" />
                                 <path d="M8.5 12.5L10.5 14.5L15.5 9.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -3195,7 +3288,7 @@ export default function HomePage() {
                               />
                             </button>
                             <a
-                              href={`https://wa.me/${marker.sellerPhoneNumber?.replace(/[^0-9]/g, '') || '918151915199'}?text=Hi,%20I%20am%20interested%20in%20${encodeURIComponent(marker.name || 'this property')}`}
+                              href={`https://wa.me/${(marker.agentDetails?.phone || marker.sellerPhoneNumber)?.replace(/[^0-9]/g, '') || '918151915199'}?text=Hi,%20I%20am%20interested%20in%20${encodeURIComponent(marker.propertyName || 'this property')}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
@@ -3206,29 +3299,29 @@ export default function HomePage() {
                           </div>
                         </div>
                         <p className={`text-[10px] mb-0.5 truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                          <span>in {marker.layer_location || marker.location_district || marker.state_name}</span>
-                          {marker.location_district && marker.layer_location && marker.location_district !== marker.layer_location && (
-                            <span>, {marker.location_district}</span>
+                          <span>in {marker.address?.locality || marker.address?.district || marker.address?.state}</span>
+                          {marker.address?.district && marker.address?.locality && marker.address.district !== marker.address.locality && (
+                            <span>, {marker.address.district}</span>
                           )}
-                          {marker.state_name && (
-                            <span>, {marker.state_name}</span>
+                          {marker.address?.state && (
+                            <span>, {marker.address.state}</span>
                           )}
                         </p>
                         {(() => {
-                          const prices = calculatePropertyPrices(marker);
-                          if (prices.discountedPrice) {
+                          const markerPrices = calculatePrices(marker);
+                          if (markerPrices.discountedPrice && markerPrices.discountedPrice !== '₹XX') {
                             return (
                               <p className="text-xs">
-                                <span className="font-bold text-blue-500">{prices.discountedPrice}</span>
-                                {prices.originalPrice && prices.originalPrice !== prices.discountedPrice && (
-                                  <span className={`line-through ml-1 text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{prices.originalPrice}</span>
+                                <span className="font-bold text-blue-500">{markerPrices.discountedPrice}</span>
+                                {markerPrices.originalPrice && markerPrices.originalPrice !== markerPrices.discountedPrice && (
+                                  <span className={`line-through ml-1 text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{markerPrices.originalPrice}</span>
                                 )}
                               </p>
                             );
-                          } else if (marker.price_per_acre && marker.price_per_acre !== 'N/A') {
+                          } else if (marker.pricePerAcre && marker.pricePerAcre !== 'N/A') {
                             return (
                               <p className="text-xs">
-                                <span className="font-bold text-orange-500">{marker.price_per_acre}</span>
+                                <span className="font-bold text-orange-500">{marker.pricePerAcre}</span>
                                 <span className={`text-[10px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>/sq.ft</span>
                               </p>
                             );
@@ -3238,25 +3331,74 @@ export default function HomePage() {
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             ) : null}
           </div>
 
-          {/* Toggle Button - positioned relative to drawer container */}
-          <button
-            onClick={() => setIsDrawerCollapsed(!isDrawerCollapsed)}
-            className={`absolute ${isDrawerCollapsed ? 'left-0' : 'right-0 translate-x-full'} top-1/2 -translate-y-1/2 z-30 bg-blue-600 hover:bg-blue-700 text-white px-2 py-4 rounded-r-lg shadow-lg transition-all duration-300 cursor-pointer`}
-            style={isDrawerCollapsed ? { borderRadius: '0 0.5rem 0.5rem 0' } : {}}
-            aria-label={isDrawerCollapsed ? "Expand drawer" : "Collapse drawer"}
-          >
-            {isDrawerCollapsed ? (
-              <ChevronRight className="w-4 h-4" />
-            ) : (
-              <ChevronLeft className="w-4 h-4" />
-            )}
-          </button>
+          {/* Compact search bar when collapsed - same position as drawer search (top left) */}
+          {isDrawerCollapsed && (
+            <div className="hidden md:block absolute top-0 left-0 z-20 pointer-events-auto">
+              <CollapsedDrawerSearch
+                searchQuery={searchQuery}
+                onSearchChange={handleSearchInputChange}
+                onSearch={handleSearch}
+                onSuggestionSelect={(suggestion) => {
+                  setSearchQuery(suggestion.text);
+                  setShowSuggestions(false);
+                  if (typeof window !== 'undefined' && window.innerWidth < 480) {
+                    setShowFiltersView(false);
+                    setShowCitySelector(false);
+                  }
+                  if (suggestion.marker?.position) {
+                    setMapCenter(suggestion.marker.position);
+                    setZoomLevel(10);
+                  }
+                }}
+                suggestions={suggestions}
+                showSuggestions={showSuggestions}
+                onFocus={() => {
+                  setIsSearchFocused(true);
+                  setShowSuggestions(true);
+                }}
+                onBlur={() => {
+                  setTimeout(() => {
+                    setIsSearchFocused(false);
+                    setShowSuggestions(false);
+                  }, 150);
+                }}
+                isSearchFocused={isSearchFocused}
+                onFilterClick={() => {
+                  setShowCitySelector(false);
+                  setShowFiltersView(true);
+                  setIsDrawerCollapsed(false);
+                }}
+                onGlobeClick={() => {
+                  setShowFiltersView(false);
+                  setShowCitySelector(true);
+                  setIsDrawerCollapsed(false);
+                }}
+                isDark={isDark}
+                isLoadingProperties={isLoadingProperties}
+              />
+            </div>
+          )}
         </div>
+
+        {/* Toggle Button - outside overflow-hidden so it stays visible when collapsed */}
+        <button
+          onClick={() => setIsDrawerCollapsed(!isDrawerCollapsed)}
+          className="hidden md:block absolute left-0 top-1/2 -translate-y-1/2 z-30 bg-blue-600 hover:bg-blue-700 text-white px-2 py-4 rounded-r-lg shadow-lg transition-all duration-300 ease-in-out cursor-pointer"
+          style={{ left: isDrawerCollapsed ? 0 : 328, transition: 'left 300ms ease-in-out' }}
+          aria-label={isDrawerCollapsed ? "Expand drawer" : "Collapse drawer"}
+        >
+          {isDrawerCollapsed ? (
+            <ChevronRight className="w-4 h-4" />
+          ) : (
+            <ChevronLeft className="w-4 h-4" />
+          )}
+        </button>
 
         <div className="flex-1 relative">
           <MapView
@@ -3271,6 +3413,46 @@ export default function HomePage() {
             isDark={isDark}
           />
 
+          {/* Locate Me loading overlay */}
+          {isLocating && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+              <div className={`flex flex-col items-center gap-3 px-4 py-3 rounded-xl ${isDark ? 'bg-[#1f2937]' : 'bg-white'} shadow-xl`}>
+                <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>Locating...</span>
+              </div>
+            </div>
+          )}
+
+          {/* Detect my location loading overlay (city section in drawer) */}
+          {isDetectingLocation && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+              <div className={`flex flex-col items-center gap-3 px-4 py-3 rounded-xl ${isDark ? 'bg-[#1f2937]' : 'bg-white'} shadow-xl`}>
+                <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>Detecting...</span>
+              </div>
+            </div>
+          )}
+
+          {/* Zooming to city overlay */}
+          {zoomingCityName && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+              <div className={`flex flex-col items-center gap-3 px-4 py-3 rounded-xl ${isDark ? 'bg-[#1f2937]' : 'bg-white'} shadow-xl`}>
+                <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>Zooming on {zoomingCityName}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Apply Filters loading overlay */}
+          {isApplyingFilters && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+              <div className={`flex flex-col items-center gap-3 px-4 py-3 rounded-xl ${isDark ? 'bg-[#1f2937]' : 'bg-white'} shadow-xl`}>
+                <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>Loading...</span>
+              </div>
+            </div>
+          )}
+
           {/* Mobile List View Button - Bottom Left above footer */}
           <button
             onClick={() => setShowMobileList(!showMobileList)}
@@ -3280,8 +3462,23 @@ export default function HomePage() {
             <span className="text-sm font-medium">List View</span>
           </button>
 
-          {/* Map Controls - Vertical Panel - Same as desktop */}
-          <div className="absolute bottom-20 md:bottom-12 right-3 md:right-4 z-10">
+          {/* Property Detail Modal - bottom-aligned, horizontally centered in map area */}
+          {selectedCity && (
+            <div className="absolute inset-0 flex items-end justify-center z-40 pointer-events-none">
+              <div className="pointer-events-auto">
+                <PropertyDetailModal
+                  property={selectedCity}
+                  onClose={closeCityModal}
+                  onViewDetailsClick={() => { if (typeof window !== 'undefined' && window.innerWidth < 480) closeCityModal(); }}
+                  isPropertyListVisible={isPropertyListVisible}
+                  centerInMapArea
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Map Controls - Vertical Panel - Same as desktop; move to top when property modal open */}
+          <div className={`absolute right-3 md:right-4 z-10 ${selectedCity ? 'top-3 md:top-4' : 'bottom-20 md:bottom-12'}`}>
             <div className={`rounded-xl overflow-hidden shadow-xl ${isDark ? 'bg-[#282c34]' : 'bg-gray-200'}`}>
               {/* Add Property Button */}
               <button
@@ -3294,21 +3491,45 @@ export default function HomePage() {
                 </div>
               </button>
 
-              {/* Locate Me Button */}
+              {/* Locate Me Button - zoom to user location */}
               <button
-                onClick={() => {
-                  setShowLocateModal(true);
-                  setLocateModalStep(1);
+                onClick={async () => {
+                  if (isLocating) return;
+                  if (typeof window !== 'undefined' && window.innerWidth < 480) {
+                    setSelectedMarker(null);
+                    setSelectedCity(null);
+                  }
+                  setIsLocating(true);
+                  try {
+                    const loc = await getUserLocation();
+                    setMapCenter({ lat: loc.lat, lng: loc.lng });
+                    setZoomLevel(loc.isFallback ? 5 : loc.isApproximate ? 10 : 13);
+                  } catch (e) {
+                    console.error('Locate failed:', e);
+                  } finally {
+                    setIsLocating(false);
+                  }
                 }}
-                className={`p-2.5 md:p-3 transition-colors flex items-center justify-center cursor-pointer border-b ${isDark ? 'bg-[#1f2229] hover:bg-[#282c34] border-gray-700' : 'bg-gray-100 hover:bg-gray-200 border-gray-300'}`}
+                disabled={isLocating}
+                className={`p-2.5 md:p-3 transition-colors flex items-center justify-center border-b ${isLocating ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'} ${isDark ? 'bg-[#1f2229] hover:bg-[#282c34] border-gray-700' : 'bg-gray-100 hover:bg-gray-200 border-gray-300'}`}
                 title="Locate Me"
               >
-                <LocateFixed className="w-3 h-3 text-red-500" />
+                {isLocating ? (
+                  <Loader2 className="w-3 h-3 text-red-500 animate-spin" />
+                ) : (
+                  <LocateFixed className="w-3 h-3 text-red-500" />
+                )}
               </button>
 
-              {/* Layers Button */}
+              {/* Layers Button - first declaration modal, then layer menu on Proceed; if menu open, close it */}
               <button
-                onClick={() => setShowLayerMenu(!showLayerMenu)}
+                onClick={() => {
+                  if (showLayerMenu) {
+                    setShowLayerMenu(false);
+                  } else {
+                    setShowLayersDeclarationModal(true);
+                  }
+                }}
                 className={`p-2.5 md:p-3 transition-colors flex items-center justify-center cursor-pointer ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-gray-200 hover:bg-gray-300'}`}
                 title="Map Layers"
               >
@@ -3385,7 +3606,7 @@ export default function HomePage() {
             }}></div>
 
             {/* Modal Content */}
-            <div className={`relative w-full rounded-t-3xl overflow-hidden flex flex-col ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`} style={{ maxHeight: '90vh' }}>
+            <div className={`relative w-full rounded-t-3xl overflow-hidden flex flex-col ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`} style={{ maxHeight: 'min(90vh, 90svh)' }}>
               {/* Drag Handle */}
               <div className="flex justify-center py-3 flex-shrink-0">
                 <div className={`w-12 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-300'}`}></div>
@@ -3393,7 +3614,7 @@ export default function HomePage() {
 
               {/* Scrollable Content */}
               <div
-                className="overflow-y-auto mobile-modal-scroll flex-1"
+                className="overflow-y-auto mobile-modal-scroll flex-1 min-h-0"
                 style={{
                   scrollbarWidth: 'thin',
                   scrollbarColor: isDark ? '#4b5563 #2d3139' : '#cbd5e1 #f1f5f9'
@@ -3487,55 +3708,63 @@ export default function HomePage() {
                 </div>
 
                 {/* Filters Content */}
-                <div className="p-4 space-y-6 pb-24">
-                  {/* Search Type - at top, for both Commercial and Residential (mobile) */}
+                <div className="p-4 space-y-6 pb-32 max-[525px]:pb-36">
+                  {/* Search Type - segmented control (single bar, selected segment highlighted) */}
                   <div>
-                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Search Type</h3>
-                    <div className="flex gap-2">
+                    <h3 className={`text-xs font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>Search Type</h3>
+                    <div className={`flex rounded-lg p-0.5 ${isDark ? 'bg-[#282c34]' : 'bg-gray-200'}`}>
                       <button
                         onClick={() => setSearchType('locality')}
-                        className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-[10px] font-medium transition-all ${searchType === 'locality'
-                          ? 'bg-blue-500 text-white'
-                          : isDark ? 'bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-medium transition-all ${searchType === 'locality'
+                          ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
+                          : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
                           }`}
                       >
-                        <MapPin className="w-3.5 h-3.5" />
+                        <MapPin className="w-3 h-3 flex-shrink-0" />
                         Locality
                       </button>
                       <button
                         onClick={() => setSearchType('metro')}
-                        className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-[10px] font-medium transition-all ${searchType === 'metro'
-                          ? 'bg-blue-500 text-white'
-                          : isDark ? 'bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-medium transition-all ${searchType === 'metro'
+                          ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
+                          : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
                           }`}
                       >
-                        <Building2 className="w-3.5 h-3.5" />
+                        <Building2 className="w-3 h-3 flex-shrink-0" />
                         Along Metro
                       </button>
                       <button
                         onClick={() => setSearchType('travel')}
-                        className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-[10px] font-medium transition-all ${searchType === 'travel'
-                          ? 'bg-blue-500 text-white'
-                          : isDark ? 'bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-medium transition-all ${searchType === 'travel'
+                          ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
+                          : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
                           }`}
                       >
-                        <Clock className="w-3.5 h-3.5" />
+                        <Clock className="w-3 h-3 flex-shrink-0" />
                         Travel time
                       </button>
                     </div>
                   </div>
 
-                  <div className={`flex items-center gap-2 px-3 py-2.5 border rounded-lg ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200'}`}>
-                    <MapPin className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-                    <input
-                      type="text"
-                      value={filterLocalitySearch}
-                      onChange={(e) => setFilterLocalitySearch(e.target.value)}
-                      placeholder="Search upto 3 localities or landmarks"
-                      className={`flex-1 text-sm outline-none bg-transparent min-w-0 ${isDark ? 'text-white placeholder-gray-500' : 'text-gray-600 placeholder-gray-400'}`}
-                    />
-                    <Target className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-                  </div>
+                  <PlacesAutocompleteInput
+                    value={filterLocalitySearch}
+                    onChange={setFilterLocalitySearch}
+                    onSelect={({ lat, lng }) => {
+                      setMapCenter({ lat, lng });
+                      setZoomLevel(14);
+                      if (typeof window !== 'undefined' && window.innerWidth < 480) {
+                        setShowFiltersView(false);
+                        setShowCitySelector(false);
+                      }
+                    }}
+                    placeholder={searchType === 'locality' ? 'Search upto 3 localities or landmarks' : searchType === 'metro' ? 'Search metro stations' : 'Search office or destination'}
+                    mapCenter={mapCenter}
+                    type={searchType === 'locality' ? 'locality' : searchType === 'metro' ? 'metro' : 'travel'}
+                    isDark={isDark}
+                    iconLeft={MapPin}
+                    iconRight={Target}
+                    disabled={isLoadingProperties}
+                  />
 
                   {/* Building Type */}
                   <div>
@@ -3942,6 +4171,92 @@ export default function HomePage() {
                           ))}
                         </div>
                       </div>
+
+                      {/* Localities (Commercial) - Google Places Autocomplete (mobile) */}
+                      <div>
+                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Localities</h3>
+                        <div className="mb-3">
+                          <PlacesAutocompleteInput
+                            value={commercialLocalitySearch}
+                            onChange={setCommercialLocalitySearch}
+                            onSelect={({ lat, lng }) => {
+                              setMapCenter({ lat, lng });
+                              setZoomLevel(14);
+                              if (typeof window !== 'undefined' && window.innerWidth < 480) {
+                                setShowFiltersView(false);
+                                setShowCitySelector(false);
+                              }
+                            }}
+                            placeholder="Search localities"
+                            mapCenter={mapCenter}
+                            type="locality"
+                            isDark={isDark}
+                            iconLeft={Search}
+                            disabled={isLoadingProperties}
+                          />
+                        </div>
+                        <div className={`rounded-lg border p-3 space-y-2 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
+                          {[
+                            { key: 'mysoreRoad', label: 'Mysore Road' },
+                            { key: 'sampangiRamaNagar', label: 'Sampangi Rama Nagar' },
+                            { key: 'hebbal', label: 'Hebbal' },
+                            { key: 'banashankari', label: 'Banashankari' },
+                          ].map(item => (
+                            <label key={item.key} className="flex items-center gap-2 cursor-pointer">
+                              <div
+                                onClick={() => setCommercialLocalities(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                                className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${commercialLocalities[item.key] ? 'bg-blue-500 border-blue-500' : 'border-blue-500'}`}
+                              >
+                                {commercialLocalities[item.key] && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                              </div>
+                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Societies (Commercial) - Google Places Autocomplete (mobile) */}
+                      <div>
+                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Societies</h3>
+                        <div className="mb-3">
+                          <PlacesAutocompleteInput
+                            value={commercialSocietySearch}
+                            onChange={setCommercialSocietySearch}
+                            onSelect={({ lat, lng }) => {
+                              setMapCenter({ lat, lng });
+                              setZoomLevel(14);
+                              if (typeof window !== 'undefined' && window.innerWidth < 480) {
+                                setShowFiltersView(false);
+                                setShowCitySelector(false);
+                              }
+                            }}
+                            placeholder="Search societies"
+                            mapCenter={mapCenter}
+                            type="society"
+                            isDark={isDark}
+                            iconLeft={Search}
+                            disabled={isLoadingProperties}
+                          />
+                        </div>
+                        <div className={`rounded-lg border p-3 space-y-2 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
+                          {[
+                            { key: 'godrejTiara', label: 'Godrej Tiara' },
+                            { key: 'sobhaInfinia', label: 'Sobha Infinia' },
+                            { key: 'snnClermont', label: 'SNN Clermont' },
+                            { key: 'lntRaintreeBoulevard', label: 'LnT Raintree Boulevard' },
+                          ].map(item => (
+                            <label key={item.key} className="flex items-center gap-2 cursor-pointer">
+                              <div
+                                onClick={() => setCommercialSocieties(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
+                                className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${commercialSocieties[item.key] ? 'bg-blue-500 border-blue-500' : 'border-blue-500'}`}
+                              >
+                                {commercialSocieties[item.key] && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                              </div>
+                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
                     </>
                   )}
 
@@ -3979,14 +4294,24 @@ export default function HomePage() {
 
                       <div>
                         <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Localities</h3>
-                        <div className={`flex items-center gap-2 px-3 py-2.5 border rounded-2xl mb-3 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
-                          <Search className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-                          <input
-                            type="text"
+                        <div className="mb-3">
+                          <PlacesAutocompleteInput
                             value={residentialLocalitySearch}
-                            onChange={(e) => setResidentialLocalitySearch(e.target.value)}
-                            placeholder="Search"
-                            className={`flex-1 text-sm outline-none bg-transparent min-w-0 ${isDark ? 'text-white placeholder-gray-500' : 'text-gray-600 placeholder-gray-400'}`}
+                            onChange={setResidentialLocalitySearch}
+                            onSelect={({ lat, lng }) => {
+                              setMapCenter({ lat, lng });
+                              setZoomLevel(14);
+                              if (typeof window !== 'undefined' && window.innerWidth < 480) {
+                                setShowFiltersView(false);
+                                setShowCitySelector(false);
+                              }
+                            }}
+                            placeholder="Search localities"
+                            mapCenter={mapCenter}
+                            type="locality"
+                            isDark={isDark}
+                            iconLeft={Search}
+                            disabled={isLoadingProperties}
                           />
                         </div>
                         <div className={`rounded-lg border p-3 space-y-2 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
@@ -4015,14 +4340,24 @@ export default function HomePage() {
                       {/* Societies (Residential) - search + checkboxes (mobile) */}
                       <div>
                         <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Societies</h3>
-                        <div className={`flex items-center gap-2 px-3 py-2.5 border rounded-2xl mb-3 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
-                          <Search className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-                          <input
-                            type="text"
+                        <div className="mb-3">
+                          <PlacesAutocompleteInput
                             value={residentialSocietySearch}
-                            onChange={(e) => setResidentialSocietySearch(e.target.value)}
-                            placeholder="Search"
-                            className={`flex-1 text-sm outline-none bg-transparent min-w-0 ${isDark ? 'text-white placeholder-gray-500' : 'text-gray-600 placeholder-gray-400'}`}
+                            onChange={setResidentialSocietySearch}
+                            onSelect={({ lat, lng }) => {
+                              setMapCenter({ lat, lng });
+                              setZoomLevel(14);
+                              if (typeof window !== 'undefined' && window.innerWidth < 480) {
+                                setShowFiltersView(false);
+                                setShowCitySelector(false);
+                              }
+                            }}
+                            placeholder="Search societies"
+                            mapCenter={mapCenter}
+                            type="society"
+                            isDark={isDark}
+                            iconLeft={Search}
+                            disabled={isLoadingProperties}
                           />
                         </div>
                         <div className={`rounded-lg border p-3 space-y-2 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
@@ -4349,13 +4684,11 @@ export default function HomePage() {
               </div>
 
               {/* Apply Filters Button - only apply filter data when clicked, not on every checkbox/radio change */}
-              <div className={`flex-shrink-0 p-4 pb-20 border-t ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-white border-gray-200'}`}>
+              <div className={`flex-shrink-0 p-4 pb-24 max-[525px]:pb-28 border-t ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-white border-gray-200'}`}>
                 <button
-                  onClick={() => {
-                    setAppliedFilters(getFilterSnapshot());
-                    setShowFiltersView(false);
-                  }}
-                  className="w-full py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
+                  onClick={handleApplyFilters}
+                  disabled={isApplyingFilters}
+                  className="w-full py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   Apply Filters
                 </button>
@@ -4371,7 +4704,7 @@ export default function HomePage() {
             <div className="absolute inset-0 bg-black/40" onClick={() => setShowCitySelector(false)}></div>
 
             {/* Modal Content */}
-            <div className={`relative w-full rounded-t-3xl overflow-hidden flex flex-col ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`} style={{ maxHeight: '90vh' }}>
+            <div className={`relative w-full rounded-t-3xl overflow-hidden flex flex-col ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`} style={{ maxHeight: 'min(90vh, 90svh)' }}>
               {/* Drag Handle */}
               <div className="flex justify-center py-3 flex-shrink-0">
                 <div className={`w-12 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-300'}`}></div>
@@ -4379,7 +4712,7 @@ export default function HomePage() {
 
               {/* Scrollable Content */}
               <div
-                className="overflow-y-auto mobile-modal-scroll flex-1"
+                className="overflow-y-auto mobile-modal-scroll flex-1 min-h-0"
                 style={{
                   scrollbarWidth: 'thin',
                   scrollbarColor: isDark ? '#4b5563 #2d3139' : '#cbd5e1 #f1f5f9'
@@ -4404,81 +4737,71 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {/* Search Input */}
+                {/* Search Input - Google Places Autocomplete for cities */}
                 <div className={`px-4 py-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-                  <div className={`flex items-center gap-2 px-3 py-2.5 border rounded-lg ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-300 bg-white'}`}>
-                    <Search className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-                    <input
-                      type="text"
-                      value={citySearchQuery}
-                      onChange={(e) => setCitySearchQuery(e.target.value)}
-                      placeholder="Select or type your city"
-                      className={`flex-1 text-sm outline-none bg-transparent ${isDark ? 'text-white placeholder-gray-500' : 'text-gray-700 placeholder-gray-400'}`}
-                    />
-                  </div>
+                  <PlacesAutocompleteInput
+                    value={citySearchQuery}
+                    onChange={setCitySearchQuery}
+                    onSelect={({ description, lat, lng }) => {
+                      setMapCenter({ lat, lng });
+                      setZoomLevel(10);
+                      setCitySearchQuery(description.split(',')[0].trim());
+                      if (typeof window !== 'undefined' && window.innerWidth < 480) {
+                        setShowFiltersView(false);
+                        setShowCitySelector(false);
+                      }
+                    }}
+                    placeholder="Select or type your city"
+                    mapCenter={mapCenter}
+                    type="city"
+                    isDark={isDark}
+                    iconLeft={Search}
+                  />
                 </div>
 
-                {/* Detect Location and Reset City */}
+                {/* Detect Location and Reset City - same logic as Locate Me (bottom right) */}
                 <div className={`px-4 py-3 flex items-center justify-between border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
                   <button
                     onClick={async () => {
                       if (isDetectingLocation || isLoadingProperties) return;
 
+                      setIsDetectingLocation(true);
                       try {
-                        setIsDetectingLocation(true);
-                        const locationData = await getUserLocation();
+                        const loc = await getUserLocation();
+                        // Core behavior: same as Locate Me - center map and zoom
+                        setMapCenter({ lat: loc.lat, lng: loc.lng });
+                        setZoomLevel(loc.isFallback ? 5 : loc.isApproximate ? 10 : 13);
+                        setDetectedUserLocation({ lat: loc.lat, lng: loc.lng });
+                        if (typeof window !== 'undefined' && window.innerWidth < 480) setShowCitySelector(false);
 
-                        // Reverse geocode to get city name
+                        // Optional: reverse geocode to show city name in search
                         const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-                        const reverseGeocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${locationData.lat},${locationData.lng}&key=${apiKey}`;
+                        if (apiKey) {
+                          try {
+                            const reverseGeocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${loc.lat},${loc.lng}&key=${apiKey}`;
+                            const geocodeRes = await fetch(reverseGeocodeUrl);
+                            const geocodeData = await geocodeRes.json();
 
-                        const geocodeRes = await fetch(reverseGeocodeUrl);
-                        const geocodeData = await geocodeRes.json();
-
-                        let cityName = null;
-                        if (geocodeData.status === "OK" && geocodeData.results && geocodeData.results.length > 0) {
-                          // Extract city name from address components
-                          const addressComponents = geocodeData.results[0].address_components;
-                          for (const component of addressComponents) {
-                            if (component.types.includes('locality')) {
-                              cityName = component.long_name;
-                              break;
-                            } else if (component.types.includes('administrative_area_level_2')) {
-                              cityName = component.long_name;
+                            let cityName = null;
+                            if (geocodeData.status === "OK" && geocodeData.results?.length > 0) {
+                              const addressComponents = geocodeData.results[0].address_components;
+                              for (const component of addressComponents) {
+                                if (component.types.includes('locality')) {
+                                  cityName = component.long_name;
+                                  break;
+                                } else if (component.types.includes('administrative_area_level_2')) {
+                                  cityName = component.long_name;
+                                }
+                              }
                             }
-                          }
-                        }
-
-                        // If we found a city, use it; otherwise use coordinates
-                        if (cityName) {
-                          // Geocode the city name to get its center
-                          const cityGeocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(cityName + ', India')}&key=${apiKey}`;
-                          const cityRes = await fetch(cityGeocodeUrl);
-                          const cityData = await cityRes.json();
-
-                          if (cityData.status === "OK" && cityData.results && cityData.results.length > 0) {
-                            const { lat, lng } = cityData.results[0].geometry.location;
-                            // Offset latitude to position city towards top of map
-                            const offsetLat = lat - 0.15;
-                            setMapCenter({ lat: offsetLat, lng });
-                            setZoomLevel(10);
-                            setCitySearchQuery(cityName); // Set city name in search
-                          } else {
-                            // Fallback to coordinates
-                            const offsetLat = locationData.lat - 0.15;
-                            setMapCenter({ lat: offsetLat, lng: locationData.lng });
-                            setZoomLevel(10);
+                            if (cityName) setCitySearchQuery(cityName);
+                            else setCitySearchQuery('');
+                          } catch {
                             setCitySearchQuery('');
                           }
                         } else {
-                          // No city found, use coordinates
-                          const offsetLat = locationData.lat - 0.15;
-                          setMapCenter({ lat: offsetLat, lng: locationData.lng });
-                          setZoomLevel(10);
                           setCitySearchQuery('');
                         }
-
-                        // Don't close country view - stay in country view
                       } catch (error) {
                         console.error('Error detecting location:', error);
                       } finally {
@@ -4488,7 +4811,7 @@ export default function HomePage() {
                     disabled={isLoadingProperties || isDetectingLocation}
                     className={`flex items-center gap-2 text-blue-500 hover:text-blue-600 transition-colors ${(isLoadingProperties || isDetectingLocation) ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                   >
-                    <LocateFixed className="w-4 h-4" />
+                    {isDetectingLocation ? <Loader2 className="w-4 h-4 animate-spin" /> : <LocateFixed className="w-4 h-4" />}
                     <span className="text-sm font-medium">{isDetectingLocation ? 'Detecting...' : 'Detect my location'}</span>
                   </button>
                   <button
@@ -4497,8 +4820,8 @@ export default function HomePage() {
                       setSelectedMarker(null);
                       setMapCenter({ lat: 20.5937, lng: 78.9629 });
                       setZoomLevel(5);
-                      setCitySearchQuery(''); // Clear city search
-                      // Don't close country view on reset - stay in country view
+                      setCitySearchQuery('');
+                      setDetectedUserLocation(null);
                     }}
                     disabled={isLoadingProperties}
                     className={`text-sm transition-colors ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
@@ -4507,39 +4830,43 @@ export default function HomePage() {
                   </button>
                 </div>
 
-                {/* Top Cities Section */}
+                {/* Closer Cities - shown when user has detected their location */}
+                {detectedUserLocation && (
+                  <div className={`px-4 py-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Closer Cities</h3>
+                    <div className="grid grid-cols-3 gap-4">
+                      {sortCitiesByDistance(
+                        [...new Set(indianCities)],
+                        detectedUserLocation.lat,
+                        detectedUserLocation.lng,
+                        6
+                      ).map(city => (
+                        <button
+                          key={city}
+                          onClick={() => zoomToCity(city, { offset: 0.08, clearSearch: true })}
+                          className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-colors cursor-pointer ${isDark ? 'hover:bg-[#282c34]' : 'hover:bg-gray-50'}`}
+                        >
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                            <MapPin className="w-6 h-6 text-blue-500" />
+                          </div>
+                          <span className={`text-xs text-center font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{city}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Top Cities Section - always visible for quick selection */}
                 <div className={`px-4 py-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
                   <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Top Cities</h3>
                   <div className="grid grid-cols-3 gap-4">
                     {[
                       'Bangalore', 'Chennai', 'Delhi', 'Gurgaon', 'Hyderabad', 'Kolkata',
                       'Lucknow', 'Mumbai', 'Navi Mumbai', 'Noida', 'Pune', 'Thane'
-                    ].filter(city =>
-                      !citySearchQuery || city.toLowerCase().includes(citySearchQuery.toLowerCase())
-                    ).map(city => (
+                    ].map(city => (
                       <button
                         key={city}
-                        onClick={async () => {
-                          const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-                          const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(city + ', India')}&key=${apiKey}`;
-
-                          try {
-                            const res = await fetch(url);
-                            const data = await res.json();
-
-                            if (data.status === "OK" && data.results && data.results.length > 0) {
-                              const { lat, lng } = data.results[0].geometry.location;
-                              // Offset latitude to position city towards top of map (subtract to move center down)
-                              const offsetLat = lat - 0.08; // Moves center down, making city appear higher
-                              setMapCenter({ lat: offsetLat, lng });
-                              setZoomLevel(10); // Less zoom so city name is visible
-                              // Don't close country view - stay in country view
-                              setCitySearchQuery('');
-                            }
-                          } catch (err) {
-                            console.error("Error geocoding city:", err);
-                          }
-                        }}
+                        onClick={() => zoomToCity(city, { offset: 0.08, clearSearch: true })}
                         className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-colors cursor-pointer ${isDark ? 'hover:bg-[#282c34]' : 'hover:bg-gray-50'}`}
                       >
                         <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
@@ -4552,40 +4879,26 @@ export default function HomePage() {
                 </div>
 
                 {/* Other Cities Section */}
-                <div className="px-4 py-4 pb-24">
+                <div className="px-4 py-4 pb-32 max-[525px]:pb-36">
                   <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Other Cities</h3>
                   <div className="space-y-0">
-                    {[...new Set(indianCities)]
-                      .filter(city =>
+                    {(() => {
+                      const filtered = [...new Set(indianCities)].filter(city =>
                         !citySearchQuery || city.toLowerCase().includes(citySearchQuery.toLowerCase())
-                      )
-                      .filter(city =>
+                      ).filter(city =>
                         !['Bangalore', 'Chennai', 'Delhi', 'Gurgaon', 'Hyderabad', 'Kolkata',
                           'Lucknow', 'Mumbai', 'Navi Mumbai', 'Noida', 'Pune', 'Thane'].includes(city)
-                      )
-                      .sort((a, b) => a.localeCompare(b))
+                      );
+                      const list = filtered.length > 0 ? filtered : [...new Set(indianCities)].filter(city =>
+                        !['Bangalore', 'Chennai', 'Delhi', 'Gurgaon', 'Hyderabad', 'Kolkata',
+                          'Lucknow', 'Mumbai', 'Navi Mumbai', 'Noida', 'Pune', 'Thane'].includes(city)
+                      );
+                      return list.sort((a, b) => a.localeCompare(b));
+                    })()
                       .map(city => (
                         <button
                           key={city}
-                          onClick={async () => {
-                            const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-                            const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(city + ', India')}&key=${apiKey}`;
-
-                            try {
-                              const res = await fetch(url);
-                              const data = await res.json();
-
-                              if (data.status === "OK" && data.results && data.results.length > 0) {
-                                const { lat, lng } = data.results[0].geometry.location;
-                                setMapCenter({ lat, lng });
-                                setZoomLevel(12);
-                                setShowCitySelector(false);
-                                setCitySearchQuery('');
-                              }
-                            } catch (err) {
-                              console.error("Error geocoding city:", err);
-                            }
-                          }}
+                          onClick={() => zoomToCity(city, { offset: 0, zoomLevel: 12, clearSearch: true, closeSelector: false })}
                           className={`w-full px-0 py-3 text-left text-sm transition-colors cursor-pointer border-b last:border-b-0 ${isDark ? 'text-gray-300 hover:text-white hover:bg-[#282c34] border-gray-700' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50 border-gray-100'}`}
                         >
                           {city}
@@ -4605,14 +4918,14 @@ export default function HomePage() {
             <div className="absolute inset-0 bg-black/40" onClick={() => setShowMobileList(false)}></div>
 
             {/* Modal Content */}
-            <div className={`relative w-full rounded-t-3xl overflow-hidden flex flex-col ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`} style={{ maxHeight: '90vh' }}>
+            <div className={`relative w-full rounded-t-3xl overflow-hidden flex flex-col ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`} style={{ maxHeight: 'min(90vh, 90svh)' }}>
               {/* Drag Handle */}
               <div className="flex justify-center py-3 flex-shrink-0">
                 <div className={`w-12 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-300'}`}></div>
               </div>
 
               {/* Scrollable Content */}
-              <div className="overflow-y-auto mobile-modal-scroll flex-1" style={{ scrollbarWidth: 'thin', scrollbarColor: isDark ? '#4b5563 #2d3139' : '#cbd5e1 #f1f5f9' }}>
+              <div className="overflow-y-auto mobile-modal-scroll flex-1 min-h-0" style={{ scrollbarWidth: 'thin', scrollbarColor: isDark ? '#4b5563 #2d3139' : '#cbd5e1 #f1f5f9' }}>
                 <div className={`sticky top-0 border-b z-10 ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-white border-gray-200'}`}>
                   {/* Header */}
                   <div className="px-3 py-2.5 flex items-center justify-between">
@@ -4683,7 +4996,7 @@ export default function HomePage() {
                         onClick={() => setListingTypeFilter(listingTypeFilter === 'forSale' ? 'all' : 'forSale')}
                         className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'forSale'
                           ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
-                          : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                          : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
                           }`}
                       >
                         For Sale
@@ -4692,7 +5005,7 @@ export default function HomePage() {
                         onClick={() => setListingTypeFilter(listingTypeFilter === 'forRent' ? 'all' : 'forRent')}
                         className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'forRent'
                           ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
-                          : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                          : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
                           }`}
                       >
                         For Rent
@@ -4701,7 +5014,7 @@ export default function HomePage() {
                         onClick={() => setListingTypeFilter(listingTypeFilter === 'readyToMove' ? 'all' : 'readyToMove')}
                         className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'readyToMove'
                           ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
-                          : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                          : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
                           }`}
                       >
                         Ready to Move
@@ -4710,7 +5023,7 @@ export default function HomePage() {
                         onClick={() => setListingTypeFilter(listingTypeFilter === 'newProjects' ? 'all' : 'newProjects')}
                         className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'newProjects'
                           ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
-                          : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                          : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
                           }`}
                       >
                         New Projects
@@ -4719,7 +5032,7 @@ export default function HomePage() {
                         onClick={() => setListingTypeFilter(listingTypeFilter === 'verified' ? 'all' : 'verified')}
                         className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'verified'
                           ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
-                          : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                          : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
                           }`}
                       >
                         Verified
@@ -4728,7 +5041,7 @@ export default function HomePage() {
                         onClick={() => setListingTypeFilter(listingTypeFilter === 'video' ? 'all' : 'video')}
                         className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'video'
                           ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
-                          : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
+                          : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
                           }`}
                       >
                         Video
@@ -4745,7 +5058,7 @@ export default function HomePage() {
                         <div className="relative sort-dropdown-container">
                           <button
                             onClick={() => setShowSortDropdown(!showSortDropdown)}
-                            className={`flex items-center gap-1 text-sm transition-colors ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
+                            className={`flex items-center gap-1 text-sm transition-colors px-2 py-1 rounded ${isDark ? 'text-gray-400 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-600 hover:bg-yellow-100 hover:text-yellow-900'}`}
                           >
                             <span>Sort by</span>
                             <ChevronDown className={`w-4 h-4 transition-transform ${showSortDropdown ? 'rotate-180' : ''}`} />
@@ -4825,11 +5138,21 @@ export default function HomePage() {
                     )}
                   </div>
                 </div>
-                <div className={`p-3 space-y-3 pb-24 ${isDark ? 'bg-[#1f2229]' : ''}`}>
-                  {getFilteredMarkers().map(marker => (
+                <div className={`p-3 space-y-3 pb-32 max-[525px]:pb-36 ${isDark ? 'bg-[#1f2229]' : ''}`}>
+                  {getFilteredMarkers().length === 0 ? (
+                    <div className={`flex flex-col items-center justify-center py-16 px-4 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                      <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${isDark ? 'bg-[#282c34]' : 'bg-gray-200'}`}>
+                        <Search className={`w-8 h-8 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                      </div>
+                      <p className="font-medium text-base mb-1">No property found</p>
+                      <p className="text-sm">Try changing your search or filters.</p>
+                    </div>
+                  ) : getFilteredMarkers().map((marker, index) => {
+                    const isActiveMobile = selectedCity && (String(marker._id || marker.id) === String(selectedCity._id || selectedCity.id));
+                    return (
                     <div
-                      key={marker.id}
-                      className={`rounded-xl p-3 cursor-pointer transition-all shadow-sm ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-white border border-gray-100 hover:bg-[#fff3c5] hover:shadow-md'}`}
+                      key={`${marker.id}-${marker.propertyCategory || 'c'}-${index}`}
+                      className={`rounded-xl p-3 cursor-pointer transition-all shadow-sm ${isActiveMobile ? 'border-2 border-blue-500' : isDark ? '' : 'border border-gray-100'} ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-white hover:bg-[#fff3c5] hover:shadow-md'}`}
                       onClick={() => {
                         handleMarkerClick(marker);
                         setShowMobileList(false);
@@ -4839,7 +5162,7 @@ export default function HomePage() {
                         <div className="relative flex-shrink-0">
                           <Image
                             src={marker.featuredImageUrl || marker.images?.[0] || '/placeholder.png'}
-                            alt={marker.name || "Property Image"}
+                            alt={marker.propertyName || "Property Image"}
                             width={90}
                             height={90}
                             className="rounded-lg object-cover w-20 h-20"
@@ -4850,9 +5173,9 @@ export default function HomePage() {
                           <div className="flex items-start justify-between gap-2 mb-0.5">
                             <div className="flex items-center gap-1.5 min-w-0">
                               <h3 className={`font-semibold text-sm leading-tight truncate ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                                {marker.name || 'Property Name'}
+                                {marker.propertyName || 'Property Name'}
                               </h3>
-                              {marker.is_verified && (
+                              {marker.isVerified && (
                                 <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none">
                                   <path d="M12 1L14.4 4.2L18.3 3.4L18.1 7.4L21.6 9.2L19.4 12.5L21.6 15.8L18.1 17.6L18.3 21.6L14.4 20.8L12 24L9.6 20.8L5.7 21.6L5.9 17.6L2.4 15.8L4.6 12.5L2.4 9.2L5.9 7.4L5.7 3.4L9.6 4.2L12 1Z" fill="#FBBF24" />
                                   <path d="M8.5 12.5L10.5 14.5L15.5 9.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -4877,7 +5200,7 @@ export default function HomePage() {
                                 />
                               </button>
                               <a
-                                href={`https://wa.me/${marker.sellerPhoneNumber?.replace(/[^0-9]/g, '') || '918151915199'}?text=Hi,%20I%20am%20interested%20in%20${encodeURIComponent(marker.name || 'this property')}`}
+                                href={`https://wa.me/${(marker.agentDetails?.phone || marker.sellerPhoneNumber)?.replace(/[^0-9]/g, '') || '918151915199'}?text=Hi,%20I%20am%20interested%20in%20${encodeURIComponent(marker.propertyName || 'this property')}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={(e) => e.stopPropagation()}
@@ -4888,29 +5211,29 @@ export default function HomePage() {
                             </div>
                           </div>
                           <p className={`text-xs mb-1.5 truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                            <span>in {marker.layer_location || marker.location_district || marker.state_name}</span>
-                            {marker.location_district && marker.layer_location && marker.location_district !== marker.layer_location && (
-                              <span>, {marker.location_district}</span>
+                            <span>in {marker.address?.locality || marker.address?.district || marker.address?.state}</span>
+                            {marker.address?.district && marker.address?.locality && marker.address.district !== marker.address.locality && (
+                              <span>, {marker.address.district}</span>
                             )}
-                            {marker.state_name && (
-                              <span>, {marker.state_name}</span>
+                            {marker.address?.state && (
+                              <span>, {marker.address.state}</span>
                             )}
                           </p>
                           {(() => {
-                            const prices = calculatePropertyPrices(marker);
-                            if (prices.discountedPrice) {
+                            const markerPrices = calculatePrices(marker);
+                            if (markerPrices.discountedPrice && markerPrices.discountedPrice !== '₹XX') {
                               return (
                                 <p className="text-sm">
-                                  <span className="font-bold text-blue-500">{prices.discountedPrice}</span>
-                                  {prices.originalPrice && prices.originalPrice !== prices.discountedPrice && (
-                                    <span className={`line-through ml-2 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{prices.originalPrice}</span>
+                                  <span className="font-bold text-blue-500">{markerPrices.discountedPrice}</span>
+                                  {markerPrices.originalPrice && markerPrices.originalPrice !== markerPrices.discountedPrice && (
+                                    <span className={`line-through ml-2 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{markerPrices.originalPrice}</span>
                                   )}
                                 </p>
                               );
-                            } else if (marker.price_per_acre && marker.price_per_acre !== 'N/A') {
+                            } else if (marker.pricePerAcre && marker.pricePerAcre !== 'N/A') {
                               return (
                                 <p className="text-sm">
-                                  <span className="font-bold text-orange-500">{marker.price_per_acre}</span>
+                                  <span className="font-bold text-orange-500">{marker.pricePerAcre}</span>
                                   <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>/sq.ft</span>
                                 </p>
                               );
@@ -4920,7 +5243,8 @@ export default function HomePage() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
               </div>
             </div>
@@ -4937,13 +5261,6 @@ export default function HomePage() {
         />
       )}
 
-      {selectedCity && (
-        <PropertyDetailModal
-          property={selectedCity}
-          onClose={closeCityModal}
-          isPropertyListVisible={isPropertyListVisible}
-        />
-      )}
 
       {/* Mobile Bottom Navigation Bar - Only visible on screens < 480px */}
       <div className={`md:hidden fixed bottom-0 left-0 right-0 border-t z-50 transition-colors ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-white border-gray-200'}`}>
@@ -4961,33 +5278,37 @@ export default function HomePage() {
             </svg>
             <span className={`text-[10px] font-medium ${pathname === '/' ? 'text-blue-600' : isDark ? 'text-gray-500' : 'text-gray-500'}`}>Map-View</span>
           </Link>
-          <Link
-            href="/commercial"
-            className="flex flex-col items-center justify-center gap-0.5 flex-1 py-2"
-          >
-            <Building2 className={`w-5 h-5 ${pathname === '/commercial' ? 'text-blue-600' : isDark ? 'text-gray-500' : 'text-gray-500'}`} strokeWidth={1.5} />
-            <span className={`text-[10px] font-medium ${pathname === '/commercial' ? 'text-blue-600' : isDark ? 'text-gray-500' : 'text-gray-500'}`}>Commercial</span>
-          </Link>
-          <Link
-            href="/residential"
-            className="flex flex-col items-center justify-center gap-0.5 flex-1 py-2"
-          >
-            <Home className={`w-5 h-5 ${pathname === '/residential' ? 'text-blue-600' : isDark ? 'text-gray-500' : 'text-gray-500'}`} strokeWidth={1.5} />
-            <span className={`text-[10px] font-medium ${pathname === '/residential' ? 'text-blue-600' : isDark ? 'text-gray-500' : 'text-gray-500'}`}>Residential</span>
-          </Link>
-          <Link
-            href="/builders"
-            className="flex flex-col items-center justify-center gap-0.5 flex-1 py-2"
-          >
-            <Image
-              src="/crown.svg"
-              width={20}
-              height={20}
-              alt="Builders"
-              className={pathname === '/builders' ? 'opacity-100' : 'opacity-50'}
-            />
-            <span className={`text-[10px] font-medium ${pathname === '/builders' ? 'text-blue-600' : isDark ? 'text-gray-500' : 'text-gray-500'}`}>Builders</span>
-          </Link>
+          {globalConfig.isFullNavVisible && (
+            <>
+              <Link
+                href="/commercial"
+                className="flex flex-col items-center justify-center gap-0.5 flex-1 py-2"
+              >
+                <Building2 className={`w-5 h-5 ${pathname === '/commercial' ? 'text-blue-600' : isDark ? 'text-gray-500' : 'text-gray-500'}`} strokeWidth={1.5} />
+                <span className={`text-[10px] font-medium ${pathname === '/commercial' ? 'text-blue-600' : isDark ? 'text-gray-500' : 'text-gray-500'}`}>Commercial</span>
+              </Link>
+              <Link
+                href="/residential"
+                className="flex flex-col items-center justify-center gap-0.5 flex-1 py-2"
+              >
+                <Home className={`w-5 h-5 ${pathname === '/residential' ? 'text-blue-600' : isDark ? 'text-gray-500' : 'text-gray-500'}`} strokeWidth={1.5} />
+                <span className={`text-[10px] font-medium ${pathname === '/residential' ? 'text-blue-600' : isDark ? 'text-gray-500' : 'text-gray-500'}`}>Residential</span>
+              </Link>
+              <Link
+                href="/builders"
+                className="flex flex-col items-center justify-center gap-0.5 flex-1 py-2"
+              >
+                <Image
+                  src="/crown.svg"
+                  width={20}
+                  height={20}
+                  alt="Builders"
+                  className={pathname === '/builders' ? 'opacity-100' : 'opacity-50'}
+                />
+                <span className={`text-[10px] font-medium ${pathname === '/builders' ? 'text-blue-600' : isDark ? 'text-gray-500' : 'text-gray-500'}`}>Builders</span>
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
@@ -5021,161 +5342,76 @@ export default function HomePage() {
               Reach thousands of potential buyers by listing your property on BuildersInfo. Our team will help you get started.
             </p>
 
-            {/* WhatsApp Button - Reduced Width, Centered */}
-            <div className="flex justify-center">
-              <Link
-                href="https://wa.me/+918151915199/?text=Hi,%20I%20want%20to%20list%20my%20land%20on%20buildersinfo."
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setShowAddPropertyModal(false)}
-                className="flex items-center gap-3 text-white font-medium px-6 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20BA5A] transition-colors justify-center min-w-[300px]"
-              >
-                <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center flex-shrink-0">
-                  <Image src='/whatsapp.svg' alt='whatsapp' width={20} height={20} />
+            {/* WhatsApp Button - Number from globalConfig only (dummy/JSON now, DB later) */}
+            {(() => {
+              const raw = globalConfig?.whatsappNo != null ? String(globalConfig.whatsappNo).replace(/\D/g, '') : '';
+              const num = raw.length === 10 ? '91' + raw : raw.startsWith('91') ? raw : raw;
+              const waUrl = num ? `https://wa.me/${num}?text=Hi,%20I%20want%20to%20list%20my%20land%20on%20buildersinfo.` : null;
+              return waUrl ? (
+                <div className="flex justify-center">
+                  <Link
+                    href={waUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setShowAddPropertyModal(false)}
+                    className="flex items-center gap-3 text-white font-medium px-6 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20BA5A] transition-colors justify-center min-w-[300px]"
+                  >
+                    <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center flex-shrink-0">
+                      <Image src='/whatsapp.svg' alt='whatsapp' width={20} height={20} />
+                    </div>
+                    <span className="text-sm">Contact on WhatsApp</span>
+                  </Link>
                 </div>
-                <span className="text-sm">Contact on WhatsApp</span>
-              </Link>
-            </div>
+              ) : null;
+            })()}
           </div>
         </Modal>
       )}
 
-      {/* Locate Me Modal - Two Step Design */}
-      {showLocateModal && (
+      {/* Layers Declaration Modal - shown before opening layer menu */}
+      {showLayersDeclarationModal && (
         <Modal
           style={{
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            width: locateModalStep === 1 ? '280px' : '300px',
-            maxWidth: locateModalStep === 1 ? '280px' : '300px'
+            width: '280px',
+            maxWidth: '280px'
           }}
-          onClose={() => {
-            setShowLocateModal(false);
-            setLocateModalStep(1);
-          }}
+          onClose={() => setShowLayersDeclarationModal(false)}
           className={`rounded-lg shadow-2xl ${isDark ? 'bg-[#1f2937]' : 'bg-white'}`}
           isDark={isDark}
         >
-          {locateModalStep === 1 ? (
-            // Step 1: Layers Declaration
-            <div className="p-3">
-              <h2 className={`text-xs font-bold mb-2 text-center ${isDark ? 'text-white' : 'text-black'}`}>
-                Layers Declaration
-              </h2>
+          <div className="p-3">
+            <h2 className={`text-xs font-bold mb-2 text-center ${isDark ? 'text-white' : 'text-black'}`}>
+              Layers Declaration
+            </h2>
 
-              <div className={`mb-3 text-[10px] leading-tight space-y-1.5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                <p>
-                  Map layers on buildersinfo.in are created from publicly available data for general informational purposes only.
-                </p>
-                <p>
-                  While we strive to ensure accuracy by referencing sources like HMDA.gov.in and Bhuvan-ISRO, these layers may contain outdated records, digitisation errors, satellite distortions, and missing cadastral data that can affect accuracy.
-                </p>
-                <p>
-                  These maps are not substitutes for official government surveys or legal verification. Please independently verify all details before making land or investment decisions.
-                </p>
-                <p>
-                  By using these layers, you acknowledge and accept these limitations. Click the info icon (in layers section) for more details on individual layers.
-                </p>
-              </div>
-
-              <button
-                onClick={() => setLocateModalStep(2)}
-                className="w-full bg-[#FFA500] hover:bg-[#FF8C00] text-black font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center justify-center gap-1 text-[10px]"
-              >
-                <span>Proceed</span>
-                <ChevronRight className="w-3 h-3" />
-              </button>
+            <div className={`mb-3 text-[10px] leading-tight space-y-1.5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              <p>
+                Disclaimer: The map layers on buildersinfo.in are created using publicly available data and are intended for general informational purposes only.
+              </p>
+              <p>
+                While we&apos;ve made best efforts to ensure accuracy by referencing sources like HMDA.gov.in, Bhuvan-ISRO, and others, limitations such as outdated records, digitisation errors, satellite distortions, and missing cadastral data may affect the accuracy of the visual overlays.
+              </p>
+              <p>
+                These maps are not substitutes for official government surveys or legal verification. Users are advised to independently verify all details with the appropriate authorities before making any land or investment decisions.
+              </p>
+              <p>
+                By using these layers, you acknowledge and accept these limitations. Click on info icon (in layers section) to know more about individual layers.
+              </p>
             </div>
-          ) : (
-            // Step 2: Layers Panel
-            <div className="p-3 max-h-[60vh] overflow-y-auto">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <h2 className={`text-xs font-bold ${isDark ? 'text-white' : 'text-black'}`}>Layers</h2>
-                  <select className={`px-1.5 py-0.5 border rounded text-[10px] font-medium ${isDark ? 'border-gray-600 text-white bg-[#374151]' : 'border-gray-300 text-black bg-white'}`}>
-                    <option>Karnataka</option>
-                  </select>
-                </div>
-              </div>
 
-              {/* Top Row Buttons */}
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                <button className={`p-2 rounded-lg border flex flex-col items-center gap-1 ${isDark ? 'bg-[#374151] border-gray-600' : 'bg-white border-gray-200'}`}>
-                  <div className="relative">
-                    <FileText className={`w-4 h-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`} />
-                    <span className="absolute -top-0.5 -right-0.5 bg-blue-500 text-white text-[8px] font-bold rounded-full w-3 h-3 flex items-center justify-center">24</span>
-                  </div>
-                  <span className={`text-[9px] font-medium ${isDark ? 'text-gray-200' : 'text-black'}`}>Survey No.S</span>
-                </button>
-
-                <button className={`p-2 rounded-lg border flex flex-col items-center gap-1 ${isDark ? 'bg-blue-900 border-blue-700' : 'bg-blue-50 border-blue-300'}`}>
-                  <div className="relative">
-                    <LayoutGrid className={`w-4 h-4 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
-                    <Check className="absolute -top-0.5 -right-0.5 bg-green-500 text-white rounded-full w-3 h-3 p-0.5" />
-                  </div>
-                  <span className={`text-[9px] font-medium ${isDark ? 'text-blue-300' : 'text-blue-900'}`}>Listings</span>
-                </button>
-              </div>
-
-              {/* Bengaluru Section */}
-              <div className="mb-3">
-                <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-2 rounded-full flex items-center justify-between transition-colors text-[10px]">
-                  <span>Bengaluru</span>
-                  <ChevronUp className="w-3 h-3" />
-                </button>
-
-                {/* Masterplan Grid */}
-                <div className="grid grid-cols-2 gap-1.5 mt-2">
-                  {[
-                    { name: 'Bengaluru Masterplan', icon: '🗺️', hasCrown: true },
-                    { name: 'Anekal Masterplan', icon: '🗺️', hasCrown: true },
-                    { name: 'Nelamangala Masterplan', icon: '🗺️', hasCrown: true },
-                    { name: 'Hoskote Masterplan', icon: '🗺️', hasCrown: true },
-                    { name: 'Masterplan', icon: '🗺️', hasCrown: true },
-                    { name: 'Masterplan', icon: <Target className="w-3 h-3" />, hasCrown: true },
-                    { name: 'Masterplan', icon: <Bus className="w-3 h-3" />, hasCrown: false },
-                    { name: 'Masterplan', icon: <span className={`font-bold text-xs ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>G</span>, hasCrown: false },
-                  ].map((item, index) => (
-                    <button
-                      key={index}
-                      className={`p-1.5 rounded-lg border flex flex-col items-center gap-1 transition-colors ${isDark ? 'bg-[#374151] border-gray-600 hover:border-blue-500' : 'bg-white border-gray-200 hover:border-blue-400'}`}
-                    >
-                      <div className="relative">
-                        {typeof item.icon === 'string' ? (
-                          <span className="text-sm">{item.icon}</span>
-                        ) : (
-                          <div className={`flex items-center justify-center ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{item.icon}</div>
-                        )}
-                        {item.hasCrown && (
-                          <span className="absolute -top-0.5 -right-0.5 text-yellow-500 text-[8px]">👑</span>
-                        )}
-                      </div>
-                      <span className={`text-[8px] text-center ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Bottom Action Buttons */}
-              <div className="flex gap-2 mt-3">
-                <button
-                  onClick={() => setShowLocateModal(false)}
-                  className={`flex-1 py-1.5 px-2 rounded-lg border border-blue-500 font-medium transition-colors text-[10px] ${isDark ? 'text-blue-400 hover:bg-blue-900/30' : 'text-blue-600 hover:bg-blue-50'}`}
-                >
-                  Clear all
-                </button>
-                <button
-                  onClick={() => setShowLocateModal(false)}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-2 rounded-lg transition-colors flex items-center justify-center gap-1 text-[10px]"
-                >
-                  <span>Apply</span>
-                  <ChevronRight className="w-3 h-3" />
-                </button>
-              </div>
-            </div>
-          )}
+            <button
+              onClick={() => {
+                setShowLayersDeclarationModal(false);
+                setShowLayerMenu(true);
+              }}
+              className="w-full bg-[#FFA500] hover:bg-[#FF8C00] text-black font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center justify-center gap-1 text-[10px]"
+            >
+              Proceed
+            </button>
+          </div>
         </Modal>
       )}
     </div>

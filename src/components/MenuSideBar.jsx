@@ -194,7 +194,7 @@ export default function MenuSideBar({ onClose }) {
                         </div>
 
                         {/* Download Builderinfo App - inside scrollable */}
-                        <div className="px-3 pb-3 max-[435px]:hidden">
+                        <div className="px-3 pb-8 max-[525px]:pb-10 max-[435px]:hidden">
                             <div className={`rounded-lg overflow-hidden w-full shadow-[0_1px_2px_rgba(0,0,0,0.06)] ${isDark ? "bg-[#282c34]" : "bg-white"}`}>
                                 <Image
                                     src="/drawer-banner.png"

@@ -2,72 +2,21 @@
 
 import { useEffect, useRef } from 'react';
 
-// Global variable to track if Google Maps API is loaded or loading
-let isGoogleMapsLoaded = false;
-let isGoogleMapsLoading = false;
-let googleMapsCallbacks = [];
-
-// Function to load Google Maps API only once
-const loadGoogleMapsAPI = () => {
-    return new Promise((resolve, reject) => {
-        // If already loaded, resolve immediately
-        if (isGoogleMapsLoaded && window.google && window.google.maps) {
+// Wait for existing Google Maps script (loaded by PlacesAutocompleteInput/useJsApiLoader) - never add our own
+const waitForGoogleMaps = () => {
+    return new Promise((resolve) => {
+        if (typeof window !== 'undefined' && window.google?.maps?.Map) {
             resolve(window.google);
             return;
         }
-
-        // Add callback to queue
-        googleMapsCallbacks.push(resolve);
-
-        // If already loading, don't load again
-        if (isGoogleMapsLoading) {
-            return;
-        }
-
-        isGoogleMapsLoading = true;
-
-        // Check if script already exists
-        const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
-        if (existingScript) {
-            // Script exists, wait for it to load
-            if (window.google && window.google.maps) {
-                isGoogleMapsLoaded = true;
-                isGoogleMapsLoading = false;
-                googleMapsCallbacks.forEach(callback => callback(window.google));
-                googleMapsCallbacks = [];
-                return;
+        const check = () => {
+            if (window.google?.maps?.Map) {
+                resolve(window.google);
+            } else {
+                setTimeout(check, 50);
             }
-            // Wait for existing script to load
-            existingScript.addEventListener('load', () => {
-                isGoogleMapsLoaded = true;
-                isGoogleMapsLoading = false;
-                googleMapsCallbacks.forEach(callback => callback(window.google));
-                googleMapsCallbacks = [];
-            });
-            return;
-        }
-
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`;
-        script.async = true;
-        script.defer = true;
-        
-        script.onload = () => {
-            isGoogleMapsLoaded = true;
-            isGoogleMapsLoading = false;
-            // Resolve all pending callbacks
-            googleMapsCallbacks.forEach(callback => callback(window.google));
-            googleMapsCallbacks = [];
         };
-
-        script.onerror = () => {
-            isGoogleMapsLoading = false;
-            googleMapsCallbacks.forEach(callback => callback(null));
-            googleMapsCallbacks = [];
-            reject(new Error('Failed to load Google Maps API'));
-        };
-
-        document.head.appendChild(script);
+        check();
     });
 };
 
@@ -84,7 +33,7 @@ const GoogleMap = ({
         const initMap = async () => {
             try {
                 // Wait for Google Maps API to load
-                const google = await loadGoogleMapsAPI();
+                const google = await waitForGoogleMaps();
                 
                 if (!google || !mapRef.current) return;
 

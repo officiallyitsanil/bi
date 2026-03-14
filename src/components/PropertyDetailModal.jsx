@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { loginUser } from "@/utils/auth";
 import { mapAmenitiesToObjects } from "@/utils/amenityMapping";
+import { calculatePrices } from "@/utils/priceUtils";
 import { useTheme } from "@/context/ThemeContext";
 
 // Helper function to safely display database values
@@ -20,7 +21,6 @@ const safeDisplay = (value, fallback = "-") => {
     return value;
 };
 import {
-    BadgeCheck,
     MapPin,
     X,
     Heart,
@@ -37,7 +37,11 @@ import {
     Edit,
     Trash2,
     Building2,
-    Users
+    Users,
+    User,
+    Bell,
+    Package,
+    Flame
 } from "lucide-react";
 import Image from "next/image";
 
@@ -49,7 +53,7 @@ import LoginModal from "./LoginModal";
 
 
 
-export default function PropertyDetailModal({ property, onClose, isPropertyListVisible = false }) {
+export default function PropertyDetailModal({ property, onClose, onViewDetailsClick, isPropertyListVisible = false, centerInMapArea = false }) {
     const { isDark } = useTheme();
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
@@ -74,6 +78,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
     const [hasUserSubmittedReview, setHasUserSubmittedReview] = useState(false);
     const [userReview, setUserReview] = useState(null);
     const [isEditingReview, setIsEditingReview] = useState(false);
+    const [mobileSwiperIndex, setMobileSwiperIndex] = useState(0);
 
     // Initialize current user from localStorage
     useEffect(() => {
@@ -301,7 +306,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
 
         try {
             const propertyId = property._id || property.id;
-            const propertyType = property.propertyType || 'commercial';
+            const propertyType = property.propertyCategory || (property.propertyType === 'residential' ? 'residential' : 'commercial');
             const reviewId = review._id || review.id;
 
             // Always get the latest user data from localStorage to ensure we have the phone number
@@ -377,7 +382,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
         }
 
         const propertyId = property._id || property.id;
-        const propertyType = property.propertyType || 'commercial';
+        const propertyType = property.propertyCategory || (property.propertyType === 'residential' ? 'residential' : 'commercial');
         const newFavoriteState = !isFavourite;
 
         // Optimistically update UI
@@ -435,35 +440,26 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
     };
 
     const handleShare = async () => {
-        // Check if user is logged in
-        if (!currentUser) {
-            setIsLoginModalOpen(true);
-            return;
-        }
-
-        const shareData = {
-            title: `${safeDisplay(name)} in ${safeDisplay(location_district)}`,
-            text: `Check out this property: ${safeDisplay(name)} at ${safeDisplay(discountedPrice)} in ${safeDisplay(layer_location)}, ${safeDisplay(location_district)}`,
-            url: `${window.location.origin}/property-details?id=${property.id}`
-        };
+        const lat = property.coordinates?.latitude ?? property.coordinates?.lat ?? property.position?.lat;
+        const lng = property.coordinates?.longitude ?? property.coordinates?.lng ?? property.position?.lng;
+        const mapUrl = (lat != null && lng != null)
+            ? `https://maps.google.com/maps?q=${lat},${lng}&z=16&t=h`
+            : `${window.location.origin}/property-details?id=${property._id || property.id}`;
 
         try {
-            if (navigator.share) {
-                await navigator.share(shareData);
-            } else {
-                // Fallback: Copy to clipboard
-                await navigator.clipboard.writeText(shareData.url);
-                alert('Property link copied to clipboard!');
-            }
-        } catch (error) {
-            console.error('Error sharing:', error);
+            await navigator.clipboard.writeText(mapUrl);
+            alert('URL copied to clipboard!');
+        } catch (err) {
+            console.error('Share copy failed:', err);
+            alert('Could not copy. Please copy the link manually.');
         }
     };
 
     const handleViewDetailsClick = async () => {
+        onViewDetailsClick?.();
         try {
             const propertyId = property._id || property.id;
-            const propertyType = property.propertyType || 'commercial';
+            const propertyType = property.propertyCategory || (property.propertyType === 'residential' ? 'residential' : 'commercial');
 
             await fetch('/api/properties/visitor-count', {
                 method: 'POST',
@@ -480,61 +476,35 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
         }
     };
 
-    // Calculate prices based on property type
-    const calculatePrices = (property) => {
-        let originalPriceValue = 0;
-
-        if (property.propertyType === 'residential') {
-            // For residential: use expectedRent
-            const expectedRent = property.expectedRent || '0';
-            originalPriceValue = parseFloat(expectedRent.toString().replace(/[₹,]/g, '')) || 0;
-        } else if (property.propertyType === 'commercial') {
-            // For commercial: calculate from floorConfigurations
-            if (property.floorConfigurations && property.floorConfigurations.length > 0) {
-                const firstFloor = property.floorConfigurations[0];
-                if (firstFloor.dedicatedCabin && firstFloor.dedicatedCabin.seats && firstFloor.dedicatedCabin.pricePerSeat) {
-                    // Extract lower values from ranges like "70 - 90" and "6000-8000"
-                    const seatsStr = firstFloor.dedicatedCabin.seats.toString();
-                    const pricePerSeatStr = firstFloor.dedicatedCabin.pricePerSeat.toString();
-
-                    const seatsMatch = seatsStr.match(/(\d+)/);
-                    const pricePerSeatMatch = pricePerSeatStr.match(/(\d+)/);
-
-                    if (seatsMatch && pricePerSeatMatch) {
-                        const seatsLower = parseFloat(seatsMatch[1]);
-                        const pricePerSeatLower = parseFloat(pricePerSeatMatch[1]);
-                        originalPriceValue = seatsLower * pricePerSeatLower;
-                    }
-                }
-            }
-        }
-
-        // Calculate discounted price (5% off = 95% of original)
-        const discountedPriceValue = originalPriceValue * 0.95;
-
-        // Format prices
-        const formatPrice = (price) => {
-            if (price === 0) return '₹XX';
-            return `₹${Math.round(price).toLocaleString('en-IN')}`;
-        };
-
-        return {
-            originalPrice: formatPrice(originalPriceValue),
-            discountedPrice: formatPrice(discountedPriceValue)
-        };
-    };
-
+    // Schema: totalPrice, discountPercent, pricePerSeat, pricePerSqft
     const prices = calculatePrices(property);
 
+    // Schema field names: propertyName, address.locality, address.district, agentDetails, brandDetails
+    const name = property.propertyName || property.name;
+    const is_verified = property.verificationStatus === 'verified' || property.verificationStatus === 'confirmed' || property.is_verified;
+    const location_district = property.address?.district || property.location_district;
+    const layer_location = property.address?.locality || property.layer_location;
+    const sellerPhoneNumber = property.agentDetails?.phone || property.sellerPhoneNumber;
+    const handlePhoneClick = (e, phone) => {
+        if (e) e.preventDefault();
+        if (!phone) return;
+        const num = String(phone).replace(/[^0-9+]/g, '');
+        const fullNum = num.startsWith('91') ? num : (num.length === 10 ? '91' + num : num);
+        const telUrl = `tel:+${fullNum}`;
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+            window.location.href = telUrl;
+        } else {
+            navigator.clipboard.writeText('+' + fullNum).then(() => {
+                alert('Phone number copied to clipboard! Paste in your phone or a calling app (Skype, Teams, etc.) to call.');
+            }).catch(() => {
+                window.location.href = telUrl;
+            });
+        }
+    };
+    const createdBy = property.agentDetails ? { name: property.agentDetails.name } : property.createdBy;
     const {
-        name,
-        location_district,
         images = [],
-        date_added,
-        is_verified = false,
-        sellerPhoneNumber,
-        layer_location,
-        createdBy,
         amenities = [],
         ratings = {},
         reviews = [],
@@ -545,6 +515,8 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
 
     const originalPrice = prices.originalPrice;
     const discountedPrice = prices.discountedPrice;
+    // Schema: propertyCategory is commercial/residential; propertyType is subtype (Office Space, Plot)
+    const propertyCategory = property.propertyCategory || (propertyType === 'residential' ? 'residential' : 'commercial');
 
     // Map amenities (handles both string arrays and object arrays)
     const mappedAmenities = mapAmenitiesToObjects(amenities);
@@ -554,19 +526,26 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
     const whatsBad = ratings?.whatsBad || [];
     const floorPlanCategories = Object.keys(floorPlans);
 
-    // Dummy data for missing fields
-    const brandName = property.brandName || "BHIVE Workspace";
-    const brandStats = property.brandStats || {
+    // Schema: brandDetails
+    const brandName = property.brandDetails?.name || property.brandName || "BHIVE Workspace";
+    const brandStats = property.brandDetails ? {
+        cities: property.brandDetails.cities ?? property.brandStats?.cities,
+        clients: property.brandDetails.clients ?? property.brandStats?.clients,
+        spaces: property.brandDetails.spaces ?? property.brandStats?.spaces,
+        seats: property.brandDetails.seats ?? property.brandStats?.seats
+    } : (property.brandStats || {
         cities: "2+ Cities",
         clients: "1000+ Clients",
-        spaces: "27+ Coworking Spaces",
+        spaces: "27+ Spaces",
         seats: "8000+ Seats"
-    };
-    const brandDescription = property.brandDescription || "BHIVE Workspace, established in 2014, specializes in providing Zero CapEx, Enterprise Grade, Customized...";
+    });
+    const brandDescription = property.brandDetails?.description || property.brandDescription || "BHIVE Workspace, established in 2014, specializes in providing Zero CapEx, Enterprise Grade, Customized...";
     const rating = property.ratings?.overall || 4.8;
     const isTopRated = property.isTopRated !== undefined ? property.isTopRated : true;
 
-    // Mobile view (< md breakpoint)
+    // Mobile view (< md breakpoint) - Exact design for screens < 480px
+    const availabilityStatus = property.availability || 'Available';
+
     const mobileModal = (
         <div
             role="dialog"
@@ -576,30 +555,41 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
             {/* Backdrop */}
             <div className="absolute inset-0 bg-black/40" onClick={onClose}></div>
 
-            {/* Modal Content */}
-            <div className={`relative pb-32 w-full rounded-t-3xl overflow-hidden transition-colors ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`} style={{ maxHeight: '90vh' }}>
+            {/* Modal Content - max 85vh on mobile so top is never cut off */}
+            <div className={`relative pb-20 max-[480px]:pb-28 w-full max-h-[min(92vh,92svh)] max-[480px]:max-h-[85vh] rounded-t-3xl overflow-hidden transition-colors ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}>
                 {/* Drag Handle */}
-                <div className="flex justify-center py-3">
+                <div className="flex justify-center py-2">
                     <div className={`w-12 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-300'}`}></div>
                 </div>
 
-                {/* Scrollable Content */}
-                <div className="overflow-y-auto" style={{ maxHeight: 'calc(90vh - 80px)' }}>
-                    {/* Image Carousel */}
-                    <div className={`relative mx-4 rounded-2xl overflow-hidden h-48 ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
-                        {/* Action Icons - Top Left */}
-                        <div className="absolute top-3 left-3 z-20 flex gap-2">
-                            <button
-                                onClick={handleFavouriteToggle}
-                                className={`w-9 h-9 rounded-full flex items-center justify-center shadow-md ${isDark ? 'bg-[#282c34]/95' : 'bg-white/95'}`}
-                            >
-                                <Heart className={`w-5 h-5 ${isFavourite ? 'fill-red-500 text-red-500' : isDark ? 'text-gray-300' : 'text-gray-600'}`} />
-                            </button>
+                {/* Scrollable Content - smaller max on mobile so modal top stays visible */}
+                <div className="overflow-y-auto max-h-[calc(92vh-120px)] max-[480px]:max-h-[calc(85vh-140px)]">
+                    {/* Image Carousel - with padding around for max-[480px] */}
+                    <div className={`relative mx-3 rounded-2xl overflow-hidden h-52 max-[480px]:h-48 max-[480px]:mx-3 max-[480px]:mt-2 max-[480px]:rounded-2xl ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                        {/* Close - Top Left (mobile < 480px) */}
+                        <button
+                            onClick={onClose}
+                            className={`absolute top-3 left-3 z-20 w-9 h-9 rounded-full flex items-center justify-center ${isDark ? 'bg-black/40' : 'bg-white/90'}`}
+                            aria-label="Close"
+                        >
+                            <X className={`w-5 h-5 ${isDark ? 'text-gray-200' : 'text-gray-700'}`} />
+                        </button>
+
+                        {/* Share & Heart - Top Right (matching design) */}
+                        <div className="absolute top-3 right-3 z-20 flex gap-2">
                             <button
                                 onClick={handleShare}
-                                className={`w-9 h-9 rounded-full flex items-center justify-center shadow-md ${isDark ? 'bg-[#282c34]/95' : 'bg-white/95'}`}
+                                className={`w-9 h-9 rounded-full flex items-center justify-center ${isDark ? 'bg-black/40' : 'bg-white/90'}`}
+                                aria-label="Share"
                             >
-                                <Share2 className={`w-5 h-5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`} />
+                                <Share2 className={`w-5 h-5 ${isDark ? 'text-gray-200' : 'text-gray-700'}`} />
+                            </button>
+                            <button
+                                onClick={handleFavouriteToggle}
+                                className={`w-9 h-9 rounded-full flex items-center justify-center ${isDark ? 'bg-black/40' : 'bg-white/90'}`}
+                                aria-label="Favorite"
+                            >
+                                <Heart className={`w-5 h-5 ${isFavourite ? 'fill-red-500 text-red-500' : isDark ? 'text-gray-200' : 'text-gray-700'}`} />
                             </button>
                         </div>
 
@@ -612,6 +602,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                             spaceBetween={0}
                             slidesPerView={1}
                             loop={true}
+                            onSlideChange={(sw) => setMobileSwiperIndex(sw.realIndex)}
                             className="h-full"
                         >
                             {images.length > 0 ? images.map((img, i) => (
@@ -627,119 +618,139 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                 </SwiperSlide>
                             )) : (
                                 <SwiperSlide>
-                                    <div className="h-full w-full bg-gray-200 flex items-center justify-center">
-                                        <span className="text-gray-400">No Image</span>
+                                    <div className={`h-full w-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-200'}`}>
+                                        <span className={isDark ? 'text-gray-500' : 'text-gray-400'}>No Image</span>
                                     </div>
                                 </SwiperSlide>
                             )}
                         </Swiper>
 
-                        {/* Navigation Arrows */}
-                        <button className={`mobile-prop-prev absolute top-1/2 -translate-y-1/2 left-2 h-8 w-8 rounded-full flex items-center justify-center z-10 shadow ${isDark ? 'bg-[#282c34]/90' : 'bg-white/90'}`}>
+                        {/* Navigation Arrows - circular semi-transparent */}
+                        <button className={`mobile-prop-prev absolute top-1/2 -translate-y-1/2 left-2 h-9 w-9 rounded-full flex items-center justify-center z-10 ${isDark ? 'bg-black/40' : 'bg-white/90'}`}>
                             <ChevronLeft className={`h-5 w-5 ${isDark ? 'text-gray-200' : 'text-gray-700'}`} />
                         </button>
-                        <button className={`mobile-prop-next absolute top-1/2 -translate-y-1/2 right-2 h-8 w-8 rounded-full flex items-center justify-center z-10 shadow ${isDark ? 'bg-[#282c34]/90' : 'bg-white/90'}`}>
+                        <button className={`mobile-prop-next absolute top-1/2 -translate-y-1/2 right-2 h-9 w-9 rounded-full flex items-center justify-center z-10 ${isDark ? 'bg-black/40' : 'bg-white/90'}`}>
                             <ChevronRight className={`h-5 w-5 ${isDark ? 'text-gray-200' : 'text-gray-700'}`} />
                         </button>
 
-                        {/* Dots */}
+                        {/* Pagination dots */}
                         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex gap-1.5">
-                            {images.slice(0, 5).map((_, i) => (
-                                <div key={i} className="w-2 h-2 rounded-full bg-white/80"></div>
-                            ))}
+                            {(images.length > 0 ? images : [null]).slice(0, 5).map((_, i) => {
+                                const count = images.length || 1;
+                                const isActive = i === (mobileSwiperIndex % count);
+                                return (
+                                    <div key={i} className={`w-2 h-2 rounded-full ${isActive ? (isDark ? 'bg-white' : 'bg-gray-800/80') : isDark ? 'bg-white/50' : 'bg-gray-500/50'}`} />
+                                );
+                            })}
                         </div>
                     </div>
 
-                    {/* Content */}
-                    <div className="px-4 pt-4 pb-6">
-                        {/* Title & Rating */}
-                        <div className="flex items-start justify-between mb-2">
-                            <div className="flex-1 pr-3">
-                                <div className="flex items-center gap-1.5 mb-1">
-                                    <h1 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(name)}</h1>
+                    {/* Content - design matching image, extra bottom padding for scroll on max-[480px] */}
+                    <div className="px-4 pt-4 pb-24 max-[480px]:px-4 max-[480px]:pt-4 max-[480px]:pb-40">
+                        {/* Property Header - Name | Badge | Rating, Location below */}
+                        <div className="flex items-start justify-between gap-2 mb-3 max-[480px]:mb-3">
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <h1 className={`text-lg max-[480px]:text-base font-bold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(name)}</h1>
                                     {is_verified && (
-                                        <BadgeCheck className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                                        <span className="flex-shrink-0 w-5 h-5 max-[480px]:w-4 max-[480px]:h-4 rounded-full bg-amber-400 flex items-center justify-center">
+                                            <Check className="w-3 h-3 max-[480px]:w-2.5 max-[480px]:h-2.5 text-white stroke-[3]" />
+                                        </span>
                                     )}
+                                    <div className="flex-shrink-0 flex items-center gap-0.5 px-2 py-0.5 max-[480px]:px-1.5 max-[480px]:py-0.5 rounded-md bg-amber-400">
+                                        <Star className="w-3.5 h-3.5 max-[480px]:w-3 max-[480px]:h-3 fill-amber-700 text-amber-700" />
+                                        <span className="text-xs max-[480px]:text-[10px] font-bold text-gray-900">{rating.toFixed(1)}</span>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                    <MapPin className="w-4 h-4 text-blue-500" />
-                                    <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                                        in{safeDisplay(layer_location)}{location_district ? `, ${safeDisplay(location_district)}` : ''}
+                                <div className="flex items-center gap-1 mt-1">
+                                    <MapPin className={`w-4 h-4 max-[480px]:w-3.5 max-[480px]:h-3.5 flex-shrink-0 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                                    <span className={`text-sm max-[480px]:text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                        in {safeDisplay(layer_location)}{location_district ? `, ${safeDisplay(location_district)}` : ''}{property.state_name ? `, ${safeDisplay(property.state_name)}` : ''}
                                     </span>
                                 </div>
                             </div>
-                            <div className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg ${isDark ? 'bg-green-900/30' : 'bg-green-50'}`}>
-                                <Star className="w-4 h-4 fill-green-500 text-green-500" />
-                                <span className={`text-sm font-bold ${isDark ? 'text-green-400' : 'text-green-600'}`}>{rating.toFixed(1)}</span>
-                            </div>
                         </div>
 
-                        {/* Tags */}
-                        <div className="flex flex-wrap gap-2 mb-5">
-                            <span className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 ${isDark ? 'bg-[#282c34] text-gray-300' : 'bg-gray-100 text-gray-600'}`}>
-                                <Building2 className="w-3.5 h-3.5" />
-                                {propertyType === 'commercial' ? 'Commercial' : 'Residential'}
+                        {/* Property Features - 3 horizontal boxes */}
+                        <div className="flex flex-wrap gap-2 mb-4">
+                            <span className={`px-3 py-2 max-[480px]:px-2.5 max-[480px]:py-1.5 rounded-xl max-[480px]:rounded-lg text-xs max-[480px]:text-[10px] font-medium flex items-center gap-2 max-[480px]:gap-1.5 ${isDark ? 'bg-[#282c34] text-blue-400' : 'bg-gray-100 text-gray-600'}`}>
+                                <Building2 className="w-4 h-4 max-[480px]:w-3.5 max-[480px]:h-3.5 flex-shrink-0" />
+                                {(property.propertyCategory || propertyType) === 'commercial' ? 'Commercial' : 'Residential'}
                             </span>
-                            <span className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 ${isDark ? 'bg-[#282c34] text-gray-300' : 'bg-gray-100 text-gray-600'}`}>
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <span className={`px-3 py-2 max-[480px]:px-2.5 max-[480px]:py-1.5 rounded-xl max-[480px]:rounded-lg text-xs max-[480px]:text-[10px] font-medium flex items-center gap-2 max-[480px]:gap-1.5 ${isDark ? 'bg-[#282c34] text-blue-400' : 'bg-gray-100 text-gray-600'}`}>
+                                <svg className="w-4 h-4 max-[480px]:w-3.5 max-[480px]:h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                                 </svg>
-                                {safeDisplay(property.carpetArea, '5000')} sq.ft
+                                {safeDisplay(property.propertySize || property.carpetArea, '5000')} sq.ft
                             </span>
-                            <span className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 ${isDark ? 'bg-[#282c34] text-gray-300' : 'bg-gray-100 text-gray-600'}`}>
-                                <Check className="w-3.5 h-3.5" />
-                                {safeDisplay(property.furnishing, 'Furnished')}
+                            <span className={`px-3 py-2 max-[480px]:px-2.5 max-[480px]:py-1.5 rounded-xl max-[480px]:rounded-lg text-xs max-[480px]:text-[10px] font-medium flex items-center gap-2 max-[480px]:gap-1.5 ${isDark ? 'bg-[#282c34] text-blue-400' : 'bg-gray-100 text-gray-600'}`}>
+                                <svg className="w-4 h-4 max-[480px]:w-3.5 max-[480px]:h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                </svg>
+                                {safeDisplay(property.furnishingLevel || property.furnishingStatus || property.furnishing, 'Furnished')}
                             </span>
                         </div>
 
-                        {/* Amenities */}
-                        <div className="grid grid-cols-4 gap-4 mb-5">
-                            {(displayedAmenities.length > 0 ? displayedAmenities.slice(0, 4) : [
-                                { name: "Guest Check-in", image: null },
-                                { name: "Delivery Acceptance", image: null },
-                                { name: "Package Notification", image: null },
-                                { name: "Fire Safety", image: null }
-                            ]).map((amenity, index) => (
-                                <div key={index} className="flex flex-col items-center gap-2">
-                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${isDark ? 'bg-blue-900/30' : 'bg-blue-50'}`}>
-                                        {amenity.image ? (
-                                            <Image src={amenity.image} alt={amenity.name} width={28} height={28} className="object-contain" unoptimized />
-                                        ) : (
-                                            <span className="text-2xl">
-                                                {index === 0 ? '👤' : index === 1 ? '📦' : index === 2 ? '🔔' : '🔥'}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <span className={`text-[10px] text-center leading-tight ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{amenity.name}</span>
+                        {/* Amenities - 4 items with icons (Guest Check-in, Delivery Acceptance, Package Notification, Fire Safety) */}
+                        {(() => {
+                            const defaultAmenities = [
+                                { name: "Guest Check-in", Icon: User },
+                                { name: "Delivery Acceptance", Icon: Bell },
+                                { name: "Package Notification", Icon: Package },
+                                { name: "Fire Safety", Icon: Flame }
+                            ];
+                            const amenitiesToShow = displayedAmenities.length > 0
+                                ? displayedAmenities.slice(0, 4).map((a, i) => ({ ...a, Icon: defaultAmenities[i]?.Icon || User }))
+                                : defaultAmenities;
+                            return (
+                                <div className="grid grid-cols-4 gap-3 mb-4">
+                                    {amenitiesToShow.map((amenity, index) => {
+                                        const IconComp = amenity.Icon || User;
+                                        return (
+                                            <div key={index} className="flex flex-col items-center gap-2">
+                                                <div className={`w-14 h-14 max-[480px]:w-12 max-[480px]:h-12 rounded-2xl flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                                                    {amenity.image ? (
+                                                        <Image src={amenity.image} alt={amenity.name} width={28} height={28} className="object-contain" unoptimized />
+                                                    ) : (
+                                                        <IconComp className={`w-6 h-6 max-[480px]:w-5 max-[480px]:h-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} strokeWidth={2} />
+                                                    )}
+                                                </div>
+                                                <span className={`text-[10px] max-[480px]:text-[9px] text-center leading-tight ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{amenity.name}</span>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
-                            ))}
+                            );
+                        })()}
+
+                        {/* Key Info - Price | Status | Reviews - 3 boxes */}
+                        <div className="grid grid-cols-3 gap-2 mb-4">
+                            <div className={`rounded-xl py-3 px-2 max-[480px]:py-2 max-[480px]:px-1.5 text-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                                <p className={`text-xs max-[480px]:text-[10px] mb-0.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Price</p>
+                                <p className="text-sm max-[480px]:text-xs font-bold text-blue-600">₹{String(property.pricePerSqft ?? prices?.pricePerSqft ?? 120).replace(/[₹,]/g, '')}</p>
+                                <p className={`text-[11px] max-[480px]:text-[9px] ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>/sq.ft</p>
+                            </div>
+                            <div className={`rounded-xl py-3 px-2 max-[480px]:py-2 max-[480px]:px-1.5 text-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                                <p className={`text-xs max-[480px]:text-[10px] mb-0.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Status</p>
+                                <p className={`text-sm max-[480px]:text-xs font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{availabilityStatus}</p>
+                            </div>
+                            <div className={`rounded-xl py-3 px-2 max-[480px]:py-2 max-[480px]:px-1.5 text-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                                <p className={`text-xs max-[480px]:text-[10px] mb-0.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Reviews</p>
+                                <p className={`text-sm max-[480px]:text-xs font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{reviews.length}</p>
+                            </div>
                         </div>
 
-                        {/* Info Boxes */}
-                        <div className="grid grid-cols-2 gap-3 mb-5">
-                            <div className={`border rounded-xl py-3 px-2 text-center ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-                                <p className={`text-[11px] mb-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Price</p>
-                                <p className="text-base font-bold text-blue-600">₹120</p>
-                                <p className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>/sq.ft</p>
-                            </div>
-                            <div className={`border rounded-xl py-3 px-2 text-center ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-                                <p className={`text-[11px] mb-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Reviews</p>
-                                <p className={`text-base font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>{reviews.length}</p>
-                            </div>
-                        </div>
-
-                        {/* Brand + Contact */}
+                        {/* Contact - Provider + Phone + WhatsApp */}
                         <div className="flex items-center justify-between mb-4">
-                            <div>
-                                <h4 className={`text-base font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{brandName}</h4>
-                                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Workspace</p>
-                            </div>
-                            <div className="flex items-center gap-3">
+                            <h4 className={`text-base max-[480px]:text-sm font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{brandName}</h4>
+                            <div className="flex items-center gap-2">
                                 <a
-                                    href={`tel:${safeDisplay(sellerPhoneNumber)}`}
-                                    className={`w-11 h-11 rounded-full flex items-center justify-center ${isDark ? 'bg-blue-900/30' : 'bg-blue-100'}`}
+                                    href={sellerPhoneNumber ? `tel:${String(sellerPhoneNumber).replace(/[^0-9+]/g, '')}` : '#'}
+                                    onClick={(e) => sellerPhoneNumber && handlePhoneClick(e, sellerPhoneNumber)}
+                                    className={`w-11 h-11 rounded-full flex items-center justify-center ${isDark ? 'bg-blue-900/40' : 'bg-blue-100'}`}
+                                    aria-label="Call"
                                 >
-                                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className={`w-5 h-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                     </svg>
                                 </a>
@@ -747,7 +758,8 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                     href={`https://wa.me/${safeDisplay(sellerPhoneNumber)?.replace(/[^0-9]/g, '') || '918151915199'}?text=Hi, I am interested in ${encodeURIComponent(name || 'this property')}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className={`w-11 h-11 rounded-full flex items-center justify-center ${isDark ? 'bg-green-900/30' : 'bg-green-100'}`}
+                                    className="w-11 h-11 rounded-full flex items-center justify-center bg-green-500/90"
+                                    aria-label="WhatsApp"
                                 >
                                     <Image src="/whatsapp.svg" alt="WhatsApp" width={24} height={24} />
                                 </a>
@@ -756,12 +768,12 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                     </div>
                 </div>
 
-                {/* Fixed Button */}
-                <div className={`p-4 pb-20 mt-5 border-t transition-colors ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-white border-gray-100'}`}>
+                {/* Fixed CTA Button - extra bottom padding on mobile for safe area + nav clearance */}
+                <div className={`p-4 max-[480px]:pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] border-t transition-colors ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-white border-gray-100'}`}>
                     <a
-                        href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
+                        href={`/property-details?id=${property._id || property.id}&type=${propertyCategory}`}
                         onClick={handleViewDetailsClick}
-                        className="block w-full bg-blue-600 text-white py-4 rounded-xl text-center font-semibold text-base"
+                        className="block w-full bg-blue-600 hover:bg-blue-700 text-white py-4 max-[480px]:py-3 rounded-xl text-center font-semibold text-base max-[480px]:text-sm"
                     >
                         View Full Details
                     </a>
@@ -774,7 +786,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
     const desktopModal = (
         <div
             role="dialog"
-            className={`hidden md:block fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 shadow-2xl rounded-2xl overflow-hidden transition-colors ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}
+            className={`hidden md:block z-50 shadow-2xl rounded-2xl overflow-hidden transition-colors ${centerInMapArea ? 'absolute left-1/2 bottom-4 -translate-x-1/2' : 'fixed bottom-4 left-1/2 -translate-x-1/2'} ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}
             style={{ width: '680px', maxWidth: '95vw', height: '260px' }}
             tabIndex="-1"
         >
@@ -804,8 +816,15 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                             </div>
                         )}
 
-                        {/* Action Icons - Top Left */}
+                        {/* Action Icons - Top Left (close, favourite, share, ...) */}
                         <div className="absolute top-1.5 left-1.5 z-20 flex gap-0.5">
+                            <button
+                                onClick={onClose}
+                                className={`w-5 h-5 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-md ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}
+                                aria-label="Close"
+                            >
+                                <X className={`w-2.5 h-2.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} />
+                            </button>
                             <button
                                 onClick={handleFavouriteToggle}
                                 className={`w-5 h-5 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-md ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}
@@ -819,7 +838,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                 <Share2 className={`w-2.5 h-2.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} />
                             </button>
                             <a
-                                href={`https://maps.google.com/maps?q=${property.coordinates?.lat || property.position?.lat},${property.coordinates?.lng || property.position?.lng}&z=16&t=h`}
+                                href={`https://maps.google.com/maps?q=${property.coordinates?.latitude ?? property.coordinates?.lat ?? property.position?.lat},${property.coordinates?.longitude ?? property.coordinates?.lng ?? property.position?.lng}&z=16&t=h`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={`w-5 h-5 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-md ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}
@@ -827,7 +846,9 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                 <CornerUpRight className={`w-2.5 h-2.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} />
                             </a>
                             <a
-                                href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
+                                href={`/property-details?id=${property._id || property.id}&type=${propertyCategory}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 onClick={handleViewDetailsClick}
                                 className={`w-5 h-5 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-md ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}
                             >
@@ -898,11 +919,17 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                 <div className="flex-1">
                                     <div className="flex items-center gap-1.5 mb-0.5">
                                         <h1 className={`text-base font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(name)}</h1>
-                                        <div className="flex items-center gap-2">
-                                            <div className="flex items-center gap-0.5">
-                                                <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
-                                                <span className={`text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{rating.toFixed(1)}</span>
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-400/90">
+                                                <Star className="w-2.5 h-2.5 fill-amber-700 text-amber-700" />
+                                                <span className="text-[10px] font-bold text-gray-900">{rating.toFixed(1)}</span>
                                             </div>
+                                            {is_verified && (
+                                                <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" aria-label="Verified">
+                                                    <path d="M12 1L14.4 4.2L18.3 3.4L18.1 7.4L21.6 9.2L19.4 12.5L21.6 15.8L18.1 17.6L18.3 21.6L14.4 20.8L12 24L9.6 20.8L5.7 21.6L5.9 17.6L2.4 15.8L4.6 12.5L2.4 9.2L5.9 7.4L5.7 3.4L9.6 4.2L12 1Z" fill="#FBBF24" />
+                                                    <path d="M8.5 12.5L10.5 14.5L15.5 9.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                                </svg>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-1 mb-0.5">
@@ -918,7 +945,8 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                             Best price guaranteed
                                         </span>
                                         <a
-                                            href={`tel:${safeDisplay(sellerPhoneNumber)}`}
+                                            href={sellerPhoneNumber ? `tel:${String(sellerPhoneNumber).replace(/[^0-9+]/g, '')}` : '#'}
+                                            onClick={(e) => sellerPhoneNumber && handlePhoneClick(e, sellerPhoneNumber)}
                                             className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-gray-100 hover:bg-gray-200'}`}
                                         >
                                             <svg className={`w-3.5 h-3.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -988,30 +1016,41 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                 <p className={`text-[9px] mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Workspace</p>
                                 <div className="grid grid-cols-2 gap-1 mb-1">
                                     <div className="flex items-center gap-0.5">
-                                        <Building2 className={`w-2.5 h-2.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
-                                        <span className={`text-[9px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{brandStats.cities}</span>
+                                        <Building2 className={`w-2.5 h-2.5 flex-shrink-0 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
+                                        <span className={`text-[9px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                                            {typeof brandStats.cities === 'number' ? `${brandStats.cities}+ Cities` : (String(brandStats.cities || '').toLowerCase().includes('cities') ? brandStats.cities : `${safeDisplay(brandStats.cities)} Cities`)}
+                                        </span>
                                     </div>
                                     <div className="flex items-center gap-0.5">
-                                        <svg className={`w-2.5 h-2.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className={`w-2.5 h-2.5 flex-shrink-0 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                         </svg>
-                                        <span className={`text-[9px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{brandStats.clients}</span>
+                                        <span className={`text-[9px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                                            {typeof brandStats.clients === 'number' ? `${brandStats.clients}+ Clients` : (String(brandStats.clients || '').toLowerCase().includes('clients') ? brandStats.clients : `${safeDisplay(brandStats.clients)} Clients`)}
+                                        </span>
                                     </div>
                                     <div className="flex items-center gap-0.5">
-                                        <Building2 className={`w-2.5 h-2.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
-                                        <span className={`text-[9px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{brandStats.spaces}</span>
+                                        <Building2 className={`w-2.5 h-2.5 flex-shrink-0 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
+                                        <span className={`text-[9px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                                            {(() => {
+                                        const v = typeof brandStats.spaces === 'number' ? `${brandStats.spaces}+` : String(safeDisplay(brandStats.spaces)).replace(/Coworking\s*/gi, '').trim();
+                                        return v.toLowerCase().endsWith('spaces') ? v : `${v} Spaces`;
+                                    })()}
+                                        </span>
                                     </div>
                                     <div className="flex items-center gap-0.5">
-                                        <svg className={`w-2.5 h-2.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className={`w-2.5 h-2.5 flex-shrink-0 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                                         </svg>
-                                        <span className={`text-[9px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{brandStats.seats}</span>
+                                        <span className={`text-[9px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                                            {typeof brandStats.seats === 'number' ? `${brandStats.seats}+ Seats` : (String(brandStats.seats || '').toLowerCase().includes('seats') ? brandStats.seats : `${safeDisplay(brandStats.seats)} Seats`)}
+                                        </span>
                                     </div>
                                 </div>
                                 <p className={`text-[9px] leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                                     {brandDescription.length > 80 ? brandDescription.substring(0, 80) + '...' : brandDescription}
                                     <a
-                                        href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
+                                        href={`/property-details?id=${property._id || property.id}&type=${propertyCategory}`}
                                         onClick={handleViewDetailsClick}
                                         className="text-blue-600 hover:underline ml-1"
                                     >
@@ -1026,7 +1065,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                 {/* View Details Button - Right Edge (Vertical) - Part of modal structure */}
                 <div className="w-7 flex-shrink-0 h-full">
                     <a
-                        href={`/property-details?id=${property._id || property.id}&type=${propertyType}`}
+                        href={`/property-details?id=${property._id || property.id}&type=${propertyCategory}`}
                         onClick={handleViewDetailsClick}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-1 rounded-l-lg shadow-lg transition-colors cursor-pointer writing-vertical-rl text-[9px] font-medium h-full w-full flex items-center justify-center"
                         style={{ writingMode: 'vertical-rl' }}
@@ -1066,7 +1105,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                         <div className="space-y-3">
                             <p className="text-base"><span className={`font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Owner Name:</span> <span className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(createdBy?.name)}</span></p>
                             <p className="text-base"><span className={`font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Contact:</span>
-                                <a href={`tel:${sellerPhoneNumber}`} className="font-semibold text-blue-600 hover:underline ml-2">{safeDisplay(sellerPhoneNumber)}</a>
+                                <a href={sellerPhoneNumber ? `tel:${String(sellerPhoneNumber).replace(/[^0-9+]/g, '')}` : '#'} onClick={(e) => sellerPhoneNumber && handlePhoneClick(e, sellerPhoneNumber)} className="font-semibold text-blue-600 hover:underline ml-2 cursor-pointer">{safeDisplay(sellerPhoneNumber)}</a>
                             </p>
                         </div>
                     </div>
@@ -1176,7 +1215,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
 
                                     try {
                                         const propertyId = property._id || property.id;
-                                        const propertyType = property.propertyType || 'commercial';
+                                        const propertyType = property.propertyCategory || (property.propertyType === 'residential' ? 'residential' : 'commercial');
 
                                         // Always get the latest user data from localStorage to ensure we have the phone number
                                         let latestUser = currentUser;
@@ -1328,7 +1367,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                 >
                     <div
                         onClick={(e) => e.stopPropagation()}
-                        className={`rounded-2xl shadow-lg w-full max-w-md relative max-h-[90vh] overflow-y-auto ${isDark ? 'bg-[#282c34]' : 'bg-white'}`}
+                        className={`rounded-2xl shadow-lg w-full max-w-md relative max-h-[min(90vh,90svh)] overflow-y-auto ${isDark ? 'bg-[#282c34]' : 'bg-white'}`}
                     >
                         <div className={`flex justify-between items-center p-6 border-b sticky top-0 z-10 rounded-t-2xl ${isDark ? 'bg-[#282c34] border-gray-700' : 'bg-white border-gray-200'}`}>
                             <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>Report this Property</h2>
@@ -1348,7 +1387,7 @@ export default function PropertyDetailModal({ property, onClose, isPropertyListV
                                 <X className="w-6 h-6" />
                             </button>
                         </div>
-                        <form className="p-6 space-y-4" onSubmit={async (e) => {
+                        <form className="p-6 pb-32 max-[525px]:pb-36 space-y-4" onSubmit={async (e) => {
                             e.preventDefault();
                             setIsSubmitting(true);
 

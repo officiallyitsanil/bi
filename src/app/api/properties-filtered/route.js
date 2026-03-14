@@ -17,7 +17,7 @@ function normalizeProperty(propertyObj) {
     return {
         ...propertyObj,
         _id: propertyObj._id.toString(),
-        propertyType: propertyObj.Category?.toLowerCase() || propertyObj.propertyType || 'unknown',
+        propertyType: (propertyObj.category || propertyObj.Category)?.toLowerCase() || propertyObj.propertyType || 'unknown',
         name: propertyObj.propertyName || propertyObj.name || 'Unnamed Property',
         badge: propertyObj.badge || 'new',
         featuredImageUrl: featuredImageUrl,
@@ -121,7 +121,7 @@ export async function GET(request) {
         // Apply filters
         let filtered = allProperties.filter(prop => {
             // Filter by Category (Commercial/Residential)
-            const propCategory = prop.Category?.toLowerCase() || '';
+            const propCategory = (prop.category || prop.Category)?.toLowerCase() || '';
             if (category) {
                 if (category.toLowerCase() === 'commercial' && propCategory !== 'commercial') return false;
                 if (category.toLowerCase() === 'residential' && propCategory !== 'residential') return false;

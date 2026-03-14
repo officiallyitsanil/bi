@@ -13,6 +13,7 @@ const amenityIconMap = {
     "pantry available 24/7": "/property-details/amenties/cups-mugs.png",
     "pantry": "/property-details/amenties/cups-mugs.png",
     "cups/mugs": "/property-details/amenties/cups-mugs.png",
+    "cups & mugs": "/property-details/amenties/cups-mugs.png",
     
     // Cleaning & Maintenance
     "daily upkeep of bathrooms...": "/property-details/amenties/daily-upkeep.png",
@@ -50,9 +51,11 @@ const amenityIconMap = {
     
     // Security & Safety
     "building security": "/property-details/amenties/building-security.png",
+    "gated community": "/property-details/amenties/building-security.png",
     "security guard": "/property-details/amenties/security-guard.png",
     "fire alarm": "/property-details/amenties/fire-alarm.png",
     "fire extinguisher": "/property-details/amenties/fire-extinguisher.png",
+    "fire safety": "/property-details/amenties/fire-extinguisher.png",
     "fire noc": "/property-details/amenties/fire-noc.png",
     "smoke detector": "/property-details/amenties/smoke-detector.png",
     "first aid kit": "/property-details/amenties/first-aidkit.png",
@@ -228,8 +231,9 @@ export function mapAmenityToObject(amenityName) {
 }
 
 /**
- * Maps an array of amenity strings to an array of amenity objects
- * @param {Array} amenities - Array of amenity strings or objects
+ * Maps an array of amenity strings or objects to an array of amenity objects with name and image.
+ * Schema-driven: when amenity has { id, name }, uses /amenities/{id}.svg. Otherwise falls back to legacy PNG mapping.
+ * @param {Array} amenities - Array of amenity strings or objects ({ id?, name, category? })
  * @returns {Array} - Array of amenity objects with name and image properties
  */
 export function mapAmenitiesToObjects(amenities) {
@@ -239,24 +243,175 @@ export function mapAmenitiesToObjects(amenities) {
     
     return amenities
         .map(amenity => {
-            // If already an object with name and image, validate the image
             if (amenity && typeof amenity === 'object' && amenity.name) {
-                // If image is missing or invalid, get a random one
-                if (!amenity.image || !isValidIcon(amenity.image)) {
+                // Schema-driven: use id-based SVG when id is present
+                if (amenity.id != null) {
                     return {
                         name: amenity.name,
-                        image: getRandomIcon(amenity.name)
+                        image: `/amenities/${amenity.id}.svg`
                     };
                 }
-                return amenity;
+                // Legacy: object with image, or needs mapping
+                if (amenity.image && isValidIcon(amenity.image)) {
+                    return amenity;
+                }
+                return {
+                    name: amenity.name,
+                    image: getRandomIcon(amenity.name)
+                };
             }
-            // If it's a string, map it to an object
             if (typeof amenity === 'string') {
                 return mapAmenityToObject(amenity);
             }
             return null;
         })
-        .filter(Boolean); // Remove null values
+        .filter(Boolean);
+}
+
+/**
+ * Fixed category mapping for All Amenities modal - exactly 6 categories per design.
+ * Maps amenity name (normalized) to: guest-services, security, food-beverages, cleaning, productivity, on-credit
+ */
+export const AMENITY_CATEGORY_MAP = {
+    // Guest Services
+    "guest check-in": "guest-services",
+    "guest checkin": "guest-services",
+    "delivery acceptance": "guest-services",
+    "package notification": "guest-services",
+    "parking": "guest-services",
+    "visitor parking": "guest-services",
+    "2w parking": "guest-services",
+    "4w parking": "guest-services",
+    "ev charging": "guest-services",
+    "ev charging space": "guest-services",
+    "elevator": "guest-services",
+    "lift": "guest-services",
+    // Security
+    "fire safety": "security",
+    "guest management": "security",
+    "video surveillance": "security",
+    "keycard access": "security",
+    "cctv": "security",
+    "security": "security",
+    "security guard": "security",
+    "gated community": "security",
+    "building security": "security",
+    // Food Beverages
+    "tea": "food-beverages",
+    "coffee": "food-beverages",
+    "water": "food-beverages",
+    "water supply": "food-beverages",
+    "milk & sweeteners": "food-beverages",
+    "milk and sweeteners": "food-beverages",
+    "cups & mugs": "food-beverages",
+    "cups and mugs": "food-beverages",
+    "24/7 pantry": "food-beverages",
+    "24/7 pantries": "food-beverages",
+    "pantry": "food-beverages",
+    "cafeteria": "food-beverages",
+    "food vendor": "food-beverages",
+    // Cleaning
+    "daily cleaning": "cleaning",
+    "trash removal": "cleaning",
+    "deep cleaning": "cleaning",
+    "24/7 cleaning": "cleaning",
+    "pest control": "cleaning",
+    "daily upkeep": "cleaning",
+    "nightly trash": "cleaning",
+    "nightly trash removal": "cleaning",
+    "pest extermination": "cleaning",
+    // Productivity
+    "power backup": "productivity",
+    "power supply": "productivity",
+    "dg backup": "productivity",
+    "generator backup": "productivity",
+    "electricity": "productivity",
+    "high-speed wifi": "productivity",
+    "high speed wifi": "productivity",
+    "wifi": "productivity",
+    "wi-fi": "productivity",
+    "tape & clips": "productivity",
+    "tape and clips": "productivity",
+    "sticky notes": "productivity",
+    "printing & copying": "productivity",
+    "printing and copying": "productivity",
+    "stationery": "productivity",
+    "paper shredding": "productivity",
+    "envelopes": "productivity",
+    "printers": "productivity",
+    "printer": "productivity",
+    "printing": "productivity",
+    "copying": "productivity",
+    // On Credit
+    "phone booths": "on-credit",
+    "phone booth": "on-credit",
+    "conference rooms": "on-credit",
+    "conference room": "on-credit",
+    "meeting rooms": "on-credit",
+    "meeting room": "on-credit",
+    "open desk": "on-credit",
+    "open desks": "on-credit",
+    "event sponsor": "on-credit",
+    "reception area": "on-credit",
+    "private cabins": "on-credit",
+    "private cabin": "on-credit",
+    "recreational area": "on-credit",
+};
+
+/** Fixed category order and display labels for All Amenities modal */
+export const AMENITY_CATEGORY_ORDER = [
+    "guest-services",
+    "security",
+    "food-beverages",
+    "cleaning",
+    "productivity",
+    "on-credit",
+];
+
+export const AMENITY_CATEGORY_LABELS = {
+    "guest-services": "Guest Services",
+    "security": "Security",
+    "food-beverages": "Food Beverages",
+    "cleaning": "Cleaning",
+    "productivity": "Productivity",
+    "on-credit": "On Credit",
+};
+
+/** Default category when amenity name doesn't match - ensures no amenity is ever dropped */
+const DEFAULT_AMENITY_CATEGORY = "guest-services";
+
+/**
+ * Maps schema category values to our 6 fixed display categories.
+ * Schema may use: guest-services, security, pantry, utilities, building, cleaning, on-credit
+ */
+export const SCHEMA_CATEGORY_TO_DISPLAY = {
+    "guest-services": "guest-services",
+    "guest services": "guest-services",
+    security: "security",
+    pantry: "food-beverages",
+    "food-beverages": "food-beverages",
+    "food beverages": "food-beverages",
+    cleaning: "cleaning",
+    utilities: "productivity",
+    productivity: "productivity",
+    building: "guest-services",
+    "on-credit": "on-credit",
+    "on credit": "on-credit",
+};
+
+/**
+ * Gets category from schema first, then falls back to name-based mapping.
+ * Always returns one of the 6 categories. Sync with schema - use schema category directly.
+ */
+export function getAmenityCategory(amenity, amenityName) {
+    const schemaCat = typeof amenity === "object" && amenity?.category ? String(amenity.category).toLowerCase().trim() : null;
+    if (schemaCat && SCHEMA_CATEGORY_TO_DISPLAY[schemaCat]) {
+        return SCHEMA_CATEGORY_TO_DISPLAY[schemaCat];
+    }
+    const name = amenityName ?? (typeof amenity === "object" ? amenity?.name : amenity);
+    if (!name || typeof name !== "string") return DEFAULT_AMENITY_CATEGORY;
+    const key = name.toLowerCase().trim();
+    return AMENITY_CATEGORY_MAP[key] || DEFAULT_AMENITY_CATEGORY;
 }
 
 export default amenityIconMap;

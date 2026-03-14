@@ -33,6 +33,16 @@
 }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 
+/* Thin horizontal scrollbar for image thumbnails */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.6) transparent;
+}
+.scrollbar-thin::-webkit-scrollbar { height: 4px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.6); border-radius: 4px; }
+.scrollbar-thin::-webkit-scrollbar-thumb:hover { background: rgba(156, 163, 175, 0.8); }
+
 /* ============================================
    Property Details - Compact layout (smaller fonts, images, content)
    ============================================ */
@@ -89,6 +99,24 @@
 
 /* Nearby map height */
 .property-details-compact .h-60 { height: 11rem !important; }
+
+/* Swiper nav - disabled state when at first/last slide */
+.swiper-button-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: auto;
+}
+.swiper-button-disabled:hover {
+  opacity: 0.5;
+}
+
+@keyframes slider-banner-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in {
+  animation: slider-banner-in 0.2s ease-out forwards;
+}
 
 /* Section spacing */
 .property-details-compact .space-y-4 { --tw-space-y-reverse: 0; }

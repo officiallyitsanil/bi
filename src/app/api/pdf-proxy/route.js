@@ -4,6 +4,8 @@ export async function GET(request) {
     try {
         const { searchParams } = new URL(request.url);
         const pdfUrl = searchParams.get('url');
+        const forceDownload = searchParams.get('download') === '1';
+        const filename = searchParams.get('filename') || 'document.pdf';
 
         if (!pdfUrl) {
             return NextResponse.json(
@@ -12,8 +14,14 @@ export async function GET(request) {
             );
         }
 
-        // Validate that the URL is from the expected domain for security
-        if (!pdfUrl.includes('admin.buildersinfo.in') && !pdfUrl.startsWith('/') && !pdfUrl.startsWith('http://localhost') && !pdfUrl.startsWith('http://127.0.0.1')) {
+        // Validate URL - allow known domains and standard PDF sources
+        const allowedDomains = ['admin.buildersinfo.in', 'africau.edu', 'mozilla.github.io', 'www.w3.org', 'localhost', '127.0.0.1'];
+        const isAllowed = pdfUrl.startsWith('/') ||
+            pdfUrl.startsWith('http://localhost') ||
+            pdfUrl.startsWith('http://127.0.0.1') ||
+            allowedDomains.some(d => pdfUrl.includes(d)) ||
+            (pdfUrl.startsWith('https://') && pdfUrl.toLowerCase().includes('.pdf'));
+        if (!isAllowed) {
             return NextResponse.json(
                 { error: 'Invalid PDF URL' },
                 { status: 400 }
@@ -39,11 +47,15 @@ export async function GET(request) {
         const pdfBuffer = await response.arrayBuffer();
 
         // Return the PDF with proper headers
+        const contentDisposition = forceDownload
+            ? `attachment; filename="${filename.replace(/"/g, '')}"`
+            : `inline; filename="${filename.replace(/"/g, '')}"`;
+
         return new NextResponse(pdfBuffer, {
             status: 200,
             headers: {
                 'Content-Type': 'application/pdf',
-                'Content-Disposition': `inline; filename="document.pdf"`,
+                'Content-Disposition': contentDisposition,
                 'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
                 'Access-Control-Allow-Origin': '*',
             },

@@ -34,7 +34,7 @@ export default function VerificationProcessModal({ onClose }) {
           }
           e.stopPropagation();
         }}
-        className="bg-white rounded-2xl shadow-lg w-full md:w-[400px] max-h-[80vh] flex flex-col"
+        className="bg-white rounded-2xl shadow-lg w-full md:w-[400px] max-h-[min(80vh,80svh)] flex flex-col"
       >
         <div className="flex items-center justify-between px-6 py-3">
           <h2 className="text-base md:text-xl mr-2 font-medium text-gray-900">Verification Process</h2>
@@ -98,7 +98,7 @@ export default function VerificationProcessModal({ onClose }) {
           </div>
         </div>
 
-        <div className="mt-3 px-6 pb-6 overflow-y-auto flex-1">
+        <div className="mt-3 px-6 pb-32 max-[525px]:pb-36 overflow-y-auto flex-1">
           {selectedTab === "Residential" && (
             <>
               <div className="relative">

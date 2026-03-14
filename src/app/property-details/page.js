@@ -61,68 +61,28 @@ import {
     Car,
     ArrowDown,
     Calendar,
-    X
+    X,
+    Wifi,
+    Footprints
 } from "lucide-react";
 import PDFViewer from "../../components/PDFViewer";
 import GoogleMap from "../../components/GoogleMap";
 import LoginModal from "../../components/LoginModal";
+import PlacesAutocompleteInput from "../../components/PlacesAutocompleteInput";
 import { loginUser } from "../../utils/auth";
-import { mapAmenitiesToObjects } from "../../utils/amenityMapping";
+import { AMENITY_CATEGORY_ORDER, AMENITY_CATEGORY_LABELS, getAmenityCategory } from "../../utils/amenityMapping";
 import Link from "next/link";
 import Image from "next/image";
 
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
 import "./animations.css";
 import "./property-details.css";
+import { calculatePrices } from "@/utils/priceUtils";
 
 // Dummy data for nearby landmarks (extended array when API returns empty)
-const DUMMY_NEARBY_BANKS = [
-    { name: "Kotak Mahindra Bank", distance: "1.22 KM" },
-    { name: "Icici Bank Ltd", distance: "1.37 KM" },
-    { name: "Andhra Bank", distance: "1.43 KM" },
-    { name: "HDFC Bank", distance: "1.8 KM" },
-    { name: "State Bank of India", distance: "2.1 KM" },
-];
-const DUMMY_NEARBY_SCHOOLS = [
-    { name: "Delhi Public School", distance: "0.8 KM" },
-    { name: "Euro School", distance: "1.2 KM" },
-    { name: "Inventure Academy", distance: "1.5 KM" },
-];
-const DUMMY_NEARBY_HOSPITALS = [
-    { name: "Apollo Hospital", distance: "2.5 KM" },
-    { name: "Manipal Hospital", distance: "3.2 KM" },
-];
-const DUMMY_NEARBY_BUS = [
-    { name: "Marathahalli Bridge", distance: "0.5 KM" },
-    { name: "Kalamandir Bus Stop", distance: "1.1 KM" },
-];
-const DUMMY_NEARBY_TEMPLE = [
-    { name: "ISKCON Temple", distance: "3 KM" },
-    { name: "Maruthi Temple", distance: "1.5 KM" },
-];
-const DUMMY_NEARBY_ATM = [
-    { name: "SBI ATM", distance: "0.8 KM" },
-    { name: "HDFC ATM", distance: "1.2 KM" },
-    { name: "ICICI ATM", distance: "1.4 KM" },
-];
-const DUMMY_NEARBY_MALL = [
-    { name: "Phoenix Mall", distance: "2 KM" },
-    { name: "Orion Mall", distance: "3.5 KM" },
-    { name: "Forum Mall", distance: "4 KM" },
-];
-const SIMILAR_LOCATIONS = ["Koramangala", "MG Road", "HSR", "Indiranagar", "Hebbal"];
-const ALL_SIMILAR_LOCATIONS = [
-    "Koramangala", "MG Road", "HSR", "Indiranagar", "Hebbal",
-    "Whitefield", "Bellandur", "Sanjay Nagar", "Electronic City",
-    "JP Nagar", "Jayanagar", "Banashankari", "Rajajinagar",
-    "Malleshwaram", "BTM Layout", "Marathahalli"
-];
-const DUMMY_SIMILAR_PROPERTIES = [
-    { id: "workshaala", name: "Workshaala", locality: "Koramangala", price: "₹7,999", rating: 4.8, badge: "44% off", image: "https://images.unsplash.com/photo-1600210492493-0946911123ea?w=600&q=80" },
-    { id: "incubex", name: "INCUBEX", locality: "Koramangala", price: "₹5,999", rating: 4.2, badge: "Best Price Guarantee", image: "https://images.unsplash.com/photo-1556761175-4b46a572b786?w=600&q=80" },
-    { id: "smart-space", name: "Smart Space", locality: "Koramangala", price: "₹4,999", rating: 3.9, badge: "34% off", image: "https://images.unsplash.com/photo-1579487785973-74d2ca7abdd5?w=600&q=80" },
-    { id: "urban-vault", name: "Urban Vault", locality: "Koramangala", price: "₹5,999", rating: 4.2, badge: "Best Price Guarantee", image: "https://images.unsplash.com/photo-1577412647305-991150c7d163?w=600&q=80" },
-    { id: "indiqube", name: "Indiqube", locality: "Koramangala", price: "₹5,999", rating: 4.2, badge: "Best Price Guarantee", image: "https://picsum.photos/seed/corporate-office-space/400/300" },
-];
 const NEARBY_CATEGORIES = [
     { id: "school", label: "Schools", icon: "school" },
     { id: "bus", label: "Bus Stops", icon: "building" },
@@ -132,47 +92,9 @@ const NEARBY_CATEGORIES = [
     { id: "atm", label: "ATMs", icon: "briefcase" },
     { id: "mall", label: "Malls", icon: "hotel" },
 ];
-const EXPLORE_LOCATIONS = [
-    { name: "Coworking Space in HSR Layout", image: "https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?w=400&q=80" },
-    { name: "Coworking Space in Koramangala", image: "https://images.unsplash.com/photo-1531973576160-7125cd663d86?w=400&q=80" },
-    { name: "Coworking Space in MG Road", image: "https://images.unsplash.com/photo-1605797491749-0c6989a44356?w=400&q=80" },
-    { name: "Coworking Space in Indiranagar", image: "https://images.unsplash.com/photo-1601762429744-46fe92ccd903?w=400&q=80" },
-    { name: "Coworking Space in Whitefield", image: "https://images.unsplash.com/photo-1614070776241-fb47cec38278?w=400&q=80" },
-    { name: "Coworking Space in Sanjay Nagar", image: "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=400&q=80" },
-    { name: "Coworking Space in Electronic city", image: "https://images.unsplash.com/photo-1589834390005-5d4fb9bf3d32?w=400&q=80" },
-    { name: "Coworking Space in JP Nagar", image: "https://images.unsplash.com/photo-1559209537-dafe2fe2886b?w=400&q=80" },
-    { name: "Coworking Space in Jayanagar", image: "https://images.unsplash.com/photo-1541746972996-4e0b0f43e02a?w=400&q=80" },
-    { name: "Coworking Space in Hebbal", image: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=400&q=80" },
-];
-const CUSTOM_INFRA_ITEMS = [
-    { label: "Meeting Rooms", icon: "users" },
-    { label: "Private cabins", icon: "door-closed" },
-    { label: "Reception area", icon: "concierge-bell" },
-    { label: "Pantry", icon: "coffee" },
-    { label: "Recreational Area", icon: "gamepad2" },
-];
-const DUMMY_AMENITIES = [
-    { label: "Guest Check-in", icon: "User" },
-    { label: "Delivery Acceptance", icon: "BellRing" },
-    { label: "Package Notification", icon: "Package" },
-    { label: "Fire Safety", icon: "Siren" },
-    { label: "Guest Management", icon: "User" },
-    { label: "Video Surveillance", icon: "Video" },
-    { label: "Keycard Access", icon: "KeyRound" },
-    { label: "Tea", icon: "CupSoda" },
-    { label: "Coffee", icon: "Coffee" },
-    { label: "Water", icon: "GlassWater" },
-    { label: "Milk & Sweeteners", icon: "Milk" },
-    { label: "Cups & Mugs", icon: "CupSoda" },
-    { label: "24/7 Pantry", icon: "Clock" },
-    { label: "Cafeteria", icon: "Building" },
-    { label: "Food Vendor", icon: "User" },
-    { label: "Daily Cleaning", icon: "Trash2" },
-    { label: "Trash Removal", icon: "Trash2" },
-    { label: "Deep Cleaning", icon: "Trash2" },
-    { label: "24/7 Cleaning", icon: "Clock" },
-    { label: "Pest Control", icon: "ShieldCheck" },
-];
+// Amenity & Custom Infra icons: SVG files in /public/amenities/{id}.svg and /public/custom-infrastructure/{id}.svg
+const DEFAULT_AMENITY_ICON = "/amenities/1.svg";
+const DEFAULT_CUSTOM_INFRA_ICON = "/custom-infrastructure/1.svg";
 
 // Helper function to safely display database values
 const safeDisplay = (value, fallback = "-") => {
@@ -254,7 +176,7 @@ function PropertyDetailsContent() {
     const [activeTab, setActiveTab] = useState('amenities');
     const [selectedCapacity, setSelectedCapacity] = useState('6-15 Seats');
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const [activeCategory, setActiveCategory] = useState('school');
+    const [activeCategory, setActiveCategory] = useState('schools');
     const [showModal, setShowModal] = useState(false);
     const [isLiked, setIsLiked] = useState(false);
     const [property, setProperty] = useState(null);
@@ -273,13 +195,21 @@ function PropertyDetailsContent() {
         email: "",
         phone: "",
         message: "",
+        companyName: "",
+        numberOfSeats: "",
+        preferredCallbackTime: "",
+        interestType: "",
     });
+    const [interestFormType, setInterestFormType] = useState("property");
+    const [interestFormErrors, setInterestFormErrors] = useState({});
     const [isSubmittingInterest, setIsSubmittingInterest] = useState(false);
     const [showSuccessTooltip, setShowSuccessTooltip] = useState(false);
     const [isSubmittingReview, setIsSubmittingReview] = useState(false);
     const [reviewSubmitSuccess, setReviewSubmitSuccess] = useState(false);
     const [userName, setUserName] = useState('');
     const [fullScreenImage, setFullScreenImage] = useState(null);
+    const [showAllPhotosModal, setShowAllPhotosModal] = useState(false);
+    const [showVideoModal, setShowVideoModal] = useState(false);
     const [isLoginOpen, setIsLoginOpen] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
     const [selectedPDF, setSelectedPDF] = useState(null);
@@ -288,7 +218,6 @@ function PropertyDetailsContent() {
     const [hasUserSubmittedReview, setHasUserSubmittedReview] = useState(false);
     const [userReview, setUserReview] = useState(null);
     const [isEditingReview, setIsEditingReview] = useState(false);
-    const [reviewCarouselIndex, setReviewCarouselIndex] = useState(0);
     const [showBrandDescription, setShowBrandDescription] = useState(true);
     const [selectedTourDate, setSelectedTourDate] = useState(() => {
         const d = new Date();
@@ -299,14 +228,28 @@ function PropertyDetailsContent() {
     const [tourFormData, setTourFormData] = useState({ name: "", phone: "", email: "", message: "" });
     const [selectedTourTime, setSelectedTourTime] = useState("");
     const [showTimeDropdown, setShowTimeDropdown] = useState(false);
-    const [canScrollPrev, setCanScrollPrev] = useState(false);
-    const [canScrollNext, setCanScrollNext] = useState(true);
-    const [similarPropertiesIndex, setSimilarPropertiesIndex] = useState(0);
     const [similarLocationFilter, setSimilarLocationFilter] = useState("Koramangala");
     const [showLocationDropdown, setShowLocationDropdown] = useState(false);
     const [showStickyHeader, setShowStickyHeader] = useState(false);
     const [showTourModal, setShowTourModal] = useState(false);
+    const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
     const [isSubmittingTour, setIsSubmittingTour] = useState(false);
+    const [tourFormErrors, setTourFormErrors] = useState({});
+    const [sliderBanner, setSliderBanner] = useState({ show: false, msg: "" });
+    const sliderBannerTimerRef = useRef(null);
+    const [travelOrigin, setTravelOrigin] = useState(null);
+    const [travelOriginInput, setTravelOriginInput] = useState("");
+    const [travelResults, setTravelResults] = useState([]);
+    const [travelLoading, setTravelLoading] = useState(false);
+    const [travelError, setTravelError] = useState("");
+
+    const handleSliderNavClick = (e, isPrev) => {
+        if (e.currentTarget.classList.contains("swiper-button-disabled")) {
+            setSliderBanner({ show: true, msg: isPrev ? "First slide" : "No more slides" });
+            if (sliderBannerTimerRef.current) clearTimeout(sliderBannerTimerRef.current);
+            sliderBannerTimerRef.current = setTimeout(() => setSliderBanner((s) => ({ ...s, show: false })), 2000);
+        }
+    };
 
     const handleTourInputChange = (e) => {
         const { name, value } = e.target;
@@ -318,12 +261,18 @@ function PropertyDetailsContent() {
         setInterestFormData((prev) => ({ ...prev, [name]: value }));
     };
 
+    const validateTourForm = () => {
+        const err = {};
+        if (!tourFormData.name?.trim()) err.name = "Name is required";
+        if (!selectedTourTime) err.tourTime = "Please select a tour time";
+        if (tourFormData.email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(tourFormData.email)) err.email = "Enter a valid email";
+        setTourFormErrors(err);
+        return Object.keys(err).length === 0;
+    };
+
     const handleTourSubmit = async (e) => {
         if (e) e.preventDefault();
-        if (!tourFormData.name) {
-            alert("Please fill in the Name field, it is mandatory.");
-            return;
-        }
+        if (!validateTourForm()) return;
         try {
             setIsSubmittingTour(true);
             const res = await fetch('/api/properties/schedule-tour', {
@@ -341,20 +290,21 @@ function PropertyDetailsContent() {
             });
             const data = await res.json();
             if (data.success) {
-                alert('Submitted successfully!');
                 setTourFormData({ name: "", phone: "", email: "", message: "" });
                 setSelectedTourTime("");
+                setTourFormErrors({});
+                setShowTourModal(false);
+                alert(data.message || 'Submitted successfully!');
             } else {
-                alert('Failed: ' + data.error);
+                setTourFormErrors({ submit: data.message || data.error || 'Failed to submit. Please try again.' });
             }
         } catch (err) {
             console.error('Error scheduling tour:', err);
-            alert('An error occurred.');
+            setTourFormErrors({ submit: 'An error occurred. Please try again.' });
         } finally {
             setIsSubmittingTour(false);
         }
     };
-    const dateCarouselRef = useRef(null);
     const locationFilterRef = useRef(null);
     const locationDropdownRef = useRef(null);
     const timeDropdownRef = useRef(null);
@@ -363,35 +313,12 @@ function PropertyDetailsContent() {
 
     const TOUR_TIME_SLOTS = ["9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM", "6:00 PM"];
 
-    const scrollDateCarousel = (direction) => {
-        const el = dateCarouselRef.current;
-        if (!el) return;
-        const cardWidth = 80;
-        const scrollAmount = direction === "next" ? cardWidth * 2 : -cardWidth * 2;
-        el.scrollBy({ left: scrollAmount, behavior: "smooth" });
-    };
-
     useEffect(() => {
-        if (!property) return;
-        const el = dateCarouselRef.current;
-        if (!el) return;
-        const onScroll = () => {
-            const maxScroll = el.scrollWidth - el.clientWidth;
-            setCanScrollPrev(el.scrollLeft > 1);
-            setCanScrollNext(maxScroll > 1 && el.scrollLeft < maxScroll - 1);
-        };
-        const timer = setTimeout(() => {
-            onScroll();
-        }, 100);
-        el.addEventListener("scroll", onScroll);
-        const ro = new ResizeObserver(onScroll);
-        ro.observe(el);
-        return () => {
-            clearTimeout(timer);
-            el.removeEventListener("scroll", onScroll);
-            ro.disconnect();
-        };
-    }, [property]);
+        const locs = property?.similarLocations;
+        if (locs?.length) {
+            setSimilarLocationFilter(prev => (prev && locs.includes(prev)) ? prev : locs[0]);
+        }
+    }, [property?.similarLocations]);
 
     useEffect(() => {
         const handleClickOutside = (e) => {
@@ -401,6 +328,12 @@ function PropertyDetailsContent() {
         if (showTimeDropdown || showLocationDropdown) document.addEventListener("click", handleClickOutside);
         return () => document.removeEventListener("click", handleClickOutside);
     }, [showTimeDropdown, showLocationDropdown]);
+
+    useEffect(() => {
+        return () => {
+            if (sliderBannerTimerRef.current) clearTimeout(sliderBannerTimerRef.current);
+        };
+    }, []);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -688,104 +621,25 @@ function PropertyDetailsContent() {
                             },
                             body: JSON.stringify({
                                 id: idParam,
-                                type: typeParam || data.property.propertyType || 'commercial'
+                                type: typeParam || data.property.propertyCategory || data.property.propertyType || 'commercial'
                             }),
                         });
                     } catch (error) {
                         console.error('Error incrementing visitor count:', error);
                     }
 
-                    // Helper function to format location from address object
-                    const formatLocation = (address) => {
-                        if (!address || typeof address === 'string') return address || 'Address not available';
-
-                        const parts = [];
-                        if (address.flat) parts.push(address.flat);
-                        if (address.street) parts.push(address.street);
-                        if (address.locality) parts.push(address.locality);
-                        if (address.city) parts.push(address.city);
-                        if (address.district) parts.push(address.district);
-                        if (address.state) parts.push(address.state);
-                        if (address.pincode) parts.push(address.pincode);
-                        if (address.country) parts.push(address.country);
-
-                        return parts.length > 0 ? parts.join(', ') : 'Address not available';
-                    };
-
-                    // Calculate prices based on property type
-                    const calculatePrices = (property) => {
-                        let originalPriceValue = 0;
-
-                        if (property.propertyType === 'residential') {
-                            // For residential: use expectedRent
-                            const expectedRent = property.expectedRent || '0';
-                            originalPriceValue = parseFloat(expectedRent.toString().replace(/[₹,]/g, '')) || 0;
-                        } else if (property.propertyType === 'commercial') {
-                            // For commercial: calculate from floorConfigurations
-                            if (property.floorConfigurations && property.floorConfigurations.length > 0) {
-                                const firstFloor = property.floorConfigurations[0];
-                                if (firstFloor.dedicatedCabin && firstFloor.dedicatedCabin.seats && firstFloor.dedicatedCabin.pricePerSeat) {
-                                    // Extract lower values from ranges like "70 - 90" and "6000-8000"
-                                    const seatsStr = firstFloor.dedicatedCabin.seats.toString();
-                                    const pricePerSeatStr = firstFloor.dedicatedCabin.pricePerSeat.toString();
-
-                                    const seatsMatch = seatsStr.match(/(\d+)/);
-                                    const pricePerSeatMatch = pricePerSeatStr.match(/(\d+)/);
-
-                                    if (seatsMatch && pricePerSeatMatch) {
-                                        const seatsLower = parseFloat(seatsMatch[1]);
-                                        const pricePerSeatLower = parseFloat(pricePerSeatMatch[1]);
-                                        originalPriceValue = seatsLower * pricePerSeatLower;
-                                    }
-                                }
-                            }
-                        }
-
-                        // Calculate discounted price (5% off = 95% of original)
-                        const discountedPriceValue = originalPriceValue * 0.95;
-
-                        // Format prices
-                        const formatPrice = (price) => {
-                            if (price === 0) return '₹XX';
-                            return `₹${Math.round(price).toLocaleString('en-IN')}`;
-                        };
-
-                        return {
-                            originalPrice: formatPrice(originalPriceValue),
-                            discountedPrice: formatPrice(discountedPriceValue)
-                        };
-                    };
-
-                    const calculatedPrices = calculatePrices(data.property);
-
+                    const p = data.property;
+                    const coord = p.coordinates || p.position;
+                    const lat = coord?.latitude ?? coord?.lat;
+                    const lng = coord?.longitude ?? coord?.lng;
+                    const position = lat != null && lng != null ? { lat: parseFloat(lat), lng: parseFloat(lng) } : (coord ?? null);
                     const formattedProperty = {
-                        ...data.property,
-                        id: data.property._id || data.property.id,
-                        _id: data.property._id || data.property.id,
-                        position: data.property.position || data.property.coordinates || { lat: 28.6139, lng: 77.2090 },
-                        coordinates: data.property.coordinates || data.property.position || { lat: 28.6139, lng: 77.2090 },
-                        images: data.property.images && data.property.images.length > 0 ? data.property.images : ['/placeholder.png'],
-                        featuredImageUrl: data.property.featuredImageUrl || data.property.images?.[0] || '/placeholder.png',
-                        amenities: mapAmenitiesToObjects(data.property.amenities || []),
-                        nearbyPlaces: data.property.nearbyPlaces || { school: [], hospital: [], hotel: [], business: [] },
-                        floorPlans: data.property.floorPlans || {},
-                        propertyVideos: data.property.propertyVideos || [],
-                        seatLayoutPDFs: data.property.seatLayoutPDFs || [],
-                        ratings: data.property.ratings || {
-                            overall: 0,
-                            totalRatings: 0,
-                            breakdown: { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 },
-                            whatsGood: [],
-                            whatsBad: []
-                        },
-                        reviews: data.property.reviews || [],
-                        name: safeDisplay(data.property.name, 'Property Name'),
-                        address: safeDisplay(data.property.address, 'Address not available'),
-                        location: data.property.location || formatLocation(data.property.address),
-                        originalPrice: calculatedPrices.originalPrice,
-                        discountedPrice: calculatedPrices.discountedPrice,
-                        sellerPhoneNumber: data.property.sellerPhoneNumber || '+91 XXXXXXXXXX',
-                        visitorCount: data.property.visitorCount || 0
+                        ...p,
+                        id: String(p._id || p.id),
+                        _id: String(p._id || p.id),
+                        position,
+                        coordinates: position ?? coord,
+                        amenities: p.amenities || []
                     };
 
                     setProperty(formattedProperty);
@@ -806,17 +660,97 @@ function PropertyDetailsContent() {
         fetchPropertyFromAPI();
     }, [searchParams, router]);
 
-    // Map configuration - using property data as reference
-    const mapCenter = property ? { lat: property.coordinates.lat, lng: property.coordinates.lng } : { lat: 28.6139, lng: 77.2090 };
+    // Map configuration - normalized coords use lat/lng (schema has latitude/longitude)
+    const coord = property?.coordinates || property?.position;
+    const mapCenter = property && coord ? { lat: coord.lat ?? coord.latitude, lng: coord.lng ?? coord.longitude } : { lat: 28.6139, lng: 77.2090 };
     const mapZoom = 15;
 
+    const openGoogleMaps = () => {
+        const c = property?.coordinates || property?.position;
+        const lat = c?.latitude ?? c?.lat;
+        const lng = c?.longitude ?? c?.lng;
+        if (lat != null && lng != null) {
+            window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank', 'noopener,noreferrer');
+        }
+    };
 
+    const handleTravelOriginSelect = useCallback((place) => {
+        setTravelOrigin(place);
+        setTravelOriginInput(place?.description || "");
+        setTravelError("");
+    }, []);
+
+    const handleShowTravelTime = useCallback(async () => {
+        if (travelOrigin?.lat == null || travelOrigin?.lng == null) {
+            setTravelError("Please select a starting point to calculate travel time.");
+            return;
+        }
+        const c = property?.coordinates || property?.position;
+        const destLat = c?.latitude ?? c?.lat;
+        const destLng = c?.longitude ?? c?.lng;
+        if (destLat == null || destLng == null) {
+            setTravelError("Property location is not available.");
+            return;
+        }
+        const originDesc = (travelOrigin.description || "").trim();
+        const alreadyShown = travelResults.some(
+            (r) => (r.originAddress && originDesc && r.originAddress.trim() === originDesc) || (r.originLatLng === `${travelOrigin.lat},${travelOrigin.lng}`)
+        );
+        if (alreadyShown) {
+            setTravelError("Travel time for this starting point is already shown.");
+            return;
+        }
+        setTravelError("");
+        setTravelLoading(true);
+        const originStr = `${travelOrigin.lat},${travelOrigin.lng}`;
+        const destStr = `${destLat},${destLng}`;
+        try {
+            const [driveRes, walkRes] = await Promise.all([
+                fetch("/api/distance-matrix", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ origin: originStr, destination: destStr, mode: "driving" }),
+                }).then((r) => r.json()),
+                fetch("/api/distance-matrix", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ origin: originStr, destination: destStr, mode: "walking" }),
+                }).then((r) => r.json()),
+            ]);
+            if (!driveRes.success || !walkRes.success) {
+                setTravelError(driveRes.error || walkRes.error || "Unable to calculate travel time.");
+                return;
+            }
+            const driving = driveRes.duration && driveRes.distance ? { duration: driveRes.duration, distance: driveRes.distance } : null;
+            const walking = walkRes.duration && walkRes.distance ? { duration: walkRes.duration, distance: walkRes.distance } : null;
+            if (!driving && !walking) {
+                setTravelError("No route found between these locations.");
+                return;
+            }
+            const newResult = {
+                originAddress: driveRes.origin_addresses?.[0] || travelOrigin.description,
+                originLatLng: `${travelOrigin.lat},${travelOrigin.lng}`,
+                driving,
+                walking,
+            };
+            setTravelResults((prev) => [...prev, newResult]);
+        } catch (err) {
+            setTravelError(err.message || "Something went wrong.");
+        } finally {
+            setTravelLoading(false);
+        }
+    }, [travelOrigin, property, travelResults]);
+
+
+
+    const isCommercial = property?.propertyCategory === 'commercial' || (property?.propertyType && property.propertyType !== 'residential');
+    const isResidential = property?.propertyCategory === 'residential' || property?.propertyType === 'residential';
 
     const tabs = [
         { id: 'amenities', label: 'Amenities' },
         { id: 'location', label: 'Location & Landmark' },
         { id: 'reviews', label: 'Rating & Reviews' },
-        ...(property?.propertyType === 'commercial' ? [{ id: 'layout', label: 'Property Layout' }] : [])
+        ...(isCommercial ? [{ id: 'layout', label: 'Property Layout' }] : [])
     ];
 
     const nextImage = () => {
@@ -856,21 +790,15 @@ function PropertyDetailsContent() {
     };
 
     const handleShare = () => {
-        if (!currentUser) {
-            setIsLoginOpen(true);
-            return;
-        }
-        if (navigator.share) {
-            navigator.share({
-                title: property.name,
-                text: `Check out this property: ${property.name}`,
-                url: window.location.href
-            });
-        } else {
-            // Fallback for browsers that don't support Web Share API
-            navigator.clipboard.writeText(window.location.href);
-            alert('Link copied to clipboard!');
-        }
+        const c = property?.coordinates || property?.position;
+        const lat = c?.latitude ?? c?.lat;
+        const lng = c?.longitude ?? c?.lng;
+        const mapUrl = (lat != null && lng != null) ? `https://www.google.com/maps?q=${lat},${lng}` : window.location.href;
+        navigator.clipboard.writeText(mapUrl).then(() => {
+            alert(lat != null && lng != null ? 'Location link copied to clipboard!' : 'Link copied to clipboard!');
+        }).catch(() => {
+            alert('Could not copy. Please copy the link manually.');
+        });
     };
 
     const handleLike = async () => {
@@ -878,7 +806,6 @@ function PropertyDetailsContent() {
             setIsLoginOpen(true);
             return;
         }
-
         if (!property || !property._id) return;
 
         const propertyId = property._id || property.id;
@@ -939,36 +866,135 @@ function PropertyDetailsContent() {
         }
     };
 
+    // Agent contact from schema: agentDetails (phone, email, whatsapp) with fallbacks
+    const agentContactPhone = property?.agentDetails?.phone || property?.agentPhone || property?.sellerPhoneNumber;
+    const agentContactWhatsApp = property?.agentDetails?.whatsapp || property?.agentDetails?.phone || property?.agentPhone || property?.sellerPhoneNumber;
+    const agentContactEmail = property?.agentDetails?.email;
+
     const handleMessage = () => {
-        if (!currentUser) {
-            setIsLoginOpen(true);
-            return;
+        if (agentContactWhatsApp) {
+            window.open(`https://wa.me/${String(agentContactWhatsApp).replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${encodeURIComponent(property?.propertyName || property?.name || '')}`, '_blank');
         }
-        window.open(`https://wa.me/${property.sellerPhoneNumber?.replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${property.name}`, '_blank');
     };
 
     const handleWhatsApp = () => {
-        if (!currentUser) {
-            setIsLoginOpen(true);
-            return;
+        if (agentContactWhatsApp) {
+            window.open(`https://wa.me/${String(agentContactWhatsApp).replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${encodeURIComponent(property?.propertyName || property?.name || '')}`, '_blank');
         }
-        window.open(`https://wa.me/${property.sellerPhoneNumber?.replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${property.name}`, '_blank');
+    };
+
+    const handlePhoneClick = (e, phone) => {
+        if (e) e.preventDefault();
+        if (!phone) return;
+        const num = String(phone).replace(/[^0-9+]/g, '');
+        const fullNum = num.startsWith('91') ? num : (num.length === 10 ? '91' + num : num);
+        const telUrl = `tel:+${fullNum}`;
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+            window.location.href = telUrl;
+        } else {
+            navigator.clipboard.writeText('+' + fullNum).then(() => {
+                alert('Phone number copied to clipboard! Paste in your phone or a calling app (Skype, Teams, etc.) to call.');
+            }).catch(() => {
+                window.location.href = telUrl;
+            });
+        }
     };
 
     const handleCall = () => {
-        if (!currentUser) {
-            setIsLoginOpen(true);
-            return;
+        if (agentContactPhone) {
+            handlePhoneClick(null, agentContactPhone);
         }
-        window.location.href = `tel:${property.sellerPhoneNumber}`;
     };
 
-    const handleShowInterestModal = () => {
-        if (!currentUser) {
-            setIsLoginOpen(true);
-            return;
+    const handleEmailClick = (e, email, subject = '') => {
+        if (e) e.preventDefault();
+        if (!email) return;
+        const mailtoUrl = subject
+            ? `mailto:${email}?subject=${encodeURIComponent(subject)}`
+            : `mailto:${email}`;
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+            window.location.href = mailtoUrl;
+        } else {
+            navigator.clipboard.writeText(email).then(() => {
+                alert('Email address copied to clipboard! Paste in Outlook, Gmail, or your email app to send a message.');
+            }).catch(() => {
+                window.location.href = mailtoUrl;
+            });
         }
+    };
+
+    const handleEmail = () => {
+        if (agentContactEmail) {
+            handleEmailClick(null, agentContactEmail, `Inquiry: ${property?.propertyName || property?.name || ''}`);
+        }
+    };
+
+    const handleShowInterestModal = (formType = "property") => {
+        setInterestFormType(formType);
+        setInterestFormErrors({});
+        setInterestFormData({ name: "", email: "", phone: "", message: "", companyName: "", numberOfSeats: "", preferredCallbackTime: "", interestType: "" });
         setShowModal(true);
+    };
+
+    const validateInterestForm = () => {
+        const err = {};
+        if (!interestFormData.name?.trim()) err.name = "Name is required";
+        if (!interestFormData.email?.trim()) err.email = "Email is required";
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(interestFormData.email)) err.email = "Enter a valid email";
+        if (!interestFormData.phone?.trim()) err.phone = "Phone is required";
+        setInterestFormErrors(err);
+        return Object.keys(err).length === 0;
+    };
+
+    const getApiUrlAndBody = () => {
+        const base = {
+            propertyName: property?.propertyName || property?.name || "",
+            propertyId: property?._id,
+            name: interestFormData.name,
+            email: interestFormData.email,
+            phone: interestFormData.phone,
+            message: interestFormData.message,
+        };
+        if (interestFormType === "callback") {
+            return { url: "/api/callback-request", body: { ...base, preferredCallbackTime: interestFormData.preferredCallbackTime } };
+        }
+        if (interestFormType === "consultation") {
+            return { url: "/api/consultation-request", body: { ...base, companyName: interestFormData.companyName, numberOfSeats: interestFormData.numberOfSeats } };
+        }
+        if (interestFormType === "brand") {
+            return { url: "/api/brand-interest", body: { ...base, brandName: property?.builderName || property?.brandDetails?.name || property?.builder || property?.propertyName, interestType: interestFormData.interestType } };
+        }
+        return { url: "/api/property-interest", body: base };
+    };
+
+    const handleInterestModalSubmit = async (e) => {
+        if (e) e.preventDefault();
+        if (!validateInterestForm()) return;
+        try {
+            setIsSubmittingInterest(true);
+            const { url, body } = getApiUrlAndBody();
+            const res = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
+            const data = await res.json();
+            if (data.success) {
+                setInterestFormData({ name: "", email: "", phone: "", message: "", companyName: "", numberOfSeats: "", preferredCallbackTime: "", interestType: "" });
+                setInterestFormErrors({});
+                setShowModal(false);
+                alert(data.message || "Submitted successfully! We will get back to you soon.");
+            } else {
+                setInterestFormErrors({ submit: data.message || "Failed to submit. Please try again." });
+            }
+        } catch (err) {
+            console.error(err);
+            setInterestFormErrors({ submit: "An error occurred. Please try again." });
+        } finally {
+            setIsSubmittingInterest(false);
+        }
     };
 
     const handleAddReview = () => {
@@ -1086,80 +1112,14 @@ function PropertyDetailsContent() {
             const data = await response.json();
 
             if (data.success && data.property) {
-                const formatLocation = (address) => {
-                    if (!address || typeof address === 'string') return address || 'Address not available';
-                    const parts = [];
-                    if (address.flat) parts.push(address.flat);
-                    if (address.street) parts.push(address.street);
-                    if (address.locality) parts.push(address.locality);
-                    if (address.city) parts.push(address.city);
-                    if (address.district) parts.push(address.district);
-                    if (address.state) parts.push(address.state);
-                    if (address.pincode) parts.push(address.pincode);
-                    if (address.country) parts.push(address.country);
-                    return parts.length > 0 ? parts.join(', ') : 'Address not available';
-                };
-
-                const calculatePrices = (property) => {
-                    let originalPriceValue = 0;
-                    if (property.propertyType === 'residential') {
-                        const expectedRent = property.expectedRent || '0';
-                        originalPriceValue = parseFloat(expectedRent.toString().replace(/[₹,]/g, '')) || 0;
-                    } else if (property.propertyType === 'commercial') {
-                        if (property.floorConfigurations && property.floorConfigurations.length > 0) {
-                            const firstFloor = property.floorConfigurations[0];
-                            if (firstFloor.dedicatedCabin && firstFloor.dedicatedCabin.seats && firstFloor.dedicatedCabin.pricePerSeat) {
-                                const seatsStr = firstFloor.dedicatedCabin.seats.toString();
-                                const pricePerSeatStr = firstFloor.dedicatedCabin.pricePerSeat.toString();
-                                const seatsMatch = seatsStr.match(/(\d+)/);
-                                const pricePerSeatMatch = pricePerSeatStr.match(/(\d+)/);
-                                if (seatsMatch && pricePerSeatMatch) {
-                                    const seatsLower = parseFloat(seatsMatch[1]);
-                                    const pricePerSeatLower = parseFloat(pricePerSeatMatch[1]);
-                                    originalPriceValue = seatsLower * pricePerSeatLower;
-                                }
-                            }
-                        }
-                    }
-                    const discountedPriceValue = originalPriceValue * 0.95;
-                    const formatPrice = (price) => {
-                        if (price === 0) return '₹XX';
-                        return `₹${Math.round(price).toLocaleString('en-IN')}`;
-                    };
-                    return {
-                        originalPrice: formatPrice(originalPriceValue),
-                        discountedPrice: formatPrice(discountedPriceValue)
-                    };
-                };
-
-                const calculatedPrices = calculatePrices(data.property);
+                const p = data.property;
                 const formattedProperty = {
-                    ...data.property,
-                    id: data.property._id || data.property.id,
-                    _id: data.property._id || data.property.id,
-                    position: data.property.position || data.property.coordinates || { lat: 28.6139, lng: 77.2090 },
-                    coordinates: data.property.coordinates || data.property.position || { lat: 28.6139, lng: 77.2090 },
-                    images: data.property.images && data.property.images.length > 0 ? data.property.images : ['/placeholder.png'],
-                    featuredImageUrl: data.property.featuredImageUrl || data.property.images?.[0] || '/placeholder.png',
-                    amenities: mapAmenitiesToObjects(data.property.amenities || []),
-                    nearbyPlaces: data.property.nearbyPlaces || { school: [], hospital: [], hotel: [], business: [] },
-                    floorPlans: data.property.floorPlans || {},
-                    propertyVideos: data.property.propertyVideos || [],
-                    seatLayoutPDFs: data.property.seatLayoutPDFs || [],
-                    ratings: data.property.ratings || {
-                        overall: 0,
-                        totalRatings: 0,
-                        breakdown: { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 },
-                        whatsGood: [],
-                        whatsBad: []
-                    },
-                    reviews: data.property.reviews || [],
-                    name: safeDisplay(data.property.name, 'Property Name'),
-                    address: safeDisplay(data.property.address, 'Address not available'),
-                    location: data.property.location || formatLocation(data.property.address),
-                    originalPrice: calculatedPrices.originalPrice,
-                    discountedPrice: calculatedPrices.discountedPrice,
-                    sellerPhoneNumber: data.property.sellerPhoneNumber || '+91 XXXXXXXXXX'
+                    ...p,
+                    id: String(p._id || p.id),
+                    _id: String(p._id || p.id),
+                    position: p.position || p.coordinates,
+                    coordinates: p.coordinates || p.position,
+                    amenities: p.amenities || []
                 };
 
                 setProperty(formattedProperty);
@@ -1191,19 +1151,19 @@ function PropertyDetailsContent() {
             'reviews': reviewsRef,
             'layout': layoutRef
         };
-
-        if (refs[sectionId]?.current) {
-            refs[sectionId].current.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
-        }
+        // Small delay so tab state updates before scroll
+        setTimeout(() => {
+            if (refs[sectionId]?.current) {
+                refs[sectionId].current.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        }, 50);
     };
 
     const openGallery = () => {
-        const imagesParam = encodeURIComponent(JSON.stringify(property.images));
-        const nameParam = encodeURIComponent(property.name);
-        router.push(`/gallery?images=${imagesParam}&name=${nameParam}`);
+        setShowAllPhotosModal(true);
     };
 
     // Show loading if property data is not yet loaded
@@ -1219,30 +1179,66 @@ function PropertyDetailsContent() {
         );
     }
 
-    const nearbyBanks = (property.nearbyPlaces?.bank || property.nearbyPlaces?.business || [])?.length > 0
-        ? (property.nearbyPlaces.bank || property.nearbyPlaces.business).slice(0, 5).map(p => ({ name: p.name || p, distance: p.distance || p.dist || "-" }))
-        : DUMMY_NEARBY_BANKS;
-    const dateAdded = property.createdAt ? new Date(property.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "15 July 2024";
+    // Schema: nearbyPlaces { banks, schools, hospitals, busStops, temples, atms, malls }
+    const categoryToSchemaKey = { school: "schools", bus: "busStops", hospital: "hospitals", bank: "banks", temple: "temples", atm: "atms", mall: "malls" };
+    const getNearbyByCategory = (cat) => {
+        const key = categoryToSchemaKey[cat] || cat;
+        const arr = property.nearbyPlaces?.[key] || property.nearbyPlaces?.[cat] || property.nearbyPlaces?.bank || property.nearbyPlaces?.business || [];
+        return Array.isArray(arr) ? arr.slice(0, 6).map(p => ({ name: p?.name || p, distance: p?.distance || p?.dist || "-" })) : [];
+    };
+    const dateAdded = (property.createdAt || property.uploadedDate) ? new Date(property.createdAt || property.uploadedDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : null;
+
+    // Rating & Reviews: use ratings schema (overall, totalRatings, breakdown); fallback to derived from reviews when missing
+    const ratingDisplay = (() => {
+        const reviews = property?.reviews && Array.isArray(property.reviews) ? property.reviews : [];
+        const r = property?.ratings || {};
+        let overall = r.overall ?? r.average;
+        let totalRatings = r.totalRatings ?? reviews.length;
+        let breakdown = r.breakdown && typeof r.breakdown === "object" ? { ...r.breakdown } : null;
+        if (reviews.length > 0 && (breakdown == null || totalRatings === 0)) {
+            const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+            reviews.forEach((rev) => {
+                const star = Math.min(5, Math.max(1, Number(rev.rating) || 0));
+                counts[star] = (counts[star] || 0) + 1;
+            });
+            breakdown = counts;
+            totalRatings = reviews.length;
+            if (overall == null || overall === 0) {
+                const sum = reviews.reduce((acc, rev) => acc + (Number(rev.rating) || 0), 0);
+                overall = reviews.length ? Math.round((sum / reviews.length) * 10) / 10 : 0;
+            }
+        }
+        return { overall: overall ?? 0, totalRatings: totalRatings || 0, breakdown: breakdown || { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
+    })();
+
+    // Schema: totalPrice, discountPercent, pricePerSeat, pricePerSqft, isNegotiablePrice
+    const { originalPrice, discountedPrice, originalPricePerSeat, discountedPricePerSeat, isNegotiablePrice } = calculatePrices(property);
 
     return (
-        <main className="property-details-compact min-h-screen bg-secondary">
+        <main className="property-details-compact min-h-screen bg-secondary pb-44 md:pb-0">
+            {/* Slider boundary banner - shows when prev/next at first/last slide */}
+            {sliderBanner.show && (
+                <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 rounded-lg bg-gray-900/90 text-white text-sm font-medium shadow-lg animate-fade-in" role="status">
+                    {sliderBanner.msg}
+                </div>
+            )}
             {/* Sticky Header - Desktop Only */}
             {showStickyHeader && (
                 <div className="hidden md:block fixed top-[48px] left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-t border-b border-gray-100 shadow-sm animate-fade-in">
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                                <h1 className="text-lg font-bold truncate">{safeDisplay(property.name)}</h1>
+                                <h1 className="text-lg font-bold truncate">{safeDisplay(property.propertyName || property.name)}</h1>
                                 <div className="inline-flex items-center rounded-lg border px-2.5 py-0.5 text-xs font-semibold bg-amber-100 text-amber-700 border-amber-200">
-                                    {property.ratings?.overall || 4.8} <Star className="h-3 w-3 ml-1 fill-current" />
+                                    {safeDisplay(property.ratings?.overall)} <Star className="h-3 w-3 ml-1 fill-current" />
                                 </div>
                                 <img src="https://cdn-icons-png.flaticon.com/512/5253/5253968.png" alt="Verified" className="w-5 h-5 object-contain" />
                             </div>
                         </div>
                         <div className="flex items-center gap-4 pl-8">
                             <div className="flex items-end gap-2">
-                                <p className="text-lg font-bold text-blue-600">{safeDisplay(property.discountedPrice)}</p>
-                                <p className="text-sm text-gray-400 line-through">{safeDisplay(property.originalPrice)}</p>
+                                <p className="text-lg font-bold text-blue-600">{safeDisplay(discountedPrice)}</p>
+                                <p className="text-sm text-gray-400 line-through">{safeDisplay(originalPrice)}</p>
                             </div>
                             <div className="flex items-center gap-2">
                                 <button
@@ -1272,9 +1268,9 @@ function PropertyDetailsContent() {
                         <ChevronRight className="h-4 w-4 mx-1" />
                         <Link href="/" className="hover:text-primary">Properties</Link>
                         <ChevronRight className="h-4 w-4 mx-1" />
-                        <span className="text-foreground font-medium truncate max-w-[200px]">{safeDisplay(property.name)}</span>
+                        <span className="text-foreground font-medium truncate max-w-[200px]">{safeDisplay(property.propertyName || property.name)}</span>
                     </div>
-                    <p className="text-muted-foreground">Date Added: <span className="font-medium text-foreground">{dateAdded}</span></p>
+                    <p className="text-muted-foreground">Date Added: <span className="font-medium text-foreground">{safeDisplay(dateAdded)}</span></p>
                 </div>
             </div>
 
@@ -1288,16 +1284,16 @@ function PropertyDetailsContent() {
                                 <div className="flex justify-between items-start">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2">
-                                            <h1 className="text-xl md:text-3xl font-bold">{safeDisplay(property.name)}</h1>
+                                            <h1 className="text-xl md:text-3xl font-bold">{safeDisplay(property.propertyName || property.name)}</h1>
                                             <div className="inline-flex items-center rounded-lg border px-2.5 py-0.5 text-xs font-semibold bg-amber-100 text-amber-700 border-amber-200">
-                                                {property.ratings?.overall || 4.8} <Star className="h-3 w-3 ml-1 fill-current" />
+                                                {safeDisplay(property.ratings?.overall)} <Star className="h-3 w-3 ml-1 fill-current" />
                                             </div>
                                             <img src="https://cdn-icons-png.flaticon.com/512/5253/5253968.png" alt="Verified" className="md:w-7 md:h-7 w-6 h-6" />
                                         </div>
                                         <div className="flex items-center gap-2 text-muted-foreground mt-2 text-sm md:text-base">
-                                            <MapPin className="h-4 w-4 text-muted-foreground" />
-                                            <p className="text-sm">{safeDisplay(property.location)}</p>
-                                            <button onClick={() => scrollToSection("location")} className="text-primary text-sm hover:underline">(View on Map)</button>
+                                            <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
+                                            <p className="text-sm">{safeDisplay(property.displayAddress || property.addressDisplay || property.location)}</p>
+                                            <button onClick={openGoogleMaps} className="text-primary text-sm hover:underline shrink-0">(View on Map)</button>
                                         </div>
                                     </div>
                                     <div className="hidden md:flex items-center gap-2">
@@ -1322,30 +1318,31 @@ function PropertyDetailsContent() {
                                     <div className="relative md:col-span-2 md:row-span-2 rounded-lg overflow-hidden group cursor-pointer aspect-[4/3] md:aspect-auto">
                                         <img
                                             src={property.images[currentImageIndex]}
-                                            alt={property.name}
+                                            alt={property.propertyName || property.name}
                                             className="w-full h-full object-cover transition-transform duration-300 cursor-pointer"
                                             onClick={() => setFullScreenImage(property.images[currentImageIndex])}
                                         />
                                     </div>
                                     <div className="relative md:col-span-1 md:row-span-1 rounded-lg overflow-hidden cursor-pointer aspect-[4/3] md:aspect-auto">
                                         <img src={property.images[1] || property.images[0]} alt="" className="w-full h-full object-cover" onClick={() => setFullScreenImage(property.images[1] || property.images[0])} />
-                                        {property.seatLayoutPDFs?.[0] && (
+                                        {((property.seatLayoutPDFs?.[0]?.url || property.seatLayoutPDFs?.[0]) || property.pdf) && (
                                             <div className="absolute top-2 right-2">
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        setPendingBrochureUrl(property.seatLayoutPDFs[0]);
-                                                        setShowDownloadBrochureModal(true);
-                                                        // setSelectedPDF(property.seatLayoutPDFs[0]) // User wants to keep logic but maybe just not use it for now
+                                                        const pdfObj = property.seatLayoutPDFs?.[0]
+                                                            ? (typeof property.seatLayoutPDFs[0] === 'string' ? { url: property.seatLayoutPDFs[0], originalName: 'Property Brochure' } : property.seatLayoutPDFs[0])
+                                                            : { url: property.pdf, originalName: 'Property Brochure' };
+                                                        setSelectedPDF(pdfObj);
                                                     }}
-                                                    className="rounded-lg h-auto px-2 py-1 text-xs bg-black/50 text-white hover:bg-black/70"
+                                                    className="rounded-lg h-auto px-2 py-1 text-xs bg-black/50 text-white hover:bg-black/70 flex items-center gap-1"
                                                 >
-                                                    <Download className="h-3 w-3 mr-1 inline" /> PDF FILE
+                                                    <Download className="h-3 w-3 shrink-0" /> PDF FILE
                                                 </button>
                                             </div>
                                         )}
                                     </div>
-                                    <div className="relative md:col-span-1 md:row-span-1 rounded-lg overflow-hidden cursor-pointer aspect-[4/3] md:aspect-auto" onClick={() => property.propertyVideos?.[0]?.url && window.open(property.propertyVideos[0].url, "_blank")}>
+                                    <div className="relative md:col-span-1 md:row-span-1 rounded-lg overflow-hidden cursor-pointer aspect-[4/3] md:aspect-auto" onClick={() => { const videoUrl = property.propertyVideos?.[0]?.url || property.video; if (videoUrl) { setShowVideoModal(true); } }}>
                                         <img src={property.propertyVideos?.[0]?.thumbnail || property.images[2] || property.images[0]} alt="" className="w-full h-full object-cover" />
                                         <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center">
                                             <CirclePlay className="h-12 w-12 text-white/80" />
@@ -1353,18 +1350,21 @@ function PropertyDetailsContent() {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex gap-2 pb-2 overflow-x-auto mt-2">
-                                    {property.images?.slice(0, 15).map((img, i) => (
-                                        <div key={i} className="relative h-20 w-28 rounded-md overflow-hidden shrink-0 cursor-pointer" onClick={() => setCurrentImageIndex(i)}>
-                                            <img src={img} alt="" className="w-full h-full object-cover" />
-                                            {i === 14 && property.images?.length > 15 && (
-                                                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white text-center p-1">
-                                                    <Camera className="h-6 w-6 mb-1" />
-                                                    <p className="text-xs font-semibold">Show all {property.images.length} photos</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
+                                <div className="flex gap-2 pb-2 overflow-x-auto mt-2 scrollbar-thin">
+                                    {property.images?.slice(0, 12).map((img, i) => {
+                                        const isShowAllCell = i === 11 && property.images.length > 12;
+                                        return (
+                                            <div key={i} className="relative h-20 w-28 rounded-md overflow-hidden shrink-0 cursor-pointer" onClick={() => isShowAllCell ? setShowAllPhotosModal(true) : setCurrentImageIndex(i)}>
+                                                <img src={img} alt="" className="w-full h-full object-cover" />
+                                                {isShowAllCell && (
+                                                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white text-center p-1">
+                                                        <Camera className="h-6 w-6 mb-1" />
+                                                        <p className="text-xs font-semibold">Show all {property.images.length} photos</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
 
@@ -1373,11 +1373,13 @@ function PropertyDetailsContent() {
                                 <div className="p-6">
                                     <div className="flex flex-col md:flex-row justify-between items-start gap-4">
                                         <div>
-                                            <h2 className="text-xl font-bold">{safeDisplay(property.name)}</h2>
-                                            <div className="flex items-end gap-2 mt-2">
-                                                <p className="text-2xl font-bold text-primary">{safeDisplay(property.discountedPrice)} <span className="text-sm font-normal text-muted-foreground">/ seat / month</span></p>
-                                                <p className="text-md text-muted-foreground line-through">{safeDisplay(property.originalPrice)}</p>
-                                                <p className="text-sm text-muted-foreground">(negotiable)</p>
+                                            <h2 className="text-xl font-bold">{safeDisplay(property.propertyName || property.name)}</h2>
+                                            <div className="flex items-end gap-2 mt-2 flex-wrap">
+                                                <p className="text-2xl font-bold text-primary">{safeDisplay(discountedPricePerSeat ?? discountedPrice)} <span className="text-sm font-normal text-muted-foreground">/ seat / month</span></p>
+                                                {(originalPricePerSeat ?? originalPrice) && (originalPricePerSeat ?? originalPrice) !== (discountedPricePerSeat ?? discountedPrice) && (
+                                                    <p className="text-md text-muted-foreground line-through">{safeDisplay(originalPricePerSeat ?? originalPrice)}</p>
+                                                )}
+                                                {isNegotiablePrice && <p className="text-sm text-muted-foreground">(negotiable)</p>}
                                             </div>
                                         </div>
                                         <div className="inline-flex items-center rounded-lg border font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 hover:bg-secondary/80 bg-green-100 border-green-200 text-green-700 text-sm py-2 px-4">
@@ -1388,53 +1390,56 @@ function PropertyDetailsContent() {
                                     <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
                                         <div className="flex items-center gap-4">
                                             <div className="bg-muted p-3 rounded-lg"><Building2 className="w-5 h-5 text-primary" /></div>
-                                            <div><p className="text-sm text-muted-foreground flex items-center">Property Type <Info className="h-3 w-3 ml-1" /></p><p className="font-bold">{safeDisplay(property.displayPropertyType || property.propertyType, "Tech Park")}</p></div>
+                                            <div><p className="text-sm text-muted-foreground flex items-center">Property Type <Info className="h-3 w-3 ml-1" /></p><p className="font-bold">{safeDisplay(property.displayPropertyType || property.propertyType)}</p></div>
                                         </div>
                                         <div className="flex items-center gap-4">
                                             <div className="bg-muted p-3 rounded-lg"><Armchair className="w-5 h-5 text-primary" /></div>
-                                            <div><p className="text-sm text-muted-foreground flex items-center">Furnishing level <Info className="h-3 w-3 ml-1" /></p><p className="font-bold">{safeDisplay(property.furnishing, "Ready to move-in")}</p></div>
+                                            <div><p className="text-sm text-muted-foreground flex items-center">Furnishing level <Info className="h-3 w-3 ml-1" /></p><p className="font-bold">{safeDisplay(property.furnishingLevel || property.furnishingStatus || property.furnishing)}</p></div>
                                         </div>
                                         <div className="flex items-center gap-4">
                                             <div className="bg-muted p-3 rounded-lg"><Building className="w-5 h-5 text-primary" /></div>
-                                            <div><p className="text-sm text-muted-foreground flex items-center">Building Lease <Info className="h-3 w-3 ml-1" /></p><p className="font-bold">Full Building / Partial Floors</p></div>
+                                            <div><p className="text-sm text-muted-foreground flex items-center">Building Lease <Info className="h-3 w-3 ml-1" /></p><p className="font-bold">{safeDisplay(property.buildingLease)}</p></div>
                                         </div>
                                         <div className="flex items-center gap-4">
                                             <div className="bg-muted p-3 rounded-lg"><Users className="w-5 h-5 text-primary" /></div>
-                                            <div><p className="text-sm text-muted-foreground flex items-center">Min. inventory unit <Info className="h-3 w-3 ml-1" /></p><p className="font-bold">{property.floorConfigurations?.[0]?.dedicatedCabin?.seats || "30"} seats ({property.floorConfigurations?.[0]?.dedicatedCabin?.areaSqft ? property.floorConfigurations[0].dedicatedCabin.areaSqft.toLocaleString() : "1,500"} sq. ft)</p></div>
+                                            <div><p className="text-sm text-muted-foreground flex items-center">Min. inventory unit <Info className="h-3 w-3 ml-1" /></p><p className="font-bold">{safeDisplay(property.minInventoryUnit)}</p></div>
                                         </div>
                                         <div className="flex items-center gap-4">
                                             <div className="bg-muted p-3 rounded-lg"><Users className="w-5 h-5 text-primary" /></div>
-                                            <div><p className="text-sm text-muted-foreground flex items-center">Max. inventory unit <Info className="h-3 w-3 ml-1" /></p><p className="font-bold">300 seats (15,000 sq. ft)</p></div>
+                                            <div><p className="text-sm text-muted-foreground flex items-center">Max. inventory unit <Info className="h-3 w-3 ml-1" /></p><p className="font-bold">{safeDisplay(property.maxInventoryUnit)}</p></div>
                                         </div>
                                         <div className="flex items-center gap-4">
                                             <div className="bg-muted p-3 rounded-lg"><User className="w-5 h-5 text-primary" /></div>
-                                            <div><p className="text-sm text-muted-foreground flex items-center">Single floor Capacity <Info className="h-3 w-3 ml-1" /></p><p className="font-bold">200 seats (10,000 sq. ft)</p></div>
+                                            <div><p className="text-sm text-muted-foreground flex items-center">Single floor Capacity <Info className="h-3 w-3 ml-1" /></p><p className="font-bold">{safeDisplay(property.singleFloorCapacity)}</p></div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Custom Infrastructure */}
-                            <div className="rounded-lg border bg-card shadow-sm" id="custom-infra">
-                                <div className="p-6"><h3 className="font-bold text-xl">Custom infrastructure possible in your Managed Office ✨</h3></div>
-                                <div className="border-t" />
-                                <div className="p-6 pt-6">
-                                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
-                                        {CUSTOM_INFRA_ITEMS.map((item, i) => (
-                                            <div key={i} className="flex flex-col items-center gap-2 p-4 rounded-lg bg-muted">
-                                                {item.icon === "users" && <Users className="h-8 w-8 text-primary" />}
-                                                {item.icon === "door-closed" && <DoorClosed className="h-8 w-8 text-primary" />}
-                                                {item.icon === "concierge-bell" && <ConciergeBell className="h-8 w-8 text-primary" />}
-                                                {item.icon === "coffee" && <Coffee className="h-8 w-8 text-primary" />}
-                                                {item.icon === "gamepad2" && <Gamepad2 className="h-8 w-8 text-primary" />}
-                                                <p className="font-semibold text-sm">{item.label}</p>
-                                            </div>
-                                        ))}
+                            {/* Custom Infrastructure - from schema */}
+                            {property.customInfrastructure && property.customInfrastructure.length > 0 && (
+                                <div className="rounded-lg border bg-card shadow-sm" id="custom-infra">
+                                    <div className="p-6"><h3 className="font-bold text-xl">Custom infrastructure possible in your Managed Office ✨</h3></div>
+                                    <div className="border-t" />
+                                    <div className="p-6 pt-6">
+                                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+                                            {property.customInfrastructure.map((item, i) => {
+                                                const name = typeof item === 'object' ? item?.name : item;
+                                                const id = typeof item === 'object' && item?.id != null ? item.id : (i + 1);
+                                                const iconSrc = `/custom-infrastructure/${id}.svg`;
+                                                return (
+                                                    <div key={`${name}-${i}`} className="flex flex-col items-center gap-2 p-4 rounded-lg bg-muted">
+                                                        <img src={iconSrc} alt={name} className="h-8 w-8 text-primary object-contain" />
+                                                        <p className="font-semibold text-sm">{name}</p>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            )}
 
-                            {/* Amenities */}
+                            {/* Amenities - from schema, Lucide icons */}
                             <div className="rounded-lg border theme-bg-card theme-shadow-sm" id="amenities">
                                 <div className="flex flex-col space-y-1.5 p-6">
                                     <h3 className="text-lg font-bold leading-none tracking-tight">Amenities</h3>
@@ -1442,32 +1447,24 @@ function PropertyDetailsContent() {
                                 <div data-orientation="horizontal" role="none" className="shrink-0 bg-border h-[1px] w-full" />
                                 <div className="p-6 pt-6">
                                     <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 gap-x-4 gap-y-6">
-                                        {DUMMY_AMENITIES.map((amenity, i) => (
-                                            <div key={i} className="flex flex-col items-center text-center gap-2">
-                                                <div className="flex items-center justify-center h-16 w-16 rounded-full bg-muted">
-                                                    {amenity.icon === "User" && <User className="h-8 w-8 text-primary" />}
-                                                    {amenity.icon === "BellRing" && <BellRing className="h-8 w-8 text-primary" />}
-                                                    {amenity.icon === "Package" && <Package className="h-8 w-8 text-primary" />}
-                                                    {amenity.icon === "Siren" && <Siren className="h-8 w-8 text-primary" />}
-                                                    {amenity.icon === "Video" && <Video className="h-8 w-8 text-primary" />}
-                                                    {amenity.icon === "KeyRound" && <KeyRound className="h-8 w-8 text-primary" />}
-                                                    {amenity.icon === "CupSoda" && <CupSoda className="h-8 w-8 text-primary" />}
-                                                    {amenity.icon === "Coffee" && <Coffee className="h-8 w-8 text-primary" />}
-                                                    {amenity.icon === "GlassWater" && <GlassWater className="h-8 w-8 text-primary" />}
-                                                    {amenity.icon === "Milk" && <Milk className="h-8 w-8 text-primary" />}
-                                                    {amenity.icon === "Clock" && <Clock className="h-8 w-8 text-primary" />}
-                                                    {amenity.icon === "Building" && <Building className="h-8 w-8 text-primary" />}
-                                                    {amenity.icon === "Trash2" && <Trash2 className="h-8 w-8 text-primary" />}
-                                                    {amenity.icon === "ShieldCheck" && <ShieldCheck className="h-8 w-8 text-primary" />}
+                                        {(property.amenities || []).map((amenity, i) => {
+                                            const name = typeof amenity === 'object' ? amenity?.name : amenity;
+                                            const id = typeof amenity === 'object' && amenity?.id != null ? amenity.id : (i + 1);
+                                            const iconSrc = `/amenities/${id}.svg`;
+                                            return (
+                                                <div key={`${name}-${i}`} className="flex flex-col items-center text-center gap-2">
+                                                    <div className="flex items-center justify-center h-16 w-16 rounded-full bg-muted">
+                                                        <img src={iconSrc} alt={name} className="h-8 w-8 text-primary object-contain" />
+                                                    </div>
+                                                    <p className="text-xs font-medium text-muted-foreground truncate w-full">{name}</p>
                                                 </div>
-                                                <p className="text-xs font-medium text-muted-foreground truncate w-full">{amenity.label}</p>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                         <div className="flex flex-col items-center gap-2">
-                                            <button className="flex items-center justify-center h-16 w-16 rounded-full bg-muted hover:bg-muted/80 transition-colors">
+                                            <button onClick={() => setShowAmenitiesModal(true)} className="flex items-center justify-center h-16 w-16 rounded-full bg-muted hover:bg-muted/80 transition-colors cursor-pointer">
                                                 <CirclePlus className="h-8 w-8 text-primary" />
                                             </button>
-                                            <button className="text-xs font-medium text-muted-foreground hover:underline truncate w-full">View All</button>
+                                            <button onClick={() => setShowAmenitiesModal(true)} className="text-xs font-medium text-muted-foreground hover:underline truncate w-full cursor-pointer">View All</button>
                                         </div>
                                     </div>
                                 </div>
@@ -1503,11 +1500,11 @@ function PropertyDetailsContent() {
                                         </div>
                                         <div className="flex items-start gap-3">
                                             <CircleParking className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                                            <div><p className="text-muted-foreground">Facilities</p><p className="font-semibold">{safeDisplay(property.facilities, "4W PARKING, 2W PARKING")}</p></div>
+                                            <div><p className="text-muted-foreground">Facilities</p><p className="font-semibold">{typeof property.facilities === 'string' ? property.facilities.trim() || '-' : (Array.isArray(property.facilities) ? property.facilities.map(f => f?.name || f).filter(Boolean).join(', ') || '-' : '-')}</p></div>
                                         </div>
                                         <div className="flex items-start gap-3">
                                             <User className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                                            <div><p className="text-muted-foreground">Builder Name</p><p className="font-semibold">{safeDisplay(property.builder || property.builderName, "A")}</p></div>
+                                            <div><p className="text-muted-foreground">Builder Name</p><p className="font-semibold">{safeDisplay(property.builderName || property.brandDetails?.name || property.builder, "A")}</p></div>
                                         </div>
                                         <div className="flex items-start gap-3">
                                             <Users className="h-5 w-5 text-primary mt-0.5 shrink-0" />
@@ -1530,7 +1527,7 @@ function PropertyDetailsContent() {
                                             <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500 shrink-0" /><span className="text-sm font-medium">Largest network of offices</span></li>
                                             <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500 shrink-0" /><span className="text-sm font-medium">Your own office consultant</span></li>
                                         </ul>
-                                        <button onClick={handleShowInterestModal} className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 shrink-0 w-full md:w-auto">Get Free Consultation</button>
+                                        <button onClick={() => handleShowInterestModal("consultation")} className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 shrink-0 w-full md:w-auto cursor-pointer">Get Free Consultation</button>
                                     </div>
                                 </div>
                             </div>
@@ -1538,22 +1535,22 @@ function PropertyDetailsContent() {
                             {/* Nearby Landmarks - matches provided HTML layout */}
                             <div id="nearby" className="rounded-lg border bg-card text-card-foreground shadow-sm">
                                 <div className="flex flex-col space-y-1.5 p-6">
-                                    <h3 className="text-lg font-bold leading-none tracking-tight">Nearby Landmarks - {safeDisplay(property.name)}</h3>
+                                    <h3 className="text-lg font-bold leading-none tracking-tight">Nearby Landmarks</h3>
                                 </div>
                                 <div className="shrink-0 bg-border h-[1px] w-full" />
                                 <div className="p-6 pt-6">
                                     <div className="relative h-60 w-full rounded-lg overflow-hidden mb-4">
                                         <img src="https://images.unsplash.com/photo-1577086664693-894d8405334a?w=800" alt="Map location" className="w-full h-full object-cover" />
                                         <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                                            <button className="bg-secondary text-secondary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-secondary/80">View on Map</button>
+                                            <button onClick={openGoogleMaps} className="bg-secondary text-secondary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 cursor-pointer">View on Map</button>
                                         </div>
                                     </div>
                                     <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
                                         {NEARBY_CATEGORIES.map((cat) => (
                                             <button
                                                 key={cat.id}
-                                                onClick={() => setActiveCategory(cat.id)}
-                                                className={`justify-center whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 flex items-center gap-2 shrink-0 ${activeCategory === cat.id
+                                                onClick={() => { setActiveCategory(categoryToSchemaKey[cat.id] || cat.id); setShowMoreNearby(false); }}
+                                                className={`justify-center whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 flex items-center gap-2 shrink-0 ${activeCategory === (categoryToSchemaKey[cat.id] || cat.id)
                                                     ? "bg-primary text-primary-foreground hover:bg-primary/90"
                                                     : "border border-input bg-background hover:bg-accent hover:text-accent-foreground"
                                                     }`}
@@ -1569,20 +1566,19 @@ function PropertyDetailsContent() {
                                             </button>
                                         ))}
                                     </div>
-                                    <h4 className="font-semibold mb-2 capitalize">
-                                        {NEARBY_CATEGORIES.find((c) => c.id === activeCategory)?.label || activeCategory} near {safeDisplay(property.name)}
-                                    </h4>
                                     <ul className="space-y-2">
-                                        {(activeCategory === "bank" ? nearbyBanks : activeCategory === "school" ? DUMMY_NEARBY_SCHOOLS : activeCategory === "hospital" ? DUMMY_NEARBY_HOSPITALS : activeCategory === "bus" ? DUMMY_NEARBY_BUS : activeCategory === "temple" ? DUMMY_NEARBY_TEMPLE : activeCategory === "atm" ? DUMMY_NEARBY_ATM : activeCategory === "mall" ? DUMMY_NEARBY_MALL : nearbyBanks).map((b, i) => (
+                                        {getNearbyByCategory(activeCategory).slice(0, showMoreNearby ? undefined : 3).map((b, i) => (
                                             <li key={i} className="flex justify-between p-2 rounded-md hover:bg-muted text-sm">
                                                 <span className="font-medium">{b.name}</span>
                                                 <span className="text-muted-foreground">{b.distance}</span>
                                             </li>
                                         ))}
                                     </ul>
-                                    <div className="text-center mt-4">
-                                        <button className="border border-input px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent hover:text-accent-foreground">View More</button>
-                                    </div>
+                                    {getNearbyByCategory(activeCategory).length > 3 && (
+                                        <div className="text-center mt-4">
+                                            <button onClick={() => setShowMoreNearby(!showMoreNearby)} className="border border-input px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent hover:text-accent-foreground cursor-pointer">{showMoreNearby ? 'View Less' : 'View More'}</button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -1594,26 +1590,34 @@ function PropertyDetailsContent() {
                                 <div data-orientation="horizontal" role="none" className="shrink-0 bg-border h-[1px] w-full" />
                                 <div className="p-6 space-y-4 pt-6">
                                     <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-4 p-4 border rounded-lg">
-                                        <div>
-                                            <button type="button" className="flex h-10 w-full items-center justify-between rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 hover:bg-accent hover:text-accent-foreground">
-                                                <span>Choose Starting Point (like office or kid&apos;s school)</span>
-                                                <ChevronDown className="h-4 w-4 opacity-50" />
-                                            </button>
+                                        <div className="relative">
+                                            <PlacesAutocompleteInput
+                                                value={travelOriginInput}
+                                                onChange={(v) => { setTravelOriginInput(v); if (!v) { setTravelOrigin(null); setTravelError(""); } }}
+                                                onSelect={handleTravelOriginSelect}
+                                                placeholder="Choose Starting Point (like office or kid's school)"
+                                                type="travel"
+                                                mapCenter={mapCenter}
+                                                className="w-full"
+                                            />
+                                            {travelError && (
+                                                <p className="text-xs text-red-500 mt-1">{travelError}</p>
+                                            )}
                                         </div>
-                                        <div className="flex items-center justify-center my-2 md:my-0">
-                                            <div className="hidden md:flex items-center gap-2 text-muted-foreground">
-                                                <div className="w-4 h-4 rounded-full border-2 border-primary" />
-                                                <div className="w-1 h-1 rounded-full bg-muted-foreground" />
-                                                <div className="w-1 h-1 rounded-full bg-muted-foreground" />
-                                                <div className="w-1 h-1 rounded-full bg-muted-foreground" />
-                                                <Car className="h-6 w-6 text-primary" />
-                                                <div className="w-1 h-1 rounded-full bg-muted-foreground" />
-                                                <div className="w-1 h-1 rounded-full bg-muted-foreground" />
-                                                <div className="w-1 h-1 rounded-full bg-muted-foreground" />
-                                                <div className="w-4 h-4 rounded-full border-2 border-primary" />
+                                        <div className="flex items-center justify-center my-2 md:my-0 shrink-0">
+                                            <div className="hidden md:flex items-center justify-center gap-0 min-w-[120px]">
+                                                <div className="w-3 h-3 rounded-full border-2 border-gray-800 dark:border-gray-200 bg-white shrink-0" aria-hidden />
+                                                <div className="flex-1 h-0 border-t border-dashed border-gray-400 min-w-[20px]" />
+                                                <div className="w-10 h-10 rounded-full border-2 border-gray-300 bg-white flex items-center justify-center shrink-0">
+                                                    <Car className="h-5 w-5 text-violet-600" />
+                                                </div>
+                                                <div className="flex-1 h-0 border-t border-dashed border-gray-400 min-w-[20px]" />
+                                                <div className="w-3 h-3 rounded-full border-2 border-gray-800 dark:border-gray-200 bg-white shrink-0" aria-hidden />
                                             </div>
-                                            <div className="md:hidden">
-                                                <ArrowDown className="h-6 w-6 text-muted-foreground" />
+                                            <div className="md:hidden flex items-center justify-center gap-1">
+                                                <div className="w-3 h-3 rounded-full border-2 border-gray-800 bg-white" />
+                                                <ArrowDown className="h-5 w-5 text-violet-600" />
+                                                <div className="w-3 h-3 rounded-full border-2 border-gray-800 bg-white" />
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2 p-2 border rounded-lg">
@@ -1621,15 +1625,58 @@ function PropertyDetailsContent() {
                                                 <img src={property.images?.[0] || "https://images.unsplash.com/photo-1556761175-b413da4baf72?w=96"} alt="" className="w-full h-full object-cover" />
                                             </div>
                                             <div>
-                                                <p className="font-semibold text-sm">{safeDisplay(property.name)}</p>
-                                                <p className="text-xs text-muted-foreground">{safeDisplay(property.address || property.location)}</p>
+                                                <p className="font-semibold text-sm">{safeDisplay(property.propertyName || property.name)}</p>
+                                                <p className="text-xs text-muted-foreground truncate max-w-[140px]">{safeDisplay(property.displayAddress || property.addressDisplay || property.location)}</p>
                                             </div>
                                         </div>
                                     </div>
-                                    <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full">
-                                        <CirclePlus className="mr-2 h-4 w-4" />
+                                    <button
+                                        type="button"
+                                        onClick={handleShowTravelTime}
+                                        disabled={travelLoading}
+                                        className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full disabled:opacity-60 disabled:cursor-not-allowed"
+                                    >
+                                        {travelLoading ? (
+                                            <span className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent" />
+                                        ) : (
+                                            <CirclePlus className="mr-2 h-4 w-4" />
+                                        )}
                                         Show Travel Time
                                     </button>
+                                    {travelResults.length > 0 && (
+                                        <div className="space-y-3">
+                                            {travelResults.map((r, idx) => (
+                                                <div key={idx} className="rounded-lg border bg-muted/30 p-4 space-y-3 relative">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setTravelResults((prev) => prev.filter((_, i) => i !== idx))}
+                                                        className="absolute top-2 right-2 p-1 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                                        aria-label="Remove travel time"
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </button>
+                                                    <div className="flex items-start gap-2 pr-8">
+                                                        <MapPin className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                                                        <p className="text-sm text-muted-foreground line-clamp-2">{r.originAddress}</p>
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-4">
+                                                        {r.driving && (
+                                                            <div className="flex items-center gap-2">
+                                                                <Car className="h-5 w-5 text-primary" />
+                                                                <span className="text-sm font-medium">{r.driving.duration.text} ({r.driving.distance.text})</span>
+                                                            </div>
+                                                        )}
+                                                        {r.walking && (
+                                                            <div className="flex items-center gap-2">
+                                                                <Footprints className="h-5 w-5 text-primary" />
+                                                                <span className="text-sm font-medium">{r.walking.duration.text} ({r.walking.distance.text})</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -1642,49 +1689,77 @@ function PropertyDetailsContent() {
                             {/* Interested Card - first so it aligns with property title */}
                             <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
                                 <div className="flex flex-col space-y-1.5 p-6">
-                                    <h3 className="font-bold tracking-tight text-base">Interested in {safeDisplay(property.name)}?</h3>
+                                    <h3 className="font-bold tracking-tight text-base">Interested in {safeDisplay(property.propertyName || property.name)}?</h3>
                                 </div>
                                 <div data-orientation="horizontal" role="none" className="shrink-0 bg-border h-[1px] w-full" />
                                 <div className="p-6 space-y-4 pt-6">
+                                    {(() => {
+                                        const agentName = property.agentDetails?.name || property.agentName || "Agent";
+                                        const agentPhone = property.agentDetails?.phone || property.agentPhone || "";
+                                        const agentEmail = property.agentDetails?.email || property.agentEmail || "";
+                                        const agentImage = property.agentImage || property.agentDetails?.image || "https://images.unsplash.com/photo-1531891437562-4301cf35b7e4?w=96";
+                                        const agentTag = property.agentDetails?.tag || "Buildersinfo Expert";
+                                        const agentTagline = property.agentDetails?.tagline || `${agentName}'s team assisted 500+ corporates in Bangalore to move into their new office.`;
+                                        const assistedLogos = property.agentDetails?.assistedCorporates || [];
+                                        return (
+                                    <>
                                     <div className="flex justify-between items-center gap-4">
                                         <div className="flex items-center gap-4">
                                             <div className="relative w-24 h-24 overflow-hidden rounded-lg">
-                                                <img src={property.agentImage || "https://images.unsplash.com/photo-1531891437562-4301cf35b7e4?w=96"} alt={property.agentName || "Rohit"} className="w-full h-full object-cover" />
+                                                <img src={agentImage} alt={agentName} className="w-full h-full object-cover" />
                                             </div>
-                                            <div>
-                                                <h3 className="font-semibold">Say Hi To {property.agentName || "Rohit"}</h3>
-                                                <p className="text-sm text-muted-foreground">{property.agentPhone || "+91 89*****896"}</p>
-                                                <span className="inline-flex items-center rounded-lg border px-2.5 py-0.5 text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground mt-1 font-medium">Buildersinfo Expert</span>
+                                            <div className="min-w-0 flex-1">
+                                                <h3 className="font-semibold">Say Hi To {agentName}</h3>
+                                                {agentPhone && (
+                                                    <a href={`tel:${agentPhone.replace(/[^0-9+]/g, '')}`} onClick={(e) => handlePhoneClick(e, agentPhone)} className="text-sm text-muted-foreground hover:text-primary block cursor-pointer">
+                                                        {(() => {
+                                                            const digits = agentPhone.replace(/[^0-9]/g, '');
+                                                            const num = digits.length >= 12 && digits.startsWith('91') ? digits.slice(2) : digits.slice(-10);
+                                                            if (num.length >= 4) {
+                                                                return `+91 ${num.slice(0, 2)}******${num.slice(-2)}`;
+                                                            }
+                                                            return agentPhone;
+                                                        })()}
+                                                    </a>
+                                                )}
+                                                {agentTag && (
+                                                    <span className="inline-flex items-center rounded-lg border px-2.5 py-0.5 text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground mt-1 font-medium">{agentTag}</span>
+                                                )}
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
-                                            <button onClick={handleCall} className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border hover:text-accent-foreground h-9 w-9 rounded-full bg-green-100 border-green-200 text-green-600 hover:bg-green-200"><Phone className="h-4 w-4" /></button>
-                                            <button onClick={handleMessage} className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border hover:text-accent-foreground h-9 w-9 rounded-full bg-green-100 border-green-200 text-green-600 hover:bg-green-200"><Mail className="h-4 w-4" /></button>
-                                            <button onClick={handleWhatsApp} className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border hover:text-accent-foreground h-9 w-9 rounded-full bg-green-100 border-green-200 text-green-600 hover:bg-green-200"><img src="/property-details/whatsapp.png" alt="WhatsApp" className="h-4 w-4" /></button>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            {agentPhone && (
+                                                <a href={`tel:${agentPhone.replace(/[^0-9+]/g, '')}`} onClick={(e) => handlePhoneClick(e, agentPhone)} className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-green-100 border border-green-200 text-green-600 hover:bg-green-200 cursor-pointer" title="Call"><Phone className="h-4 w-4" /></a>
+                                            )}
+                                            {agentEmail && (
+                                                <a href={`mailto:${agentEmail}`} onClick={(e) => handleEmailClick(e, agentEmail, `Inquiry: ${property.propertyName || property.name || ''}`)} className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-green-100 border border-green-200 text-green-600 hover:bg-green-200 cursor-pointer" title="Email"><Mail className="h-4 w-4" /></a>
+                                            )}
+                                            {(property.agentDetails?.whatsapp || agentPhone) && (
+                                                <a href={`https://wa.me/${(property.agentDetails?.whatsapp || agentPhone).replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${encodeURIComponent(property.propertyName || property.name)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-green-100 border border-green-200 text-green-600 hover:bg-green-200" title="WhatsApp"><img src="/property-details/whatsapp.png" alt="WhatsApp" className="h-4 w-4" /></a>
+                                            )}
                                         </div>
                                     </div>
-                                    <button onClick={handleShowInterestModal} className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full">Contact {property.agentName || "Rohit"}</button>
+                                    <button onClick={(e) => agentPhone && handlePhoneClick(e, agentPhone)} className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer h-10 px-4 py-2 w-full">Contact {agentName}</button>
                                     <div data-orientation="horizontal" role="none" className="shrink-0 bg-border h-[1px] w-full" />
                                     <div className="theme-bg-tertiary p-4 rounded-lg -m-2">
-                                        <p className="text-sm text-center text-muted-foreground mb-4">{(property.agentName || "Rohit")}&apos;s team assisted 500+ corporates in Bangalore to move into their new office.</p>
+                                        <p className="text-sm text-center text-muted-foreground mb-4">{agentTagline}</p>
                                         <div className="flex justify-around items-center flex-wrap gap-4">
-                                            <div className="relative h-12 w-12 rounded-lg overflow-hidden">
-                                                <img alt="Google logo" src="https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=96" className="w-full h-full object-cover" />
-                                            </div>
-                                            <div className="relative h-12 w-12 rounded-lg overflow-hidden">
-                                                <img alt="Facebook logo" src="https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=96" className="w-full h-full object-cover" />
-                                            </div>
-                                            <div className="relative h-12 w-12 rounded-lg overflow-hidden">
-                                                <img alt="Netflix logo" src="https://images.unsplash.com/photo-1611162618071-b39a2ec055fb?w=96" className="w-full h-full object-cover" />
-                                            </div>
-                                            <div className="relative h-12 w-12 rounded-lg overflow-hidden">
-                                                <img alt="Amazon logo" src="https://images.unsplash.com/photo-1529612700005-e35377bf1415?w=96" className="w-full h-full object-cover" />
-                                            </div>
-                                            <div className="relative h-12 w-12 rounded-lg overflow-hidden">
-                                                <img alt="Instagram logo" src="https://images.unsplash.com/photo-1620288627223-53302f4e8c74?w=96" className="w-full h-full object-cover" />
-                                            </div>
+                                            {(assistedLogos.length > 0 ? assistedLogos : [
+                                                "https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=96",
+                                                "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=96",
+                                                "https://images.unsplash.com/photo-1611162618071-b39a2ec055fb?w=96",
+                                                "https://images.unsplash.com/photo-1529612700005-e35377bf1415?w=96",
+                                                "https://images.unsplash.com/photo-1620288627223-53302f4e8c74?w=96"
+                                            ]).slice(0, 5).map((src, i) => (
+                                                <div key={i} className="relative h-12 w-12 rounded-lg overflow-hidden">
+                                                    <img alt="Client" src={typeof src === 'string' ? src : src?.url || src} className="w-full h-full object-cover" />
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
+                                    </>
+                                    );
+                                    })()}
                                 </div>
                             </div>
                             {/* Why Clients Choose Us */}
@@ -1723,7 +1798,7 @@ function PropertyDetailsContent() {
                                             </div>
                                         </li>
                                     </ul>
-                                    <button onClick={handleCall} className="inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 rounded-lg px-8 w-full bg-accent hover:bg-accent/90 text-accent-foreground font-bold h-14 text-base">
+                                    <button onClick={() => handleShowInterestModal("callback")} className="inline-flex items-center justify-center gap-2 whitespace-nowrap ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 rounded-lg px-8 w-full bg-accent hover:bg-accent/90 text-accent-foreground font-bold h-14 text-base cursor-pointer">
                                         <Phone className="mr-2 h-5 w-5" />
                                         Request More Information or a Callback
                                     </button>
@@ -1738,9 +1813,9 @@ function PropertyDetailsContent() {
                                 <div data-orientation="horizontal" role="none" className="shrink-0 bg-border h-[1px] w-full" />
                                 <div className="p-6 pt-6">
                                     <div className="flex items-center gap-4 mb-4">
-                                        <img alt={`${safeDisplay(property.builder || property.builderName || property.name)} Logo`} src={property.brandLogo || "https://cdn-icons-png.flaticon.com/512/90/90830.png"} className="w-10 h-10 object-contain" />
+                                        <img alt={`${safeDisplay(property.builderName || property.brandDetails?.name || property.builder || property.propertyName)} Logo`} src={property.brandDetails?.logo || property.brandLogo || "https://cdn-icons-png.flaticon.com/512/90/90830.png"} className="w-10 h-10 object-contain" />
                                         <div>
-                                            <h3 className="text-xl font-bold">{safeDisplay(property.builder || property.builderName || property.name)}</h3>
+                                            <h3 className="text-xl font-bold">{safeDisplay(property.builderName || property.brandDetails?.name || property.builder || property.propertyName)}</h3>
                                             <p className="text-sm font-semibold text-muted-foreground">WORKSPACE</p>
                                         </div>
                                     </div>
@@ -1776,31 +1851,41 @@ function PropertyDetailsContent() {
                                     </div>
                                     <p className="text-sm text-muted-foreground mb-4">
                                         {showBrandDescription
-                                            ? `${safeDisplay(property.builder || property.builderName || property.name)} Workspace, established in 2014, specializes in providing Zero CapEx, Enterprise Grade, Customized managed office spaces. With 26+ locations in Bangalore and an expansion to Mumbai, ${safeDisplay(property.builder || property.builderName || property.name)}'s flagship HSR campus is the largest in India, offering over 8,000 seats... `
-                                            : `${safeDisplay(property.builder || property.builderName || property.name)} Workspace, established in 2014, specializes in providing Zero CapEx, Enterprise Grade, Customized managed office spaces. `
+                                            ? `${safeDisplay(property.builderName || property.brandDetails?.name || property.builder || property.propertyName)} Workspace, established in 2014, specializes in providing Zero CapEx, Enterprise Grade, Customized managed office spaces. With 26+ locations in Bangalore and an expansion to Mumbai, ${safeDisplay(property.builderName || property.brandDetails?.name || property.builder || property.propertyName)}'s flagship HSR campus is the largest in India, offering over 8,000 seats... `
+                                            : `${safeDisplay(property.builderName || property.brandDetails?.name || property.builder || property.propertyName)} Workspace, established in 2014, specializes in providing Zero CapEx, Enterprise Grade, Customized managed office spaces. `
                                         }
                                         <button type="button" onClick={() => setShowBrandDescription(!showBrandDescription)} className="inline-flex items-center p-0 h-auto text-primary text-sm underline-offset-4 hover:underline font-medium">
                                             {showBrandDescription ? "Read less" : "Read more"}
                                         </button>
                                     </p>
-                                    <button onClick={handleShowInterestModal} className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full">
-                                        Interested in {safeDisplay(property.builder || property.builderName || property.name)} Workspace? Connect with us
+                                    <button onClick={() => handleShowInterestModal("brand")} className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full cursor-pointer">
+                                        Interested in {safeDisplay(property.builderName || property.brandDetails?.name || property.builder || property.propertyName)} Workspace? Connect with us
                                         <ArrowRight className="h-4 w-4 ml-2" />
                                     </button>
                                 </div>
                             </div>
                             {/* Floor Plan */}
-                            {property.floorPlans?.[selectedCapacity]?.[0] && (
-                                <div className="rounded-lg border bg-card shadow-sm">
-                                    <div className="p-6"><h3 className="text-lg font-bold">Floor Plan</h3></div>
-                                    <div className="border-t" />
-                                    <div className="p-6">
-                                        <div className="aspect-[4/3] rounded-lg overflow-hidden border">
-                                            <img src={property.floorPlans[selectedCapacity][0]} alt="Floor plan" className="w-full h-full object-contain p-4" />
-                                        </div>
+                            <div className="rounded-lg border bg-card shadow-sm">
+                                <div className="p-6"><h3 className="text-lg font-bold">Floor Plan</h3></div>
+                                <div className="border-t" />
+                                <div className="p-6">
+                                    <div className="relative w-full rounded-lg overflow-hidden border bg-gray-50" style={{ aspectRatio: '4/3', minHeight: 200 }}>
+                                        <Image
+                                            src={
+                                                (typeof property.floorPlan === 'string' && property.floorPlan.trim())
+                                                    ? (property.floorPlan.startsWith('http') ? property.floorPlan : `https://admin.buildersinfo.in${property.floorPlan.startsWith('/') ? property.floorPlan : '/' + property.floorPlan}`)
+                                                    : 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=800'
+                                            }
+                                            alt="Floor plan"
+                                            fill
+                                            className="object-contain p-4 cursor-pointer hover:opacity-90 transition-opacity"
+                                            onClick={(e) => setFullScreenImage(e.currentTarget.src)}
+                                            unoptimized
+                                            sizes="(max-width: 400px) 100vw, 400px"
+                                        />
                                     </div>
                                 </div>
-                            )}
+                            </div>
                             {/* Opening Hours */}
                             <div className="rounded-lg border theme-bg-card theme-shadow-sm">
                                 <div className="flex flex-col space-y-1.5 p-6">
@@ -1841,49 +1926,36 @@ function PropertyDetailsContent() {
                                 <div data-orientation="horizontal" role="none" className="shrink-0 bg-border h-[1px] w-full" />
                                 <div className="p-4 space-y-4">
                                     <div className="relative">
-                                        <div className="relative" role="region" aria-roledescription="carousel">
-                                            <div className="overflow-hidden">
-                                                <div ref={dateCarouselRef} className="flex gap-2 overflow-x-auto overflow-y-hidden pb-2 scrollbar-hide -ml-2" style={{ scrollSnapType: "x mandatory" }}>
-                                                    {tourDates.map((date, i) => {
-                                                        const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-                                                        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-                                                        const dateStr = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-                                                        const selectedStr = `${selectedTourDate.getFullYear()}-${selectedTourDate.getMonth()}-${selectedTourDate.getDate()}`;
-                                                        const isSelected = dateStr === selectedStr;
-                                                        return (
-                                                            <div key={i} role="group" aria-roledescription="slide" className="min-w-0 shrink-0 grow-0 basis-1/4 pl-2" style={{ scrollSnapAlign: "start" }}>
-                                                                <div
-                                                                    onClick={() => setSelectedTourDate(date)}
-                                                                    className={`p-2 border rounded-lg text-center cursor-pointer transition-colors ${isSelected ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted"}`}
-                                                                >
-                                                                    <p className="text-xs">{dayNames[date.getDay()]}</p>
-                                                                    <p className="font-bold text-lg">{date.getDate()}</p>
-                                                                    <p className="text-xs">{monthNames[date.getMonth()]}</p>
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => scrollDateCarousel("prev")}
-                                                disabled={!canScrollPrev}
-                                                className="inline-flex items-center justify-center absolute left-2 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full border border-input bg-background hover:bg-accent hover:text-accent-foreground disabled:opacity-50 transition-colors"
-                                            >
-                                                <ArrowLeft className="h-4 w-4" />
-                                                <span className="sr-only">Previous slide</span>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => scrollDateCarousel("next")}
-                                                disabled={!canScrollNext}
-                                                className="inline-flex items-center justify-center absolute right-2 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full border border-input bg-background hover:bg-accent hover:text-accent-foreground disabled:opacity-50 transition-colors"
-                                            >
-                                                <ArrowRight className="h-4 w-4" />
-                                                <span className="sr-only">Next slide</span>
-                                            </button>
-                                        </div>
+                                        <Swiper
+                                            modules={[Navigation]}
+                                            navigation={{ prevEl: ".tour-dates-prev", nextEl: ".tour-dates-next" }}
+                                            spaceBetween={8}
+                                            slidesPerView={4}
+                                            slidesPerGroup={2}
+                                            className="w-full"
+                                        >
+                                            {tourDates.map((date, i) => {
+                                                const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+                                                const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                                                const dateStr = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+                                                const selectedStr = `${selectedTourDate.getFullYear()}-${selectedTourDate.getMonth()}-${selectedTourDate.getDate()}`;
+                                                const isSelected = dateStr === selectedStr;
+                                                return (
+                                                    <SwiperSlide key={i}>
+                                                        <div
+                                                            onClick={() => setSelectedTourDate(date)}
+                                                            className={`p-2 border rounded-lg text-center cursor-pointer transition-colors ${isSelected ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted"}`}
+                                                        >
+                                                            <p className="text-xs">{dayNames[date.getDay()]}</p>
+                                                            <p className="font-bold text-lg">{date.getDate()}</p>
+                                                            <p className="text-xs">{monthNames[date.getMonth()]}</p>
+                                                        </div>
+                                                    </SwiperSlide>
+                                                );
+                                            })}
+                                        </Swiper>
+                                        <button type="button" onClick={(e) => handleSliderNavClick(e, true)} className="tour-dates-prev swiper-nav-btn absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full border border-input bg-background hover:bg-accent flex items-center justify-center cursor-pointer"><ArrowLeft className="h-4 w-4" /></button>
+                                        <button type="button" onClick={(e) => handleSliderNavClick(e, false)} className="tour-dates-next swiper-nav-btn absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full border border-input bg-background hover:bg-accent flex items-center justify-center cursor-pointer"><ArrowRight className="h-4 w-4" /></button>
                                     </div>
                                     <div>
                                         <p className="font-semibold mb-2 text-sm">Tour Type</p>
@@ -1909,12 +1981,13 @@ function PropertyDetailsContent() {
                                     <div className="relative" ref={timeDropdownRef}>
                                         <button
                                             type="button"
-                                            onClick={(e) => { e.stopPropagation(); setShowTimeDropdown(!showTimeDropdown); }}
-                                            className="flex h-10 w-full items-center justify-between rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                                            onClick={(e) => { e.stopPropagation(); setShowTimeDropdown(!showTimeDropdown); setTourFormErrors((p) => ({ ...p, tourTime: '' })); }}
+                                            className={`flex h-10 w-full items-center justify-between rounded-lg border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors ${tourFormErrors.tourTime ? 'border-red-500' : 'border-input'}`}
                                         >
                                             <span className={selectedTourTime ? "" : "text-muted-foreground"}>{selectedTourTime || "Time"}</span>
                                             <ChevronDown className={`h-4 w-4 opacity-50 transition-transform ${showTimeDropdown ? "rotate-180" : ""}`} />
                                         </button>
+                                        {tourFormErrors.tourTime && <p className="text-xs text-red-500 mt-0.5">{tourFormErrors.tourTime}</p>}
                                         {showTimeDropdown && (
                                             <div className="absolute top-full left-0 right-0 mt-1 z-20 max-h-48 overflow-y-auto rounded-lg border border-input bg-background shadow-lg">
                                                 {TOUR_TIME_SLOTS.map((slot) => (
@@ -1931,41 +2004,59 @@ function PropertyDetailsContent() {
                                         )}
                                     </div>
                                     <form className="space-y-3" onSubmit={handleTourSubmit}>
-                                        <input
-                                            className="flex h-10 w-full rounded-lg border border-input bg-card px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                                            placeholder="Name"
-                                            value={tourFormData.name}
-                                            onChange={(e) => setTourFormData((p) => ({ ...p, name: e.target.value }))}
-                                        />
+                                        {tourFormErrors.submit && (
+                                            <p className="text-xs text-red-500">{tourFormErrors.submit}</p>
+                                        )}
+                                        <div>
+                                            <input
+                                                name="name"
+                                                className={`flex h-10 w-full rounded-lg border bg-card px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${tourFormErrors.name ? 'border-red-500' : 'border-input'}`}
+                                                placeholder="Name"
+                                                value={tourFormData.name}
+                                                onChange={(e) => { setTourFormData((p) => ({ ...p, name: e.target.value })); setTourFormErrors((p) => ({ ...p, name: '' })); }}
+                                            />
+                                            {tourFormErrors.name && <p className="text-xs text-red-500 mt-0.5">{tourFormErrors.name}</p>}
+                                        </div>
                                         <input
                                             className="flex h-10 w-full rounded-lg border border-input bg-card px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                             placeholder="Phone"
                                             value={tourFormData.phone}
                                             onChange={(e) => setTourFormData((p) => ({ ...p, phone: e.target.value }))}
                                         />
-                                        <input
-                                            className="flex h-10 w-full rounded-lg border border-input bg-card px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                                            placeholder="Email"
-                                            type="email"
-                                            value={tourFormData.email}
-                                            onChange={(e) => setTourFormData((p) => ({ ...p, email: e.target.value }))}
-                                        />
+                                        <div>
+                                            <input
+                                                name="email"
+                                                className={`flex h-10 w-full rounded-lg border bg-card px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${tourFormErrors.email ? 'border-red-500' : 'border-input'}`}
+                                                placeholder="Email"
+                                                type="email"
+                                                value={tourFormData.email}
+                                                onChange={(e) => { setTourFormData((p) => ({ ...p, email: e.target.value })); setTourFormErrors((p) => ({ ...p, email: '' })); }}
+                                            />
+                                            {tourFormErrors.email && <p className="text-xs text-red-500 mt-0.5">{tourFormErrors.email}</p>}
+                                        </div>
                                         <textarea
                                             className="flex min-h-[80px] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                             placeholder="Enter your Message"
                                             value={tourFormData.message}
                                             onChange={(e) => setTourFormData((p) => ({ ...p, message: e.target.value }))}
                                         />
-                                        <button
-                                            type="submit"
-                                            disabled={isSubmittingTour}
-                                            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full transition-colors disabled:opacity-50"
-                                        >
-                                            {isSubmittingTour ? "Submitting..." : "Submit a Tour Request"}
-                                        </button>
-                                        <button type="button" className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full transition-colors">
-                                            BOOK YOUR VIDEO TOUR NOW
-                                        </button>
+                                        {tourType === "in-person" ? (
+                                            <button
+                                                type="submit"
+                                                disabled={isSubmittingTour}
+                                                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full transition-colors disabled:opacity-50"
+                                            >
+                                                {isSubmittingTour ? "Submitting..." : "Submit a Tour Request"}
+                                            </button>
+                                        ) : (
+                                            <button
+                                                type="submit"
+                                                disabled={isSubmittingTour}
+                                                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full transition-colors disabled:opacity-50"
+                                            >
+                                                {isSubmittingTour ? "Submitting..." : "BOOK YOUR VIDEO TOUR NOW"}
+                                            </button>
+                                        )}
                                     </form>
                                 </div>
                             </div>
@@ -1989,35 +2080,33 @@ function PropertyDetailsContent() {
                                 <div data-orientation="horizontal" role="none" className="shrink-0 bg-border h-[1px] w-full" />
                                 <div className="p-6 space-y-8 pt-6">
                                     <div>
-                                        <p className="text-sm mb-4">Overall rating based on {property?.reviews?.length || 0} reviews.</p>
+                                        <p className="text-sm mb-4">Overall rating based on {ratingDisplay.totalRatings} reviews.</p>
                                         <div className="grid grid-cols-1 gap-6">
                                             <div className="flex flex-col items-center justify-center">
-                                                <p className="text-4xl font-bold">{property?.ratings?.average || 0}</p>
+                                                <p className="text-4xl font-bold">{ratingDisplay.overall}</p>
                                                 <div className="flex items-center">
                                                     {[1, 2, 3, 4, 5].map((star) => (
-                                                        <Star key={star} className={`w-5 h-5 ${star <= (property?.ratings?.average || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+                                                        <Star key={star} className={`w-5 h-5 ${star <= Math.round(ratingDisplay.overall) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
                                                     ))}
                                                 </div>
-                                                <p className="text-sm text-muted-foreground mt-1">{property?.reviews?.length || 0} ratings</p>
+                                                <p className="text-sm text-muted-foreground mt-1">{ratingDisplay.totalRatings} ratings</p>
                                             </div>
-                                            {property?.ratings && (
-                                                <div>
-                                                    {[5, 4, 3, 2, 1].map((star) => {
-                                                        const count = property.ratings[`star${star}`] || 0;
-                                                        const total = property.reviews?.length || 1;
-                                                        const percentage = Math.round((count / total) * 100);
-                                                        return (
-                                                            <div key={star} className="flex items-center gap-3">
-                                                                <span className="text-sm w-16 whitespace-nowrap flex-shrink-0">{star} star</span>
-                                                                <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden leading-none">
-                                                                    <div className="h-full bg-yellow-400" style={{ width: `${percentage}%` }} />
-                                                                </div>
-                                                                <span className="text-sm w-10 text-right flex-shrink-0">{percentage}%</span>
+                                            <div>
+                                                {[5, 4, 3, 2, 1].map((star) => {
+                                                    const count = ratingDisplay.breakdown[star] ?? ratingDisplay.breakdown[String(star)] ?? 0;
+                                                    const total = ratingDisplay.totalRatings || 1;
+                                                    const percentage = Math.round((count / total) * 100);
+                                                    return (
+                                                        <div key={star} className="flex items-center gap-3">
+                                                            <span className="text-sm w-16 whitespace-nowrap flex-shrink-0">{star} star</span>
+                                                            <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden leading-none">
+                                                                <div className="h-full bg-yellow-400" style={{ width: `${percentage}%` }} />
                                                             </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            )}
+                                                            <span className="text-sm w-10 text-right flex-shrink-0">{percentage}%</span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
                                     </div>
                                     <div data-orientation="horizontal" role="none" className="shrink-0 bg-border h-[1px] w-full" />
@@ -2032,54 +2121,58 @@ function PropertyDetailsContent() {
                                         </div>
                                         {property?.reviews && property.reviews.length > 0 ? (
                                             <div className="relative w-full">
-                                                <div className="overflow-hidden">
-                                                    <div className="flex -ml-4 transition-transform duration-300" style={{ transform: `translate3d(${-reviewCarouselIndex * 100}%, 0px, 0px)` }}>
-                                                        {property.reviews.slice(0, 5).map((review, idx) => (
-                                                            <div key={review._id || idx} role="group" aria-roledescription="slide" className="min-w-0 shrink-0 grow-0 basis-full pl-4">
-                                                                <div className="p-1">
-                                                                    <div className="rounded-lg bg-card text-card-foreground shadow-sm border">
-                                                                        <div className="p-4 space-y-3">
-                                                                            <div className="flex justify-between items-start">
-                                                                                <div className="flex items-center gap-3">
-                                                                                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                                                                                        <UserCheck className="w-6 h-6 text-primary" />
-                                                                                    </div>
-                                                                                    <div>
-                                                                                        <p className="font-semibold text-sm truncate max-w-[120px]">{safeDisplay(review.user)}</p>
-                                                                                        <p className="text-[10px] text-muted-foreground">{safeDisplay(review.date)}</p>
-                                                                                    </div>
+                                                <Swiper
+                                                    modules={[Navigation]}
+                                                    navigation={{ prevEl: ".reviews-prev", nextEl: ".reviews-next" }}
+                                                    spaceBetween={16}
+                                                    slidesPerView={1}
+                                                    className="w-full -mx-4 px-4"
+                                                >
+                                                    {property.reviews.slice(0, 5).map((review, idx) => (
+                                                        <SwiperSlide key={review._id || idx}>
+                                                            <div className="p-1">
+                                                                <div className="rounded-lg bg-card text-card-foreground shadow-sm border">
+                                                                    <div className="p-4 space-y-3">
+                                                                        <div className="flex justify-between items-start">
+                                                                            <div className="flex items-center gap-3">
+                                                                                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                                                                                    <UserCheck className="w-6 h-6 text-primary" />
                                                                                 </div>
-                                                                                <span className="inline-flex items-center rounded-lg border px-2 py-0.5 text-xs font-semibold bg-green-100 text-green-800 border-green-200">{review.rating} <Star className="h-3 w-3 ml-1 fill-current" /></span>
+                                                                                <div>
+                                                                                    <p className="font-semibold text-sm truncate max-w-[120px]">{safeDisplay(review.user)}</p>
+                                                                                    <p className="text-[10px] text-muted-foreground">{safeDisplay(review.date)}</p>
+                                                                                </div>
                                                                             </div>
-                                                                            <div className="space-y-2">
-                                                                                {review.goodThings && (
-                                                                                    <div>
-                                                                                        <h4 className="font-semibold text-[11px] flex items-center gap-1.5"><CircleCheckBig className="h-3 w-3 text-green-500" /> Good things here</h4>
-                                                                                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{review.goodThings}</p>
-                                                                                    </div>
-                                                                                )}
-                                                                                {review.badThings && (
-                                                                                    <div>
-                                                                                        <h4 className="font-semibold text-[11px] flex items-center gap-1.5"><Wrench className="h-3 w-3 text-orange-500" /> Things to improve</h4>
-                                                                                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{review.badThings}</p>
-                                                                                    </div>
-                                                                                )}
-                                                                                {!review.goodThings && !review.badThings && review.comment && (
-                                                                                    <p className="text-xs text-muted-foreground line-clamp-2">{review.comment}</p>
-                                                                                )}
-                                                                                <button onClick={() => setShowReviewsModal(true)} className="text-primary text-[11px] font-medium hover:underline cursor-pointer">read more</button>
-                                                                            </div>
+                                                                            <span className="inline-flex items-center rounded-lg border px-2 py-0.5 text-xs font-semibold bg-green-100 text-green-800 border-green-200">{review.rating} <Star className="h-3 w-3 ml-1 fill-current" /></span>
+                                                                        </div>
+                                                                        <div className="space-y-2">
+                                                                            {review.goodThings && (
+                                                                                <div>
+                                                                                    <h4 className="font-semibold text-[11px] flex items-center gap-1.5"><CircleCheckBig className="h-3 w-3 text-green-500" /> Good things here</h4>
+                                                                                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{review.goodThings}</p>
+                                                                                </div>
+                                                                            )}
+                                                                            {review.badThings && (
+                                                                                <div>
+                                                                                    <h4 className="font-semibold text-[11px] flex items-center gap-1.5"><Wrench className="h-3 w-3 text-orange-500" /> Things to improve</h4>
+                                                                                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{review.badThings}</p>
+                                                                                </div>
+                                                                            )}
+                                                                            {!review.goodThings && !review.badThings && review.comment && (
+                                                                                <p className="text-xs text-muted-foreground line-clamp-2">{review.comment}</p>
+                                                                            )}
+                                                                            <button onClick={() => setShowReviewsModal(true)} className="text-primary text-[11px] font-medium hover:underline cursor-pointer">read more</button>
                                                                         </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
+                                                        </SwiperSlide>
+                                                    ))}
+                                                </Swiper>
                                                 {property.reviews.length > 1 && (
                                                     <>
-                                                        <button onClick={() => setReviewCarouselIndex(Math.max(0, reviewCarouselIndex - 1))} disabled={reviewCarouselIndex === 0} className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8 rounded-full absolute -left-4 top-1/2 -translate-y-1/2 z-10 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" aria-label="Previous slide"><ChevronLeft className="h-4 w-4" /></button>
-                                                        <button onClick={() => setReviewCarouselIndex(Math.min(Math.min(4, property.reviews.length - 1), reviewCarouselIndex + 1))} disabled={reviewCarouselIndex >= Math.min(4, property.reviews.length - 1)} className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8 rounded-full absolute -right-4 top-1/2 -translate-y-1/2 z-10 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" aria-label="Next slide"><ChevronRight className="h-4 w-4" /></button>
+                                                        <button type="button" onClick={(e) => handleSliderNavClick(e, true)} className="reviews-prev swiper-nav-btn inline-flex items-center justify-center h-8 w-8 rounded-full border border-input bg-background hover:bg-accent absolute -left-4 top-1/2 -translate-y-1/2 z-10 cursor-pointer" aria-label="Previous slide"><ChevronLeft className="h-4 w-4" /></button>
+                                                        <button type="button" onClick={(e) => handleSliderNavClick(e, false)} className="reviews-next swiper-nav-btn inline-flex items-center justify-center h-8 w-8 rounded-full border border-input bg-background hover:bg-accent absolute -right-4 top-1/2 -translate-y-1/2 z-10 cursor-pointer" aria-label="Next slide"><ChevronRight className="h-4 w-4" /></button>
                                                     </>
                                                 )}
                                             </div>
@@ -2109,10 +2202,10 @@ function PropertyDetailsContent() {
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="flex gap-2 flex-wrap scroll-smooth">
-                                {SIMILAR_LOCATIONS.map((loc) => (
+                                {(property.similarLocations || []).map((loc) => (
                                     <button
                                         key={loc}
-                                        onClick={() => { setSimilarLocationFilter(loc); setSimilarPropertiesIndex(0); }}
+                                        onClick={() => setSimilarLocationFilter(loc)}
                                         className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap shrink-0 transition-colors ${similarLocationFilter === loc ? "bg-primary text-primary-foreground" : "bg-background border border-input hover:bg-accent cursor-pointer"}`}
                                     >
                                         {loc}
@@ -2129,10 +2222,10 @@ function PropertyDetailsContent() {
                                 </button>
                                 {showLocationDropdown && (
                                     <div className="absolute top-full right-0 mt-2 z-20 w-48 max-h-60 overflow-y-auto rounded-lg border border-input bg-background shadow-lg p-1 scrollbar-hide">
-                                        {ALL_SIMILAR_LOCATIONS.map((loc) => (
+                                        {(property.allSimilarLocations || property.similarLocations || []).map((loc) => (
                                             <button
                                                 key={loc}
-                                                onClick={() => { setSimilarLocationFilter(loc); setSimilarPropertiesIndex(0); setShowLocationDropdown(false); }}
+                                                onClick={() => { setSimilarLocationFilter(loc); setShowLocationDropdown(false); }}
                                                 className={`w-full px-3 py-2 text-left text-sm rounded-md transition-colors cursor-pointer ${similarLocationFilter === loc ? "bg-amber-100 text-amber-900 font-medium" : "hover:bg-muted"}`}
                                             >
                                                 {loc}
@@ -2145,54 +2238,52 @@ function PropertyDetailsContent() {
                     </div>
 
                     {(() => {
-                        const filteredProps = similarLocationFilter === "Koramangala" || DUMMY_SIMILAR_PROPERTIES.filter((p) => p.locality === similarLocationFilter).length === 0
-                            ? DUMMY_SIMILAR_PROPERTIES
-                            : DUMMY_SIMILAR_PROPERTIES.filter((p) => p.locality === similarLocationFilter);
-                        const cardsPerPage = 4;
-                        const maxPage = Math.max(0, Math.ceil(filteredProps.length / cardsPerPage) - 1);
-                        const pageIndex = Math.min(similarPropertiesIndex, maxPage);
-                        const visibleProps = filteredProps.slice(pageIndex * cardsPerPage, pageIndex * cardsPerPage + cardsPerPage);
+                        const similarProps = (property.similarProperties || []).filter(p => p && (p.id || p.name));
+                        const filteredProps = !similarLocationFilter || similarProps.filter((p) => p?.locality === similarLocationFilter).length === 0
+                            ? similarProps
+                            : similarProps.filter((p) => p?.locality === similarLocationFilter);
                         return (
                             <div className="relative">
-                                <button
-                                    onClick={() => setSimilarPropertiesIndex((i) => Math.max(0, i - 1))}
-                                    disabled={pageIndex === 0}
-                                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 md:-translate-x-4 z-10 w-10 h-10 rounded-full border bg-background shadow-md flex items-center justify-center hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
-                                    aria-label="Previous properties"
+                                <Swiper
+                                    key={similarLocationFilter}
+                                    modules={[Navigation]}
+                                    navigation={{ prevEl: ".similar-prev", nextEl: ".similar-next" }}
+                                    spaceBetween={16}
+                                    slidesPerView={1}
+                                    breakpoints={{ 640: { slidesPerView: 2 }, 1024: { slidesPerView: 4 } }}
+                                    slidesPerGroup={1}
+                                    className="w-full"
                                 >
-                                    <ChevronLeft className="h-5 w-5" />
-                                </button>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                    {visibleProps.map((p) => (
-                                        <Link key={p.id} href={`/property-details?id=${p.id}`} className="block">
-                                            <div className="rounded-lg border bg-card shadow-sm overflow-hidden group h-full">
-                                                <div className="relative aspect-[4/3]">
-                                                    <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                                                    {p.badge && <span className={`absolute top-2 left-2 px-2.5 py-0.5 text-xs font-semibold rounded-lg ${p.badge.includes("%") ? "bg-destructive text-destructive-foreground" : "bg-green-600 text-white"}`}>{p.badge}</span>}
-                                                </div>
-                                                <div className="p-4">
-                                                    <h3 className="font-bold">{p.name}</h3>
-                                                    <p className="text-sm text-muted-foreground">{p.locality}</p>
-                                                    <div className="flex justify-between items-center mt-2">
-                                                        <div className="flex items-center gap-1">
-                                                            <span className="px-2.5 py-0.5 text-xs font-semibold bg-primary text-primary-foreground rounded-lg">{p.rating}</span>
-                                                            <span className="text-sm font-medium">Excellent</span>
+                                    {filteredProps.map((p) => (
+                                        <SwiperSlide key={p?.id || p?.name}>
+                                            <Link href={`/property-details?id=${p?.id || '#'}`} className="block h-full">
+                                                <div className="rounded-lg border bg-card shadow-sm overflow-hidden group h-full">
+                                                    <div className="relative aspect-[4/3]">
+                                                        <img src={p?.image || ''} alt={p?.name || ''} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                                        {p?.badge && <span className={`absolute top-2 left-2 px-2.5 py-0.5 text-xs font-semibold rounded-lg ${typeof p.badge === 'string' && p.badge.includes("%") ? "bg-destructive text-destructive-foreground" : "bg-green-600 text-white"}`}>{p.badge}</span>}
+                                                    </div>
+                                                    <div className="p-4">
+                                                        <h3 className="font-bold">{safeDisplay(p?.name)}</h3>
+                                                        <p className="text-sm text-muted-foreground">{safeDisplay(p?.locality)}</p>
+                                                        <div className="flex justify-between items-center mt-2">
+                                                            <div className="flex items-center gap-1">
+                                                                <span className="px-2.5 py-0.5 text-xs font-semibold bg-primary text-primary-foreground rounded-lg">{safeDisplay(p?.rating)}</span>
+                                                                <span className="text-sm font-medium">Excellent</span>
+                                                            </div>
+                                                            <p className="font-bold text-lg">{safeDisplay(p?.price)}</p>
                                                         </div>
-                                                        <p className="font-bold text-lg">{p.price}</p>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </Link>
+                                            </Link>
+                                        </SwiperSlide>
                                     ))}
-                                </div>
-                                <button
-                                    onClick={() => setSimilarPropertiesIndex((i) => Math.min(maxPage, i + 1))}
-                                    disabled={pageIndex >= maxPage}
-                                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 md:translate-x-4 z-10 w-10 h-10 rounded-full border bg-background shadow-md flex items-center justify-center hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
-                                    aria-label="Next properties"
-                                >
-                                    <ChevronRight className="h-5 w-5" />
-                                </button>
+                                </Swiper>
+                                {filteredProps.length > 1 && (
+                                    <>
+                                        <button type="button" onClick={(e) => handleSliderNavClick(e, true)} className="similar-prev swiper-nav-btn absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 md:-translate-x-4 z-10 w-10 h-10 rounded-full border bg-background shadow-md flex items-center justify-center hover:bg-accent cursor-pointer" aria-label="Previous properties"><ChevronLeft className="h-5 w-5" /></button>
+                                        <button type="button" onClick={(e) => handleSliderNavClick(e, false)} className="similar-next swiper-nav-btn absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 md:translate-x-4 z-10 w-10 h-10 rounded-full border bg-background shadow-md flex items-center justify-center hover:bg-accent cursor-pointer" aria-label="Next properties"><ChevronRight className="h-5 w-5" /></button>
+                                    </>
+                                )}
                             </div>
                         );
                     })()}
@@ -2204,13 +2295,13 @@ function PropertyDetailsContent() {
                 <div className="w-full px-8">
                     <h2 className="text-2xl md:text-3xl font-bold mb-8">Explore Top Coworking Locations in Bangalore</h2>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-                        {EXPLORE_LOCATIONS.map((loc, i) => (
+                        {(property.exploreLocations || []).filter(Boolean).map((loc, i) => (
                             <Link key={i} href="#" className="rounded-lg border bg-card shadow-sm overflow-hidden group">
                                 <div className="relative aspect-[4/3]">
-                                    <img src={loc.image} alt={loc.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                    <img src={loc?.image || ''} alt={loc?.name || 'Explore'} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                                 </div>
                                 <div className="p-4">
-                                    <h3 className="font-semibold">{loc.name}</h3>
+                                    <h3 className="font-semibold">{safeDisplay(loc?.name)}</h3>
                                     <p className="text-sm text-primary group-hover:underline mt-1">Explore Spaces</p>
                                 </div>
                             </Link>
@@ -2262,9 +2353,8 @@ function PropertyDetailsContent() {
                 </div>
             </section >
 
-            {/* Fixed Bottom Action Bar */}
-            < div className="fixed left-0 right-0 bg-white border-t border-gray-200 p-4 md:hidden z-30" style={{ bottom: '60px' }
-            }>
+            {/* Fixed Bottom Action Bar - sits above footer nav (footer ~56px) */}
+            <div className="fixed left-0 right-0 bg-white border-t border-gray-200 p-4 md:hidden z-30" style={{ bottom: '56px' }}>
                 <div className="flex gap-3">
                     <button
                         onClick={handleWhatsApp}
@@ -2291,8 +2381,8 @@ function PropertyDetailsContent() {
                 </div>
             </div >
 
-            {/* Floating Chat Icon */}
-            < div className="fixed right-4 z-40 md:hidden" style={{ bottom: '140px' }}>
+            {/* Floating Chat Icon - above CTA bar, below Schedule FAB */}
+            <div className="fixed right-4 z-40 md:hidden" style={{ bottom: '200px' }}>
                 <button
                     onClick={handleShowInterestModal}
                     className="w-14 h-14 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-blue-700 transition-colors"
@@ -2301,75 +2391,156 @@ function PropertyDetailsContent() {
                 </button>
             </div >
 
-            {/* Mobile Modal */}
-            {
-                showModal && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 md:hidden">
-                        <div className="bg-white rounded-2xl w-full max-w-sm p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-bold text-blue-600">Interested in this Property</h3>
-                                <button
-                                    onClick={() => setShowModal(false)}
-                                    className="text-gray-500 hover:text-gray-700"
-                                >
-                                    ✕
-                                </button>
-                            </div>
-                            <p className="text-gray-600 text-sm mb-6">Fill your details for a customized quote</p>
-
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Enter your name"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                                    <input
-                                        type="email"
-                                        placeholder="Enter your email"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                                    <input
-                                        type="tel"
-                                        placeholder="Enter phone number"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Messages</label>
-                                    <textarea
-                                        placeholder="Enter your message..."
-                                        rows={3}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none"
-                                    />
-                                </div>
-                                <button
-                                    onClick={() => {
-                                        alert('Form submitted successfully!');
-                                        setShowModal(false);
-                                    }}
-                                    className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors cursor-pointer"
-                                >
-                                    Submit
-                                </button>
-                            </div>
+            {/* Interest / Callback / Consultation Modal - all screens */}
+            {showModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-2xl w-full max-w-sm p-6 pb-32 max-[525px]:pb-36 max-h-[min(90vh,90svh)] overflow-y-auto">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold text-blue-600">
+                                {interestFormType === "callback" && "Request More Information or Callback"}
+                                {interestFormType === "consultation" && "Get Free Consultation"}
+                                {interestFormType === "brand" && "Connect with us"}
+                                {interestFormType === "property" && "Interested in this Property"}
+                            </h3>
+                            <button onClick={() => setShowModal(false)} className="text-gray-500 hover:text-gray-700 cursor-pointer">✕</button>
                         </div>
+                        <p className="text-gray-600 text-sm mb-6">
+                            {interestFormType === "callback" && "Share your details and we'll call you back soon."}
+                            {interestFormType === "consultation" && "Get a free workspace consultation tailored to your needs."}
+                            {interestFormType === "brand" && "Let us know how we can help with your workspace needs."}
+                            {interestFormType === "property" && "Fill your details for a customized quote."}
+                        </p>
+                        <form onSubmit={handleInterestModalSubmit} className="space-y-4">
+                            {interestFormErrors.submit && (
+                                <p className="text-xs text-red-500">{interestFormErrors.submit}</p>
+                            )}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    required
+                                    placeholder="Enter your name"
+                                    value={interestFormData.name}
+                                    onChange={(e) => { handleInterestInputChange(e); setInterestFormErrors((p) => ({ ...p, name: '' })); }}
+                                    className={`w-full px-3 py-2 border rounded-lg ${interestFormErrors.name ? "border-red-500" : "border-gray-300"}`}
+                                />
+                                {interestFormErrors.name && <p className="text-xs text-red-500 mt-1">{interestFormErrors.name}</p>}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    required
+                                    placeholder="Enter your email"
+                                    value={interestFormData.email}
+                                    onChange={handleInterestInputChange}
+                                    className={`w-full px-3 py-2 border rounded-lg ${interestFormErrors.email ? "border-red-500" : "border-gray-300"}`}
+                                />
+                                {interestFormErrors.email && <p className="text-xs text-red-500 mt-1">{interestFormErrors.email}</p>}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
+                                <input
+                                    type="tel"
+                                    name="phone"
+                                    required
+                                    placeholder="Enter phone number"
+                                    value={interestFormData.phone}
+                                    onChange={handleInterestInputChange}
+                                    className={`w-full px-3 py-2 border rounded-lg ${interestFormErrors.phone ? "border-red-500" : "border-gray-300"}`}
+                                />
+                                {interestFormErrors.phone && <p className="text-xs text-red-500 mt-1">{interestFormErrors.phone}</p>}
+                            </div>
+                            {interestFormType === "callback" && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Preferred callback time</label>
+                                    <select
+                                        name="preferredCallbackTime"
+                                        value={interestFormData.preferredCallbackTime}
+                                        onChange={handleInterestInputChange}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                    >
+                                        <option value="">Select preferred time</option>
+                                        <option value="Morning (9 AM - 12 PM)">Morning (9 AM - 12 PM)</option>
+                                        <option value="Afternoon (12 PM - 5 PM)">Afternoon (12 PM - 5 PM)</option>
+                                        <option value="Evening (5 PM - 8 PM)">Evening (5 PM - 8 PM)</option>
+                                        <option value="Anytime">Anytime</option>
+                                    </select>
+                                </div>
+                            )}
+                            {interestFormType === "consultation" && (
+                                <>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Company name</label>
+                                        <input
+                                            type="text"
+                                            name="companyName"
+                                            placeholder="Your company (optional)"
+                                            value={interestFormData.companyName}
+                                            onChange={handleInterestInputChange}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Number of seats needed</label>
+                                        <input
+                                            type="text"
+                                            name="numberOfSeats"
+                                            placeholder="e.g. 10, 20-30 (optional)"
+                                            value={interestFormData.numberOfSeats}
+                                            onChange={handleInterestInputChange}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                        />
+                                    </div>
+                                </>
+                            )}
+                            {interestFormType === "brand" && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">I'm interested in</label>
+                                    <select
+                                        name="interestType"
+                                        value={interestFormData.interestType}
+                                        onChange={handleInterestInputChange}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                    >
+                                        <option value="">Select interest</option>
+                                        <option value="New workspace">New workspace</option>
+                                        <option value="Expansion">Expansion</option>
+                                        <option value="Custom solution">Custom solution</option>
+                                        <option value="General inquiry">General inquiry</option>
+                                    </select>
+                                </div>
+                            )}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                                <textarea
+                                    name="message"
+                                    placeholder={interestFormType === "callback" ? "What information do you need? (optional)" : "Enter your message (optional)"}
+                                    rows={3}
+                                    value={interestFormData.message}
+                                    onChange={handleInterestInputChange}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none"
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={isSubmittingInterest}
+                                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                            >
+                                {isSubmittingInterest ? "Submitting..." : "Submit"}
+                            </button>
+                        </form>
                     </div>
-                )
-            }
+                </div>
+            )}
 
             {/* Reviews Modal */}
             {
                 showReviewsModal && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+                        <div className="bg-white rounded-2xl w-full max-w-xl max-h-[min(90vh,90svh)] overflow-hidden flex flex-col">
                             {/* Modal Header */}
                             <div className="flex items-center justify-between p-5 border-b sticky top-0 bg-white">
                                 <h3 className="text-xl font-bold">All Ratings & Reviews</h3>
@@ -2396,7 +2567,7 @@ function PropertyDetailsContent() {
                             </div>
 
                             {/* Modal Content - Scrollable */}
-                            <div className="overflow-y-auto p-5 flex-1">
+                            <div className="overflow-y-auto p-5 pb-32 max-[525px]:pb-36 flex-1">
                                 {property.reviews && property.reviews.length > 0 ? (
                                     <div className="space-y-5">
                                         {property.reviews.map((review, index) => {
@@ -2492,6 +2663,51 @@ function PropertyDetailsContent() {
                     </div>
                 )
             }
+
+            {/* All Amenities Modal - centered, grouped by category from schema */}
+            {showAmenitiesModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" role="dialog" aria-modal="true" aria-labelledby="amenities-modal-title" onClick={() => setShowAmenitiesModal(false)}>
+                    <div className="fixed left-[50%] top-[50%] z-50 w-full max-w-xl max-h-[min(90vh,90svh)] translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg flex flex-col" onClick={(e) => e.stopPropagation()} style={{ maxHeight: 'min(90vh, 90svh)' }}>
+                        <div className="flex flex-col space-y-1.5 text-center sm:text-left shrink-0">
+                            <h2 id="amenities-modal-title" className="tracking-tight text-2xl font-bold">All Amenities</h2>
+                        </div>
+                        <button type="button" onClick={() => setShowAmenitiesModal(false)} className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 p-1 z-10" aria-label="Close">
+                            <X className="h-5 w-5" />
+                        </button>
+                        <div className="overflow-y-auto flex-1 min-h-0 pt-4 -mt-2 pr-2 pb-32 max-[525px]:pb-36">
+                            <div className="space-y-6">
+                                {(() => {
+                                    const amenities = property?.amenities || [];
+                                    const grouped = amenities.reduce((acc, a) => {
+                                        const name = typeof a === 'object' ? a?.name : a;
+                                        if (!name) return acc;
+                                        const id = typeof a === 'object' && a?.id != null ? a.id : 1;
+                                        const category = getAmenityCategory(a, name);
+                                        if (!acc[category]) acc[category] = [];
+                                        acc[category].push({ name, id });
+                                        return acc;
+                                    }, {});
+                                    return AMENITY_CATEGORY_ORDER.map((cat) => (
+                                        <div key={cat}>
+                                            <h3 className="font-semibold text-lg mb-4">{AMENITY_CATEGORY_LABELS[cat]}</h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {(grouped[cat] || []).map((item, i) => (
+                                                    <div key={`${item.name}-${i}`} className="flex items-center gap-3">
+                                                        <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-muted shrink-0">
+                                                            <img src={`/amenities/${item.id}.svg`} alt={item.name} className="h-5 w-5 object-contain" />
+                                                        </div>
+                                                        <span className="text-sm">{item.name}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ));
+                                })()}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Rating Submit Modal */}
             {showRatingModal && (
@@ -2687,7 +2903,7 @@ function PropertyDetailsContent() {
                 <div className="w-full px-12 py-6">
                     <div className="mb-6 scroll-animate" data-animation="animate-pop">
                         <AnimatedText className="text-lg font-bold inline-block" lineColor="#f8c02f">
-                            <h1>Showing Spaces in {safeDisplay(property.city) !== "-" ? safeDisplay(property.city) : (safeDisplay(property.address) !== "-" ? property.address?.split(',').pop()?.trim() : 'Delhi')}</h1>
+                            <h1>Showing Spaces in {safeDisplay(property.address?.city || property.city) !== "-" ? safeDisplay(property.address?.city || property.city) : (safeDisplay(property.displayAddress || property.addressDisplay || property.location) !== "-" ? (property.displayAddress || property.addressDisplay || property.location)?.split(',').pop()?.trim() : 'Delhi')}</h1>
                         </AnimatedText>
                     </div>
 
@@ -2738,27 +2954,18 @@ function PropertyDetailsContent() {
                                     </button>
                                 </div>
 
-                                {/* Bottom Right Counter */}
-                                <div className="absolute bottom-4 right-4 cursor-pointer">
-                                    <button
-                                        onClick={openGallery}
-                                        className="bg-black/30 backdrop-blur-sm text-white rounded-xl border-2 border-white/80 w-16 h-16 flex flex-col items-center justify-center hover:bg-black/40 transition-all duration-200 shadow-lg cursor-pointer rotate-12"
-                                    >
-                                        <span className="text-lg font-bold leading-none cursor-pointer">+{property.images.length - 1}</span>
-                                        <span className="text-sm font-medium leading-none mt-0.5 cursor-pointer">More</span>
-                                    </button>
-                                </div>
-
-                                {/* Bottom Right Counter Overlay - Shifted Right Side */}
-                                <div className="absolute bottom-4 right-6 cursor-pointer">
-                                    <button
-                                        onClick={openGallery}
-                                        className="bg-black/30 backdrop-blur-sm text-white rounded-xl border-2 border-white/80 w-16 h-16 flex flex-col items-center justify-center hover:bg-black/40 transition-all duration-200 shadow-lg cursor-pointer"
-                                    >
-                                        <span className="text-lg font-bold leading-none cursor-pointer">+{property.images.length - 1}</span>
-                                        <span className="text-sm font-medium leading-none mt-0.5 cursor-pointer">More</span>
-                                    </button>
-                                </div>
+                                {/* Bottom Right - Show all X photos overlay */}
+                                {property.images?.length > 1 && (
+                                    <div className="absolute bottom-4 right-4 cursor-pointer">
+                                        <button
+                                            onClick={openGallery}
+                                            className="bg-black/50 backdrop-blur-sm text-white rounded-xl border-2 border-white/60 px-4 py-3 flex flex-col items-center justify-center hover:bg-black/60 transition-all duration-200 shadow-lg cursor-pointer"
+                                        >
+                                            <Camera className="h-8 w-8 mb-1" strokeWidth={2} stroke="currentColor" fill="none" />
+                                            <span className="text-sm font-semibold leading-tight">Show all {property.images.length} photos</span>
+                                        </button>
+                                    </div>
+                                )}
 
                                 {/* Dots */}
                                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1">
@@ -2772,7 +2979,7 @@ function PropertyDetailsContent() {
                                 </div>
                             </div>
 
-                            {/* Thumbnail Grid - 2x2 */}
+                            {/* Thumbnail Grid - 2x2 + Show all */}
                             <div className="w-80 grid grid-cols-2 gap-2">
                                 <div className="aspect-square overflow-hidden rounded-xl cursor-pointer scroll-animate" data-animation="animate-fade-up" style={{ animationDelay: '100ms' }}>
                                     <img
@@ -2798,13 +3005,18 @@ function PropertyDetailsContent() {
                                         onClick={() => setFullScreenImage(property.images[3] || property.images[0])}
                                     />
                                 </div>
-                                <div className="aspect-square overflow-hidden rounded-xl cursor-pointer scroll-animate" data-animation="animate-fade-up" style={{ animationDelay: '400ms' }}>
+                                <div className="aspect-square overflow-hidden rounded-xl cursor-pointer scroll-animate relative" data-animation="animate-fade-up" style={{ animationDelay: '400ms' }} onClick={property.images?.length > 4 ? openGallery : () => setFullScreenImage(property.images[4] || property.images[0])}>
                                     <img
                                         src={property.images[4] || property.images[0]}
                                         alt="Thumbnail 4"
                                         className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
-                                        onClick={() => setFullScreenImage(property.images[4] || property.images[0])}
                                     />
+                                    {property.images?.length > 4 && (
+                                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white">
+                                            <Camera className="h-8 w-8 mb-1" strokeWidth={2} stroke="currentColor" fill="none" />
+                                            <span className="text-xs font-semibold text-center px-1">Show all {property.images.length} photos</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -2816,18 +3028,18 @@ function PropertyDetailsContent() {
                         <div className="lg:col-span-2 space-y-5">
                             {/* Property Info */}
                             <div className="bg-white rounded-2xl p-5 scroll-animate" data-animation="animate-slide-top">
-                                <h2 className="text-xl font-bold mb-2 scroll-animate" data-animation="animate-pop">{safeDisplay(property.name)}</h2>
-                                <p className="text-sm text-gray-600 mb-3 scroll-animate" data-animation="animate-fade-up">{safeDisplay(property.address)}</p>
+                                <h2 className="text-xl font-bold mb-2 scroll-animate" data-animation="animate-pop">{safeDisplay(property.propertyName || property.name)}</h2>
+                                <p className="text-sm text-gray-600 mb-3 scroll-animate" data-animation="animate-fade-up">{safeDisplay(property.displayAddress || property.addressDisplay || property.location)}</p>
 
                                 {/* Price */}
                                 <div className="flex items-center gap-3 mb-5 scroll-animate" data-animation="animate-fade-up">
-                                    <span className="text-lg text-red-500 line-through">{safeDisplay(property.originalPrice)}</span>
+                                    <span className="text-lg text-red-500 line-through">{safeDisplay(originalPrice)}</span>
                                     <img
                                         src="/property-details/right-arrow.png"
                                         alt="Arrow"
                                         className="w-8 h-8 object-contain"
                                     />
-                                    <span className="text-xl font-bold">{safeDisplay(property.discountedPrice)}</span>
+                                    <span className="text-xl font-bold">{safeDisplay(discountedPrice)}</span>
                                     <img
                                         src="/property-details/limited-offer.png"
                                         alt="Limited Time Offer"
@@ -2886,20 +3098,20 @@ function PropertyDetailsContent() {
                                     </AnimatedText>
                                     <div className="grid grid-cols-6 gap-3 mt-5">
                                         {property.amenities?.map((amenity, i) => {
-                                            const truncatedName = amenity.name.length > 15 ? amenity.name.substring(0, 15) + '...' : amenity.name;
+                                            const name = typeof amenity === 'string' ? amenity : amenity?.name;
+                                            if (!name) return null;
+                                            const truncatedName = name.length > 15 ? name.substring(0, 15) + '...' : name;
+                                            const id = typeof amenity === 'object' && amenity?.id != null ? amenity.id : (i + 1);
+                                            const iconSrc = `/amenities/${id}.svg`;
                                             return (
-                                                <div key={i} className="text-center relative group p-3 scroll-animate" data-animation="animate-fade-up" style={{ animationDelay: `${i * 50}ms` }}>
+                                                <div key={`${name}-${i}`} className="text-center relative group p-3 scroll-animate" data-animation="animate-fade-up" style={{ animationDelay: `${i * 50}ms` }}>
                                                     <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-white shadow-md flex items-center justify-center">
-                                                        <img
-                                                            src={amenity.image}
-                                                            alt={amenity.name}
-                                                            className="w-5 h-5 object-contain"
-                                                        />
+                                                        <img src={iconSrc} alt={name} className="w-5 h-5 text-primary object-contain" />
                                                     </div>
                                                     <p className="text-[0.6rem] text-gray-700">{truncatedName}</p>
-                                                    {amenity.name.length > 15 && (
+                                                    {name.length > 15 && (
                                                         <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 px-3 py-2 bg-black text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-[9999]">
-                                                            {amenity.name}
+                                                            {name}
                                                         </div>
                                                     )}
                                                 </div>
@@ -2967,39 +3179,32 @@ function PropertyDetailsContent() {
 
                                 <form className="space-y-3" onSubmit={async (e) => {
                                     e.preventDefault();
-
-                                    if (!currentUser) {
-                                        setIsLoginOpen(true);
+                                    if (!interestFormData.name?.trim() || !interestFormData.email?.trim() || !interestFormData.phone?.trim()) {
+                                        alert("Name, email, and phone are required.");
                                         return;
                                     }
-
                                     setIsSubmittingInterest(true);
-
                                     try {
                                         const response = await fetch('/api/property-interest', {
                                             method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json',
-                                            },
+                                            headers: { 'Content-Type': 'application/json' },
                                             body: JSON.stringify({
-                                                propertyName: property?.name,
-                                                ...interestFormData,
+                                                propertyName: property?.propertyName || property?.name,
+                                                propertyId: property?._id,
+                                                name: interestFormData.name,
+                                                email: interestFormData.email,
+                                                phone: interestFormData.phone,
+                                                message: interestFormData.message,
                                             }),
                                         });
-
                                         const data = await response.json();
-
                                         if (data.success) {
-                                            setInterestFormData({
-                                                name: "",
-                                                email: "",
-                                                phone: "",
-                                                message: "",
-                                            });
+                                            setInterestFormData({ name: "", email: "", phone: "", message: "" });
                                             setShowSuccessTooltip(true);
                                             setTimeout(() => setShowSuccessTooltip(false), 5000);
+                                            alert('Submitted successfully! We will get back to you soon.');
                                         } else {
-                                            alert('Failed to submit. Please try again.');
+                                            alert(data.message || 'Failed to submit. Please try again.');
                                         }
                                     } catch (error) {
                                         console.error('Error submitting interest:', error);
@@ -3175,11 +3380,11 @@ function PropertyDetailsContent() {
                                             <span className="text-base font-semibold text-gray-800">{safeDisplay(property.expectedDeposit) !== "-" ? `₹${Number(property.expectedDeposit).toLocaleString('en-IN')}` : "-"}</span>
                                         </div>
                                     )}
-                                    {property.isNegotiable !== undefined && property.isNegotiable !== null && (
+                                    {(property.isNegotiablePrice ?? property.isNegotiable) !== undefined && (property.isNegotiablePrice ?? property.isNegotiable) !== null && (
                                         <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
                                             <span className="text-sm font-medium text-gray-500 block mb-1">Negotiable</span>
-                                            <span className={`text-base font-semibold ${property.isNegotiable ? 'text-green-600' : 'text-red-600'}`}>
-                                                {property.isNegotiable ? 'Yes' : 'No'}
+                                            <span className={`text-base font-semibold ${(property.isNegotiablePrice ?? property.isNegotiable) ? 'text-green-600' : 'text-red-600'}`}>
+                                                {(property.isNegotiablePrice ?? property.isNegotiable) ? 'Yes' : 'No'}
                                             </span>
                                         </div>
                                     )}
@@ -3231,10 +3436,10 @@ function PropertyDetailsContent() {
                                             <span className="text-base font-semibold text-gray-800">{safeDisplay(property.whoWillShow)}</span>
                                         </div>
                                     )}
-                                    {property.builder && (
+                                    {(property.builderName || property.brandDetails?.name || property.builder) && (
                                         <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
                                             <span className="text-sm font-medium text-gray-500 block mb-1">Builder Name</span>
-                                            <span className="text-base font-semibold text-gray-800">{safeDisplay(property.builder)}</span>
+                                            <span className="text-base font-semibold text-gray-800">{safeDisplay(property.builderName || property.brandDetails?.name || property.builder)}</span>
                                         </div>
                                     )}
                                 </div>
@@ -3292,16 +3497,16 @@ function PropertyDetailsContent() {
                                             </div>
                                         </div>
                                     )}
-                                    {property.facilities && property.facilities.length > 0 && (
+                                    {((typeof property.facilities === 'string' && property.facilities.trim()) || (Array.isArray(property.facilities) && property.facilities.length > 0)) && (
                                         <div className="bg-gray-50 p-4 rounded-lg scroll-animate col-span-3" data-animation="animate-fade-up">
                                             <span className="text-sm font-medium text-gray-500 block mb-1">Facilities</span>
-                                            <span className="text-base font-semibold text-gray-800">{property.facilities.join(', ')}</span>
+                                            <span className="text-base font-semibold text-gray-800">{typeof property.facilities === 'string' ? property.facilities.trim() : property.facilities.map(f => f?.name || f).filter(Boolean).join(', ')}</span>
                                         </div>
                                     )}
-                                    {property.builder && (
+                                    {(property.builderName || property.brandDetails?.name || property.builder) && (
                                         <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
                                             <span className="text-sm font-medium text-gray-500 block mb-1">Builder Name</span>
-                                            <span className="text-base font-semibold text-gray-800">{safeDisplay(property.builder)}</span>
+                                            <span className="text-base font-semibold text-gray-800">{safeDisplay(property.builderName || property.brandDetails?.name || property.builder)}</span>
                                         </div>
                                     )}
                                 </div>
@@ -3322,9 +3527,9 @@ function PropertyDetailsContent() {
                                     markers={[
                                         {
                                             position: property.coordinates,
-                                            title: property.name,
+                                            title: property.propertyName || property.name,
                                             useDefaultIcon: true,
-                                            infoContent: `<div style="padding: 10px;"><strong>${property.name}</strong><br/>${property.address}<br/><span style="color: #ef4444; font-weight: bold;">Property Location</span></div>`
+                                            infoContent: `<div style="padding: 10px;"><strong>${property.propertyName || property.name}</strong><br/>${property.displayAddress || property.addressDisplay || property.location || ''}<br/><span style="color: #ef4444; font-weight: bold;">Property Location</span></div>`
                                         },
                                         {
                                             position: { lat: 28.6149, lng: 77.2100 },
@@ -3380,12 +3585,9 @@ function PropertyDetailsContent() {
                             {/* Places List */}
                             <div className="space-y-1 scroll-animate" data-animation="animate-fade-up">
                                 {property.nearbyPlaces && property.nearbyPlaces[activeCategory] ?
-                                    property.nearbyPlaces[activeCategory].slice(0, showMoreNearby ? 6 : 4).map((place, i) => (
+                                    property.nearbyPlaces[activeCategory].slice(0, showMoreNearby ? undefined : 3).map((place, i) => (
                                         <div key={i} className="flex items-center justify-between py-2.5 border-b">
-                                            <div>
-                                                <h4 className="font-medium text-sm text-gray-900">{safeDisplay(place.name)}</h4>
-                                                <p className="text-xs text-gray-500">{safeDisplay(place.location)}</p>
-                                            </div>
+                                            <span className="font-medium text-sm text-gray-900">{safeDisplay(place.name)}</span>
                                             <span className="text-xs text-gray-500">{safeDisplay(place.distance)}</span>
                                         </div>
                                     ))
@@ -3394,7 +3596,7 @@ function PropertyDetailsContent() {
                             </div>
 
                             {/* View More Button */}
-                            {property.nearbyPlaces && property.nearbyPlaces[activeCategory] && property.nearbyPlaces[activeCategory].length > 4 && (
+                            {property.nearbyPlaces && property.nearbyPlaces[activeCategory] && property.nearbyPlaces[activeCategory].length > 3 && (
                                 <button
                                     onClick={() => setShowMoreNearby(!showMoreNearby)}
                                     className="w-28 mt-3 py-2.5 border-2 border-blue-600 text-blue-600 rounded-lg font-medium text-sm hover:cursor-pointer transition-colors hover:bg-blue-600 hover:text-white"
@@ -3483,10 +3685,6 @@ function PropertyDetailsContent() {
                                         <span
                                             key={i}
                                             onClick={() => {
-                                                if (!currentUser) {
-                                                    setIsLoginOpen(true);
-                                                    return;
-                                                }
                                                 setReviewText(item);
                                                 setShowRatingModal(true);
                                             }}
@@ -3509,10 +3707,6 @@ function PropertyDetailsContent() {
                                         <span
                                             key={i}
                                             onClick={() => {
-                                                if (!currentUser) {
-                                                    setIsLoginOpen(true);
-                                                    return;
-                                                }
                                                 setReviewText(item);
                                                 setShowRatingModal(true);
                                             }}
@@ -3526,13 +3720,13 @@ function PropertyDetailsContent() {
                         </div>
 
                         {/* Property Videos Section - Full Width */}
-                        {property.propertyVideos && property.propertyVideos.length > 0 && (
+                        {((property.propertyVideos && property.propertyVideos.length > 0) || property.video) && (
                             <div className="bg-white rounded-2xl p-5 mb-6 scroll-animate" data-animation="animate-slide-top">
                                 <AnimatedText className="text-lg font-bold mb-3 inline-block" delay={1700} lineColor="#f8c02f">
                                     <h3>Property Videos</h3>
                                 </AnimatedText>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
-                                    {property.propertyVideos.map((video, i) => {
+                                    {(property.propertyVideos?.length ? property.propertyVideos : [{ url: property.video, thumbnail: property.images?.[0] }]).filter(v => v?.url).map((video, i) => {
                                         const mimeType = getVideoMimeType(video.url, video.contentType);
                                         return (
                                             <div key={i} className="relative rounded-lg overflow-hidden bg-black scroll-animate" data-animation="animate-fade-up" style={{ animationDelay: `${i * 100}ms` }}>
@@ -3558,13 +3752,13 @@ function PropertyDetailsContent() {
                         )}
 
                         {/* Property PDFs Section - Full Width - Only for commercial properties */}
-                        {property.propertyType === 'commercial' && property.seatLayoutPDFs && property.seatLayoutPDFs.length > 0 && (
+                        {property.propertyType === 'commercial' && ((property.seatLayoutPDFs && property.seatLayoutPDFs.length > 0) || property.pdf) && (
                             <div className="bg-white rounded-2xl p-5 mb-6 scroll-animate" data-animation="animate-slide-top">
                                 <AnimatedText className="text-lg font-bold mb-3 inline-block" delay={1800} lineColor="#f8c02f">
                                     <h3>Property Documents</h3>
                                 </AnimatedText>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
-                                    {property.seatLayoutPDFs.map((pdf, i) => (
+                                    {(property.seatLayoutPDFs?.length ? property.seatLayoutPDFs : [{ url: property.pdf, originalName: 'Property Brochure' }]).filter(p => p?.url).map((pdf, i) => (
                                         <div key={i} className="bg-gray-50 border border-gray-200 rounded-lg p-5 scroll-animate" data-animation="animate-fade-up" style={{ animationDelay: `${i * 100}ms` }}>
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-4 flex-1">
@@ -3706,7 +3900,7 @@ function PropertyDetailsContent() {
                 {/* Reviews Modal - Desktop */}
                 {showReviewsModal && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+                        <div className="bg-white rounded-2xl w-full max-w-xl max-h-[min(90vh,90svh)] overflow-hidden flex flex-col">
                             {/* Modal Header */}
                             <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white">
                                 <h3 className="text-2xl font-bold">All Ratings & Reviews</h3>
@@ -3733,7 +3927,7 @@ function PropertyDetailsContent() {
                             </div>
 
                             {/* Modal Content - Scrollable */}
-                            <div className="overflow-y-auto p-6 flex-1">
+                            <div className="overflow-y-auto p-6 pb-32 max-[525px]:pb-36 flex-1">
                                 {property.reviews && property.reviews.length > 0 ? (
                                     <div className="space-y-6">
                                         {property.reviews.map((review, index) => {
@@ -4029,6 +4223,42 @@ function PropertyDetailsContent() {
                 )}
             </div>
 
+            {/* Show All Photos Modal */}
+            {/* All Photos Modal - images only */}
+            {showAllPhotosModal && property?.images?.length > 0 && (
+                <div className="fixed inset-0 bg-black/90 flex flex-col z-[9999]" onClick={() => setShowAllPhotosModal(false)}>
+                    <div className="flex items-center justify-between p-4 bg-black/50">
+                        <h3 className="text-white text-lg font-bold">All Photos ({property.images.length})</h3>
+                        <button onClick={(e) => { e.stopPropagation(); setShowAllPhotosModal(false); }} className="p-2 rounded-full hover:bg-white/20 text-white cursor-pointer"><X className="h-6 w-6" /></button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-4 pb-32 max-[525px]:pb-36" onClick={(e) => e.stopPropagation()}>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                            {property.images.map((img, i) => (
+                                <div key={i} className="aspect-square rounded-xl overflow-hidden bg-gray-800 cursor-pointer hover:opacity-90 transition-opacity" onClick={() => { setFullScreenImage(img); setShowAllPhotosModal(false); }}>
+                                    <img src={img} alt="" className="w-full h-full object-cover" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Video Modal - separate modal for video */}
+            {showVideoModal && (property.propertyVideos?.[0]?.url || property.video) && (
+                <div className="fixed inset-0 bg-black/90 flex flex-col z-[9999]" onClick={() => setShowVideoModal(false)}>
+                    <div className="flex items-center justify-between p-4 bg-black/50">
+                        <h3 className="text-white text-lg font-bold">Video</h3>
+                        <button onClick={(e) => { e.stopPropagation(); setShowVideoModal(false); }} className="p-2 rounded-full hover:bg-white/20 text-white cursor-pointer"><X className="h-6 w-6" /></button>
+                    </div>
+                    <div className="flex-1 flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+                        <video controls autoPlay className="max-w-full max-h-[80vh] rounded-xl" src={property.propertyVideos?.[0]?.url || property.video}>
+                            <source src={property.propertyVideos?.[0]?.url || property.video} type={getVideoMimeType(property.propertyVideos?.[0]?.url || property.video)} />
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                </div>
+            )}
+
             {/* Full Screen Image Modal */}
             {
                 fullScreenImage && (
@@ -4071,15 +4301,15 @@ function PropertyDetailsContent() {
                     />
                 )
             }
-            {/* Fixed bottom-right: floating action container */}
-            <div className="fixed bottom-6 right-4 max-[425px]:bottom-[210px] max-[425px]:right-3 z-50 flex flex-col items-end">
+            {/* Fixed bottom-right: Schedule a Tour FAB - above footer + CTA on mobile so no overlap */}
+            <div className="fixed bottom-[130px] md:bottom-6 right-4 max-[525px]:right-3 z-50 flex flex-col items-end">
                 {/* Schedule a Tour Modal - Anchored floating popup */}
                 {showTourModal && (
                     <div className="relative w-[360px] max-[425px]:w-[calc(100vw-32px)] mb-3 group/modal">
                         {/* Compact Backdrop for anchored modal */}
                         <div className="fixed inset-0 z-[-1] bg-black/5 md:bg-transparent" onClick={() => setShowTourModal(false)} />
 
-                        <div className="bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden animate-slide-up-fade flex flex-col max-h-[80vh]">
+                        <div className="bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden animate-slide-up-fade flex flex-col max-h-[min(80vh,80svh)]">
                             {/* Gradient Header */}
                             <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-5 text-white">
                                 <div className="flex justify-between items-center">
@@ -4099,32 +4329,43 @@ function PropertyDetailsContent() {
                                 </div>
                             </div>
 
-                            <div className="p-5 overflow-y-auto space-y-5 custom-scrollbar">
+                            <div className="p-5 pb-32 max-[525px]:pb-36 overflow-y-auto space-y-5 custom-scrollbar">
                                 {/* Date Selection */}
                                 <div className="space-y-3">
                                     <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">1. Choose Date</p>
-                                    <div className="relative group/carousel">
-                                        <div ref={dateCarouselRef} className="flex gap-2 overflow-x-auto scrollbar-hide py-1 snap-x">
+                                    <div className="relative">
+                                        <Swiper
+                                            modules={[Navigation]}
+                                            navigation={{ prevEl: ".tour-dates-modal-prev", nextEl: ".tour-dates-modal-next" }}
+                                            spaceBetween={8}
+                                            slidesPerView="auto"
+                                            slidesPerGroup={2}
+                                            breakpoints={{ 320: { slidesPerView: 4 } }}
+                                            className="w-full"
+                                        >
                                             {tourDates.map((date, i) => {
                                                 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
                                                 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
                                                 const isSelected = date.toDateString() === selectedTourDate.toDateString();
                                                 return (
-                                                    <div
-                                                        key={i}
-                                                        onClick={() => setSelectedTourDate(date)}
-                                                        className={`min-w-[64px] snap-start p-2 border rounded-xl text-center cursor-pointer transition-all ${isSelected
-                                                            ? "bg-blue-600 border-blue-600 text-white shadow-md scale-105"
-                                                            : "bg-gray-50 border-gray-100 hover:border-blue-200 text-gray-600"
-                                                            }`}
-                                                    >
-                                                        <p className="text-[9px] font-bold uppercase">{dayNames[date.getDay()]}</p>
-                                                        <p className="font-bold text-base leading-tight">{date.getDate()}</p>
-                                                        <p className="text-[9px] uppercase">{monthNames[date.getMonth()]}</p>
-                                                    </div>
+                                                    <SwiperSlide key={i} className="!w-[64px]">
+                                                        <div
+                                                            onClick={() => setSelectedTourDate(date)}
+                                                            className={`p-2 border rounded-xl text-center cursor-pointer transition-all ${isSelected
+                                                                ? "bg-blue-600 border-blue-600 text-white shadow-md scale-105"
+                                                                : "bg-gray-50 border-gray-100 hover:border-blue-200 text-gray-600"
+                                                                }`}
+                                                        >
+                                                            <p className="text-[9px] font-bold uppercase">{dayNames[date.getDay()]}</p>
+                                                            <p className="font-bold text-base leading-tight">{date.getDate()}</p>
+                                                            <p className="text-[9px] uppercase">{monthNames[date.getMonth()]}</p>
+                                                        </div>
+                                                    </SwiperSlide>
                                                 );
                                             })}
-                                        </div>
+                                        </Swiper>
+                                        <button type="button" onClick={(e) => handleSliderNavClick(e, true)} className="tour-dates-modal-prev swiper-nav-btn absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full border bg-white shadow flex items-center justify-center cursor-pointer text-gray-600 hover:bg-gray-50"><ArrowLeft className="h-4 w-4" /></button>
+                                        <button type="button" onClick={(e) => handleSliderNavClick(e, false)} className="tour-dates-modal-next swiper-nav-btn absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full border bg-white shadow flex items-center justify-center cursor-pointer text-gray-600 hover:bg-gray-50"><ArrowRight className="h-4 w-4" /></button>
                                     </div>
                                 </div>
 
@@ -4151,12 +4392,13 @@ function PropertyDetailsContent() {
                                         <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">3. Pick Time</p>
                                         <button
                                             type="button"
-                                            onClick={(e) => { e.stopPropagation(); setShowTimeDropdown(!showTimeDropdown); }}
-                                            className="w-full flex items-center justify-between bg-gray-50 border border-gray-100 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-gray-700"
+                                            onClick={(e) => { e.stopPropagation(); setShowTimeDropdown(!showTimeDropdown); setTourFormErrors((p) => ({ ...p, tourTime: '' })); }}
+                                            className={`w-full flex items-center justify-between bg-gray-50 border rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-gray-700 ${tourFormErrors.tourTime ? 'border-red-500' : 'border-gray-100'}`}
                                         >
                                             <span className="truncate">{selectedTourTime || "Time"}</span>
                                             <ChevronDown className="h-3 w-3 text-gray-400" />
                                         </button>
+                                        {tourFormErrors.tourTime && <p className="text-[10px] text-red-500 mt-0.5">{tourFormErrors.tourTime}</p>}
                                         {showTimeDropdown && (
                                             <div className="absolute bottom-full left-0 right-0 mb-1 z-[60] max-h-40 overflow-y-auto bg-white border border-gray-100 rounded-lg shadow-xl p-1">
                                                 {TOUR_TIME_SLOTS.map((slot) => (
@@ -4175,14 +4417,20 @@ function PropertyDetailsContent() {
 
                                 {/* Form Fields - Updated to match User Snippet */}
                                 <form className="space-y-3" onSubmit={handleTourSubmit}>
+                                    {tourFormErrors.submit && (
+                                        <p className="text-xs text-red-500">{tourFormErrors.submit}</p>
+                                    )}
                                     <div className="grid grid-cols-2 gap-3">
-                                        <input
-                                            name="name"
-                                            className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-[11px] outline-none focus:ring-1 focus:ring-blue-600 transition-all font-medium"
-                                            placeholder="Name"
-                                            value={tourFormData.name}
-                                            onChange={handleTourInputChange}
-                                        />
+                                        <div>
+                                            <input
+                                                name="name"
+                                                className={`w-full bg-gray-50 border rounded-lg px-3 py-2 text-[11px] outline-none focus:ring-1 focus:ring-blue-600 transition-all font-medium ${tourFormErrors.name ? 'border-red-500' : 'border-gray-100'}`}
+                                                placeholder="Name"
+                                                value={tourFormData.name}
+                                                onChange={(e) => { handleTourInputChange(e); setTourFormErrors((p) => ({ ...p, name: '' })); }}
+                                            />
+                                            {tourFormErrors.name && <p className="text-[10px] text-red-500 mt-0.5">{tourFormErrors.name}</p>}
+                                        </div>
                                         <input
                                             name="phone"
                                             className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-[11px] outline-none focus:ring-1 focus:ring-blue-600 transition-all font-medium"
@@ -4191,14 +4439,17 @@ function PropertyDetailsContent() {
                                             onChange={handleTourInputChange}
                                         />
                                     </div>
-                                    <input
-                                        name="email"
-                                        className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-[11px] outline-none focus:ring-1 focus:ring-blue-600 transition-all font-medium"
-                                        placeholder="Email"
-                                        type="email"
-                                        value={tourFormData.email}
-                                        onChange={handleTourInputChange}
-                                    />
+                                    <div>
+                                        <input
+                                            name="email"
+                                            className={`w-full bg-gray-50 border rounded-lg px-3 py-2 text-[11px] outline-none focus:ring-1 focus:ring-blue-600 transition-all font-medium ${tourFormErrors.email ? 'border-red-500' : 'border-gray-100'}`}
+                                            placeholder="Email"
+                                            type="email"
+                                            value={tourFormData.email}
+                                            onChange={(e) => { handleTourInputChange(e); setTourFormErrors((p) => ({ ...p, email: '' })); }}
+                                        />
+                                        {tourFormErrors.email && <p className="text-[10px] text-red-500 mt-0.5">{tourFormErrors.email}</p>}
+                                    </div>
                                     <textarea
                                         name="message"
                                         className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-[11px] outline-none focus:ring-1 focus:ring-blue-600 transition-all font-medium resize-none h-20"
@@ -4206,13 +4457,17 @@ function PropertyDetailsContent() {
                                         value={tourFormData.message}
                                         onChange={handleTourInputChange}
                                     />
-                                    <button type="submit" className="w-full bg-blue-600 text-white font-bold py-2.5 rounded-xl hover:bg-blue-700 shadow-md shadow-blue-100 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs">
-                                        Submit a Tour Request
-                                        <ArrowRight className="h-3.5 w-3.5" />
-                                    </button>
-                                    <button type="button" className="w-full border border-gray-200 bg-white text-gray-700 font-bold py-2.5 rounded-xl hover:bg-gray-50 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs">
-                                        BOOK YOUR VIDEO TOUR NOW
-                                    </button>
+                                    {tourType === "in-person" ? (
+                                        <button type="submit" className="w-full bg-blue-600 text-white font-bold py-2.5 rounded-xl hover:bg-blue-700 shadow-md shadow-blue-100 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs">
+                                            Submit a Tour Request
+                                            <ArrowRight className="h-3.5 w-3.5" />
+                                        </button>
+                                    ) : (
+                                        <button type="submit" className="w-full bg-blue-600 text-white font-bold py-2.5 rounded-xl hover:bg-blue-700 shadow-md shadow-blue-100 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs">
+                                            BOOK YOUR VIDEO TOUR NOW
+                                            <ArrowRight className="h-3.5 w-3.5" />
+                                        </button>
+                                    )}
                                 </form>
                             </div>
                         </div>
@@ -4222,7 +4477,7 @@ function PropertyDetailsContent() {
                 {/* Primary Floating Action Button */}
                 <button
                     type="button"
-                    onClick={() => setShowTourModal(!showTourModal)}
+                    onClick={() => { if (!showTourModal) setTourFormErrors({}); setShowTourModal(!showTourModal); }}
                     className={`inline-flex items-center justify-center rounded-full shadow-2xl h-14 w-14 cursor-pointer transition-all duration-300 group ${showTourModal ? 'bg-gray-900 rotate-90 scale-90' : 'bg-blue-600 hover:bg-blue-700'}`}
                 >
                     {showTourModal ? (

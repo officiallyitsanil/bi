@@ -29,7 +29,7 @@ export async function GET() {
             return {
                 ...prop,
                 _id: prop._id.toString(),
-                propertyType: prop.Category?.toLowerCase() || prop.propertyType || 'unknown',
+                propertyType: (prop.category || prop.Category)?.toLowerCase() || prop.propertyType || 'unknown',
                 name: prop.propertyName || prop.name || 'Unnamed Property',
                 badge: prop.badge || 'new',
                 featuredImageUrl: featuredImageUrl,
