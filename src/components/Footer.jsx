@@ -13,7 +13,7 @@ export default function Footer() {
     const pathName = usePathname();
     const [isLoginOpen, setIsLoginOpen] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
-    const [globalConfig, setGlobalConfig] = useState({ isFullNavVisible: false });
+    const [globalConfig, setGlobalConfig] = useState({ isFullNavVisible: false, whatsappNo: null });
     const { isDark } = useTheme();
 
     useEffect(() => {
@@ -169,9 +169,16 @@ export default function Footer() {
                                     <a href="mailto:support@buildersinfo.in" className={`flex items-center gap-1.5 text-xs hover:text-[#007BFF] ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280] hover:text-[#1A6AC4]'}`}>
                                         <Mail className="h-3.5 w-3.5 shrink-0" strokeWidth={2} /> support@buildersinfo.in
                                     </a>
-                                    <a href="tel:+918884886822" className={`flex items-center gap-1.5 text-xs hover:text-[#007BFF] ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280] hover:text-[#1A6AC4]'}`}>
-                                        <Phone className="h-3.5 w-3.5 shrink-0" strokeWidth={2} /> +918884886822
-                                    </a>
+                                    {globalConfig.whatsappNo != null && (() => {
+                                        const raw = String(globalConfig.whatsappNo).replace(/\D/g, '');
+                                        const tel = raw.length === 10 ? '91' + raw : raw.startsWith('91') ? raw : raw;
+                                        const display = tel.length === 12 && tel.startsWith('91') ? `+91 ${tel.slice(2, 7)} ${tel.slice(7)}` : tel ? `+${tel}` : '';
+                                        return (
+                                            <a href={`tel:+${tel}`} className={`flex items-center gap-1.5 text-xs hover:text-[#007BFF] ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280] hover:text-[#1A6AC4]'}`}>
+                                                <Phone className="h-3.5 w-3.5 shrink-0" strokeWidth={2} /> {display}
+                                            </a>
+                                        );
+                                    })()}
                                 </div>
                             </div>
                         </div>

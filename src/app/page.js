@@ -2,7 +2,7 @@
 import MenuSideBar from '@/components/MenuSideBar';
 import LoginModal from '@/components/LoginModal';
 import { Search, X, Plus, SlidersHorizontal, Menu, List, Check, Heart, Building2, Home, MapPin, ChevronDown, ChevronRight, ChevronLeft, LayoutGrid, Map as MapIcon, Globe, ZoomIn, LocateFixed, Layers, Minus, Sun, Moon, User, FileText, Grid3x3, ChevronUp, Bus, Target, Clock, Loader2 } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from "next/dynamic";
@@ -19,6 +19,11 @@ import { useTheme } from '@/context/ThemeContext';
 import { calculatePrices } from '@/utils/priceUtils';
 
 const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
+
+// Consistent map zoom: location name visible, zoomed point at map center (no offset)
+const ZOOM_INDIA = 5;
+const ZOOM_CITY = 12;
+const ZOOM_LOCATION = 14;
 
 function Modal({ children, style, onClose, hideClose = false, className = "", isDark = false }) {
   return (
@@ -56,7 +61,7 @@ export default function HomePage() {
   const [isDrawerCollapsed, setIsDrawerCollapsed] = useState(false); // Track drawer collapse state
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [globalConfig, setGlobalConfig] = useState({ isFullNavVisible: false });
+  const [globalConfig, setGlobalConfig] = useState({ isFullNavVisible: false, whatsappNo: null });
   const [propertyFavorites, setPropertyFavorites] = useState({}); // Track favorites for each property
 
   const [mapCenter, setMapCenter] = useState({ lat: 20.5937, lng: 78.9629 }); // Center of India as initial
@@ -64,7 +69,7 @@ export default function HomePage() {
   const [selectedCity, setSelectedCity] = useState(null);
   const [selectedMarker, setSelectedMarker] = useState(null);
 
-  const [zoomLevel, setZoomLevel] = useState(5); // Start zoomed out to show India
+  const [zoomLevel, setZoomLevel] = useState(ZOOM_INDIA);
   const [, setLocationError] = useState(null);
   const [propertyTypeFilter, setPropertyTypeFilter] = useState('all'); // 'all', 'commercial', 'residential'
   const [listingTypeFilter, setListingTypeFilter] = useState('all'); // 'all', 'forSale', 'forRent', 'readyToMove', 'newProjects', 'verified', 'video'
@@ -301,7 +306,7 @@ export default function HomePage() {
   // Handle location updates from VisitorTracker
   const handleLocationUpdate = (locationData) => {
     setMapCenter({ lat: locationData.lat, lng: locationData.lng });
-    setZoomLevel(locationData.zoom);
+    setZoomLevel(locationData.zoom ?? ZOOM_LOCATION);
     setUserLocationInfo({
       lat: locationData.lat,
       lng: locationData.lng,
@@ -320,11 +325,11 @@ export default function HomePage() {
 
         // Set zoom based on location accuracy
         if (locationData.isFallback) {
-          setZoomLevel(5); // Zoomed out for India view
+          setZoomLevel(ZOOM_INDIA);
         } else if (locationData.isApproximate) {
-          setZoomLevel(10); // City-level zoom for IP location
+          setZoomLevel(ZOOM_CITY);
         } else {
-          setZoomLevel(13); // Street-level zoom for exact GPS location
+          setZoomLevel(ZOOM_LOCATION);
         }
 
         setIsLoadingLocation(false);
@@ -385,6 +390,11 @@ export default function HomePage() {
       })
       .catch(() => {});
   }, []);
+
+  const defaultWhatsappForWa = useMemo(() => {
+    const r = globalConfig?.whatsappNo != null ? String(globalConfig.whatsappNo).replace(/\D/g, '') : '';
+    return r.length === 10 ? '91' + r : r.startsWith('91') ? r : r || '918151915199';
+  }, [globalConfig?.whatsappNo]);
 
   useEffect(() => {
     const checkFavorites = async () => {
@@ -458,7 +468,7 @@ export default function HomePage() {
         if (result.success && result.data) {
           console.log("Total properties fetched:", result.data.length);
 
-          // Filter verified/confirmed properties (schema uses verificationStatus: "verified")
+          // Filter verified/confirmed properties (DB: verificationStatus "verified" | "confirmed" | "pending")
           const confirmedProperties = result.data.filter(property =>
             property.verificationStatus === 'verified' || property.verificationStatus === 'confirmed'
           );
@@ -627,9 +637,8 @@ export default function HomePage() {
     });
 
     if (matchingProperties.length > 0 && matchingProperties[0].position) {
-      // Zoom to first matching property - less zoom so city name is visible
       setMapCenter(matchingProperties[0].position);
-      setZoomLevel(10);
+      setZoomLevel(ZOOM_LOCATION);
     }
     // The filtering will be handled by getFilteredMarkers
   };
@@ -637,6 +646,7 @@ export default function HomePage() {
   const handleMarkerClick = (marker) => {
     if (marker.position) {
       setMapCenter(marker.position);
+      setZoomLevel(ZOOM_LOCATION);
     }
     setSelectedMarker(marker);
     setSelectedCity(marker);
@@ -656,9 +666,8 @@ export default function HomePage() {
       const data = await res.json();
       if (data.status === "OK" && data.results?.length > 0) {
         const { lat, lng } = data.results[0].geometry.location;
-        const offset = options.offset ?? 0.15;
-        setMapCenter({ lat: lat - offset, lng });
-        setZoomLevel(options.zoomLevel ?? 10);
+        setMapCenter({ lat, lng });
+        setZoomLevel(options.zoomLevel ?? ZOOM_CITY);
         if (options.clearSearch) setCitySearchQuery('');
         const isMobile = typeof window !== 'undefined' && window.innerWidth < 480;
         if (options.closeSelector || isMobile) {
@@ -772,7 +781,7 @@ export default function HomePage() {
   };
 
 
-  // Helper function to get numeric price value for sorting - schema: totalPrice, discountPercent
+  // Helper function to get numeric price value for sorting - DB: totalPrice, discountPercent
   const getPriceValue = (marker) => {
     const prices = calculatePrices(marker);
     const p = prices.discountedPrice || marker.discountedPrice || marker.totalPrice || marker.originalPrice;
@@ -786,7 +795,7 @@ export default function HomePage() {
     const raw = marker.propertySize ?? marker.size ?? 0;
     const size = typeof raw === 'number' ? raw : parseFloat(String(raw).replace(/[^0-9.]/g, '')) || 0;
 
-    // Schema: propertySize (number, sq ft in dummy) or size string; convert to square feet for comparison
+    // DB: propertySize (number, sq ft) or size string; convert to square feet for comparison
     const sizeStr = String(marker.size || '');
     if (typeof raw === 'number') return size; // propertySize from schema is typically sq ft
     if (sizeStr.toLowerCase().includes('sq ft') || sizeStr.toLowerCase().includes('sqft')) return size;
@@ -803,7 +812,7 @@ export default function HomePage() {
     return getPriceValue(marker);
   };
 
-  // Helper: get price per seat for commercial (schema: pricePerSeat at top level or floorConfigurations)
+  // Helper: get price per seat for commercial (DB: pricePerSeat at top level or floorConfigurations)
   const getPricePerSeat = (marker) => {
     if (marker.propertyCategory === 'commercial' || marker.propertyType === 'commercial') {
       const priceStr = marker.pricePerSeat ?? marker.floorConfigurations?.[0]?.dedicatedCabin?.pricePerSeat;
@@ -861,22 +870,20 @@ export default function HomePage() {
       });
     }
 
-    // Apply listing type filter (For Sale, For Rent, Ready to Move, New Projects, Verified, Video)
+    // Apply listing type filter (For Sale, For Rent, Ready to Move, New Projects, Verified, Video) - DB: listingType
     if (listingTypeFilter && listingTypeFilter !== 'all') {
       filtered = filtered.filter(marker => {
-        const markerListingType = marker.listingType || '';
-        // Map filter values to property values
-        const filterMapping = {
-          'forSale': 'For Sale',
-          'forRent': 'For Rent',
-          'readyToMove': 'Ready to Move',
-          'newProjects': 'New Projects',
-          'verified': 'Verified'
-        };
-        const expectedValue = filterMapping[listingTypeFilter] || listingTypeFilter;
+        const markerListingType = (marker.listingType || '').toString().toLowerCase();
         if (listingTypeFilter === 'verified') return marker.isVerified || marker.verificationStatus === 'verified' || marker.verificationStatus === 'confirmed';
-        if (listingTypeFilter === 'video') return !!(marker.video_url || marker.video || marker.has_video);
-        return markerListingType === expectedValue;
+        if (listingTypeFilter === 'video') return !!(marker.video || (marker.propertyVideos && marker.propertyVideos.length > 0));
+        // DB values: "for-rent", "Standard", etc.; also accept display form "For Rent"
+        const match = {
+          forSale: () => markerListingType.includes('sale') || markerListingType === 'for-sale',
+          forRent: () => markerListingType.includes('rent') || markerListingType === 'for-rent',
+          readyToMove: () => markerListingType.includes('ready') || markerListingType.includes('move'),
+          newProjects: () => markerListingType.includes('new') || markerListingType.includes('project'),
+        };
+        return match[listingTypeFilter] ? match[listingTypeFilter]() : markerListingType === listingTypeFilter.toLowerCase();
       });
     }
 
@@ -1168,41 +1175,41 @@ export default function HomePage() {
         });
       }
 
-      // Apply property category type filters (Office Space, Co-Working, etc.)
+      // Apply property category type filters (Office Space, Co-Working, etc.) - DB: propertyType, category
       if (hasPropertyTypeFilters) {
         filtered = filtered.filter(marker => {
-          const categoryType = marker.propertyCategoryType || '';
+          const propType = (marker.propertyType || '').toString().toLowerCase();
+          const category = (marker.category || '').toString().toLowerCase();
+          const combined = `${propType} ${category}`.trim();
           const categoryMapping = {
-            'officeSpace': 'Office Space',
-            'coWorking': 'Co-Working',
-            'shop': 'Shop',
-            'showroom': 'Showroom',
-            'godownWarehouse': 'Godown/Warehouse',
-            'industrialShed': 'Industrial Shed',
-            'industrialBuilding': 'Industrial Building',
-            'otherBusiness': 'Other business',
-            'restaurantCafe': 'Restaurant/Cafe'
+            officeSpace: ['office space', 'office', 'techpark', 'tech park'],
+            coWorking: ['co-working', 'coworking', 'managed space', 'unmanaged space'],
+            shop: ['shop'],
+            showroom: ['showroom'],
+            godownWarehouse: ['godown', 'warehouse'],
+            industrialShed: ['industrial shed', 'shed'],
+            industrialBuilding: ['industrial building', 'industrial'],
+            otherBusiness: ['other', 'business'],
+            restaurantCafe: ['restaurant', 'cafe', 'café'],
           };
-
-          // Check if any selected property type matches
           return Object.entries(f.propertyTypes).some(([key, isSelected]) => {
             if (!isSelected) return false;
-            const expectedCategory = categoryMapping[key];
-            return categoryType === expectedCategory;
+            const possibleValues = categoryMapping[key] || [key];
+            return possibleValues.some(v => combined.includes(v));
           });
         });
       }
 
-      // Apply listed by filter
+      // Apply listed by filter - DB: postedBy ("Owner", "Builder", "Agent")
       if (hasListedByFilters) {
         filtered = filtered.filter(marker => {
-          const raw = (marker.listed_by || marker.listedBy || '').toLowerCase();
+          const postedBy = (marker.postedBy || marker.listed_by || marker.listedBy || '').toString().toLowerCase();
           const tag = (marker.agentDetails?.tag || '').toLowerCase();
-          const listedBy = raw || (tag.includes('builderinfo') ? 'buildersinfo' : 'agent');
+          const isBuilder = postedBy === 'builder' || tag.includes('builderinfo') || tag.includes('buildersinfo');
           return (
-            (f.filters.listedBy.owner && listedBy === 'owner') ||
-            (f.filters.listedBy.agent && listedBy === 'agent') ||
-            (f.filters.listedBy.iacre && listedBy === 'buildersinfo')
+            (f.filters.listedBy.owner && postedBy === 'owner') ||
+            (f.filters.listedBy.agent && (postedBy === 'agent' || (postedBy !== 'owner' && postedBy !== 'builder' && !!postedBy))) ||
+            (f.filters.listedBy.iacre && isBuilder)
           );
         });
       }
@@ -1326,32 +1333,32 @@ export default function HomePage() {
         });
       }
 
-      // Apply show only: With Photos
+      // Apply show only: With Photos - DB: images, interiorImages
       if (f.showOnly.withPhotos) {
         filtered = filtered.filter(marker => {
-          const hasImg = !!(marker.featuredImageUrl || (marker.images && marker.images.length > 0));
+          const hasImg = !!(marker.featuredImageUrl || (marker.images && marker.images.length > 0) || (marker.interiorImages && marker.interiorImages.length > 0));
           return hasImg;
         });
       }
-      // Remove Seen Properties - no-op if no seen tracking (include all)
       if (f.showOnly.removeSeen) {
-        // Dummy: exclude nothing; could integrate with a "seen" list later
+        // No-op; could integrate with seen list later
       }
 
-      // Apply amenities filter
+      // Apply amenities filter - DB: amenities (array of { id, name, category })
       if (f.amenities.powerBackup || f.amenities.lift) {
         filtered = filtered.filter(marker => {
-          const mAmenities = (marker.amenities || marker.amenitiesList || '').toString().toLowerCase();
+          const arr = marker.amenities || marker.amenitiesList;
+          const mAmenities = Array.isArray(arr) ? arr.map(a => (a && (a.name || a))).filter(Boolean).join(' ').toLowerCase() : (arr || '').toString().toLowerCase();
           if (!mAmenities) return true;
           const needPower = f.amenities.powerBackup && mAmenities.includes('power');
-          const needLift = f.amenities.lift && mAmenities.includes('lift');
+          const needLift = f.amenities.lift && (mAmenities.includes('lift') || mAmenities.includes('elevator'));
           if (f.amenities.powerBackup && !needPower) return false;
           if (f.amenities.lift && !needLift) return false;
           return true;
         });
       }
 
-      // Apply floors filter
+      // Apply floors filter - DB: availableFloors ("10th"), selectedFloors (["7","8","9"])
       if (hasFloorsFilter) {
         const floorRanges = {
           ground: [0, 0],
@@ -1362,27 +1369,31 @@ export default function HomePage() {
           custom: null,
         };
         filtered = filtered.filter(marker => {
-          const floorNum = parseInt(marker.floor || marker.floors || '0', 10) || 0;
-          if (isNaN(floorNum)) return true;
+          const fromAvailable = parseInt(String(marker.availableFloors || '').replace(/\D/g, ''), 10) || 0;
+          const fromSelected = (marker.selectedFloors || []).map(s => parseInt(String(s).replace(/\D/g, ''), 10)).filter(n => !isNaN(n));
+          const floorNum = fromAvailable || (fromSelected.length ? Math.max(...fromSelected) : 0) || parseInt(marker.floor || marker.floors || '0', 10) || 0;
+          if (!floorNum) return true;
           return Object.entries(f.floors).some(([key, sel]) => {
             if (!sel) return false;
             const range = floorRanges[key];
-            if (!range) return true; // custom: include
+            if (!range) return true;
             return floorNum >= range[0] && floorNum <= range[1];
           });
         });
       }
 
-      // Apply property age filter
+      // Apply property age filter - DB: propertyAgeInYears (number) or propertyAge (string)
       if (hasPropertyAgeFilter) {
         filtered = filtered.filter(marker => {
-          const age = (marker.propertyAge || marker.age || '').toLowerCase();
+          const ageNum = typeof marker.propertyAgeInYears === 'number' ? marker.propertyAgeInYears : NaN;
+          const ageStr = (marker.propertyAge || marker.age || (Number.isFinite(ageNum) ? String(ageNum) : '')).toString().toLowerCase();
+          const age = Number.isFinite(ageNum) ? `${ageNum} ${ageStr}` : ageStr;
           if (!age) return true;
           const ageMap = {
-            lessThan1: ['less', '1 year', 'new'],
-            '1to5': ['1 to 5', '1-5'],
-            '5to10': ['5 to 10', '5-10'],
-            moreThan10: ['10', 'old', 'more than'],
+            lessThan1: ['0', 'less', '1 year', 'new'],
+            '1to5': ['1', '2', '3', '4', '5', '1 to 5', '1-5'],
+            '5to10': ['6', '7', '8', '9', '10', '5 to 10', '5-10'],
+            moreThan10: ['10', '11', '12', 'old', 'more than'],
           };
           return Object.entries(f.propertyAge).some(([key, sel]) => {
             if (!sel) return false;
@@ -1602,7 +1613,7 @@ export default function HomePage() {
                       // If suggestion has a marker (property), zoom to it
                       if (suggestion.marker && suggestion.marker.position) {
                         setMapCenter(suggestion.marker.position);
-                        setZoomLevel(10); // Less zoom so city name is visible
+                        setZoomLevel(ZOOM_LOCATION);
                         setSearchQuery(suggestion.text);
                         if (typeof window !== 'undefined' && window.innerWidth < 480) setSelectedMarker(null);
                         return;
@@ -1722,7 +1733,7 @@ export default function HomePage() {
                               // If suggestion has a marker (property), zoom to it
                               if (suggestion.marker && suggestion.marker.position) {
                                 setMapCenter(suggestion.marker.position);
-                                setZoomLevel(10); // Less zoom so city name is visible
+                                setZoomLevel(ZOOM_LOCATION);
                                 setSearchQuery(suggestion.text);
                                 return;
                               }
@@ -1978,7 +1989,7 @@ export default function HomePage() {
                     onChange={setCitySearchQuery}
                     onSelect={({ description, lat, lng }) => {
                       setMapCenter({ lat, lng });
-                      setZoomLevel(10);
+                      setZoomLevel(ZOOM_LOCATION);
                       setCitySearchQuery(description.split(',')[0].trim());
                       if (typeof window !== 'undefined' && window.innerWidth < 480) {
                         setShowFiltersView(false);
@@ -2004,7 +2015,7 @@ export default function HomePage() {
                         const loc = await getUserLocation();
                         // Core behavior: same as Locate Me - center map and zoom
                         setMapCenter({ lat: loc.lat, lng: loc.lng });
-                        setZoomLevel(loc.isFallback ? 5 : loc.isApproximate ? 10 : 13);
+                        setZoomLevel(loc.isFallback ? ZOOM_INDIA : loc.isApproximate ? ZOOM_CITY : ZOOM_LOCATION);
                         setDetectedUserLocation({ lat: loc.lat, lng: loc.lng });
                         if (typeof window !== 'undefined' && window.innerWidth < 480) setShowCitySelector(false);
 
@@ -2053,7 +2064,7 @@ export default function HomePage() {
                       setSelectedCity(null);
                       setSelectedMarker(null);
                       setMapCenter({ lat: 20.5937, lng: 78.9629 });
-                      setZoomLevel(5);
+                      setZoomLevel(ZOOM_INDIA);
                       setCitySearchQuery('');
                       setDetectedUserLocation(null);
                     }}
@@ -2132,7 +2143,7 @@ export default function HomePage() {
                       .map(city => (
                         <button
                           key={city}
-                          onClick={() => zoomToCity(city, { offset: 0, zoomLevel: 12, clearSearch: true, closeSelector: false })}
+                          onClick={() => zoomToCity(city, { zoomLevel: ZOOM_CITY, clearSearch: true, closeSelector: false })}
                           className={`w-full px-0 py-3 text-left text-sm transition-colors cursor-pointer border-b last:border-b-0 ${isDark ? 'text-gray-300 hover:text-white hover:bg-[#282c34] border-gray-700' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50 border-gray-100'}`}
                         >
                           {city}
@@ -2275,7 +2286,7 @@ export default function HomePage() {
                     onChange={setFilterLocalitySearch}
                     onSelect={({ lat, lng }) => {
                       setMapCenter({ lat, lng });
-                      setZoomLevel(14);
+                      setZoomLevel(ZOOM_LOCATION);
                       if (typeof window !== 'undefined' && window.innerWidth < 480) {
                         setShowFiltersView(false);
                         setShowCitySelector(false);
@@ -2707,7 +2718,7 @@ export default function HomePage() {
                             onChange={setCommercialLocalitySearch}
                             onSelect={({ lat, lng }) => {
                               setMapCenter({ lat, lng });
-                              setZoomLevel(14);
+                              setZoomLevel(ZOOM_LOCATION);
                               if (typeof window !== 'undefined' && window.innerWidth < 480) {
                                 setShowFiltersView(false);
                                 setShowCitySelector(false);
@@ -2752,7 +2763,7 @@ export default function HomePage() {
                             onChange={setCommercialSocietySearch}
                             onSelect={({ lat, lng }) => {
                               setMapCenter({ lat, lng });
-                              setZoomLevel(14);
+                              setZoomLevel(ZOOM_LOCATION);
                               if (typeof window !== 'undefined' && window.innerWidth < 480) {
                                 setShowFiltersView(false);
                                 setShowCitySelector(false);
@@ -2832,7 +2843,7 @@ export default function HomePage() {
                             onChange={setResidentialLocalitySearch}
                             onSelect={({ lat, lng }) => {
                               setMapCenter({ lat, lng });
-                              setZoomLevel(14);
+                              setZoomLevel(ZOOM_LOCATION);
                               if (typeof window !== 'undefined' && window.innerWidth < 480) {
                                 setShowFiltersView(false);
                                 setShowCitySelector(false);
@@ -2878,7 +2889,7 @@ export default function HomePage() {
                             onChange={setResidentialSocietySearch}
                             onSelect={({ lat, lng }) => {
                               setMapCenter({ lat, lng });
-                              setZoomLevel(14);
+                              setZoomLevel(ZOOM_LOCATION);
                               if (typeof window !== 'undefined' && window.innerWidth < 480) {
                                 setShowFiltersView(false);
                                 setShowCitySelector(false);
@@ -3247,21 +3258,25 @@ export default function HomePage() {
                     onClick={() => handleMarkerClick(marker)}
                   >
                     <div className="flex gap-2">
-                      <div className="relative flex-shrink-0">
-                        <Image
-                          src={marker.featuredImageUrl || marker.images?.[0] || '/placeholder.png'}
-                          alt={marker.propertyName || "Property Image"}
-                          width={56}
-                          height={56}
-                          className="rounded-md object-cover w-14 h-14"
-                          unoptimized
-                        />
+                      <div className="relative flex-shrink-0 w-14 h-14 rounded-md overflow-hidden bg-muted">
+                        {(marker.featuredImageUrl || marker.images?.[0]) ? (
+                          <Image
+                            src={marker.featuredImageUrl || marker.images[0]}
+                            alt={marker.propertyName || '-'}
+                            width={56}
+                            height={56}
+                            className="rounded-md object-cover w-14 h-14"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="w-full h-full rounded-md bg-muted" aria-hidden />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-1 mb-0.5">
                           <div className="flex items-center gap-1 min-w-0">
                             <h3 className={`font-semibold text-xs leading-tight truncate ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                              {marker.propertyName || 'Property Name'}
+                              {marker.propertyName || marker.name || '-'}
                             </h3>
                             {marker.isVerified && (
                               <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none">
@@ -3288,7 +3303,7 @@ export default function HomePage() {
                               />
                             </button>
                             <a
-                              href={`https://wa.me/${(marker.agentDetails?.phone || marker.sellerPhoneNumber)?.replace(/[^0-9]/g, '') || '918151915199'}?text=Hi,%20I%20am%20interested%20in%20${encodeURIComponent(marker.propertyName || 'this property')}`}
+                              href={`https://wa.me/${(marker.agentDetails?.phone || marker.sellerPhoneNumber)?.replace(/[^0-9]/g, '') || defaultWhatsappForWa}?text=Hi,%20I%20am%20interested%20in%20${encodeURIComponent(marker.propertyName || 'this property')}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
@@ -3353,7 +3368,7 @@ export default function HomePage() {
                   }
                   if (suggestion.marker?.position) {
                     setMapCenter(suggestion.marker.position);
-                    setZoomLevel(10);
+                    setZoomLevel(ZOOM_LOCATION);
                   }
                 }}
                 suggestions={suggestions}
@@ -3503,7 +3518,7 @@ export default function HomePage() {
                   try {
                     const loc = await getUserLocation();
                     setMapCenter({ lat: loc.lat, lng: loc.lng });
-                    setZoomLevel(loc.isFallback ? 5 : loc.isApproximate ? 10 : 13);
+                    setZoomLevel(loc.isFallback ? ZOOM_INDIA : loc.isApproximate ? ZOOM_CITY : ZOOM_LOCATION);
                   } catch (e) {
                     console.error('Locate failed:', e);
                   } finally {
@@ -3751,7 +3766,7 @@ export default function HomePage() {
                     onChange={setFilterLocalitySearch}
                     onSelect={({ lat, lng }) => {
                       setMapCenter({ lat, lng });
-                      setZoomLevel(14);
+                      setZoomLevel(ZOOM_LOCATION);
                       if (typeof window !== 'undefined' && window.innerWidth < 480) {
                         setShowFiltersView(false);
                         setShowCitySelector(false);
@@ -4181,7 +4196,7 @@ export default function HomePage() {
                             onChange={setCommercialLocalitySearch}
                             onSelect={({ lat, lng }) => {
                               setMapCenter({ lat, lng });
-                              setZoomLevel(14);
+                              setZoomLevel(ZOOM_LOCATION);
                               if (typeof window !== 'undefined' && window.innerWidth < 480) {
                                 setShowFiltersView(false);
                                 setShowCitySelector(false);
@@ -4224,7 +4239,7 @@ export default function HomePage() {
                             onChange={setCommercialSocietySearch}
                             onSelect={({ lat, lng }) => {
                               setMapCenter({ lat, lng });
-                              setZoomLevel(14);
+                              setZoomLevel(ZOOM_LOCATION);
                               if (typeof window !== 'undefined' && window.innerWidth < 480) {
                                 setShowFiltersView(false);
                                 setShowCitySelector(false);
@@ -4300,7 +4315,7 @@ export default function HomePage() {
                             onChange={setResidentialLocalitySearch}
                             onSelect={({ lat, lng }) => {
                               setMapCenter({ lat, lng });
-                              setZoomLevel(14);
+                              setZoomLevel(ZOOM_LOCATION);
                               if (typeof window !== 'undefined' && window.innerWidth < 480) {
                                 setShowFiltersView(false);
                                 setShowCitySelector(false);
@@ -4346,7 +4361,7 @@ export default function HomePage() {
                             onChange={setResidentialSocietySearch}
                             onSelect={({ lat, lng }) => {
                               setMapCenter({ lat, lng });
-                              setZoomLevel(14);
+                              setZoomLevel(ZOOM_LOCATION);
                               if (typeof window !== 'undefined' && window.innerWidth < 480) {
                                 setShowFiltersView(false);
                                 setShowCitySelector(false);
@@ -4744,7 +4759,7 @@ export default function HomePage() {
                     onChange={setCitySearchQuery}
                     onSelect={({ description, lat, lng }) => {
                       setMapCenter({ lat, lng });
-                      setZoomLevel(10);
+                      setZoomLevel(ZOOM_LOCATION);
                       setCitySearchQuery(description.split(',')[0].trim());
                       if (typeof window !== 'undefined' && window.innerWidth < 480) {
                         setShowFiltersView(false);
@@ -4770,7 +4785,7 @@ export default function HomePage() {
                         const loc = await getUserLocation();
                         // Core behavior: same as Locate Me - center map and zoom
                         setMapCenter({ lat: loc.lat, lng: loc.lng });
-                        setZoomLevel(loc.isFallback ? 5 : loc.isApproximate ? 10 : 13);
+                        setZoomLevel(loc.isFallback ? ZOOM_INDIA : loc.isApproximate ? ZOOM_CITY : ZOOM_LOCATION);
                         setDetectedUserLocation({ lat: loc.lat, lng: loc.lng });
                         if (typeof window !== 'undefined' && window.innerWidth < 480) setShowCitySelector(false);
 
@@ -4819,7 +4834,7 @@ export default function HomePage() {
                       setSelectedCity(null);
                       setSelectedMarker(null);
                       setMapCenter({ lat: 20.5937, lng: 78.9629 });
-                      setZoomLevel(5);
+                      setZoomLevel(ZOOM_INDIA);
                       setCitySearchQuery('');
                       setDetectedUserLocation(null);
                     }}
@@ -4843,7 +4858,7 @@ export default function HomePage() {
                       ).map(city => (
                         <button
                           key={city}
-                          onClick={() => zoomToCity(city, { offset: 0.08, clearSearch: true })}
+                          onClick={() => zoomToCity(city, { clearSearch: true })}
                           className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-colors cursor-pointer ${isDark ? 'hover:bg-[#282c34]' : 'hover:bg-gray-50'}`}
                         >
                           <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
@@ -4866,7 +4881,7 @@ export default function HomePage() {
                     ].map(city => (
                       <button
                         key={city}
-                        onClick={() => zoomToCity(city, { offset: 0.08, clearSearch: true })}
+                        onClick={() => zoomToCity(city, { clearSearch: true })}
                         className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-colors cursor-pointer ${isDark ? 'hover:bg-[#282c34]' : 'hover:bg-gray-50'}`}
                       >
                         <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
@@ -4898,7 +4913,7 @@ export default function HomePage() {
                       .map(city => (
                         <button
                           key={city}
-                          onClick={() => zoomToCity(city, { offset: 0, zoomLevel: 12, clearSearch: true, closeSelector: false })}
+                          onClick={() => zoomToCity(city, { zoomLevel: ZOOM_CITY, clearSearch: true, closeSelector: false })}
                           className={`w-full px-0 py-3 text-left text-sm transition-colors cursor-pointer border-b last:border-b-0 ${isDark ? 'text-gray-300 hover:text-white hover:bg-[#282c34] border-gray-700' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50 border-gray-100'}`}
                         >
                           {city}
@@ -5159,21 +5174,25 @@ export default function HomePage() {
                       }}
                     >
                       <div className="flex gap-3">
-                        <div className="relative flex-shrink-0">
-                          <Image
-                            src={marker.featuredImageUrl || marker.images?.[0] || '/placeholder.png'}
-                            alt={marker.propertyName || "Property Image"}
-                            width={90}
-                            height={90}
-                            className="rounded-lg object-cover w-20 h-20"
-                            unoptimized
-                          />
+                        <div className="relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-muted">
+                          {(marker.featuredImageUrl || marker.images?.[0]) ? (
+                            <Image
+                              src={marker.featuredImageUrl || marker.images[0]}
+                              alt={marker.propertyName || '-'}
+                              width={90}
+                              height={90}
+                              className="rounded-lg object-cover w-20 h-20"
+                              unoptimized
+                            />
+                          ) : (
+                            <div className="w-full h-full rounded-lg bg-muted" aria-hidden />
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2 mb-0.5">
                             <div className="flex items-center gap-1.5 min-w-0">
                               <h3 className={`font-semibold text-sm leading-tight truncate ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                                {marker.propertyName || 'Property Name'}
+                                {marker.propertyName || marker.name || '-'}
                               </h3>
                               {marker.isVerified && (
                                 <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none">
@@ -5200,7 +5219,7 @@ export default function HomePage() {
                                 />
                               </button>
                               <a
-                                href={`https://wa.me/${(marker.agentDetails?.phone || marker.sellerPhoneNumber)?.replace(/[^0-9]/g, '') || '918151915199'}?text=Hi,%20I%20am%20interested%20in%20${encodeURIComponent(marker.propertyName || 'this property')}`}
+                                href={`https://wa.me/${(marker.agentDetails?.phone || marker.sellerPhoneNumber)?.replace(/[^0-9]/g, '') || defaultWhatsappForWa}?text=Hi,%20I%20am%20interested%20in%20${encodeURIComponent(marker.propertyName || 'this property')}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={(e) => e.stopPropagation()}
@@ -5342,7 +5361,7 @@ export default function HomePage() {
               Reach thousands of potential buyers by listing your property on BuildersInfo. Our team will help you get started.
             </p>
 
-            {/* WhatsApp Button - Number from globalConfig only (dummy/JSON now, DB later) */}
+            {/* WhatsApp Button - Number from DB globalConfig */}
             {(() => {
               const raw = globalConfig?.whatsappNo != null ? String(globalConfig.whatsappNo).replace(/\D/g, '') : '';
               const num = raw.length === 10 ? '91' + raw : raw.startsWith('91') ? raw : raw;

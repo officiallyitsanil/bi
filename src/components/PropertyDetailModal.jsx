@@ -20,6 +20,13 @@ const safeDisplay = (value, fallback = "-") => {
     }
     return value;
 };
+
+const safeNumber = (value) => {
+    if (value === null || value === undefined || value === "") return 0;
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 0;
+};
+
 import {
     MapPin,
     X,
@@ -443,7 +450,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
         const lat = property.coordinates?.latitude ?? property.coordinates?.lat ?? property.position?.lat;
         const lng = property.coordinates?.longitude ?? property.coordinates?.lng ?? property.position?.lng;
         const mapUrl = (lat != null && lng != null)
-            ? `https://maps.google.com/maps?q=${lat},${lng}&z=16&t=h`
+            ? `https://maps.google.com/maps?q=${lat},${lng}&z=14&t=h`
             : `${window.location.origin}/property-details?id=${property._id || property.id}`;
 
         try {
@@ -527,24 +534,19 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
     const floorPlanCategories = Object.keys(floorPlans);
 
     // Schema: brandDetails
-    const brandName = property.brandDetails?.name || property.brandName || "BHIVE Workspace";
+    const brandName = safeDisplay(property.brandDetails?.name || property.brandName);
     const brandStats = property.brandDetails ? {
-        cities: property.brandDetails.cities ?? property.brandStats?.cities,
-        clients: property.brandDetails.clients ?? property.brandStats?.clients,
-        spaces: property.brandDetails.spaces ?? property.brandStats?.spaces,
-        seats: property.brandDetails.seats ?? property.brandStats?.seats
-    } : (property.brandStats || {
-        cities: "2+ Cities",
-        clients: "1000+ Clients",
-        spaces: "27+ Spaces",
-        seats: "8000+ Seats"
-    });
-    const brandDescription = property.brandDetails?.description || property.brandDescription || "BHIVE Workspace, established in 2014, specializes in providing Zero CapEx, Enterprise Grade, Customized...";
-    const rating = property.ratings?.overall || 4.8;
+        cities: property.brandDetails.cities ?? property.brandStats?.cities ?? 0,
+        clients: property.brandDetails.clients ?? property.brandStats?.clients ?? 0,
+        spaces: property.brandDetails.spaces ?? property.brandStats?.spaces ?? 0,
+        seats: property.brandDetails.seats ?? property.brandStats?.seats ?? 0
+    } : (property.brandStats || { cities: 0, clients: 0, spaces: 0, seats: 0 });
+    const brandDescription = safeDisplay(property.brandDetails?.description || property.brandDescription);
+    const rating = safeNumber(property.ratings?.overall);
     const isTopRated = property.isTopRated !== undefined ? property.isTopRated : true;
 
     // Mobile view (< md breakpoint) - Exact design for screens < 480px
-    const availabilityStatus = property.availability || 'Available';
+    const availabilityStatus = safeDisplay(property.availability, 'Available');
 
     const mobileModal = (
         <div
@@ -681,7 +683,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                 <svg className="w-4 h-4 max-[480px]:w-3.5 max-[480px]:h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                                 </svg>
-                                {safeDisplay(property.propertySize || property.carpetArea, '5000')} sq.ft
+                                {safeNumber(property.propertySize || property.carpetArea)} sq.ft
                             </span>
                             <span className={`px-3 py-2 max-[480px]:px-2.5 max-[480px]:py-1.5 rounded-xl max-[480px]:rounded-lg text-xs max-[480px]:text-[10px] font-medium flex items-center gap-2 max-[480px]:gap-1.5 ${isDark ? 'bg-[#282c34] text-blue-400' : 'bg-gray-100 text-gray-600'}`}>
                                 <svg className="w-4 h-4 max-[480px]:w-3.5 max-[480px]:h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -727,7 +729,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                         <div className="grid grid-cols-3 gap-2 mb-4">
                             <div className={`rounded-xl py-3 px-2 max-[480px]:py-2 max-[480px]:px-1.5 text-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
                                 <p className={`text-xs max-[480px]:text-[10px] mb-0.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Price</p>
-                                <p className="text-sm max-[480px]:text-xs font-bold text-blue-600">₹{String(property.pricePerSqft ?? prices?.pricePerSqft ?? 120).replace(/[₹,]/g, '')}</p>
+                                <p className="text-sm max-[480px]:text-xs font-bold text-blue-600">₹{String(safeNumber(property.pricePerSqft ?? prices?.pricePerSqft)).replace(/[₹,]/g, '')}</p>
                                 <p className={`text-[11px] max-[480px]:text-[9px] ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>/sq.ft</p>
                             </div>
                             <div className={`rounded-xl py-3 px-2 max-[480px]:py-2 max-[480px]:px-1.5 text-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
@@ -736,7 +738,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                             </div>
                             <div className={`rounded-xl py-3 px-2 max-[480px]:py-2 max-[480px]:px-1.5 text-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
                                 <p className={`text-xs max-[480px]:text-[10px] mb-0.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Reviews</p>
-                                <p className={`text-sm max-[480px]:text-xs font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{reviews.length}</p>
+                                <p className={`text-sm max-[480px]:text-xs font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeNumber(reviews.length)}</p>
                             </div>
                         </div>
 
@@ -838,7 +840,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                 <Share2 className={`w-2.5 h-2.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} />
                             </button>
                             <a
-                                href={`https://maps.google.com/maps?q=${property.coordinates?.latitude ?? property.coordinates?.lat ?? property.position?.lat},${property.coordinates?.longitude ?? property.coordinates?.lng ?? property.position?.lng}&z=16&t=h`}
+                                href={`https://maps.google.com/maps?q=${property.coordinates?.latitude ?? property.coordinates?.lat ?? property.position?.lat},${property.coordinates?.longitude ?? property.coordinates?.lng ?? property.position?.lng}&z=14&t=h`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={`w-5 h-5 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-md ${isDark ? 'bg-[#282c34]/80 hover:bg-[#282c34]' : 'bg-white/80 hover:bg-white'}`}

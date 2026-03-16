@@ -7,7 +7,7 @@ const GlobalConfigSchema = new mongoose.Schema({
   },
   whatsappNo: {
     type: Number,
-    required: true,
+    default: null,
   },
 }, {
   timestamps: true,

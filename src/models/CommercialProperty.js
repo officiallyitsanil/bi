@@ -83,24 +83,84 @@ const ReviewSchema = new mongoose.Schema({
 }, { _id: false });
 
 const CustomInfrastructureSchema = new mongoose.Schema({
-    id: String,
+    id: { type: mongoose.Schema.Types.Mixed },
     name: String
 }, { _id: false });
 
 const AmenitySchema = new mongoose.Schema({
-    id: String,
+    id: { type: mongoose.Schema.Types.Mixed },
     name: String,
     category: String
 }, { _id: false });
 
+const PropertyVideoSchema = new mongoose.Schema({
+    url: String,
+    thumbnail: String,
+    fileId: String,
+    filename: String
+}, { _id: false });
+
+const SimilarPropertySchema = new mongoose.Schema({
+    id: String,
+    name: String,
+    locality: String,
+    price: String,
+    rating: Number,
+    badge: String,
+    image: String
+}, { _id: false });
+
+const ExploreLocationSchema = new mongoose.Schema({
+    name: String,
+    image: String
+}, { _id: false });
+
+const DedicatedConfigSchema = new mongoose.Schema({
+    enabled: Boolean,
+    readyToMove: Boolean,
+    readyForFitOut: Boolean,
+    availableFrom: String,
+    timeline: String,
+    seats: String,
+    pricePerSeat: String,
+    pricePerSqft: String,
+    billableUnits: String
+}, { _id: false });
+
+const FloorConfigSchema = new mongoose.Schema({
+    floor: String,
+    dedicatedCabin: DedicatedConfigSchema,
+    dedicatedFloor: DedicatedConfigSchema
+}, { _id: false });
+
+const SeatLayoutPDFSchema = new mongoose.Schema({
+    url: String,
+    originalName: String,
+    filename: String,
+    size: Number,
+    fileId: String
+}, { _id: false });
+
+const InteriorImageSchema = new mongoose.Schema({
+    fileId: String,
+    filename: String,
+    originalName: String,
+    contentType: String,
+    size: Number,
+    uploadDate: Date,
+    url: String
+}, { _id: false });
+
 const CommercialPropertySchema = new mongoose.Schema({
     propertyCategory: String,
+    category: String,
     propertyName: String,
     address: AddressSchema,
     displayAddress: String,
     coordinates: CoordinatesSchema,
     verificationStatus: String,
     isTopRated: Boolean,
+    isPremium: Boolean,
     listingType: String,
     totalPrice: String,
     discountPercent: Number,
@@ -118,7 +178,7 @@ const CommercialPropertySchema = new mongoose.Schema({
     availableFloors: String,
     officeSpaceSolutions: String,
     builderName: String,
-    facilities: String,
+    facilities: { type: mongoose.Schema.Types.Mixed },
     agentDetails: AgentDetailsSchema,
     brandDetails: BrandDetailsSchema,
     floorPlan: String,
@@ -131,8 +191,11 @@ const CommercialPropertySchema = new mongoose.Schema({
     customInfrastructure: [CustomInfrastructureSchema],
     amenities: [AmenitySchema],
     images: [String],
+    interiorImages: [InteriorImageSchema],
     pdf: String,
     video: String,
+    propertyVideos: [PropertyVideoSchema],
+    seatLayoutPDFs: [SeatLayoutPDFSchema],
     selectedFloors: [String],
     propertyType: String,
     propertyLabel: String,
@@ -143,9 +206,28 @@ const CommercialPropertySchema = new mongoose.Schema({
     showOnly: String,
     propertyAgeInYears: Number,
     postedBy: String,
-    uploadedDate: String
+    uploadedDate: String,
+    similarLocations: [String],
+    allSimilarLocations: [String],
+    similarProperties: [SimilarPropertySchema],
+    exploreLocations: [ExploreLocationSchema],
+    status: String,
+    location: String,
+    views: Number,
+    inquiries: Number,
+    floorConfigurations: [FloorConfigSchema],
+    badge: String,
+    sellerPhoneNumber: String,
+    isNew: Boolean,
+    date_added: String,
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Users' },
+    updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Users' },
+    publishedAt: Date,
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
 }, {
-    collection: 'commercialProperties'
+    collection: 'commercialProperties',
+    timestamps: true
 });
 
 export default mongoose.models.CommercialProperty || mongoose.model('CommercialProperty', CommercialPropertySchema);

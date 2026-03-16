@@ -1,23 +1,21 @@
 import { NextResponse } from 'next/server';
-// import dbConnect from '@/utils/dbConnect';
-// import GlobalConfig from '@/models/GlobalConfig';
-
-// For now: serve from dummy JSON (later: fetch from DB)
-import globalConfig from '@/dummy/global-configs.json';
+import dbConnect from '@/utils/dbConnect';
+import GlobalConfig from '@/models/GlobalConfig';
 
 export async function GET() {
     try {
-        // TODO: Later - fetch from DB
-        // await dbConnect();
-        // const config = await GlobalConfig.findOne().sort({ createdAt: -1 }).lean();
-        // if (!config) return NextResponse.json({ success: false, message: 'Config not found' }, { status: 404 });
-        // return NextResponse.json({ success: true, config });
-
+        await dbConnect();
+        const doc = await GlobalConfig.findOne().sort({ createdAt: -1 }).lean();
+        if (!doc) {
+            return NextResponse.json({
+                success: true,
+                config: { isFullNavVisible: false, whatsappNo: null },
+            });
+        }
         const config = {
-            isFullNavVisible: globalConfig.isFullNavVisible ?? false,
-            whatsappNo: globalConfig.whatsappNo ?? null,
+            isFullNavVisible: doc.isFullNavVisible ?? false,
+            whatsappNo: doc.whatsappNo != null ? doc.whatsappNo : null,
         };
-
         return NextResponse.json({ success: true, config });
     } catch (error) {
         console.error('[global-config]', error);

@@ -193,9 +193,9 @@ export async function GET(request) {
                 }
             }
             
-            // Filter by facilities (facilities array in DB)
+            // Filter by facilities (DB: commercial = array of strings, residential = string)
             if (facilities) {
-                const propFacilities = prop.facilities || [];
+                const propFacilities = Array.isArray(prop.facilities) ? prop.facilities : (prop.facilities ? [prop.facilities] : []);
                 const searchFacility = facilities.toLowerCase().trim();
                 
                 // Check if the property has the selected facility in its facilities array
@@ -360,7 +360,7 @@ export async function GET(request) {
                     };
                     
                     const facilityToCheck = preferenceMap[preferences.toLowerCase()] || preferences;
-                    const propFacilities = prop.facilities || [];
+                    const propFacilities = Array.isArray(prop.facilities) ? prop.facilities : (prop.facilities ? [prop.facilities] : []);
                     
                     // Check if property has the requested facility
                     const hasFacility = propFacilities.some(facility => {

@@ -101,7 +101,6 @@ const safeDisplay = (value, fallback = "-") => {
     if (value === null || value === undefined || value === "") {
         return fallback;
     }
-    // Handle arrays and objects
     if (Array.isArray(value) && value.length === 0) {
         return fallback;
     }
@@ -109,6 +108,12 @@ const safeDisplay = (value, fallback = "-") => {
         return fallback;
     }
     return value;
+};
+
+const safeNumber = (value) => {
+    if (value === null || value === undefined || value === "") return 0;
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 0;
 };
 
 // Helper function to get video MIME type from URL or contentType
@@ -501,7 +506,7 @@ function PropertyDetailsContent() {
 
         const normalizedUserPhone = normalizePhone(userPhone);
 
-        // Check reviews - handle different possible field names in review schema
+        // Check reviews - handle different possible field names (DB: reviews)
         const userReviewFound = propToCheck.reviews.find(review => {
             const reviewPhone = review.userPhoneNumber || review.userPhone || review.phoneNumber || review.phone;
             if (!reviewPhone) return false;
@@ -639,7 +644,8 @@ function PropertyDetailsContent() {
                         _id: String(p._id || p.id),
                         position,
                         coordinates: position ?? coord,
-                        amenities: p.amenities || []
+                        amenities: p.amenities || [],
+                        images: Array.isArray(p.images) ? p.images : (Array.isArray(p.interiorImages) ? p.interiorImages.map((i) => (i && typeof i === 'object' && i.url) ? i.url : (typeof i === 'string' ? i : '')).filter(Boolean) : [])
                     };
 
                     setProperty(formattedProperty);
@@ -660,10 +666,10 @@ function PropertyDetailsContent() {
         fetchPropertyFromAPI();
     }, [searchParams, router]);
 
-    // Map configuration - normalized coords use lat/lng (schema has latitude/longitude)
+    // Map configuration - normalized coords use lat/lng (DB: coordinates.latitude/longitude)
     const coord = property?.coordinates || property?.position;
     const mapCenter = property && coord ? { lat: coord.lat ?? coord.latitude, lng: coord.lng ?? coord.longitude } : { lat: 28.6139, lng: 77.2090 };
-    const mapZoom = 15;
+    const mapZoom = 14; // Match main map ZOOM_LOCATION for consistent scale
 
     const openGoogleMaps = () => {
         const c = property?.coordinates || property?.position;
@@ -753,12 +759,13 @@ function PropertyDetailsContent() {
         ...(isCommercial ? [{ id: 'layout', label: 'Property Layout' }] : [])
     ];
 
+    const images = property?.images ?? [];
     const nextImage = () => {
-        setCurrentImageIndex((prev) => (prev + 1) % property.images.length);
+        setCurrentImageIndex((prev) => (prev + 1) % Math.max(1, images.length));
     };
 
     const prevImage = () => {
-        setCurrentImageIndex((prev) => (prev - 1 + property.images.length) % property.images.length);
+        setCurrentImageIndex((prev) => (prev - 1 + Math.max(1, images.length)) % Math.max(1, images.length));
     };
 
     // Swipe handlers for mobile
@@ -866,7 +873,7 @@ function PropertyDetailsContent() {
         }
     };
 
-    // Agent contact from schema: agentDetails (phone, email, whatsapp) with fallbacks
+    // Agent contact - DB: agentDetails (phone, email, whatsapp)
     const agentContactPhone = property?.agentDetails?.phone || property?.agentPhone || property?.sellerPhoneNumber;
     const agentContactWhatsApp = property?.agentDetails?.whatsapp || property?.agentDetails?.phone || property?.agentPhone || property?.sellerPhoneNumber;
     const agentContactEmail = property?.agentDetails?.email;
@@ -1179,7 +1186,7 @@ function PropertyDetailsContent() {
         );
     }
 
-    // Schema: nearbyPlaces { banks, schools, hospitals, busStops, temples, atms, malls }
+    // DB: nearbyPlaces { schools, busStops, hospitals, banks, temples, atms, malls }
     const categoryToSchemaKey = { school: "schools", bus: "busStops", hospital: "hospitals", bank: "banks", temple: "temples", atm: "atms", mall: "malls" };
     const getNearbyByCategory = (cat) => {
         const key = categoryToSchemaKey[cat] || cat;
@@ -1188,7 +1195,7 @@ function PropertyDetailsContent() {
     };
     const dateAdded = (property.createdAt || property.uploadedDate) ? new Date(property.createdAt || property.uploadedDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : null;
 
-    // Rating & Reviews: use ratings schema (overall, totalRatings, breakdown); fallback to derived from reviews when missing
+    // Rating & Reviews - DB: ratings (overall, totalRatings, breakdown), reviews array
     const ratingDisplay = (() => {
         const reviews = property?.reviews && Array.isArray(property.reviews) ? property.reviews : [];
         const r = property?.ratings || {};
@@ -1315,16 +1322,24 @@ function PropertyDetailsContent() {
                                 onTouchEnd={handleTouchEnd}
                             >
                                 <div className="property-details-gallery grid grid-cols-1 md:grid-cols-3 md:grid-rows-2 gap-2 md:h-[450px]">
-                                    <div className="relative md:col-span-2 md:row-span-2 rounded-lg overflow-hidden group cursor-pointer aspect-[4/3] md:aspect-auto">
-                                        <img
-                                            src={property.images[currentImageIndex]}
-                                            alt={property.propertyName || property.name}
-                                            className="w-full h-full object-cover transition-transform duration-300 cursor-pointer"
-                                            onClick={() => setFullScreenImage(property.images[currentImageIndex])}
-                                        />
+                                    <div className="relative md:col-span-2 md:row-span-2 rounded-lg overflow-hidden group cursor-pointer aspect-[4/3] md:aspect-auto bg-muted">
+                                        {images[currentImageIndex] ? (
+                                            <img
+                                                src={images[currentImageIndex]}
+                                                alt={safeDisplay(property.propertyName || property.name)}
+                                                className="w-full h-full object-cover transition-transform duration-300 cursor-pointer"
+                                                onClick={() => setFullScreenImage(images[currentImageIndex])}
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full bg-muted" aria-hidden />
+                                        )}
                                     </div>
-                                    <div className="relative md:col-span-1 md:row-span-1 rounded-lg overflow-hidden cursor-pointer aspect-[4/3] md:aspect-auto">
-                                        <img src={property.images[1] || property.images[0]} alt="" className="w-full h-full object-cover" onClick={() => setFullScreenImage(property.images[1] || property.images[0])} />
+                                    <div className="relative md:col-span-1 md:row-span-1 rounded-lg overflow-hidden cursor-pointer aspect-[4/3] md:aspect-auto bg-muted">
+                                        {(images[1] || images[0]) ? (
+                                            <img src={images[1] || images[0]} alt="" className="w-full h-full object-cover" onClick={() => setFullScreenImage(images[1] || images[0])} />
+                                        ) : (
+                                            <div className="w-full h-full bg-muted" aria-hidden />
+                                        )}
                                         {((property.seatLayoutPDFs?.[0]?.url || property.seatLayoutPDFs?.[0]) || property.pdf) && (
                                             <div className="absolute top-2 right-2">
                                                 <button
@@ -1342,8 +1357,12 @@ function PropertyDetailsContent() {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="relative md:col-span-1 md:row-span-1 rounded-lg overflow-hidden cursor-pointer aspect-[4/3] md:aspect-auto" onClick={() => { const videoUrl = property.propertyVideos?.[0]?.url || property.video; if (videoUrl) { setShowVideoModal(true); } }}>
-                                        <img src={property.propertyVideos?.[0]?.thumbnail || property.images[2] || property.images[0]} alt="" className="w-full h-full object-cover" />
+                                    <div className="relative md:col-span-1 md:row-span-1 rounded-lg overflow-hidden cursor-pointer aspect-[4/3] md:aspect-auto bg-muted" onClick={() => { const videoUrl = property.propertyVideos?.[0]?.url || property.video; if (videoUrl) { setShowVideoModal(true); } }}>
+                                        {(property.propertyVideos?.[0]?.thumbnail || images[2] || images[0]) ? (
+                                            <img src={property.propertyVideos?.[0]?.thumbnail || images[2] || images[0]} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full bg-muted" aria-hidden />
+                                        )}
                                         <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center">
                                             <CirclePlay className="h-12 w-12 text-white/80" />
                                             <span className="text-white text-xs mt-2">WATCH VIDEO</span>
@@ -1351,15 +1370,15 @@ function PropertyDetailsContent() {
                                     </div>
                                 </div>
                                 <div className="flex gap-2 pb-2 overflow-x-auto mt-2 scrollbar-thin">
-                                    {property.images?.slice(0, 12).map((img, i) => {
-                                        const isShowAllCell = i === 11 && property.images.length > 12;
+                                    {images.slice(0, 12).map((img, i) => {
+                                        const isShowAllCell = i === 11 && images.length > 12;
                                         return (
                                             <div key={i} className="relative h-20 w-28 rounded-md overflow-hidden shrink-0 cursor-pointer" onClick={() => isShowAllCell ? setShowAllPhotosModal(true) : setCurrentImageIndex(i)}>
                                                 <img src={img} alt="" className="w-full h-full object-cover" />
                                                 {isShowAllCell && (
                                                     <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white text-center p-1">
                                                         <Camera className="h-6 w-6 mb-1" />
-                                                        <p className="text-xs font-semibold">Show all {property.images.length} photos</p>
+                                                        <p className="text-xs font-semibold">Show all {images.length} photos</p>
                                                     </div>
                                                 )}
                                             </div>
@@ -1416,7 +1435,7 @@ function PropertyDetailsContent() {
                                 </div>
                             </div>
 
-                            {/* Custom Infrastructure - from schema */}
+                            {/* Custom Infrastructure - DB: customInfrastructure */}
                             {property.customInfrastructure && property.customInfrastructure.length > 0 && (
                                 <div className="rounded-lg border bg-card shadow-sm" id="custom-infra">
                                     <div className="p-6"><h3 className="font-bold text-xl">Custom infrastructure possible in your Managed Office ✨</h3></div>
@@ -1439,7 +1458,7 @@ function PropertyDetailsContent() {
                                 </div>
                             )}
 
-                            {/* Amenities - from schema, Lucide icons */}
+                            {/* Amenities - DB: amenities (id, name, category) */}
                             <div className="rounded-lg border theme-bg-card theme-shadow-sm" id="amenities">
                                 <div className="flex flex-col space-y-1.5 p-6">
                                     <h3 className="text-lg font-bold leading-none tracking-tight">Amenities</h3>
@@ -1539,9 +1558,8 @@ function PropertyDetailsContent() {
                                 </div>
                                 <div className="shrink-0 bg-border h-[1px] w-full" />
                                 <div className="p-6 pt-6">
-                                    <div className="relative h-60 w-full rounded-lg overflow-hidden mb-4">
-                                        <img src="https://images.unsplash.com/photo-1577086664693-894d8405334a?w=800" alt="Map location" className="w-full h-full object-cover" />
-                                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                                    <div className="relative h-60 w-full rounded-lg overflow-hidden mb-4 bg-muted">
+                                        <div className="w-full h-full bg-muted flex items-center justify-center">
                                             <button onClick={openGoogleMaps} className="bg-secondary text-secondary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 cursor-pointer">View on Map</button>
                                         </div>
                                     </div>
@@ -1621,8 +1639,12 @@ function PropertyDetailsContent() {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2 p-2 border rounded-lg">
-                                            <div className="relative w-12 h-12 rounded-md overflow-hidden shrink-0">
-                                                <img src={property.images?.[0] || "https://images.unsplash.com/photo-1556761175-b413da4baf72?w=96"} alt="" className="w-full h-full object-cover" />
+                                            <div className="relative w-12 h-12 rounded-md overflow-hidden shrink-0 bg-muted">
+                                                {images[0] ? (
+                                                    <img src={images[0]} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full bg-muted" aria-hidden />
+                                                )}
                                             </div>
                                             <div>
                                                 <p className="font-semibold text-sm">{safeDisplay(property.propertyName || property.name)}</p>
@@ -1694,19 +1716,23 @@ function PropertyDetailsContent() {
                                 <div data-orientation="horizontal" role="none" className="shrink-0 bg-border h-[1px] w-full" />
                                 <div className="p-6 space-y-4 pt-6">
                                     {(() => {
-                                        const agentName = property.agentDetails?.name || property.agentName || "Agent";
+                                        const agentName = safeDisplay(property.agentDetails?.name || property.agentName);
                                         const agentPhone = property.agentDetails?.phone || property.agentPhone || "";
                                         const agentEmail = property.agentDetails?.email || property.agentEmail || "";
-                                        const agentImage = property.agentImage || property.agentDetails?.image || "https://images.unsplash.com/photo-1531891437562-4301cf35b7e4?w=96";
-                                        const agentTag = property.agentDetails?.tag || "Buildersinfo Expert";
-                                        const agentTagline = property.agentDetails?.tagline || `${agentName}'s team assisted 500+ corporates in Bangalore to move into their new office.`;
+                                        const agentImage = property.agentImage || property.agentDetails?.image || "";
+                                        const agentTag = safeDisplay(property.agentDetails?.tag);
+                                        const agentTagline = safeDisplay(property.agentDetails?.tagline);
                                         const assistedLogos = property.agentDetails?.assistedCorporates || [];
                                         return (
                                     <>
                                     <div className="flex justify-between items-center gap-4">
                                         <div className="flex items-center gap-4">
-                                            <div className="relative w-24 h-24 overflow-hidden rounded-lg">
-                                                <img src={agentImage} alt={agentName} className="w-full h-full object-cover" />
+                                            <div className="relative w-24 h-24 overflow-hidden rounded-lg bg-muted">
+                                                {agentImage ? (
+                                                    <img src={agentImage} alt={agentName} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground text-2xl font-semibold" aria-hidden>{agentName ? agentName.charAt(0) : '-'}</div>
+                                                )}
                                             </div>
                                             <div className="min-w-0 flex-1">
                                                 <h3 className="font-semibold">Say Hi To {agentName}</h3>
@@ -1741,20 +1767,21 @@ function PropertyDetailsContent() {
                                     </div>
                                     <button onClick={(e) => agentPhone && handlePhoneClick(e, agentPhone)} className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer h-10 px-4 py-2 w-full">Contact {agentName}</button>
                                     <div data-orientation="horizontal" role="none" className="shrink-0 bg-border h-[1px] w-full" />
-                                    <div className="theme-bg-tertiary p-4 rounded-lg -m-2">
+                                        <div className="theme-bg-tertiary p-4 rounded-lg -m-2">
                                         <p className="text-sm text-center text-muted-foreground mb-4">{agentTagline}</p>
                                         <div className="flex justify-around items-center flex-wrap gap-4">
-                                            {(assistedLogos.length > 0 ? assistedLogos : [
-                                                "https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=96",
-                                                "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=96",
-                                                "https://images.unsplash.com/photo-1611162618071-b39a2ec055fb?w=96",
-                                                "https://images.unsplash.com/photo-1529612700005-e35377bf1415?w=96",
-                                                "https://images.unsplash.com/photo-1620288627223-53302f4e8c74?w=96"
-                                            ]).slice(0, 5).map((src, i) => (
-                                                <div key={i} className="relative h-12 w-12 rounded-lg overflow-hidden">
-                                                    <img alt="Client" src={typeof src === 'string' ? src : src?.url || src} className="w-full h-full object-cover" />
-                                                </div>
-                                            ))}
+                                            {assistedLogos.slice(0, 5).map((item, i) => {
+                                                const val = typeof item === 'string' ? item : (item?.url || item?.name || '');
+                                                if (!val) return null;
+                                                const isUrl = /^https?:\/\//i.test(val);
+                                                return isUrl ? (
+                                                    <div key={i} className="relative h-12 w-12 rounded-lg overflow-hidden bg-muted">
+                                                        <img alt="Client" src={val} className="w-full h-full object-cover" />
+                                                    </div>
+                                                ) : (
+                                                    <span key={i} className="inline-flex items-center rounded-lg border px-3 py-1.5 text-xs font-medium bg-background">{safeDisplay(val)}</span>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                     </>
@@ -1870,19 +1897,19 @@ function PropertyDetailsContent() {
                                 <div className="border-t" />
                                 <div className="p-6">
                                     <div className="relative w-full rounded-lg overflow-hidden border bg-gray-50" style={{ aspectRatio: '4/3', minHeight: 200 }}>
-                                        <Image
-                                            src={
-                                                (typeof property.floorPlan === 'string' && property.floorPlan.trim())
-                                                    ? (property.floorPlan.startsWith('http') ? property.floorPlan : `https://admin.buildersinfo.in${property.floorPlan.startsWith('/') ? property.floorPlan : '/' + property.floorPlan}`)
-                                                    : 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=800'
-                                            }
-                                            alt="Floor plan"
-                                            fill
-                                            className="object-contain p-4 cursor-pointer hover:opacity-90 transition-opacity"
-                                            onClick={(e) => setFullScreenImage(e.currentTarget.src)}
-                                            unoptimized
-                                            sizes="(max-width: 400px) 100vw, 400px"
-                                        />
+                                        {(typeof property.floorPlan === 'string' && property.floorPlan.trim()) ? (
+                                            <Image
+                                                src={property.floorPlan.startsWith('http') ? property.floorPlan : `https://admin.buildersinfo.in${property.floorPlan.startsWith('/') ? property.floorPlan : '/' + property.floorPlan}`}
+                                                alt="Floor plan"
+                                                fill
+                                                className="object-contain p-4 cursor-pointer hover:opacity-90 transition-opacity"
+                                                onClick={(e) => setFullScreenImage(e.currentTarget.src)}
+                                                unoptimized
+                                                sizes="(max-width: 400px) 100vw, 400px"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">No floor plan available</div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -1896,23 +1923,26 @@ function PropertyDetailsContent() {
                                     <ul className="space-y-3 text-sm">
                                         <li className="flex justify-between items-center">
                                             <span className="text-muted-foreground">Monday - Friday</span>
-                                            <span className="font-medium">{property?.openingHours?.mondayFriday?.enabled ? `${property.openingHours.mondayFriday.open || "9:00 AM"} - ${property.openingHours.mondayFriday.close || "6:00 PM"}` : "9:00 AM - 6:00 PM"}</span>
+                                            <span className="font-medium">{(() => {
+                                                const v = property?.openingHours?.mondayFriday;
+                                                return typeof v === 'string' ? (v.trim() || '-') : (v?.enabled ? (`${v.open || ''} - ${v.close || ''}`.trim() || '-') : '-');
+                                            })()}</span>
                                         </li>
                                         <li className="flex justify-between items-center">
                                             <span className="text-muted-foreground">Saturday</span>
-                                            {property?.openingHours?.saturday?.enabled ? (
-                                                <span className="font-medium">{property.openingHours.saturday.open || "9:00 AM"} - {property.openingHours.saturday.close || "6:00 PM"}</span>
-                                            ) : (
-                                                <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-red-500 text-white">Closed</span>
-                                            )}
+                                            {(() => {
+                                                const v = property?.openingHours?.saturday;
+                                                const str = typeof v === 'string' ? (v.trim() || '') : (v?.enabled ? `${v.open || ''} - ${v.close || ''}`.trim() : '');
+                                                return str ? <span className="font-medium">{str}</span> : <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-red-500 text-white">Closed</span>;
+                                            })()}
                                         </li>
                                         <li className="flex justify-between items-center">
                                             <span className="text-muted-foreground">Sunday</span>
-                                            {property?.openingHours?.sunday?.enabled ? (
-                                                <span className="font-medium">{property.openingHours.sunday.open || "9:00 AM"} - {property.openingHours.sunday.close || "6:00 PM"}</span>
-                                            ) : (
-                                                <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-red-500 text-white">Closed</span>
-                                            )}
+                                            {(() => {
+                                                const v = property?.openingHours?.sunday;
+                                                const str = typeof v === 'string' ? (v.trim() || '') : (v?.enabled ? `${v.open || ''} - ${v.close || ''}`.trim() : '');
+                                                return str ? <span className="font-medium">{str}</span> : <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-red-500 text-white">Closed</span>;
+                                            })()}
                                         </li>
                                     </ul>
                                 </div>
@@ -2061,7 +2091,7 @@ function PropertyDetailsContent() {
                                 </div>
                             </div>
 
-                            {/* Rating & Reviews - Right sidebar bottom, dummy data only */}
+                            {/* Rating & Reviews - Right sidebar (DB: ratings, reviews) */}
                             <div ref={reviewsRef} id="ratings-reviews" className="rounded-lg border bg-card text-card-foreground shadow-sm">
                                 <div className="flex flex-col space-y-1.5 p-6">
                                     <div className="flex justify-between items-center">
@@ -2664,7 +2694,7 @@ function PropertyDetailsContent() {
                 )
             }
 
-            {/* All Amenities Modal - centered, grouped by category from schema */}
+            {/* All Amenities Modal - grouped by category (DB: amenities) */}
             {showAmenitiesModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" role="dialog" aria-modal="true" aria-labelledby="amenities-modal-title" onClick={() => setShowAmenitiesModal(false)}>
                     <div className="fixed left-[50%] top-[50%] z-50 w-full max-w-xl max-h-[min(90vh,90svh)] translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg flex flex-col" onClick={(e) => e.stopPropagation()} style={{ maxHeight: 'min(90vh, 90svh)' }}>
@@ -2712,7 +2742,7 @@ function PropertyDetailsContent() {
             {/* Rating Submit Modal */}
             {showRatingModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[100]">
-                    <div className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg sm:max-w-md animate-in fade-in zoom-in duration-300">
+                    <div className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg sm:max-w-md animate-in fade-in zoom-in duration-200">
                         <div className="flex flex-col space-y-1.5 text-center sm:text-left">
                             <h2 className="tracking-tight text-xl font-bold">Rate Property</h2>
                             <p className="text-sm text-muted-foreground">Share your experience with the community.</p>
@@ -2913,10 +2943,10 @@ function PropertyDetailsContent() {
                             {/* Main Image */}
                             <div className="flex-1 relative group h-80 overflow-hidden rounded-xl">
                                 <img
-                                    src={property.images[currentImageIndex]}
+                                    src={images[currentImageIndex]}
                                     alt="Property"
                                     className="w-full h-full object-cover transition-transform duration-300 cursor-pointer"
-                                    onClick={() => setFullScreenImage(property.images[currentImageIndex])}
+                                    onClick={() => setFullScreenImage(images[currentImageIndex])}
                                 />
                                 <button
                                     onClick={prevImage}
@@ -2955,21 +2985,21 @@ function PropertyDetailsContent() {
                                 </div>
 
                                 {/* Bottom Right - Show all X photos overlay */}
-                                {property.images?.length > 1 && (
+                                {images.length > 1 && (
                                     <div className="absolute bottom-4 right-4 cursor-pointer">
                                         <button
                                             onClick={openGallery}
                                             className="bg-black/50 backdrop-blur-sm text-white rounded-xl border-2 border-white/60 px-4 py-3 flex flex-col items-center justify-center hover:bg-black/60 transition-all duration-200 shadow-lg cursor-pointer"
                                         >
                                             <Camera className="h-8 w-8 mb-1" strokeWidth={2} stroke="currentColor" fill="none" />
-                                            <span className="text-sm font-semibold leading-tight">Show all {property.images.length} photos</span>
+                                            <span className="text-sm font-semibold leading-tight">Show all {images.length} photos</span>
                                         </button>
                                     </div>
                                 )}
 
                                 {/* Dots */}
                                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1">
-                                    {property.images.map((_, i) => (
+                                    {images.map((_, i) => (
                                         <div
                                             key={i}
                                             className={`w-2 h-2 rounded-full ${i === currentImageIndex ? 'bg-white' : 'bg-white/50'
@@ -2983,38 +3013,38 @@ function PropertyDetailsContent() {
                             <div className="w-80 grid grid-cols-2 gap-2">
                                 <div className="aspect-square overflow-hidden rounded-xl cursor-pointer scroll-animate" data-animation="animate-fade-up" style={{ animationDelay: '100ms' }}>
                                     <img
-                                        src={property.images[1] || property.images[0]}
+                                        src={images[1] || images[0]}
                                         alt="Thumbnail 1"
                                         className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
-                                        onClick={() => setFullScreenImage(property.images[1] || property.images[0])}
+                                        onClick={() => setFullScreenImage(images[1] || images[0])}
                                     />
                                 </div>
                                 <div className="aspect-square overflow-hidden rounded-xl cursor-pointer scroll-animate" data-animation="animate-fade-up" style={{ animationDelay: '200ms' }}>
                                     <img
-                                        src={property.images[2] || property.images[0]}
+                                        src={images[2] || images[0]}
                                         alt="Thumbnail 2"
                                         className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
-                                        onClick={() => setFullScreenImage(property.images[2] || property.images[0])}
+                                        onClick={() => setFullScreenImage(images[2] || images[0])}
                                     />
                                 </div>
                                 <div className="aspect-square overflow-hidden rounded-xl cursor-pointer scroll-animate" data-animation="animate-fade-up" style={{ animationDelay: '300ms' }}>
                                     <img
-                                        src={property.images[3] || property.images[0]}
+                                        src={images[3] || images[0]}
                                         alt="Thumbnail 3"
                                         className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
-                                        onClick={() => setFullScreenImage(property.images[3] || property.images[0])}
+                                        onClick={() => setFullScreenImage(images[3] || images[0])}
                                     />
                                 </div>
-                                <div className="aspect-square overflow-hidden rounded-xl cursor-pointer scroll-animate relative" data-animation="animate-fade-up" style={{ animationDelay: '400ms' }} onClick={property.images?.length > 4 ? openGallery : () => setFullScreenImage(property.images[4] || property.images[0])}>
+                                <div className="aspect-square overflow-hidden rounded-xl cursor-pointer scroll-animate relative" data-animation="animate-fade-up" style={{ animationDelay: '400ms' }} onClick={images.length > 4 ? openGallery : () => setFullScreenImage(images[4] || images[0])}>
                                     <img
-                                        src={property.images[4] || property.images[0]}
+                                        src={images[4] || images[0]}
                                         alt="Thumbnail 4"
                                         className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
                                     />
-                                    {property.images?.length > 4 && (
+                                    {images.length > 4 && (
                                         <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white">
                                             <Camera className="h-8 w-8 mb-1" strokeWidth={2} stroke="currentColor" fill="none" />
-                                            <span className="text-xs font-semibold text-center px-1">Show all {property.images.length} photos</span>
+                                            <span className="text-xs font-semibold text-center px-1">Show all {images.length} photos</span>
                                         </div>
                                     )}
                                 </div>
@@ -3127,39 +3157,36 @@ function PropertyDetailsContent() {
                                             <h3>Opening Hours</h3>
                                         </AnimatedText>
                                         <div className="space-y-3 mt-5">
-                                            {property.openingHours.mondayFriday && (
+                                            {property.openingHours?.mondayFriday != null && (
                                                 <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
                                                     <span className="text-base font-semibold text-gray-800">Monday - Friday</span>
-                                                    <span className={`text-base font-semibold ${property.openingHours.mondayFriday.enabled ? 'text-green-600' : 'text-red-600'}`}>
-                                                        {property.openingHours.mondayFriday.enabled
-                                                            ? (safeDisplay(property.openingHours.mondayFriday.open) === 'Open' && safeDisplay(property.openingHours.mondayFriday.close) === 'Close'
-                                                                ? 'Open All Day'
-                                                                : `${safeDisplay(property.openingHours.mondayFriday.open)} - ${safeDisplay(property.openingHours.mondayFriday.close)}`)
-                                                            : 'Closed'}
+                                                    <span className="text-base font-semibold text-green-600">
+                                                        {(() => {
+                                                            const v = property.openingHours.mondayFriday;
+                                                            return typeof v === 'string' ? (v.trim() || '-') : (v?.enabled ? `${safeDisplay(v.open)} - ${safeDisplay(v.close)}`.trim() || 'Open All Day' : 'Closed');
+                                                        })()}
                                                     </span>
                                                 </div>
                                             )}
-                                            {property.openingHours.saturday && (
+                                            {property.openingHours?.saturday != null && (
                                                 <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
                                                     <span className="text-base font-semibold text-gray-800">Saturday</span>
-                                                    <span className={`text-base font-semibold ${property.openingHours.saturday.enabled ? 'text-green-600' : 'text-red-600'}`}>
-                                                        {property.openingHours.saturday.enabled
-                                                            ? (safeDisplay(property.openingHours.saturday.open) === 'Open' && safeDisplay(property.openingHours.saturday.close) === 'Close'
-                                                                ? 'Open All Day'
-                                                                : `${safeDisplay(property.openingHours.saturday.open)} - ${safeDisplay(property.openingHours.saturday.close)}`)
-                                                            : 'Closed'}
+                                                    <span className="text-base font-semibold text-green-600">
+                                                        {(() => {
+                                                            const v = property.openingHours.saturday;
+                                                            return typeof v === 'string' ? (v.trim() || '-') : (v?.enabled ? `${safeDisplay(v.open)} - ${safeDisplay(v.close)}`.trim() || 'Open All Day' : 'Closed');
+                                                        })()}
                                                     </span>
                                                 </div>
                                             )}
-                                            {property.openingHours.sunday && (
+                                            {property.openingHours?.sunday != null && (
                                                 <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
                                                     <span className="text-base font-semibold text-gray-800">Sunday</span>
-                                                    <span className={`text-base font-semibold ${property.openingHours.sunday.enabled ? 'text-green-600' : 'text-red-600'}`}>
-                                                        {property.openingHours.sunday.enabled
-                                                            ? (safeDisplay(property.openingHours.sunday.open) === 'Open' && safeDisplay(property.openingHours.sunday.close) === 'Close'
-                                                                ? 'Open All Day'
-                                                                : `${safeDisplay(property.openingHours.sunday.open)} - ${safeDisplay(property.openingHours.sunday.close)}`)
-                                                            : 'Closed'}
+                                                    <span className="text-base font-semibold text-green-600">
+                                                        {(() => {
+                                                            const v = property.openingHours.sunday;
+                                                            return typeof v === 'string' ? (v.trim() || '-') : (v?.enabled ? `${safeDisplay(v.open)} - ${safeDisplay(v.close)}`.trim() || 'Open All Day' : 'Closed');
+                                                        })()}
                                                     </span>
                                                 </div>
                                             )}
@@ -3726,7 +3753,7 @@ function PropertyDetailsContent() {
                                     <h3>Property Videos</h3>
                                 </AnimatedText>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
-                                    {(property.propertyVideos?.length ? property.propertyVideos : [{ url: property.video, thumbnail: property.images?.[0] }]).filter(v => v?.url).map((video, i) => {
+                                    {(property.propertyVideos?.length ? property.propertyVideos : (property.video ? [{ url: property.video, thumbnail: images[0] || '' }] : [])).filter(v => v?.url).map((video, i) => {
                                         const mimeType = getVideoMimeType(video.url, video.contentType);
                                         return (
                                             <div key={i} className="relative rounded-lg overflow-hidden bg-black scroll-animate" data-animation="animate-fade-up" style={{ animationDelay: `${i * 100}ms` }}>
@@ -3817,7 +3844,7 @@ function PropertyDetailsContent() {
 
                                 {/* Floor Plans */}
                                 <div className="grid grid-cols-2 gap-3 mt-12 scroll-animate" data-animation="animate-fade-up">
-                                    {property.floorPlans && property.floorPlans[selectedCapacity] ? (
+                                    {property.floorPlans && property.floorPlans[selectedCapacity] && property.floorPlans[selectedCapacity].length > 0 ? (
                                         property.floorPlans[selectedCapacity].map((floorPlan, index) => (
                                             <div key={index} className="overflow-hidden rounded-lg">
                                                 <img
@@ -3829,24 +3856,7 @@ function PropertyDetailsContent() {
                                             </div>
                                         ))
                                     ) : (
-                                        <>
-                                            <div className="overflow-hidden rounded-lg">
-                                                <img
-                                                    src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600"
-                                                    alt="Floor Plan 1"
-                                                    className="w-full h-full object-cover rounded-lg transition-transform duration-300 hover:scale-110 cursor-pointer"
-                                                    onClick={() => setFullScreenImage("https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600")}
-                                                />
-                                            </div>
-                                            <div className="overflow-hidden rounded-lg">
-                                                <img
-                                                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600"
-                                                    alt="Floor Plan 2"
-                                                    className="w-full h-full object-cover rounded-lg transition-transform duration-300 hover:scale-110 cursor-pointer"
-                                                    onClick={() => setFullScreenImage("https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600")}
-                                                />
-                                            </div>
-                                        </>
+                                        <div className="col-span-full flex items-center justify-center text-muted-foreground text-sm py-8">No floor plans available</div>
                                     )}
                                 </div>
                             </div>
@@ -4225,15 +4235,15 @@ function PropertyDetailsContent() {
 
             {/* Show All Photos Modal */}
             {/* All Photos Modal - images only */}
-            {showAllPhotosModal && property?.images?.length > 0 && (
+            {showAllPhotosModal && images.length > 0 && (
                 <div className="fixed inset-0 bg-black/90 flex flex-col z-[9999]" onClick={() => setShowAllPhotosModal(false)}>
                     <div className="flex items-center justify-between p-4 bg-black/50">
-                        <h3 className="text-white text-lg font-bold">All Photos ({property.images.length})</h3>
+                        <h3 className="text-white text-lg font-bold">All Photos ({images.length})</h3>
                         <button onClick={(e) => { e.stopPropagation(); setShowAllPhotosModal(false); }} className="p-2 rounded-full hover:bg-white/20 text-white cursor-pointer"><X className="h-6 w-6" /></button>
                     </div>
                     <div className="flex-1 overflow-y-auto p-4 pb-32 max-[525px]:pb-36" onClick={(e) => e.stopPropagation()}>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                            {property.images.map((img, i) => (
+                            {images.map((img, i) => (
                                 <div key={i} className="aspect-square rounded-xl overflow-hidden bg-gray-800 cursor-pointer hover:opacity-90 transition-opacity" onClick={() => { setFullScreenImage(img); setShowAllPhotosModal(false); }}>
                                     <img src={img} alt="" className="w-full h-full object-cover" />
                                 </div>
