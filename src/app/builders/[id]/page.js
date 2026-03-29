@@ -7,21 +7,22 @@ import { ArrowLeft, ChevronRight, ChevronDown, ChevronLeft, ArrowUpRight, Shield
 import { useEffect, useState } from 'react';
 import { getBuilderById } from '@/data/builders';
 import { useTheme } from '@/context/ThemeContext';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
 
 export default function BuilderDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { isDark } = useTheme();
-  const builderId = params?.id;
+  const slugString = params?.id || "";
   const [builder, setBuilder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openFaq, setOpenFaq] = useState(null);
   const [activeSegment, setActiveSegment] = useState(0);
-  const [activeTestimonial, setActiveTestimonial] = useState(0);
-  const [testimonialDirection, setTestimonialDirection] = useState('next');
-  const [activeTeamMember, setActiveTeamMember] = useState(0);
-  const [teamDirection, setTeamDirection] = useState('next');
+
   const [scrolled, setScrolled] = useState(false);
   const [touchModalOpen, setTouchModalOpen] = useState(false);
   const [showDownloadBrochureModal, setShowDownloadBrochureModal] = useState(false);
@@ -74,7 +75,7 @@ export default function BuilderDetailPage() {
 
   useEffect(() => {
     fetchBuilderData();
-  }, [builderId]);
+  }, [slugString]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(typeof window !== 'undefined' && window.scrollY > 400);
@@ -86,27 +87,29 @@ export default function BuilderDetailPage() {
   }, []);
 
   const fetchBuilderData = async () => {
-    if (!builderId) {
-      setError('No builder ID provided');
+    if (!slugString) {
+      setError('No builder slug provided');
       setLoading(false);
       return;
     }
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`/api/builders/${builderId}`);
+      // Try to fetch by slug (passed as ID to the API which handles both)
+      const response = await fetch(`/api/builders/${encodeURIComponent(slugString)}`);
       const data = await response.json();
 
       if (data.success) {
         const apiBuilder = data.builder || data.data;
         setBuilder(transformApiToLocal(apiBuilder));
       } else {
-        const local = getBuilderById(builderId);
+        // Fallback to local data if API fails
+        const local = getBuilderById(slugString);
         if (local) setBuilder(local);
         else setError(data.message || 'Builder not found');
       }
     } catch (err) {
-      const local = getBuilderById(builderId);
+      const local = getBuilderById(slugString);
       if (local) setBuilder(local);
       else setError('Error fetching builder data');
     } finally {
@@ -213,7 +216,7 @@ export default function BuilderDetailPage() {
             <div className="flex items-center gap-4">
               <div className={`relative w-10 h-10 rounded-full overflow-hidden border shrink-0 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
                 {builder.logo ? (
-                  <Image src={builder.logo} alt={`${builder.name} logo`} fill className="object-contain p-0.5" sizes="40px" />
+                  <Image src={builder.logo} alt={`${builder.name} logo`} fill className="object-contain p-0.5" sizes="40px" unoptimized />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <Building2 className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
@@ -297,7 +300,7 @@ export default function BuilderDetailPage() {
                       <span className={`text-[10px] font-semibold uppercase mt-1.5 ${isDark ? 'text-white' : 'text-gray-900'}`}>BRIGADE</span>
                     </div>
                   ) : builder.logo ? (
-                    <Image src={builder.logo} alt={`${builder.name} logo`} fill className="object-contain" sizes="144px" />
+                    <Image src={builder.logo} alt={`${builder.name} logo`} fill className="object-contain" sizes="144px" unoptimized />
                   ) : (
                     <div className={`w-full h-full flex items-center justify-center ${isDark ? 'bg-[#1f2229]' : 'bg-gray-200'}`}>
                       <Building2 className={`w-12 h-12 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
@@ -687,41 +690,43 @@ export default function BuilderDetailPage() {
                   <h3 className={`text-lg font-bold ${isDark ? 'text-white' : ''}`}>Client Testimonials</h3>
                 </div>
                 <div className={`h-px w-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
-                <div className="p-6 pt-6">
-                  <div className="flex items-center justify-center gap-4">
-                    <button
-                      type="button"
-                      onClick={() => setActiveTestimonial((prev) => (prev <= 0 ? builder.testimonials.length - 1 : prev - 1))}
-                      className={`w-10 h-10 shrink-0 rounded-full border flex items-center justify-center transition-colors ${isDark ? 'border-gray-600 bg-[#282c34] text-gray-300 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}
-                      aria-label="Previous testimonial"
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    <div className="flex-1 flex flex-col items-center text-center gap-4 min-w-0 px-2">
-                      {(() => {
-                        const idx = Math.min(activeTestimonial, builder.testimonials.length - 1);
-                        const t = builder.testimonials[idx];
-                        if (!t) return null;
-                        return (
-                          <>
-                            <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-200 shrink-0">
-                              {t.avatar && <Image src={t.avatar} alt={t.author} width={80} height={80} className="w-full h-full object-cover" />}
-                            </div>
-                            <p className="italic text-gray-500 text-sm md:text-base">{t.quote}</p>
-                            <p className="font-semibold">{t.author}</p>
-                          </>
-                        );
-                      })()}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTestimonial((prev) => (prev >= builder.testimonials.length - 1 ? 0 : prev + 1))}
-                      className={`w-10 h-10 shrink-0 rounded-full border flex items-center justify-center transition-colors ${isDark ? 'border-gray-600 bg-[#282c34] text-gray-300 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}
-                      aria-label="Next testimonial"
-                    >
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
-                  </div>
+                <div className="p-6 pt-6 relative">
+                  <Swiper
+                    modules={[Navigation]}
+                    navigation={{
+                      prevEl: '.testimonial-prev',
+                      nextEl: '.testimonial-next',
+                    }}
+                    spaceBetween={20}
+                    slidesPerView={1}
+                    className="w-full"
+                  >
+                    {builder.testimonials.map((t, idx) => (
+                      <SwiperSlide key={idx}>
+                        <div className="flex-1 flex flex-col items-center text-center gap-4 min-w-0 px-2 md:px-12">
+                          <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-200 shrink-0">
+                            {t.avatar && <Image src={t.avatar} alt={t.author || 'Client'} width={80} height={80} className="w-full h-full object-cover" />}
+                          </div>
+                          <p className={`italic text-sm md:text-base ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>"{t.quote}"</p>
+                          <p className={`font-semibold ${isDark ? 'text-white' : ''}`}>{t.author}</p>
+                        </div>
+                      </SwiperSlide>
+                    ))}
+                  </Swiper>
+                  <button
+                    type="button"
+                    className={`testimonial-prev absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 shrink-0 rounded-full border flex items-center justify-center transition-colors cursor-pointer ${isDark ? 'border-gray-600 bg-[#282c34] text-gray-300 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}
+                    aria-label="Previous testimonial"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    type="button"
+                    className={`testimonial-next absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 shrink-0 rounded-full border flex items-center justify-center transition-colors cursor-pointer ${isDark ? 'border-gray-600 bg-[#282c34] text-gray-300 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}
+                    aria-label="Next testimonial"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
             )}
@@ -873,54 +878,47 @@ export default function BuilderDetailPage() {
                   <h3 className={`text-lg font-bold ${isDark ? 'text-white' : ''}`}>Meet the Team</h3>
                 </div>
                 <div className={`h-px w-full ${isDark ? 'bg-gray-600' : 'bg-gray-200'}`} />
-                <div className="p-6 pt-6">
-                  <div className="flex items-center gap-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTeamDirection('prev');
-                        setActiveTeamMember((prev) => (prev <= 0 ? builder.team.length - 1 : prev - 1));
-                      }}
-                      className={`w-10 h-10 shrink-0 rounded-full border flex items-center justify-center transition-colors ${isDark ? 'border-gray-600 bg-[#282c34] text-gray-300 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}
-                      aria-label="Previous team member"
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    <div className="flex-1 flex flex-col md:flex-row items-center gap-6 text-center md:text-left min-w-0 overflow-hidden">
-                      {(() => {
-                        const idx = Math.min(activeTeamMember, builder.team.length - 1);
-                        const member = builder.team[idx];
-                        if (!member) return null;
-                        return (
-                          <div
-                            key={activeTeamMember}
-                            className={`flex flex-col md:flex-row items-center gap-6 w-full ${teamDirection === 'prev' ? 'animate-testimonial-from-left' : 'animate-testimonial-from-right'}`}
-                          >
-                            <div className="w-32 h-32 rounded-lg overflow-hidden shrink-0 bg-gray-200">
-                              {member.image && <Image src={member.image} alt={member.name} width={128} height={128} className="w-full h-full object-cover" />}
-                            </div>
-                            <div>
-                              <h3 className="text-lg font-bold">{member.name}</h3>
-                              <p className="text-blue-600 font-semibold">{member.role}</p>
-                              {member.quote && <p className="text-gray-500 italic mt-2">"{member.quote}"</p>}
-                              {member.bio && <p className="text-gray-500 mt-2 text-sm">{member.bio}</p>}
-                            </div>
+                <div className="p-6 pt-6 relative">
+                  <Swiper
+                    modules={[Navigation]}
+                    navigation={{
+                      prevEl: '.team-prev',
+                      nextEl: '.team-next',
+                    }}
+                    spaceBetween={20}
+                    slidesPerView={1}
+                    className="w-full"
+                  >
+                    {builder.team.map((member, idx) => (
+                      <SwiperSlide key={idx}>
+                        <div className="flex flex-col md:flex-row items-center gap-6 w-full px-2 md:px-12 text-center md:text-left">
+                          <div className="w-32 h-32 rounded-lg overflow-hidden shrink-0 bg-gray-200">
+                            {member.image && <Image src={member.image} alt={member.name || 'Team member'} width={128} height={128} className="w-full h-full object-cover" />}
                           </div>
-                        );
-                      })()}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTeamDirection('next');
-                        setActiveTeamMember((prev) => (prev >= builder.team.length - 1 ? 0 : prev + 1));
-                      }}
-                      className={`w-10 h-10 shrink-0 rounded-full border flex items-center justify-center transition-colors ${isDark ? 'border-gray-600 bg-[#282c34] text-gray-300 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}
-                      aria-label="Next team member"
-                    >
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
-                  </div>
+                          <div>
+                            <h3 className={`text-lg font-bold ${isDark ? 'text-white' : ''}`}>{member.name}</h3>
+                            <p className="text-blue-600 font-semibold">{member.role}</p>
+                            {member.quote && <p className={`italic mt-2 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>"{member.quote}"</p>}
+                            {member.bio && <p className={`mt-2 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{member.bio}</p>}
+                          </div>
+                        </div>
+                      </SwiperSlide>
+                    ))}
+                  </Swiper>
+                  <button
+                    type="button"
+                    className={`team-prev absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 shrink-0 rounded-full border flex items-center justify-center transition-colors cursor-pointer ${isDark ? 'border-gray-600 bg-[#282c34] text-gray-300 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}
+                    aria-label="Previous team member"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    type="button"
+                    className={`team-next absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 shrink-0 rounded-full border flex items-center justify-center transition-colors cursor-pointer ${isDark ? 'border-gray-600 bg-[#282c34] text-gray-300 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'}`}
+                    aria-label="Next team member"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
             )}

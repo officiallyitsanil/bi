@@ -1,17 +1,20 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/utils/dbConnect';
 import mongoose from 'mongoose';
+import { USE_DUMMY_PROPERTIES, enrichDummyForFilter, getAllDummyPropertiesRaw } from '@/lib/dummyProperties';
 
 // Helper function to normalize property data
 function normalizeProperty(propertyObj) {
     // Get featured image URL
-    let featuredImageUrl = null;
+    let featuredImageUrl = propertyObj.featuredImageUrl || null;
     if (propertyObj.featuredImage?.url) {
         featuredImageUrl = propertyObj.featuredImage.url;
     } else if (propertyObj.interiorImages && propertyObj.interiorImages.length > 0 && propertyObj.interiorImages[0]?.url) {
         featuredImageUrl = propertyObj.interiorImages[0].url;
     } else if (propertyObj.seatLayoutImages && propertyObj.seatLayoutImages.length > 0 && propertyObj.seatLayoutImages[0]?.url) {
         featuredImageUrl = propertyObj.seatLayoutImages[0].url;
+    } else if (Array.isArray(propertyObj.images) && propertyObj.images.length > 0) {
+        featuredImageUrl = propertyObj.images[0];
     }
     
     return {
@@ -76,8 +79,6 @@ function matchesSeatRange(seatsStr, rangeStr) {
 
 export async function GET(request) {
     try {
-        await dbConnect();
-        
         const url = new URL(request.url);
         const city = url.searchParams.get('city') || '';
         const type = url.searchParams.get('type') || '';
@@ -90,38 +91,47 @@ export async function GET(request) {
         const floorsOffered = url.searchParams.get('floorsOffered') || ''; // 1st, 2nd, 3rd, etc.
         const facilities = url.searchParams.get('facilities') || ''; // Parking, 4W Parking, 2W Parking, etc.
         
-        const db = mongoose.connection.db;
         let allProperties = [];
-        
-        // Determine which collection(s) to query based on Category or type
-        let queryCommercial = false;
-        let queryResidential = false;
-        
-        if (category === 'commercial' || (type && ['Managed Space', 'Unmanaged Space', 'Coworking Dedicated', 'Coworking Shared', 'Price Per Desk', 'Price Per Sqft', 'No. Of Seats'].includes(type))) {
-            queryCommercial = true;
-        } else if (category === 'residential' || (type && ['Rent', 'Sale', 'PG/Hostel', 'Flatmates'].includes(type))) {
-            queryResidential = true;
+
+        if (USE_DUMMY_PROPERTIES) {
+            allProperties = getAllDummyPropertiesRaw().map(enrichDummyForFilter);
         } else {
-            // If no clear indication, query both
-            queryCommercial = true;
-            queryResidential = true;
-        }
-        
-        // Fetch from appropriate collections
-        if (queryCommercial) {
-            const commercialProperties = await db.collection('commercialProperties').find({}).toArray();
-            allProperties = [...allProperties, ...commercialProperties];
-        }
-        
-        if (queryResidential) {
-            const residentialProperties = await db.collection('residentialproperties').find({}).toArray();
-            allProperties = [...allProperties, ...residentialProperties];
+            await dbConnect();
+            const db = mongoose.connection.db;
+
+            // Determine which collection(s) to query based on Category or type
+            let queryCommercial = false;
+            let queryResidential = false;
+
+            // Case-insensitive checks for building type selection
+            const lowerType = type.toLowerCase();
+            const commercialTypes = ['managed space', 'unmanaged space', 'coworking dedicated', 'coworking shared', 'price per desk', 'price per sqft', 'no. of seats'];
+            const residentialTypes = ['rent', 'sale', 'pg/hostel', 'flatmates'];
+
+            if (category === 'commercial' || (type && commercialTypes.some(t => lowerType.includes(t.toLowerCase()) || t.toLowerCase().includes(lowerType)))) {
+                queryCommercial = true;
+            } else if (category === 'residential' || (type && residentialTypes.some(t => lowerType.includes(t.toLowerCase()) || t.toLowerCase().includes(lowerType)))) {
+                queryResidential = true;
+            } else {
+                queryCommercial = true;
+                queryResidential = true;
+            }
+
+            if (queryCommercial) {
+                const commercialProperties = await db.collection('commercialProperties').find({}).toArray();
+                allProperties = [...allProperties, ...commercialProperties];
+            }
+
+            if (queryResidential) {
+                const residentialProperties = await db.collection('residentialproperties').find({}).toArray();
+                allProperties = [...allProperties, ...residentialProperties];
+            }
         }
         
         // Apply filters
         let filtered = allProperties.filter(prop => {
-            // Filter by Category (Commercial/Residential)
-            const propCategory = (prop.category || prop.Category)?.toLowerCase() || '';
+            // Filter by Category (Commercial/Residential) — prefer explicit Category when both exist
+            const propCategory = (prop.Category || prop.category)?.toLowerCase() || '';
             if (category) {
                 if (category.toLowerCase() === 'commercial' && propCategory !== 'commercial') return false;
                 if (category.toLowerCase() === 'residential' && propCategory !== 'residential') return false;
@@ -130,48 +140,34 @@ export async function GET(request) {
             // Filter by propertyType field in DB (techpark, standalone, villa, rent, sale, etc.)
             if (propertyType) {
                 const propType = prop.propertyType?.toLowerCase()?.trim() || '';
-                const selectedType = prop.selectedType?.toLowerCase()?.trim() || ''; // Only for residential
-                const searchPropertyType = propertyType.toLowerCase().trim();
+                const selectedType = prop.selectedType?.toLowerCase()?.trim() || '';
+                // Handle hyphenated search types from clean URLs
+                const searchClean = propertyType.replace(/-/g, ' ').toLowerCase().trim();
                 
-                // Handle variations like "pg" vs "pg/hostel" (residential only)
-                if (searchPropertyType === 'pg' || searchPropertyType === 'pg/hostel' || searchPropertyType === 'pg-hostel') {
-                    // Match if property has "pg" or "hostel" in propertyType or selectedType
-                    const hasPg = propType.includes('pg') || propType.includes('hostel') || 
-                                  selectedType.includes('pg') || selectedType.includes('hostel');
-                    if (!hasPg) {
-                        return false;
-                    }
+                let matches = false;
+                if (propCategory === 'commercial') {
+                    const propCommCategory = (prop.category || '').toLowerCase().replace(/-/g, ' ');
+                    matches = propType.includes(searchClean) || 
+                             searchClean.includes(propType) ||
+                             propCommCategory.includes(searchClean) ||
+                             searchClean.includes(propCommCategory);
                 } else {
-                    // For commercial properties: only check propertyType field
-                    // For residential properties: check both propertyType and selectedType fields
-                    let matches = false;
-                    
-                    if (propCategory === 'commercial') {
-                        // Commercial: check propertyType field only
-                        matches = propType === searchPropertyType || 
-                                 propType.includes(searchPropertyType) || 
-                                 searchPropertyType.includes(propType);
-                    } else {
-                        // Residential: check both propertyType and selectedType fields
-                        const matchesPropertyType = propType === searchPropertyType || 
-                                                   propType.includes(searchPropertyType) || 
-                                                   searchPropertyType.includes(propType);
-                        const matchesSelectedType = selectedType === searchPropertyType || 
-                                                   selectedType.includes(searchPropertyType) || 
-                                                   searchPropertyType.includes(selectedType);
-                        matches = matchesPropertyType || matchesSelectedType;
-                    }
-                    
-                    if (!matches) {
-                        return false;
-                    }
+                    const matchesPropertyType = propType.includes(searchClean) || 
+                                               searchClean.includes(propType);
+                    const matchesSelectedType = selectedType.includes(searchClean) || 
+                                               searchClean.includes(selectedType);
+                    matches = matchesPropertyType || matchesSelectedType;
+                }
+                
+                if (!matches) {
+                    return false;
                 }
             }
             
             // Filter by city
             if (city) {
                 const propCity = prop.address?.city?.toLowerCase() || '';
-                const searchCity = city.toLowerCase();
+                const searchCity = city.toLowerCase().replace(/-/g, ' ');
                 if (!propCity.includes(searchCity) && !searchCity.includes(propCity)) {
                     return false;
                 }

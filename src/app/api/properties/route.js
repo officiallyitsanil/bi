@@ -1,10 +1,36 @@
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import dbConnect from '@/utils/dbConnect';
+import {
+    USE_DUMMY_PROPERTIES,
+    findDummyPropertyById,
+    getCommercialDummy,
+    getResidentialDummy,
+    getAllDummyPropertiesRaw,
+} from '@/lib/dummyProperties';
 
 function normalizeProperty(prop) {
     const id = (prop._id && typeof prop._id.toString === 'function') ? prop._id.toString() : String(prop._id || prop.id || '');
-    const out = { ...prop, _id: id, id };
+    
+    // Determine featured image
+    let featuredImageUrl = prop.featuredImageUrl || null;
+    if (prop.featuredImage?.url) {
+        featuredImageUrl = prop.featuredImage.url;
+    } else if (prop.interiorImages && prop.interiorImages.length > 0 && prop.interiorImages[0]?.url) {
+        featuredImageUrl = prop.interiorImages[0].url;
+    } else if (Array.isArray(prop.images) && prop.images.length > 0) {
+        // Handle string array from dummy JSON
+        featuredImageUrl = typeof prop.images[0] === 'string' ? prop.images[0] : (prop.images[0].url || null);
+    }
+    
+    const out = { 
+        ...prop, 
+        _id: id, 
+        id,
+        name: prop.propertyName || prop.name || 'Unnamed Property',
+        featuredImageUrl
+    };
+    
     if (out.createdAt && typeof out.createdAt === 'object' && out.createdAt.$date) out.createdAt = out.createdAt.$date;
     if (out.updatedAt && typeof out.updatedAt === 'object' && out.updatedAt.$date) out.updatedAt = out.updatedAt.$date;
     if (out.publishedAt && typeof out.publishedAt === 'object' && out.publishedAt.$date) out.publishedAt = out.publishedAt.$date;
@@ -15,10 +41,6 @@ function normalizeProperty(prop) {
 
 export async function GET(request) {
     try {
-        await dbConnect();
-        const db = mongoose.connection.db;
-        const ObjectId = mongoose.Types.ObjectId;
-
         const url = new URL(request.url);
         const id = url.searchParams.get('id');
         const type = url.searchParams.get('type');
@@ -31,6 +53,20 @@ export async function GET(request) {
                     { status: 400 }
                 );
             }
+            if (USE_DUMMY_PROPERTIES) {
+                const property = findDummyPropertyById(id, type || '');
+                if (!property) {
+                    return NextResponse.json(
+                        { success: false, message: `Property not found in ${type || 'any'} collection` },
+                        { status: 404 }
+                    );
+                }
+                return NextResponse.json({ success: true, property: normalizeProperty(property) });
+            }
+
+            await dbConnect();
+            const db = mongoose.connection.db;
+            const ObjectId = mongoose.Types.ObjectId;
             let property = null;
             if (type === 'commercial') {
                 property = await db.collection('commercialProperties').findOne({ _id: new ObjectId(id) });
@@ -49,6 +85,55 @@ export async function GET(request) {
             return NextResponse.json({ success: true, property: normalizeProperty(property) });
         }
 
+        const name = url.searchParams.get('name');
+        if (name) {
+            const decodedName = decodeURIComponent(name).replace(/-/g, ' ');
+            if (USE_DUMMY_PROPERTIES) {
+                const allProps = getAllDummyPropertiesRaw();
+                const property = allProps.find(p => 
+                    (p.propertyName || p.name).toLowerCase() === decodedName.toLowerCase()
+                );
+                if (!property) {
+                    return NextResponse.json(
+                        { success: false, message: `Property not found by name: ${decodedName}` },
+                        { status: 404 }
+                    );
+                }
+                return NextResponse.json({ success: true, property: normalizeProperty(property) });
+            }
+
+            await dbConnect();
+            const db = mongoose.connection.db;
+            // Case-insensitive search
+            const query = { propertyName: { $regex: new RegExp(`^${decodedName}$`, 'i') } };
+            let property = await db.collection('commercialProperties').findOne(query);
+            if (!property) {
+                property = await db.collection('residentialproperties').findOne(query);
+            }
+            if (!property) {
+                return NextResponse.json(
+                    { success: false, message: `Property not found by name: ${decodedName}` },
+                    { status: 404 }
+                );
+            }
+            return NextResponse.json({ success: true, property: normalizeProperty(property) });
+        }
+
+        if (USE_DUMMY_PROPERTIES) {
+            let allProperties = [];
+            if (type === 'commercial') {
+                allProperties = getCommercialDummy();
+            } else if (type === 'residential') {
+                allProperties = getResidentialDummy();
+            } else {
+                allProperties = getAllDummyPropertiesRaw();
+            }
+            const data = allProperties.map(normalizeProperty);
+            return NextResponse.json({ success: true, data });
+        }
+
+        await dbConnect();
+        const db = mongoose.connection.db;
         let allProperties = [];
         if (type === 'commercial') {
             allProperties = await db.collection('commercialProperties').find({}).toArray();

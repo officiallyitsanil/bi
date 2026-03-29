@@ -118,7 +118,415 @@
   animation: slider-banner-in 0.2s ease-out forwards;
 }
 
+/* Gallery grid: allow PDF badge to extend past image corners */
+.property-details-gallery {
+  overflow: visible;
+}
+
+/* Wrapper positions CTA outside the photo (not clipped by rounded image) */
+.gallery-pdf-cta-float {
+  top: -0.5rem;
+  right: -0.5rem;
+}
+@media (min-width: 768px) {
+  .gallery-pdf-cta-float {
+    top: -0.75rem;
+    right: -0.75rem;
+  }
+}
+
+/* Gallery PDF CTA — badge + circular doc icon + green download arrow (reference design) */
+.gallery-pdf-cta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  padding: 0;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.35));
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+.gallery-pdf-cta:hover {
+  transform: scale(1.03);
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.42));
+}
+.gallery-pdf-cta:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+.gallery-pdf-cta__badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 1.45rem 0.3rem 0.5rem;
+  min-height: 2.35rem;
+  background: linear-gradient(180deg, #4eb0f2 0%, #3498db 42%, #2587c4 100%);
+  border-radius: 0.55rem 0 0 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-right: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+.gallery-pdf-cta__badge-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.05;
+  gap: 0;
+}
+.gallery-pdf-cta__badge-text span {
+  font-size: 0.5625rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.18);
+}
+@media (min-width: 768px) {
+  .gallery-pdf-cta__badge-text span {
+    font-size: 0.625rem;
+  }
+}
+.gallery-pdf-cta__disc {
+  position: relative;
+  flex-shrink: 0;
+  width: 2.6rem;
+  height: 2.6rem;
+  margin-left: -1.15rem;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #5eb6f2 0%, #3498db 50%, #1f7ab8 100%);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow:
+    inset 0 2px 5px rgba(255, 255, 255, 0.45),
+    inset 0 -2px 5px rgba(0, 0, 0, 0.12),
+    0 2px 6px rgba(0, 0, 0, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.gallery-pdf-cta__doc {
+  width: 1.15rem;
+  height: auto;
+  display: block;
+}
+.gallery-pdf-cta__arrow {
+  position: absolute;
+  right: -0.1rem;
+  bottom: -0.15rem;
+  width: 1.2rem;
+  height: 1.2rem;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
+  pointer-events: none;
+}
+
+/* Watch video — pill floats past bottom-right edge (reference) */
+.gallery-watch-video-float {
+  bottom: 0.65rem;
+  right: -0.55rem;
+}
+@media (min-width: 768px) {
+  .gallery-watch-video-float {
+    bottom: 0.85rem;
+    right: -0.75rem;
+  }
+}
+.gallery-watch-video-pill {
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #42a5f5 0%, #1e88e5 52%, #1565c0 100%);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow:
+    5px 7px 0 rgba(12, 35, 72, 0.72),
+    3px 4px 10px rgba(0, 0, 0, 0.28);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+}
+.gallery-watch-video-pill:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    6px 8px 0 rgba(12, 35, 72, 0.65),
+    4px 6px 14px rgba(0, 0, 0, 0.32);
+}
+.gallery-watch-video-pill:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+.gallery-watch-video-pill:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Thumbnail strip — "See all" mint pill (reference) */
+.gallery-see-all-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.42rem 1.2rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #15803d;
+  background: rgba(236, 253, 245, 0.96);
+  border: 1.5px solid #4ade80;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.gallery-see-all-thumb__img {
+  opacity: 0.55;
+}
+.gallery-see-all-thumb__wash {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.38);
+  pointer-events: none;
+}
+
 /* Section spacing */
 .property-details-compact .space-y-4 { --tw-space-y-reverse: 0; }
 .property-details-compact .py-12 { padding-top: 2rem !important; padding-bottom: 2rem !important; }
 .property-details-compact .py-16 { padding-top: 2.5rem !important; padding-bottom: 2.5rem !important; }
+
+/* ============================================
+   Schedule a Tour Component (Reference Design)
+   ============================================ */
+.tour-card {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f0f2f5;
+}
+
+.tour-header-box {
+  background-color: #f1f3ff;
+  border: 1px solid #d8dfff;
+  margin: 20px 20px 15px 20px;
+  border-radius: 6px;
+  padding: 14px 10px;
+  text-align: center;
+}
+
+.tour-header-box h3 {
+  color: #3b4fad;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 15px !important;
+  margin: 0;
+}
+
+.tour-dates-container {
+  padding: 0 20px;
+  position: relative;
+  margin-top: 10px;
+}
+
+.date-card-item {
+  border: 1.5px solid #edf2f7;
+  border-radius: 8px;
+  padding: 16px 4px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #fff;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.date-card-item:hover {
+  border-color: #cbd5e0;
+  transform: translateY(-1px);
+}
+
+.date-card-item.active {
+  border-color: #3b4fad;
+  background-color: #fff;
+  box-shadow: 0 0 0 1px #3b4fad;
+}
+
+.date-card-item .day-name {
+  font-size: 11px;
+  color: #4a5568;
+  font-weight: 600;
+  margin-bottom: 4px;
+  text-transform: capitalize;
+}
+
+.date-card-item .day-num {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1a202c;
+  line-height: 1;
+}
+
+.date-card-item .month-name {
+  font-size: 11px;
+  color: #4a5568;
+  font-weight: 600;
+  margin-top: 4px;
+  text-transform: capitalize;
+}
+
+.date-card-item.active .day-name,
+.date-card-item.active .day-num,
+.date-card-item.active .month-name {
+  color: #3143a1;
+}
+
+/* Nav arrows for dates */
+.tour-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  background: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #4a5568;
+}
+
+.tour-nav-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #2d3748;
+  box-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.12);
+}
+
+.tour-nav-prev { left: 4px; }
+.tour-nav-next { right: 4px; }
+
+.tour-label {
+  font-weight: 800;
+  font-size: 15px;
+  color: #1a202c;
+  margin: 24px 0 15px 0;
+  padding: 0 20px;
+}
+
+.tour-type-toggle {
+  display: flex;
+  gap: 12px;
+  padding: 0 20px;
+  margin-bottom: 20px;
+}
+
+.tour-type-option {
+  flex: 1;
+  padding: 14px 10px;
+  border: 1.5px solid #edf2f7;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  color: #2d3748;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.tour-type-option.active {
+  border-color: #3b4fad;
+  color: #3b4fad;
+  box-shadow: 0 0 0 0.5px #3b4fad;
+}
+
+.tour-form-container {
+  padding: 0 20px 20px 20px;
+}
+
+.tour-field {
+  width: 100%;
+  padding: 13px 16px;
+  border: 1.5px solid #edf2f7;
+  border-radius: 8px;
+  font-size: 15px;
+  color: #1a202c;
+  background: #fff;
+  margin-bottom: 14px;
+  transition: all 0.2s;
+}
+
+.tour-field:focus {
+  outline: none;
+  border-color: #3b4fad;
+  box-shadow: 0 0 0 1px rgba(59, 79, 173, 0.1);
+}
+
+.tour-field::placeholder {
+  color: #2d3748;
+  font-weight: 500;
+}
+
+.tour-submit {
+  width: 100%;
+  padding: 16px;
+  background-color: #3b4fad;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+  margin-top: 10px;
+  box-shadow: 0 4px 6px -1px rgba(59, 79, 173, 0.2);
+}
+
+.tour-submit:hover {
+  background-color: #2d3b8a;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px -2px rgba(59, 79, 173, 0.3);
+}
+
+.tour-footer-box {
+  background-color: #f1f3ff;
+  border: 1px solid #d8dfff;
+  border-radius: 6px;
+  padding: 16px 10px;
+  text-align: center;
+  width: calc(100% - 40px);
+  color: #3b4fad;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 14px !important;
+  cursor: pointer;
+  margin: 0 20px 25px 20px;
+  transition: all 0.2s;
+}
+
+.tour-footer-box:hover {
+  background-color: #e8ebff;
+  border-color: #cbd5ff;
+}
+
+.tour-select-wrapper {
+  position: relative;
+  margin-bottom: 2px;
+}
+
+.tour-select-wrapper select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%233b4fad' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M8 9l4-4 4 4m0 6l-4 4-4-4' /%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 18px;
+  padding-right: 48px;
+}

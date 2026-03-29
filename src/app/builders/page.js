@@ -40,7 +40,7 @@ function BuilderGridCard({ section, router, isDark }) {
   ];
   return (
     <div
-      onClick={() => section.id && router.push(`/builders/${section.id}`)}
+      onClick={() => section.slug ? router.push(`/builders/${section.slug}`) : section.name && router.push(`/builders/${section.name.toLowerCase().replace(/\s+/g, '-')}`)}
       className={`rounded-xl shadow-sm border p-4 max-[425px]:p-3 cursor-pointer hover:shadow-md transition-all mt-4 mx-2 sm:mx-3 max-[425px]:mx-2 ${isDark ? 'bg-[#282c34] border-gray-600' : 'bg-white border-gray-100'}`}
     >
       <div className="flex items-start gap-3 max-[425px]:gap-2">
@@ -185,7 +185,7 @@ function BuilderSectionBlock({ section, expert, isVisible, delay, router, isDark
                     <span className={`text-[8px] font-semibold uppercase leading-tight mt-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>BRIGADE</span>
                   </div>
                 ) : section.logo ? (
-                  <Image src={section.logo} alt={section.name} width={64} height={70} className="object-contain w-full h-full" />
+                  <Image src={section.logo} alt={section.name} width={64} height={70} className="object-contain w-full h-full" unoptimized />
                 ) : (
                   <div className="flex flex-col items-center justify-center py-1">
                     <Building2 className={`w-5 h-5 mb-0.5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
@@ -242,7 +242,7 @@ function BuilderSectionBlock({ section, expert, isVisible, delay, router, isDark
             </div>
             <button
               type="button"
-              onClick={() => section.id && router.push(`/builders/${section.id}`)}
+              onClick={() => section.name && router.push(`/builders/${section.name.toLowerCase().replace(/\s+/g, '-')}`)}
               className="inline-flex items-center gap-1 text-blue-400 font-medium text-xs max-[425px]:text-[11px] hover:underline mt-auto pt-4 max-[425px]:pt-3 text-left cursor-pointer"
             >
               Interested in {section.name}? Connect with us <ChevronRight className="w-3.5 h-3.5 shrink-0" />
@@ -308,7 +308,7 @@ function BuilderSectionBlock({ section, expert, isVisible, delay, router, isDark
                   ))}
                   <button
                     type="button"
-                    onClick={() => section.id && router.push(`/builders/${section.id}`)}
+                    onClick={() => section.name && router.push(`/builders/${section.name.toLowerCase().replace(/\s+/g, '-')}`)}
                     className="bg-amber-400 hover:bg-amber-500 text-gray-900 font-semibold text-sm max-[425px]:text-xs rounded-lg flex items-center justify-center min-h-[72px] max-[425px]:min-h-[60px] transition-colors shadow-sm min-w-0"
                   >
                     View All
@@ -421,8 +421,9 @@ export default function BuildersPage() {
         const transformedBuilders = data.data.map((builder, index) => {
           const name = builder.name || builder.builderName || 'N/A';
           const stats = builder.stats || {};
+          const bId = builder.id || builder._id || `temp-${index}`;
           return {
-            id: builder._id,
+            id: bId,
             name,
             tagline: builder.tagline || '',
             founded: builder.founded || builder.foundedYear || 'N/A',

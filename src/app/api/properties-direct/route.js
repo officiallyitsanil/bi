@@ -1,18 +1,21 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/utils/dbConnect';
 import mongoose from 'mongoose';
+import { USE_DUMMY_PROPERTIES, getAllDummyPropertiesRaw } from '@/lib/dummyProperties';
 
 export async function GET() {
     try {
-        await dbConnect();
-        
-        const db = mongoose.connection.db;
-        
-        // Fetch directly from collections
-        const commercial = await db.collection('commercialProperties').find({}).toArray();
-        const residential = await db.collection('residentialproperties').find({}).toArray();
-        
-        const allProperties = [...commercial, ...residential];
+        let allProperties = [];
+
+        if (USE_DUMMY_PROPERTIES) {
+            allProperties = getAllDummyPropertiesRaw();
+        } else {
+            await dbConnect();
+            const db = mongoose.connection.db;
+            const commercial = await db.collection('commercialProperties').find({}).toArray();
+            const residential = await db.collection('residentialproperties').find({}).toArray();
+            allProperties = [...commercial, ...residential];
+        }
         
         // Add propertyType field if missing and fix image URLs
         const normalized = allProperties.map(prop => {

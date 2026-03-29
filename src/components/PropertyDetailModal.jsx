@@ -449,9 +449,10 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
     const handleShare = async () => {
         const lat = property.coordinates?.latitude ?? property.coordinates?.lat ?? property.position?.lat;
         const lng = property.coordinates?.longitude ?? property.coordinates?.lng ?? property.position?.lng;
+        const cleanName = (property.propertyName || property.name || 'property').toLowerCase().replace(/\s+/g, '-');
         const mapUrl = (lat != null && lng != null)
             ? `https://maps.google.com/maps?q=${lat},${lng}&z=14&t=h`
-            : `${window.location.origin}/property-details?id=${property._id || property.id}`;
+            : `${window.location.origin}/property-details/${cleanName}`;
 
         try {
             await navigator.clipboard.writeText(mapUrl);
@@ -696,10 +697,10 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                         {/* Amenities - 4 items with icons (Guest Check-in, Delivery Acceptance, Package Notification, Fire Safety) */}
                         {(() => {
                             const defaultAmenities = [
-                                { name: "Guest Check-in", Icon: User },
-                                { name: "Delivery Acceptance", Icon: Bell },
-                                { name: "Package Notification", Icon: Package },
-                                { name: "Fire Safety", Icon: Flame }
+                                { name: "Guest Check-in", image: "/amenities/Guest%20Check%20in.svg", Icon: User },
+                                { name: "Delivery Acceptance", image: "/amenities/Delivery.svg", Icon: Bell },
+                                { name: "Package Notification", image: "/amenities/Package%20Notification.svg", Icon: Package },
+                                { name: "Fire Safety", image: "/amenities/Fire%20%26%20seafty.svg", Icon: Flame }
                             ];
                             const amenitiesToShow = displayedAmenities.length > 0
                                 ? displayedAmenities.slice(0, 4).map((a, i) => ({ ...a, Icon: defaultAmenities[i]?.Icon || User }))
@@ -710,7 +711,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                         const IconComp = amenity.Icon || User;
                                         return (
                                             <div key={index} className="flex flex-col items-center gap-2">
-                                                <div className={`w-14 h-14 max-[480px]:w-12 max-[480px]:h-12 rounded-2xl flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                                            <div className={`w-14 h-14 max-[480px]:w-12 max-[480px]:h-12 rounded-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'}`}>
                                                     {amenity.image ? (
                                                         <Image src={amenity.image} alt={amenity.name} width={28} height={28} className="object-contain" unoptimized />
                                                     ) : (
@@ -773,7 +774,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                 {/* Fixed CTA Button - extra bottom padding on mobile for safe area + nav clearance */}
                 <div className={`p-4 max-[480px]:pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] border-t transition-colors ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-white border-gray-100'}`}>
                     <a
-                        href={`/property-details?id=${property._id || property.id}&type=${propertyCategory}`}
+                        href={`/property-details/${(property.propertyName || property.name || 'property').toLowerCase().replace(/\s+/g, '-')}`}
                         onClick={handleViewDetailsClick}
                         className="block w-full bg-blue-600 hover:bg-blue-700 text-white py-4 max-[480px]:py-3 rounded-xl text-center font-semibold text-base max-[480px]:text-sm"
                     >
@@ -848,7 +849,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                 <CornerUpRight className={`w-2.5 h-2.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} />
                             </a>
                             <a
-                                href={`/property-details?id=${property._id || property.id}&type=${propertyCategory}`}
+                                href={`/property-details/${(property.propertyName || property.name || 'property').toLowerCase().replace(/\s+/g, '-')}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={handleViewDetailsClick}
@@ -991,7 +992,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                         { name: "Tea", icon: "☕" }
                                     ]).map((amenity, index) => (
                                         <div key={index} className="flex flex-col items-center gap-0.5">
-                                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                                            <div className={`w-7 h-7 rounded-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'}`}>
                                                 {amenity.image ? (
                                                     <Image
                                                         src={amenity.image}
@@ -1052,7 +1053,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                 <p className={`text-[9px] leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                                     {brandDescription.length > 80 ? brandDescription.substring(0, 80) + '...' : brandDescription}
                                     <a
-                                        href={`/property-details?id=${property._id || property.id}&type=${propertyCategory}`}
+                                        href={`/property-details/${(property.propertyName || property.name || 'property').toLowerCase().replace(/\s+/g, '-')}`}
                                         onClick={handleViewDetailsClick}
                                         className="text-blue-600 hover:underline ml-1"
                                     >
@@ -1067,7 +1068,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                 {/* View Details Button - Right Edge (Vertical) - Part of modal structure */}
                 <div className="w-7 flex-shrink-0 h-full">
                     <a
-                        href={`/property-details?id=${property._id || property.id}&type=${propertyCategory}`}
+                        href={`/property-details/${(property.propertyName || property.name || 'property').toLowerCase().replace(/\s+/g, '-')}`}
                         onClick={handleViewDetailsClick}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-1 rounded-l-lg shadow-lg transition-colors cursor-pointer writing-vertical-rl text-[9px] font-medium h-full w-full flex items-center justify-center"
                         style={{ writingMode: 'vertical-rl' }}

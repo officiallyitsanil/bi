@@ -143,25 +143,21 @@ export default function SearchSection({ isCommercial = false }) {
       return;
     }
 
-    // Build URL parameters
+    const cityName = location.toLowerCase().replace(/\s+/g, '-').trim();
+    const cat = isCommercial ? 'commercial' : 'residential';
+    const type = selectedFilter.toLowerCase().replace(/\s+/g, '-');
+    
+    // Build URL parameters for optional filters
     const params = new URLSearchParams();
-
-    if (location) params.append('city', location);
-    if (selectedFilter) params.append('type', selectedFilter);
-    // Pass Category based on isCommercial prop (instead of propertyType)
-    if (isCommercial) {
-      params.append('Category', 'commercial');
-    } else {
-      params.append('Category', 'residential');
-    }
-    // Note: managedSpace is the selected property type option, not the propertyType parameter
     if (preferences) params.append('preferences', preferences);
     if (pricePerDesk && pricePerDesk !== 'Any') params.append('pricePerDesk', pricePerDesk);
     if (pricePerSqft && pricePerSqft !== 'Any') params.append('pricePerSqft', pricePerSqft);
     if (noOfSeats && noOfSeats !== 'Any') params.append('noOfSeats', noOfSeats);
 
-    // Redirect to properties-search with parameters
-    router.push(`/properties-search?${params.toString()}`);
+    const queryString = params.toString();
+    const targetUrl = `/properties-search/${cityName}/${cat}/${encodeURIComponent(type)}${queryString ? `?${queryString}` : ""}`;
+    
+    router.push(targetUrl);
   };
 
   // Get dropdown options based on selected filter

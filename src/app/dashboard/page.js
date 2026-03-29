@@ -764,7 +764,10 @@ export default function DashboardPage() {
                                         {favoriteProperties.map((property) => (
                                             <div
                                                 key={property._id || property.id}
-                                                onClick={() => window.open(`/property-details?id=${property._id || property.id}&type=${property.propertyType || 'commercial'}`, '_blank')}
+                                                onClick={() => {
+                                                  const slug = (property.propertyName || property.name || 'property').toLowerCase().replace(/\s+/g, '-');
+                                                  window.open(`/property-details/${slug}-${property._id || property.id}?type=${property.propertyType || 'commercial'}`, '_blank');
+                                                }}
                                                 className="bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl hover:-translate-y-1 sm:hover:-translate-y-2 transition-all duration-300 relative cursor-pointer"
                                             >
                                                 {/* Property Image */}

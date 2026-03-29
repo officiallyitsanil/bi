@@ -1,27 +1,35 @@
 import { NextResponse } from 'next/server';
-import { BUILDERS_BY_ID } from '@/data/builders';
-
-// For now: return dummy data. When switching to DB, remove dummy and use:
-//   await dbConnect();
-//   const builders = await Builder.find(query).select('-__v');
-//   return NextResponse.json({ success: true, data: builders.map(b => ({ ...b.toObject(), _id: b._id.toString() }) });
+import dbConnect from '@/utils/dbConnect';
+import Builder from '@/models/Builder';
+import { USE_DUMMY_PROPERTIES } from '@/lib/dummyProperties';
+import { ALL_BUILDERS } from '@/data/builders';
 
 export async function GET(request) {
     try {
         const url = new URL(request.url);
         const category = url.searchParams.get('category');
         const status = url.searchParams.get('status');
+        const name = url.searchParams.get('name');
 
-        let list = Object.values(BUILDERS_BY_ID);
-
-        if (category) {
-            list = list.filter(b => (b.category || '') === category);
+        if (USE_DUMMY_PROPERTIES) {
+            let data = ALL_BUILDERS;
+            if (name) {
+                const decodedName = decodeURIComponent(name).replace(/-/g, ' ');
+                data = data.filter(b => b.name.toLowerCase() === decodedName.toLowerCase());
+            }
+            if (category) data = data.filter(b => b.category === category);
+            if (status) data = data.filter(b => b.status === status);
+            return NextResponse.json({ success: true, data });
         }
-        if (status) {
-            list = list.filter(b => (b.status || '') === status);
-        }
 
-        const data = list.map(b => ({ ...b, _id: b.id }));
+        await dbConnect();
+
+        let query = {};
+        if (category) query.category = category;
+        if (status) query.status = status;
+
+        const builders = await Builder.find(query).sort({ createdAt: -1 }).lean();
+        const data = builders.map(b => ({ ...b, _id: b._id.toString(), id: b._id.toString() }));
 
         return NextResponse.json({
             success: true,

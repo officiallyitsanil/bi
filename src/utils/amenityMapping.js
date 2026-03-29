@@ -1,37 +1,37 @@
 // Mapping of amenity names to their corresponding icon files
-// Icons are located in /public/property-details/amenties/
+// Icons are located in /public/amenities/
 
 const amenityIconMap = {
     // Beverages & Food
-    "tea": "/property-details/amenties/tea.png",
-    "coffee": "/property-details/amenties/coffee.png",
-    "milk": "/property-details/amenties/milk.png",
-    "water": "/property-details/amenties/water.png",
-    "food vendor": "/property-details/amenties/food-vendor.png",
+    "tea": "/amenities/Tea.svg",
+    "coffee": "/amenities/coffee.svg",
+    "milk": "/amenities/milk.svg",
+    "water": "/amenities/water.svg",
+    "food vendor": "/amenities/Food%20Vendor.svg",
     
     // Pantry & Kitchen
-    "pantry available 24/7": "/property-details/amenties/cups-mugs.png",
-    "pantry": "/property-details/amenties/cups-mugs.png",
-    "cups/mugs": "/property-details/amenties/cups-mugs.png",
-    "cups & mugs": "/property-details/amenties/cups-mugs.png",
+    "pantry available 24/7": "/amenities/Pantry.svg",
+    "pantry": "/amenities/Pantry.svg",
+    "cups/mugs": "/amenities/Pantry.svg",
+    "cups & mugs": "/amenities/Pantry.svg",
     
     // Cleaning & Maintenance
-    "daily upkeep of bathrooms...": "/property-details/amenties/daily-upkeep.png",
-    "daily upkeep of bathrooms": "/property-details/amenties/daily-upkeep.png",
-    "daily upkeep": "/property-details/amenties/daily-upkeep.png",
+    "daily upkeep of bathrooms...": "/amenities/Daily%20Upkeep.svg",
+    "daily upkeep of bathrooms": "/amenities/Daily%20Upkeep.svg",
+    "daily upkeep": "/amenities/Daily%20Upkeep.svg",
     "deep cleaning": "/property-details/amenties/deep-cleaning.png",
     "general cleaning": "/property-details/amenties/general-cleaning.png",
-    "nightly trash": "/property-details/amenties/nighty-trash.png",
-    "nightly trash removal": "/property-details/amenties/nighty-trash.png",
+    "nightly trash": "/amenities/Nightly%20Thrash.svg",
+    "nightly trash removal": "/amenities/Nightly%20Thrash.svg",
     "pest extermination": "/property-details/amenties/pest-extermination.png",
     
     // Internet & Tech
-    "high - speed wi-fi 24/7": "/property-details/amenties/wifi.png",
-    "high-speed wi-fi 24/7": "/property-details/amenties/wifi.png",
-    "high speed wi-fi": "/property-details/amenties/wifi.png",
-    "wi-fi": "/property-details/amenties/wifi.png",
-    "wifi": "/property-details/amenties/wifi.png",
-    "high - speed wi-fi": "/property-details/amenties/wifi.png",
+    "high - speed wi-fi 24/7": "/amenities/wifi.svg",
+    "high-speed wi-fi 24/7": "/amenities/wifi.svg",
+    "high speed wi-fi": "/amenities/wifi.svg",
+    "wi-fi": "/amenities/wifi.svg",
+    "wifi": "/amenities/wifi.svg",
+    "high - speed wi-fi": "/amenities/wifi.svg",
     
     // Meeting & Conference
     "conference room access": "/property-details/amenties/club.png",
@@ -50,13 +50,13 @@ const amenityIconMap = {
     "ev charging": "/property-details/amenties/ev-charging-space.png",
     
     // Security & Safety
-    "building security": "/property-details/amenties/building-security.png",
-    "gated community": "/property-details/amenties/building-security.png",
-    "security guard": "/property-details/amenties/security-guard.png",
-    "fire alarm": "/property-details/amenties/fire-alarm.png",
-    "fire extinguisher": "/property-details/amenties/fire-extinguisher.png",
-    "fire safety": "/property-details/amenties/fire-extinguisher.png",
-    "fire noc": "/property-details/amenties/fire-noc.png",
+    "building security": "/amenities/security.svg",
+    "gated community": "/amenities/security.svg",
+    "security guard": "/amenities/security.svg",
+    "fire alarm": "/amenities/Fire%20%26%20seafty.svg",
+    "fire extinguisher": "/amenities/Fire%20%26%20seafty.svg",
+    "fire safety": "/amenities/Fire%20%26%20seafty.svg",
+    "fire noc": "/amenities/Fire%20%26%20seafty.svg",
     "smoke detector": "/property-details/amenties/smoke-detector.png",
     "first aid kit": "/property-details/amenties/first-aidkit.png",
     "first-aid kit": "/property-details/amenties/first-aidkit.png",
@@ -87,11 +87,12 @@ const amenityIconMap = {
     "tape/paper": "/property-details/amenties/tape-paper.png",
     
     // Reception & Guest Services
-    "guest check-in": "/property-details/amenties/guest-checkin.png",
-    "guest checkin": "/property-details/amenties/guest-checkin.png",
+    "guest check-in": "/amenities/Guest%20Check%20in.svg",
+    "guest checkin": "/amenities/Guest%20Check%20in.svg",
+    "guest check in": "/amenities/Guest%20Check%20in.svg",
     "guest management": "/property-details/amenties/guest-management.png",
-    "delivery acceptance": "/property-details/amenties/delivery-acceptance.png",
-    "package notification": "/property-details/amenties/package-notification.png",
+    "delivery acceptance": "/amenities/Delivery.svg",
+    "package notification": "/amenities/Package%20Notification.svg",
     
     // Workspace
     "open desk": "/property-details/amenties/open-desk.png",
@@ -109,60 +110,27 @@ const amenityIconMap = {
     "playground": "/property-details/amenties/playground.png",
 };
 
-// All available amenity icons from the public folder
+// All available amenity icons from `public/amenities` (svg files).
 const AVAILABLE_ICONS = [
-    "/property-details/amenties/2wparking.png",
-    "/property-details/amenties/4wparking.png",
-    "/property-details/amenties/accessable.png",
-    "/property-details/amenties/building-security.png",
-    "/property-details/amenties/club.png",
-    "/property-details/amenties/coffee.png",
-    "/property-details/amenties/cups-mugs.png",
-    "/property-details/amenties/daily-upkeep.png",
-    "/property-details/amenties/deep-cleaning.png",
-    "/property-details/amenties/delivery-acceptance.png",
-    "/property-details/amenties/dg-backup.png",
-    "/property-details/amenties/electricity.png",
-    "/property-details/amenties/elevator.png",
-    "/property-details/amenties/enevelopes.png",
-    "/property-details/amenties/ev-charging-space.png",
-    "/property-details/amenties/fire-alarm.png",
-    "/property-details/amenties/fire-extinguisher.png",
-    "/property-details/amenties/fire-noc.png",
-    "/property-details/amenties/first-aidkit.png",
-    "/property-details/amenties/food-vendor.png",
-    "/property-details/amenties/gas.png",
-    "/property-details/amenties/general-cleaning.png",
-    "/property-details/amenties/guest-checkin.png",
-    "/property-details/amenties/guest-management.png",
-    "/property-details/amenties/hvac.png",
-    "/property-details/amenties/milk.png",
-    "/property-details/amenties/nighty-trash.png",
-    "/property-details/amenties/oc.png",
-    "/property-details/amenties/open-desk.png",
-    "/property-details/amenties/package-notification.png",
-    "/property-details/amenties/paper-shreding.png",
-    "/property-details/amenties/permit.png",
-    "/property-details/amenties/pest-extermination.png",
-    "/property-details/amenties/playground.png",
-    "/property-details/amenties/power-supply.png",
-    "/property-details/amenties/printers.png",
-    "/property-details/amenties/property-insurance.png",
-    "/property-details/amenties/security-guard.png",
-    "/property-details/amenties/sewage-system.png",
-    "/property-details/amenties/sez.png",
-    "/property-details/amenties/smoke-detector.png",
-    "/property-details/amenties/sticky-notes.png",
-    "/property-details/amenties/tape-paper.png",
-    "/property-details/amenties/tea.png",
-    "/property-details/amenties/visitor-parking.png",
-    "/property-details/amenties/water-supply.png",
-    "/property-details/amenties/water.png",
-    "/property-details/amenties/wifi.png"
+    "/amenities/Tea.svg",
+    "/amenities/coffee.svg",
+    "/amenities/milk.svg",
+    "/amenities/water.svg",
+    "/amenities/Food%20Vendor.svg",
+    "/amenities/Cafeteria.svg",
+    "/amenities/Pantry.svg",
+    "/amenities/Daily%20Upkeep.svg",
+    "/amenities/Nightly%20Thrash.svg",
+    "/amenities/Fire%20%26%20seafty.svg",
+    "/amenities/security.svg",
+    "/amenities/wifi.svg",
+    "/amenities/Guest%20Check%20in.svg",
+    "/amenities/Delivery.svg",
+    "/amenities/Package%20Notification.svg",
 ];
 
 // Default icon for unmapped amenities
-const DEFAULT_ICON = "/property-details/amenties/accessable.png";
+const DEFAULT_ICON = "/amenities/security.svg";
 
 /**
  * Gets a random icon from available icons based on amenity name (deterministic)
@@ -198,7 +166,7 @@ function isValidIcon(iconPath) {
         return false;
     }
     // Check if it's in the available icons list
-    return AVAILABLE_ICONS.includes(iconPath) || iconPath.startsWith('/property-details/amenties/');
+    return AVAILABLE_ICONS.includes(iconPath) || iconPath.startsWith('/amenities/');
 }
 
 /**
@@ -244,20 +212,13 @@ export function mapAmenitiesToObjects(amenities) {
     return amenities
         .map(amenity => {
             if (amenity && typeof amenity === 'object' && amenity.name) {
-                // Schema-driven: use id-based SVG when id is present
-                if (amenity.id != null) {
-                    return {
-                        name: amenity.name,
-                        image: `/amenities/${amenity.id}.svg`
-                    };
-                }
                 // Legacy: object with image, or needs mapping
                 if (amenity.image && isValidIcon(amenity.image)) {
                     return amenity;
                 }
                 return {
                     name: amenity.name,
-                    image: getRandomIcon(amenity.name)
+                    image: mapAmenityToObject(amenity.name)?.image || getRandomIcon(amenity.name)
                 };
             }
             if (typeof amenity === 'string') {

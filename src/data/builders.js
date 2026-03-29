@@ -184,8 +184,16 @@ export const BUILDERS_BY_ID = {
   }),
 };
 
+export const ALL_BUILDERS = Object.values(BUILDERS_BY_ID);
+
 export function getBuilderById(id) {
-  return BUILDERS_BY_ID[id] || null;
+  if (BUILDERS_BY_ID[id]) return BUILDERS_BY_ID[id];
+  
+  // Try by name slug
+  const decodedId = decodeURIComponent(id).replace(/-/g, ' ');
+  return ALL_BUILDERS.find(b => 
+    b.name.toLowerCase() === decodedId.toLowerCase()
+  ) || null;
 }
 
 export function transformLocalBuilderToDetailFormat(builder) {

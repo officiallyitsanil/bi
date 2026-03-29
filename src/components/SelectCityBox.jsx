@@ -41,19 +41,12 @@ export default function SelectCityBox({ title = "Select by City", cities = [], i
   const handleCategorySelect = (category) => {
     if (!selectedCity) return;
 
-    const params = new URLSearchParams({
-      city: selectedCity.name,
-      type: category,
-    });
+    const cityName = selectedCity.name.toLowerCase().replace(/\s+/g, '-');
+    const cat = isCommercial ? 'commercial' : 'residential';
+    const type = category.toLowerCase().replace(/\s+/g, '-');
     
-    // Add Category based on isCommercial prop (instead of propertyType)
-    if (isCommercial) {
-      params.append('Category', 'commercial');
-    } else {
-      params.append('Category', 'residential');
-    }
-
-    router.push(`/properties-search?${params.toString()}`);
+    // Proper route: /properties-search/[city]/[category]/[type]
+    router.push(`/properties-search/${cityName}/${cat}/${encodeURIComponent(type)}`);
     setIsModalOpen(false);
   };
 
