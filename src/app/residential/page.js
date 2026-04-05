@@ -129,8 +129,8 @@ export default function ResidentialPage() {
 
   const scrollCarousel = (ref, direction) => {
     if (!ref?.current) return;
-    const cardWidth = ref.current.querySelector("[data-carousel-card]")?.offsetWidth || 320;
-    const scrollAmount = direction === "next" ? cardWidth + 16 : -(cardWidth + 16);
+    const cardWidth = ref.current.querySelector("[data-carousel-card]")?.offsetWidth || 256;
+    const scrollAmount = direction === "next" ? cardWidth + 12 : -(cardWidth + 12);
     ref.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
   };
 
@@ -166,9 +166,9 @@ export default function ResidentialPage() {
   };
 
   return (
-    <main className="pt-14 flex-grow">
+    <main className="pt-10 flex-grow">
       {/* Hero Section */}
-      <section className="relative h-[550px] flex items-center justify-center text-center text-white">
+      <section className="relative h-[400px] flex items-center justify-center text-center text-white">
         <Image
           src="https://images.unsplash.com/photo-1565402170291-8491f14678db?w=1920&q=80"
           alt="Modern living room"
@@ -179,12 +179,12 @@ export default function ResidentialPage() {
         />
         <div className="absolute inset-0 bg-black/50" />
         <div className="relative z-10 container mx-auto px-4">
-          <h1 className="text-4xl md:text-5xl font-bold font-headline">
+          <h1 className="text-2xl md:text-4xl font-bold font-headline">
             Embrace The Era of{" "}
             <span className="text-amber-400">Brokerage Free</span> Real Estate
           </h1>
-          <div className="mt-8 bg-white/20 backdrop-blur-sm rounded-2xl p-4 max-w-4xl mx-auto">
-            <div className="grid grid-cols-4 gap-2">
+          <div className="mt-5 bg-white/20 backdrop-blur-sm rounded-xl p-3 max-w-3xl mx-auto">
+            <div className="grid grid-cols-4 gap-1.5">
               {FILTER_OPTIONS.map((opt) => {
                 const Icon = opt.icon;
                 const isSelected = selectedFilter === opt.id;
@@ -192,19 +192,19 @@ export default function ResidentialPage() {
                   <button
                     key={opt.id}
                     onClick={() => setSelectedFilter(opt.id)}
-                    className={`flex flex-col items-center justify-center gap-2 p-3 rounded-lg transition-colors text-white ${
+                    className={`flex flex-col items-center justify-center gap-1 p-2 rounded-md transition-colors text-white ${
                       isSelected ? "bg-blue-600/80" : "bg-black/20 hover:bg-black/40"
                     }`}
                   >
-                    <Icon className="h-5 w-5" strokeWidth={2} />
-                    <span className="text-xs text-center">{opt.name}</span>
+                    <Icon className="h-4 w-4" strokeWidth={2} />
+                    <span className="text-[10px] sm:text-xs text-center leading-tight">{opt.name}</span>
                   </button>
                 );
               })}
             </div>
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-2 items-center bg-gray-100 dark:bg-gray-800 p-2 rounded-lg">
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-1.5 items-center bg-gray-100 dark:bg-gray-800 p-1.5 rounded-md">
               <div className="relative md:col-span-2">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                 <input
                   type="text"
                   placeholder="Search by Location"
@@ -212,10 +212,10 @@ export default function ResidentialPage() {
                   onChange={handleLocationChange}
                   onFocus={() => location && setShowSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  className="flex h-10 w-full rounded-lg border-0 bg-white dark:bg-gray-900 px-3 py-2 pl-10 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-0"
+                  className="flex h-8 w-full rounded-md border-0 bg-white dark:bg-gray-900 px-2.5 py-1.5 pl-9 text-xs text-gray-900 dark:text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-0"
                 />
                 {showSuggestions && suggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 max-h-60 overflow-y-auto">
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-50 max-h-48 overflow-y-auto text-xs">
                     {suggestions.map((s, i) => (
                       <div
                         key={i}
@@ -223,7 +223,7 @@ export default function ResidentialPage() {
                           setLocation(s.text);
                           setShowSuggestions(false);
                         }}
-                        className="px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                        className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
                       >
                         {s.displayText}
                       </div>
@@ -231,19 +231,19 @@ export default function ResidentialPage() {
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <button
                   type="button"
-                  className="flex h-10 w-full items-center justify-between rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 hover:bg-amber-400 hover:text-gray-900"
+                  className="flex h-8 w-full items-center justify-between rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-2.5 py-1.5 text-xs text-gray-900 dark:text-gray-100 hover:bg-amber-400 hover:text-gray-900"
                 >
                   <span>{selectedFilter}</span>
-                  <ChevronDown className="h-4 w-4 opacity-50" />
+                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
                 </button>
                 <button
                   onClick={handleSearch}
-                  className="inline-flex items-center justify-center rounded-lg text-sm font-medium h-10 w-10 bg-amber-400 hover:bg-amber-500 text-gray-900 shrink-0"
+                  className="inline-flex items-center justify-center rounded-md text-xs font-medium h-8 w-8 bg-amber-400 hover:bg-amber-500 text-gray-900 shrink-0"
                 >
-                  <Search className="h-5 w-5" />
+                  <Search className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -252,47 +252,47 @@ export default function ResidentialPage() {
       </section>
 
       {/* Cities Section */}
-      <section className="py-16 bg-gray-100/50 dark:bg-gray-900/50" id="cities">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-8 items-center">
+      <section className="py-10 bg-gray-100/50 dark:bg-gray-900/50" id="cities">
+        <div className="container mx-auto px-3 sm:px-4">
+          <div className="grid lg:grid-cols-2 gap-5 items-center">
             <div>
-              <h2 className="text-3xl font-bold font-headline mb-2">Select by City</h2>
-              <div className="w-24 h-1.5 bg-amber-400 mb-8" />
-              <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-x-4 gap-y-6">
+              <h2 className="text-2xl font-bold font-headline mb-1.5">Select by City</h2>
+              <div className="w-16 h-1 bg-amber-400 mb-5" />
+              <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-x-3 gap-y-4">
                 {CITIES.map((city) => (
                   <div
                     key={city.name}
-                    className="flex flex-col items-center gap-2 text-center cursor-pointer group"
+                    className="flex flex-col items-center gap-1.5 text-center cursor-pointer group"
                     onClick={() => handleCityClick(city)}
                   >
-                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-transparent group-hover:border-amber-400 transition-all duration-300 transform group-hover:scale-110">
+                    <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden border-2 border-transparent group-hover:border-amber-400 transition-all duration-300 transform group-hover:scale-110">
                       <Image
                         src={`https://picsum.photos/seed/${city.seed}/100/100`}
                         alt={city.name}
                         fill
                         className="object-cover"
-                        sizes="80px"
+                        sizes="56px"
                       />
                     </div>
-                    <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 group-hover:text-amber-500">
+                    <p className="text-[10px] sm:text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-amber-500">
                       {city.name}
                     </p>
                   </div>
                 ))}
                 <div
-                  className="flex flex-col items-center gap-2 text-center cursor-pointer group"
+                  className="flex flex-col items-center gap-1.5 text-center cursor-pointer group"
                   onClick={() => handleCityClick(CITIES[0])}
                 >
-                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden bg-blue-600 flex items-center justify-center transition-all duration-300 transform group-hover:scale-110">
-                    <span className="text-white text-xs sm:text-sm font-bold text-center">See All</span>
+                  <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden bg-blue-600 flex items-center justify-center transition-all duration-300 transform group-hover:scale-110">
+                    <span className="text-white text-[10px] sm:text-xs font-bold text-center px-0.5">See All</span>
                   </div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 group-hover:text-blue-600">
+                  <p className="text-[10px] sm:text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-blue-600">
                     More Cities
                   </p>
                 </div>
               </div>
             </div>
-            <div className="hidden lg:block relative h-full min-h-[400px] rounded-2xl overflow-hidden">
+            <div className="hidden lg:block relative h-full min-h-[280px] rounded-xl overflow-hidden">
               <Image
                 src="https://images.unsplash.com/photo-1554435493-93422e8220c8?w=1080&q=80"
                 alt="Modern building"
@@ -306,17 +306,17 @@ export default function ResidentialPage() {
       </section>
 
       {/* Amenities Section */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-12">
+      <section className="py-10">
+        <div className="container mx-auto px-3 sm:px-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-5 gap-y-8">
             {AMENITIES.map((item) => {
               const Icon = item.icon;
               return (
-                <div key={item.title} className="flex items-start gap-4">
-                  <Icon className="w-8 h-8 text-blue-600 mt-1 flex-shrink-0" strokeWidth={2} />
+                <div key={item.title} className="flex items-start gap-3">
+                  <Icon className="w-6 h-6 text-blue-600 mt-0.5 flex-shrink-0" strokeWidth={2} />
                   <div>
-                    <h3 className="font-bold text-lg mb-1">{item.title}</h3>
-                    <p className="text-gray-600 dark:text-gray-400">{item.desc}</p>
+                    <h3 className="font-bold text-sm mb-0.5">{item.title}</h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-xs leading-relaxed">{item.desc}</p>
                   </div>
                 </div>
               );
@@ -326,22 +326,22 @@ export default function ResidentialPage() {
       </section>
 
       {/* Top Cities for Property for Rent */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
+      <section className="py-10">
+        <div className="container mx-auto px-3 sm:px-4">
+          <div className="text-center mb-8">
             <div className="inline-block relative">
-              <h2 className="text-3xl font-bold font-headline">Top Cities for Property for Rent in India</h2>
-              <div className="absolute -top-4 -left-4 w-12 h-12 bg-amber-400/30 rounded-full -z-10" />
+              <h2 className="text-2xl font-bold font-headline">Top Cities for Property for Rent in India</h2>
+              <div className="absolute -top-3 -left-3 w-8 h-8 bg-amber-400/30 rounded-full -z-10" />
             </div>
-            <div className="w-24 h-1.5 bg-blue-600 mx-auto mt-2" />
+            <div className="w-16 h-1 bg-blue-600 mx-auto mt-1.5" />
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 md:grid-rows-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 md:grid-rows-3 gap-4">
             {TOP_CITIES_RENT.map((item, idx) => (
               <Link
                 key={item.city}
                 href={`/properties-search/${item.city.toLowerCase().replace(/\s+/g, '-')}/residential/rent`}
-                className={`relative rounded-2xl overflow-hidden group cursor-pointer ${
-                  item.span ? "md:col-span-2 md:row-span-3 h-full min-h-[400px] md:min-h-0" : "aspect-[4/3]"
+                className={`relative rounded-xl overflow-hidden group cursor-pointer ${
+                  item.span ? "md:col-span-2 md:row-span-3 h-full min-h-[280px] md:min-h-0" : "aspect-[4/3]"
                 }`}
               >
                 <Image
@@ -352,9 +352,9 @@ export default function ResidentialPage() {
                   sizes={item.span ? "(max-width: 768px) 100vw, 50vw" : "(max-width: 768px) 50vw, 25vw"}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <div className="absolute bottom-4 left-4 text-white flex items-center gap-1">
-                  <MapPin className="h-4 w-4" />
-                  <span className="font-semibold">{item.city}</span>
+                <div className="absolute bottom-3 left-3 text-white flex items-center gap-1">
+                  <MapPin className="h-3.5 w-3.5" />
+                  <span className="font-semibold text-sm">{item.city}</span>
                 </div>
               </Link>
             ))}
@@ -363,27 +363,27 @@ export default function ResidentialPage() {
       </section>
 
       {/* Find Dream Home CTA */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="bg-amber-50 dark:bg-amber-900/20 rounded-2xl overflow-hidden">
+      <section className="py-10">
+        <div className="container mx-auto px-3 sm:px-4">
+          <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl overflow-hidden">
             <div className="grid md:grid-cols-2 items-center">
-              <div className="space-y-4 p-8 md:p-12">
-                <h2 className="text-3xl font-bold font-headline text-gray-900 dark:text-gray-100">
+              <div className="space-y-3 p-5 md:p-8">
+                <h2 className="text-2xl font-bold font-headline text-gray-900 dark:text-gray-100">
                   Find your Dream Home with BuildersInfo
                 </h2>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
                   Just drop us an email with your requirements – Property Type, Location, Budget… and
                   our team will connect back with you within 24 Hrs with the best possible options.
                 </p>
                 <a
                   href="mailto:support@buildersinfo.in"
-                  className="flex items-center gap-2 font-semibold text-gray-900 dark:text-gray-100 hover:text-blue-600"
+                  className="flex items-center gap-1.5 text-sm font-semibold text-gray-900 dark:text-gray-100 hover:text-blue-600"
                 >
-                  <Mail className="h-5 w-5" />
+                  <Mail className="h-4 w-4" />
                   <span>support@buildersinfo.in</span>
                 </a>
               </div>
-              <div className="relative h-64 md:h-full w-full min-h-[300px]">
+              <div className="relative h-48 md:h-full w-full min-h-[220px]">
                 <Image
                   src="https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=1080&q=80"
                   alt="Modern house"
@@ -398,21 +398,21 @@ export default function ResidentialPage() {
       </section>
 
       {/* Top Projects in Bengaluru Carousel */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
+      <section className="py-10">
+        <div className="container mx-auto px-3 sm:px-4">
+          <div className="text-center mb-8">
             <div className="inline-block relative">
-              <div className="absolute -top-4 -left-4 w-12 h-12 bg-amber-400 rounded-full -z-10" />
-              <h2 className="text-3xl font-bold font-headline">Top Projects in Bengaluru</h2>
+              <div className="absolute -top-3 -left-3 w-8 h-8 bg-amber-400 rounded-full -z-10" />
+              <h2 className="text-2xl font-bold font-headline">Top Projects in Bengaluru</h2>
             </div>
-            <div className="w-24 h-1.5 bg-blue-600 mx-auto mt-2" />
+            <div className="w-16 h-1 bg-blue-600 mx-auto mt-1.5" />
           </div>
           <div className="relative w-full">
-            <div className="overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth -mx-4 px-4" ref={projectsRef}>
-              <div className="flex gap-4 -ml-4 w-max min-w-full">
+            <div className="overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth -mx-3 px-3 sm:-mx-4 sm:px-4" ref={projectsRef}>
+              <div className="flex gap-3 -ml-3 sm:-ml-4 w-max min-w-full">
                 {BANGALORE_PROJECTS.map((project) => (
-                  <div key={project.name} data-carousel-card className="w-80 md:w-96 shrink-0">
-                    <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden group h-full flex flex-col shadow-md">
+                  <div key={project.name} data-carousel-card className="w-64 md:w-72 shrink-0">
+                    <div className="rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden group h-full flex flex-col shadow-sm">
                       <div className="relative aspect-[4/3] w-full overflow-hidden">
                         <Image
                           src={project.img}
@@ -422,32 +422,32 @@ export default function ResidentialPage() {
                           sizes="(max-width: 768px) 100vw, 50vw"
                         />
                       </div>
-                      <div className="p-4 flex-1 flex flex-col">
-                        <h3 className="font-bold">{project.name}</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-1">
-                          <MapPin className="h-4 w-4 shrink-0" />
+                      <div className="p-3 flex-1 flex flex-col">
+                        <h3 className="font-bold text-sm">{project.name}</h3>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-0.5">
+                          <MapPin className="h-3.5 w-3.5 shrink-0" />
                           {project.location}
                         </p>
-                        <div className="my-4 space-y-2 border-t border-gray-200 dark:border-gray-700 pt-4">
-                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                            <Bed className="h-4 w-4" />
+                        <div className="my-3 space-y-1.5 border-t border-gray-200 dark:border-gray-700 pt-3">
+                          <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+                            <Bed className="h-3.5 w-3.5" />
                             <span>{project.bhk}</span>
                           </div>
-                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                            <Square className="h-4 w-4" />
+                          <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+                            <Square className="h-3.5 w-3.5" />
                             <span>{project.sqft}</span>
                           </div>
                         </div>
-                        <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                        <div className="mt-auto pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
                           <div>
-                            <p className="text-xs text-gray-500">Starting from</p>
-                            <p className="font-bold text-blue-600">{project.price}</p>
+                            <p className="text-[10px] text-gray-500">Starting from</p>
+                            <p className="font-bold text-sm text-blue-600">{project.price}</p>
                           </div>
                           <Link
                             href="/properties-search/bangalore/residential/sale"
-                            className="flex items-center text-sm font-semibold text-blue-600 hover:underline"
+                            className="flex items-center text-xs font-semibold text-blue-600 hover:underline"
                           >
-                            Explore More <ExternalLink className="h-4 w-4 ml-1" />
+                            Explore More <ExternalLink className="h-3.5 w-3.5 ml-0.5" />
                           </Link>
                         </div>
                       </div>
@@ -458,15 +458,15 @@ export default function ResidentialPage() {
             </div>
             <button
               onClick={() => scrollCarousel(projectsRef, "prev")}
-              className="inline-flex items-center justify-center h-8 w-8 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-amber-400 absolute -left-4 top-1/2 -translate-y-1/2 z-10"
+              className="inline-flex items-center justify-center h-7 w-7 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-amber-400 absolute -left-3 top-1/2 -translate-y-1/2 z-10"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={() => scrollCarousel(projectsRef, "next")}
-              className="inline-flex items-center justify-center h-8 w-8 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-amber-400 absolute -right-4 top-1/2 -translate-y-1/2 z-10"
+              className="inline-flex items-center justify-center h-7 w-7 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-amber-400 absolute -right-3 top-1/2 -translate-y-1/2 z-10"
             >
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
@@ -484,17 +484,17 @@ export default function ResidentialPage() {
           />
           <div className="absolute inset-0 bg-gradient-to-r from-white dark:from-gray-900 via-white/80 dark:via-gray-900/80 to-transparent md:from-white md:via-white/90 md:to-transparent" />
         </div>
-        <div className="relative container mx-auto px-4 py-16 md:py-24">
-          <div className="max-w-lg text-center md:text-left">
-            <h2 className="text-3xl font-bold font-headline mb-4 text-gray-900 dark:text-gray-100">
+        <div className="relative container mx-auto px-3 sm:px-4 py-10 md:py-14">
+          <div className="max-w-md text-center md:text-left">
+            <h2 className="text-2xl font-bold font-headline mb-3 text-gray-900 dark:text-gray-100">
               Get the Perfect Property for Rent in your City
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-8">
+            <p className="text-gray-600 dark:text-gray-400 mb-5 text-sm">
               Bangalore | Hyderabad | Mumbai | Pune | Delhi | Noida | Gurgaon & More...
             </p>
             <Link
               href="/properties-search/all/residential/rent"
-              className="inline-flex items-center justify-center h-11 rounded-lg px-8 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-amber-400 hover:text-gray-900 text-sm font-medium"
+              className="inline-flex items-center justify-center h-9 rounded-md px-5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-amber-400 hover:text-gray-900 text-xs font-medium"
             >
               Enquire Now
             </Link>
@@ -503,21 +503,21 @@ export default function ResidentialPage() {
       </section>
 
       {/* Top Properties for Rent in Mumbai Carousel */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
+      <section className="py-10">
+        <div className="container mx-auto px-3 sm:px-4">
+          <div className="text-center mb-8">
             <div className="inline-block relative">
-              <div className="absolute -top-4 -left-4 w-12 h-12 bg-amber-400 rounded-full -z-10" />
-              <h2 className="text-3xl font-bold font-headline">Top Properties for Rent in Mumbai</h2>
+              <div className="absolute -top-3 -left-3 w-8 h-8 bg-amber-400 rounded-full -z-10" />
+              <h2 className="text-2xl font-bold font-headline">Top Properties for Rent in Mumbai</h2>
             </div>
-            <div className="w-24 h-1.5 bg-blue-600 mx-auto mt-2" />
+            <div className="w-16 h-1 bg-blue-600 mx-auto mt-1.5" />
           </div>
           <div className="relative w-full">
-            <div className="overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth -mx-4 px-4" ref={rentalsRef}>
-              <div className="flex gap-4 -ml-4 w-max min-w-full">
+            <div className="overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth -mx-3 px-3 sm:-mx-4 sm:px-4" ref={rentalsRef}>
+              <div className="flex gap-3 -ml-3 sm:-ml-4 w-max min-w-full">
                 {MUMBAI_RENTALS.map((item) => (
-                  <div key={item.name} data-carousel-card className="w-80 md:w-96 shrink-0">
-                    <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden group h-full flex flex-col shadow-md">
+                  <div key={item.name} data-carousel-card className="w-64 md:w-72 shrink-0">
+                    <div className="rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden group h-full flex flex-col shadow-sm">
                       <div className="relative aspect-[4/3] w-full overflow-hidden">
                         <Image
                           src={item.img}
@@ -527,32 +527,32 @@ export default function ResidentialPage() {
                           sizes="(max-width: 768px) 100vw, 50vw"
                         />
                       </div>
-                      <div className="p-4 flex-1 flex flex-col">
-                        <h3 className="font-bold">{item.name}</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-1">
-                          <MapPin className="h-4 w-4 shrink-0" />
+                      <div className="p-3 flex-1 flex flex-col">
+                        <h3 className="font-bold text-sm">{item.name}</h3>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-0.5">
+                          <MapPin className="h-3.5 w-3.5 shrink-0" />
                           {item.location}
                         </p>
-                        <div className="my-4 space-y-2 border-t border-gray-200 dark:border-gray-700 pt-4">
-                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                            <Bed className="h-4 w-4" />
+                        <div className="my-3 space-y-1.5 border-t border-gray-200 dark:border-gray-700 pt-3">
+                          <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+                            <Bed className="h-3.5 w-3.5" />
                             <span>{item.bhk}</span>
                           </div>
-                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                            <Square className="h-4 w-4" />
+                          <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+                            <Square className="h-3.5 w-3.5" />
                             <span>{item.sqft}</span>
                           </div>
                         </div>
-                        <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                        <div className="mt-auto pt-3 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
                           <div>
-                            <p className="text-xs text-gray-500">Starting from</p>
-                            <p className="font-bold text-blue-600">{item.price}</p>
+                            <p className="text-[10px] text-gray-500">Starting from</p>
+                            <p className="font-bold text-sm text-blue-600">{item.price}</p>
                           </div>
                           <Link
                             href="/properties-search/mumbai/residential/rent"
-                            className="flex items-center text-sm font-semibold text-blue-600 hover:underline"
+                            className="flex items-center text-xs font-semibold text-blue-600 hover:underline"
                           >
-                            Explore More <ExternalLink className="h-4 w-4 ml-1" />
+                            Explore More <ExternalLink className="h-3.5 w-3.5 ml-0.5" />
                           </Link>
                         </div>
                       </div>
@@ -563,46 +563,46 @@ export default function ResidentialPage() {
             </div>
             <button
               onClick={() => scrollCarousel(rentalsRef, "prev")}
-              className="inline-flex items-center justify-center h-8 w-8 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-amber-400 absolute -left-4 top-1/2 -translate-y-1/2 z-10"
+              className="inline-flex items-center justify-center h-7 w-7 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-amber-400 absolute -left-3 top-1/2 -translate-y-1/2 z-10"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-3.5 w-3.5" />
             </button>
             <button
               onClick={() => scrollCarousel(rentalsRef, "next")}
-              className="inline-flex items-center justify-center h-8 w-8 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-amber-400 absolute -right-4 top-1/2 -translate-y-1/2 z-10"
+              className="inline-flex items-center justify-center h-7 w-7 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-amber-400 absolute -right-3 top-1/2 -translate-y-1/2 z-10"
             >
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
       </section>
 
       {/* What You Get From Us */}
-      <section className="py-16 relative overflow-hidden bg-gray-100/50 dark:bg-gray-900/50">
-        <div className="absolute -top-24 -left-24 w-72 h-72 bg-amber-400/10 dark:bg-amber-900/20 rounded-full -z-0" />
-        <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-amber-400/10 dark:bg-amber-900/20 rounded-full -z-0" />
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
+      <section className="py-10 relative overflow-hidden bg-gray-100/50 dark:bg-gray-900/50">
+        <div className="absolute -top-16 -left-16 w-52 h-52 bg-amber-400/10 dark:bg-amber-900/20 rounded-full -z-0" />
+        <div className="absolute -bottom-8 -right-8 w-36 h-36 bg-amber-400/10 dark:bg-amber-900/20 rounded-full -z-0" />
+        <div className="container mx-auto px-3 sm:px-4">
+          <div className="grid md:grid-cols-2 gap-8 items-center">
             <div className="relative flex justify-center">
-              <div className="w-[450px] h-[450px] relative rounded-full overflow-hidden shadow-2xl">
+              <div className="w-[280px] h-[280px] sm:w-[300px] sm:h-[300px] relative rounded-full overflow-hidden shadow-xl">
                 <Image
                   src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&q=80"
                   alt="Happy family in their new home"
                   fill
                   className="object-cover"
-                  sizes="450px"
+                  sizes="300px"
                 />
               </div>
             </div>
             <div>
-              <div className="inline-block relative mb-8">
-                <div className="absolute -top-4 -left-4 w-12 h-12 bg-amber-400/50 rounded-full -z-10" />
-                <h2 className="text-3xl font-bold font-headline relative z-10">
+              <div className="inline-block relative mb-5">
+                <div className="absolute -top-3 -left-3 w-8 h-8 bg-amber-400/50 rounded-full -z-10" />
+                <h2 className="text-2xl font-bold font-headline relative z-10">
                   What You Get From Us
                 </h2>
-                <div className="absolute -bottom-2 left-0 w-24 h-1 bg-blue-600" />
+                <div className="absolute -bottom-1.5 left-0 w-16 h-0.5 bg-blue-600" />
               </div>
-              <ul className="space-y-6">
+              <ul className="space-y-4">
                 {[
                   { icon: Star, text: "Exclusive pricing for BuildersInfo members" },
                   { icon: ShieldCheck, text: "Verified Spaces and Trusted Partners" },
@@ -612,11 +612,11 @@ export default function ResidentialPage() {
                 ].map((item) => {
                   const Icon = item.icon;
                   return (
-                    <li key={item.text} className="flex items-center gap-4">
-                      <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-lg bg-blue-600/10">
-                        <Icon className="h-6 w-6 text-blue-600" strokeWidth={2} />
+                    <li key={item.text} className="flex items-center gap-3">
+                      <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-md bg-blue-600/10">
+                        <Icon className="h-4 w-4 text-blue-600" strokeWidth={2} />
                       </div>
-                      <span className="font-medium text-lg text-gray-600 dark:text-gray-400">
+                      <span className="font-medium text-sm text-gray-600 dark:text-gray-400">
                         {item.text}
                       </span>
                     </li>
@@ -629,42 +629,42 @@ export default function ResidentialPage() {
       </section>
 
       {/* BuildersInfo Advantages */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="bg-amber-50 dark:bg-amber-900/20 rounded-2xl p-8 md:p-12">
-            <div className="grid md:grid-cols-4 gap-12 items-center">
+      <section className="py-10">
+        <div className="container mx-auto px-3 sm:px-4">
+          <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-5 md:p-8">
+            <div className="grid md:grid-cols-4 gap-8 items-center">
               <div className="md:col-span-1">
-                <h2 className="text-3xl font-bold font-headline text-gray-900 dark:text-gray-100">
+                <h2 className="text-2xl font-bold font-headline text-gray-900 dark:text-gray-100">
                   BuildersInfo Advantages
                 </h2>
               </div>
-              <div className="md:col-span-3 grid sm:grid-cols-3 gap-8">
-                <div className="space-y-4">
-                  <div className="h-11 w-11 relative">
-                    <Building className="h-9 w-9 text-gray-900 dark:text-gray-100" strokeWidth={2} />
-                    <CircleCheckBig className="absolute -bottom-1 -right-1 h-6 w-6 bg-amber-400 rounded-full text-white" strokeWidth={2} />
+              <div className="md:col-span-3 grid sm:grid-cols-3 gap-5">
+                <div className="space-y-3">
+                  <div className="h-9 w-9 relative">
+                    <Building className="h-7 w-7 text-gray-900 dark:text-gray-100" strokeWidth={2} />
+                    <CircleCheckBig className="absolute -bottom-0.5 -right-0.5 h-5 w-5 bg-amber-400 rounded-full text-white" strokeWidth={2} />
                   </div>
-                  <h3 className="font-bold text-lg">100,000+ Spaces</h3>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm">
+                  <h3 className="font-bold text-base">100,000+ Spaces</h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-xs leading-relaxed">
                     Get access to 100,000+ spaces with easy availability and convenience anytime and
                     anywhere. Space Search Made Simple with BuildersInfo
                   </p>
                 </div>
-                <div className="space-y-4">
-                  <BadgePercent className="h-11 w-11 text-gray-900 dark:text-gray-100" strokeWidth={2} />
-                  <h3 className="font-bold text-lg">Zero Brokerage</h3>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm">
+                <div className="space-y-3">
+                  <BadgePercent className="h-9 w-9 text-gray-900 dark:text-gray-100" strokeWidth={2} />
+                  <h3 className="font-bold text-base">Zero Brokerage</h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-xs leading-relaxed">
                     BuildersInfo is India's fastest growing space discovery platform that doesn't
                     charge any brokerage from the customers.
                   </p>
                 </div>
-                <div className="space-y-4">
-                  <div className="h-11 w-11 relative">
-                    <Users className="h-9 w-9 text-gray-900 dark:text-gray-100" strokeWidth={2} />
-                    <MessageSquareQuote className="absolute -bottom-1 -right-1 h-6 w-6 text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-full" strokeWidth={2} />
+                <div className="space-y-3">
+                  <div className="h-9 w-9 relative">
+                    <Users className="h-7 w-7 text-gray-900 dark:text-gray-100" strokeWidth={2} />
+                    <MessageSquareQuote className="absolute -bottom-0.5 -right-0.5 h-5 w-5 text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-full" strokeWidth={2} />
                   </div>
-                  <h3 className="font-bold text-lg">100% Offline Support</h3>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm">
+                  <h3 className="font-bold text-base">100% Offline Support</h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-xs leading-relaxed">
                     We provide you 100% offline support from giving you the various space options,
                     scheduling the site visit, booking the space to the after-sales support also.
                   </p>

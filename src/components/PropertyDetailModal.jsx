@@ -48,7 +48,10 @@ import {
     User,
     Bell,
     Package,
-    Flame
+    Flame,
+    ChevronDown,
+    BadgeCheck,
+    Info
 } from "lucide-react";
 import Image from "next/image";
 
@@ -528,7 +531,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
 
     // Map amenities (handles both string arrays and object arrays)
     const mappedAmenities = mapAmenitiesToObjects(amenities);
-    const displayedAmenities = mappedAmenities.slice(0, 8);
+    const displayedAmenities = mappedAmenities;
     const displayedReviews = reviews.slice(0, 3);
     const whatsGood = ratings?.whatsGood || [];
     const whatsBad = ratings?.whatsBad || [];
@@ -546,6 +549,13 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
     const rating = safeNumber(property.ratings?.overall);
     const isTopRated = property.isTopRated !== undefined ? property.isTopRated : true;
 
+    // Calculate discount percentage for Best Price badge
+    const originalPriceNum = parseFloat(String(originalPrice || 0).replace(/[^0-9.]/g, ''));
+    const discountedPriceNum = parseFloat(String(discountedPrice || 0).replace(/[^0-9.]/g, ''));
+    const discountPct = (originalPriceNum && discountedPriceNum && originalPriceNum > discountedPriceNum)
+        ? Math.round(((originalPriceNum - discountedPriceNum) / originalPriceNum) * 100)
+        : 0;
+
     // Mobile view (< md breakpoint) - Exact design for screens < 480px
     const availabilityStatus = safeDisplay(property.availability, 'Available');
 
@@ -559,7 +569,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
             <div className="absolute inset-0 bg-black/40" onClick={onClose}></div>
 
             {/* Modal Content - max 85vh on mobile so top is never cut off */}
-            <div className={`relative pb-20 max-[480px]:pb-28 w-full max-h-[min(92vh,92svh)] max-[480px]:max-h-[85vh] rounded-t-3xl overflow-hidden transition-colors ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}>
+            <div className={`relative pb-20 max-[480px]:pb-28 w-full max-h-[min(88vh,88svh)] max-[480px]:max-h-[82vh] rounded-t-3xl overflow-hidden transition-colors ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}>
                 {/* Drag Handle */}
                 <div className="flex justify-center py-2">
                     <div className={`w-12 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-300'}`}></div>
@@ -568,7 +578,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                 {/* Scrollable Content - smaller max on mobile so modal top stays visible */}
                 <div className="overflow-y-auto max-h-[calc(92vh-120px)] max-[480px]:max-h-[calc(85vh-140px)]">
                     {/* Image Carousel - with padding around for max-[480px] */}
-                    <div className={`relative mx-3 rounded-2xl overflow-hidden h-52 max-[480px]:h-48 max-[480px]:mx-3 max-[480px]:mt-2 max-[480px]:rounded-2xl ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                    <div className={`relative mx-3 rounded-2xl overflow-hidden h-44 max-[480px]:h-40 max-[480px]:mx-3 max-[480px]:mt-2 max-[480px]:rounded-2xl ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
                         {/* Close - Top Left (mobile < 480px) */}
                         <button
                             onClick={onClose}
@@ -653,107 +663,216 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                         {/* Property Header - Name | Badge | Rating, Location below */}
                         <div className="flex items-start justify-between gap-2 mb-3 max-[480px]:mb-3">
                             <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    <h1 className={`text-lg max-[480px]:text-base font-bold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(name)}</h1>
-                                    {is_verified && (
-                                        <span className="flex-shrink-0 w-5 h-5 max-[480px]:w-4 max-[480px]:h-4 rounded-full bg-amber-400 flex items-center justify-center">
-                                            <Check className="w-3 h-3 max-[480px]:w-2.5 max-[480px]:h-2.5 text-white stroke-[3]" />
-                                        </span>
-                                    )}
-                                    <div className="flex-shrink-0 flex items-center gap-0.5 px-2 py-0.5 max-[480px]:px-1.5 max-[480px]:py-0.5 rounded-md bg-amber-400">
-                                        <Star className="w-3.5 h-3.5 max-[480px]:w-3 max-[480px]:h-3 fill-amber-700 text-amber-700" />
-                                        <span className="text-xs max-[480px]:text-[10px] font-bold text-gray-900">{rating.toFixed(1)}</span>
+                                <div className="flex items-center justify-between w-full">
+                                    <h1 className={`text-[21px] max-[480px]:text-[19px] font-bold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(name)}</h1>
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="flex items-center gap-0.5 px-2 py-0.5 max-[480px]:px-1.5 max-[480px]:py-0.5 rounded-full bg-[#fff4e5]">
+                                            <Star className="w-5 h-5 max-[480px]:w-4.5 max-[480px]:h-4.5 fill-[#f97316] text-[#f97316]" />
+                                            <span className="text-[13px] max-[480px]:text-[11.5px] font-bold text-[#f97316]">{rating.toFixed(1)}</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-1 mt-1">
-                                    <MapPin className={`w-4 h-4 max-[480px]:w-3.5 max-[480px]:h-3.5 flex-shrink-0 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
-                                    <span className={`text-sm max-[480px]:text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                                        in {safeDisplay(layer_location)}{location_district ? `, ${safeDisplay(location_district)}` : ''}{property.state_name ? `, ${safeDisplay(property.state_name)}` : ''}
-                                    </span>
+                                <div className="flex items-center justify-between w-full mt-1">
+                                    <div className="flex items-center gap-1.5">
+                                        <MapPin className={`w-4.5 h-4.5 max-[480px]:w-4 max-[480px]:h-4 flex-shrink-0 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                                        <span className={`text-[15.5px] max-[480px]:text-[14.5px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                            in {safeDisplay(layer_location)}{location_district ? `, ${safeDisplay(location_district)}` : ''}{property.state_name ? `, ${safeDisplay(property.state_name)}` : ''}
+                                        </span>
+                                    </div>
+                                    {is_verified && (
+                                        <BadgeCheck className="w-4.5 h-4.5 max-[480px]:w-4 max-[480px]:h-4 text-[#3b82f6] fill-[#3b82f6]/10" />
+                                    )}
                                 </div>
                             </div>
                         </div>
 
                         {/* Property Features - 3 horizontal boxes */}
-                        <div className="flex flex-wrap gap-2 mb-4">
-                            <span className={`px-3 py-2 max-[480px]:px-2.5 max-[480px]:py-1.5 rounded-xl max-[480px]:rounded-lg text-xs max-[480px]:text-[10px] font-medium flex items-center gap-2 max-[480px]:gap-1.5 ${isDark ? 'bg-[#282c34] text-blue-400' : 'bg-gray-100 text-gray-600'}`}>
-                                <Building2 className="w-4 h-4 max-[480px]:w-3.5 max-[480px]:h-3.5 flex-shrink-0" />
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                            <span className={`px-2.5 py-1.5 max-[480px]:px-2 max-[480px]:py-1 rounded-xl max-[480px]:rounded-lg text-[11px] max-[480px]:text-[10px] font-medium flex items-center gap-1.5 max-[480px]:gap-1 ${isDark ? 'bg-[#282c34] text-blue-400' : 'bg-gray-100 text-gray-600'}`}>
+                                <Building2 className="w-3.5 h-3.5 max-[480px]:w-3 max-[480px]:h-3 flex-shrink-0" />
                                 {(property.propertyCategory || propertyType) === 'commercial' ? 'Commercial' : 'Residential'}
                             </span>
-                            <span className={`px-3 py-2 max-[480px]:px-2.5 max-[480px]:py-1.5 rounded-xl max-[480px]:rounded-lg text-xs max-[480px]:text-[10px] font-medium flex items-center gap-2 max-[480px]:gap-1.5 ${isDark ? 'bg-[#282c34] text-blue-400' : 'bg-gray-100 text-gray-600'}`}>
-                                <svg className="w-4 h-4 max-[480px]:w-3.5 max-[480px]:h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <span className={`px-2.5 py-1.5 max-[480px]:px-2 max-[480px]:py-1 rounded-xl max-[480px]:rounded-lg text-[11px] max-[480px]:text-[10px] font-medium flex items-center gap-1.5 max-[480px]:gap-1 ${isDark ? 'bg-[#282c34] text-blue-400' : 'bg-gray-100 text-gray-600'}`}>
+                                <svg className="w-3.5 h-3.5 max-[480px]:w-3 max-[480px]:h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                                 </svg>
                                 {safeNumber(property.propertySize || property.carpetArea)} sq.ft
                             </span>
-                            <span className={`px-3 py-2 max-[480px]:px-2.5 max-[480px]:py-1.5 rounded-xl max-[480px]:rounded-lg text-xs max-[480px]:text-[10px] font-medium flex items-center gap-2 max-[480px]:gap-1.5 ${isDark ? 'bg-[#282c34] text-blue-400' : 'bg-gray-100 text-gray-600'}`}>
-                                <svg className="w-4 h-4 max-[480px]:w-3.5 max-[480px]:h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <span className={`px-2.5 py-1.5 max-[480px]:px-2 max-[480px]:py-1 rounded-xl max-[480px]:rounded-lg text-[11px] max-[480px]:text-[10px] font-medium flex items-center gap-1.5 max-[480px]:gap-1 ${isDark ? 'bg-[#282c34] text-blue-400' : 'bg-gray-100 text-gray-600'}`}>
+                                <svg className="w-3.5 h-3.5 max-[480px]:w-3 max-[480px]:h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                                 </svg>
                                 {safeDisplay(property.furnishingLevel || property.furnishingStatus || property.furnishing, 'Furnished')}
                             </span>
                         </div>
 
-                        {/* Amenities - 4 items with icons (Guest Check-in, Delivery Acceptance, Package Notification, Fire Safety) */}
+                        {/* Best Price Guaranteed Mobile */}
+                        <div className="flex items-start gap-1.5 mb-3 px-2 py-1 max-[480px]:py-0.5 rounded-l-2xl bg-gradient-to-r from-[#e3f2e6] via-[#e3f2e6]/70 to-transparent w-fit">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0 mt-0.5">
+                                <path d="M11.455 1.579a1.5 1.5 0 011.09 0l2.365.882a1.5 1.5 0 001.32-.158l2.094-1.424a1.5 1.5 0 011.838.252l1.79 1.79a1.5 1.5 0 01.252 1.838l-1.424 2.094a1.5 1.5 0 00-.158 1.32l.882 2.365a1.5 1.5 0 010 1.09l-.882 2.365a1.5 1.5 0 00.158 1.32l1.424 2.094a1.5 1.5 0 01-.252 1.838l-1.79 1.79a1.5 1.5 0 01-1.838.252l-2.094-1.424a1.5 1.5 0 00-1.32-.158l-2.365.882a1.5 1.5 0 01-1.09 0l-2.365-.882a1.5 1.5 0 00-1.32.158l-2.094 1.424a1.5 1.5 0 01-1.838-.252l-1.79-1.79a1.5 1.5 0 01-.252-1.838l1.424-2.094a1.5 1.5 0 00.158-1.32l-.882-2.365a1.5 1.5 0 010-1.09l.882-2.365a1.5 1.5 0 00-.158-1.32l-1.424-2.094a1.5 1.5 0 01.252-1.838l1.79-1.79a1.5 1.5 0 011.838-.252l2.094 1.424a1.5 1.5 0 001.32.158l2.365-.882z" fill="#307f43" />
+                                <path d="M9 10.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm6 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm-6.2-5.8l6.4-6.4 1.4 1.4-6.4 6.4-1.4-1.4z" fill="white" />
+                            </svg>
+                            <span className="text-[9px] font-medium text-[#307f43] leading-tight max-w-[160px]">
+                                Best price guaranteed - save up to {discountPct}% with <strong className="font-serif">Buildersinfo</strong>
+                            </span>
+                            <Info className="w-3 h-3 text-[#307f43] opacity-70 shrink-0 mt-0.5" strokeWidth={1.5} />
+                        </div>
+
+                        {/* Amenities - Show all with scrollbar */}
                         {(() => {
                             const defaultAmenities = [
-                                { name: "Guest Check-in", image: "/amenities/Guest%20Check%20in.svg", Icon: User },
-                                { name: "Delivery Acceptance", image: "/amenities/Delivery.svg", Icon: Bell },
-                                { name: "Package Notification", image: "/amenities/Package%20Notification.svg", Icon: Package },
-                                { name: "Fire Safety", image: "/amenities/Fire%20%26%20seafty.svg", Icon: Flame }
+                                { name: "Guest Check-in", image: "/amenities/Guest%20Check%20in.png", Icon: User },
+                                { name: "Delivery Acceptance", image: "/amenities/Delivery.png", Icon: Bell },
+                                { name: "Package Notification", image: "/amenities/Package%20Notification.png", Icon: Package },
+                                { name: "Fire Safety", image: "/amenities/Fire%20%26%20seafty.png", Icon: Flame }
                             ];
                             const amenitiesToShow = displayedAmenities.length > 0
-                                ? displayedAmenities.slice(0, 4).map((a, i) => ({ ...a, Icon: defaultAmenities[i]?.Icon || User }))
+                                ? displayedAmenities.map((a, i) => ({ ...a, Icon: a.Icon || defaultAmenities[i % defaultAmenities.length]?.Icon || User }))
                                 : defaultAmenities;
                             return (
-                                <div className="grid grid-cols-4 gap-3 mb-4">
-                                    {amenitiesToShow.map((amenity, index) => {
-                                        const IconComp = amenity.Icon || User;
-                                        return (
-                                            <div key={index} className="flex flex-col items-center gap-2">
-                                            <div className={`w-14 h-14 max-[480px]:w-12 max-[480px]:h-12 rounded-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'}`}>
-                                                    {amenity.image ? (
-                                                        <Image src={amenity.image} alt={amenity.name} width={28} height={28} className="object-contain" unoptimized />
-                                                    ) : (
-                                                        <IconComp className={`w-6 h-6 max-[480px]:w-5 max-[480px]:h-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} strokeWidth={2} />
-                                                    )}
-                                                </div>
-                                                <span className={`text-[10px] max-[480px]:text-[9px] text-center leading-tight ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{amenity.name}</span>
-                                            </div>
-                                        );
-                                    })}
+                                <div className="mb-4">
+                                    <div className="max-h-[140px] overflow-y-auto pr-0.5 scrollbar-ultra-thin">
+                                        <div className="grid grid-cols-4 gap-3">
+                                            {amenitiesToShow.map((amenity, index) => {
+                                                const IconComp = amenity.Icon || User;
+                                                return (
+                                                    <div key={index} className="flex flex-col items-center gap-1.5 pb-2">
+                                                        <div className={`w-10 h-10 max-[480px]:w-8 max-[480px]:h-8 rounded-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'}`}>
+                                                            {amenity.image ? (
+                                                                <Image src={amenity.image} alt={amenity.name} width={18} height={18} className="object-contain" unoptimized />
+                                                            ) : (
+                                                                <IconComp className={`w-4 h-4 max-[480px]:w-3.5 max-[480px]:h-3.5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} strokeWidth={2} />
+                                                            )}
+                                                        </div>
+                                                        <span className={`text-[8px] max-[480px]:text-[7px] text-center leading-tight ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{amenity.name}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
                                 </div>
                             );
                         })()}
 
                         {/* Key Info - Price | Status | Reviews - 3 boxes */}
-                        <div className="grid grid-cols-3 gap-2 mb-4">
-                            <div className={`rounded-xl py-3 px-2 max-[480px]:py-2 max-[480px]:px-1.5 text-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
-                                <p className={`text-xs max-[480px]:text-[10px] mb-0.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Price</p>
-                                <p className="text-sm max-[480px]:text-xs font-bold text-blue-600">₹{String(safeNumber(property.pricePerSqft ?? prices?.pricePerSqft)).replace(/[₹,]/g, '')}</p>
-                                <p className={`text-[11px] max-[480px]:text-[9px] ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>/sq.ft</p>
+                        <div className="grid grid-cols-3 gap-1.5 mb-3">
+                            <div className={`rounded-xl py-2 px-1.5 max-[480px]:py-1.5 max-[480px]:px-1 text-center flex flex-col items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                                <p className={`text-[11px] max-[480px]:text-[9px] mb-0.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Price</p>
+                                <div className={`flex items-center gap-1.5 border-2 border-gray-400 rounded-lg px-2.5 py-1.5 ${isDark ? 'bg-black/20' : 'bg-white'}`}>
+                                    {originalPrice && originalPrice !== discountedPrice ? (
+                                        <>
+                                            <div className="relative px-0.5">
+                                                <span className={`italic font-serif text-[10px] ${isDark ? 'text-green-500' : 'text-green-700'}`}>
+                                                    {String(originalPrice).replace(/[₹,]/g, '')}
+                                                </span>
+                                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                    <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                                        <line x1="10" y1="90" x2="90" y2="10" stroke="#ef4444" strokeWidth="8" />
+                                                        <line x1="10" y1="10" x2="90" y2="90" stroke="#ef4444" strokeWidth="8" />
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                            <svg width="20" height="10" viewBox="0 0 24 12" fill="none" className={isDark ? 'text-gray-400' : 'text-gray-500'}>
+                                                <path d="M1 6H23M23 6L17 1M23 6L17 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                            </svg>
+                                        </>
+                                    ) : null}
+                                    <span className={`italic font-serif text-xs font-bold ${isDark ? 'text-green-500' : 'text-green-700'}`}>
+                                        {String(discountedPrice).replace(/[₹,]/g, '')}
+                                    </span>
+                                </div>
+                                <p className={`text-[10px] max-[480px]:text-[8px] mt-0.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>/sq.ft</p>
                             </div>
-                            <div className={`rounded-xl py-3 px-2 max-[480px]:py-2 max-[480px]:px-1.5 text-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
-                                <p className={`text-xs max-[480px]:text-[10px] mb-0.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Status</p>
-                                <p className={`text-sm max-[480px]:text-xs font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{availabilityStatus}</p>
+                            <div className={`rounded-xl py-2 px-1.5 max-[480px]:py-1.5 max-[480px]:px-1 text-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                                <p className={`text-[11px] max-[480px]:text-[9px] mb-0.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Status</p>
+                                <p className={`text-[13px] max-[480px]:text-[11px] font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{availabilityStatus}</p>
                             </div>
-                            <div className={`rounded-xl py-3 px-2 max-[480px]:py-2 max-[480px]:px-1.5 text-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
-                                <p className={`text-xs max-[480px]:text-[10px] mb-0.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Reviews</p>
-                                <p className={`text-sm max-[480px]:text-xs font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeNumber(reviews.length)}</p>
+                            <div className={`rounded-xl py-2 px-1.5 max-[480px]:py-1.5 max-[480px]:px-1 text-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                                <p className={`text-[11px] max-[480px]:text-[9px] mb-0.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Reviews</p>
+                                <p className={`text-[13px] max-[480px]:text-[11px] font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeNumber(reviews.length)}</p>
                             </div>
                         </div>
 
+                        {/* About the Brand - Mobile Card (as per design) */}
+                        <div className={`mb-5 p-3 border-2 border-gray-400 rounded-2xl ${isDark ? 'bg-[#282c34]' : 'bg-white'}`}>
+                            <div className="mb-1.5">
+                                <h3 className={`text-[9px] font-extrabold uppercase ${isDark ? 'text-gray-200' : 'text-[#2e2e2e]'}`}>ABOUT THE BRAND</h3>
+                                <div className="w-6 h-0.5 bg-blue-800 mt-0.5"></div>
+                            </div>
+
+                            <div className="flex items-center gap-2.5 mb-3">
+                                <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-white shadow-sm flex items-center justify-center p-1">
+                                    <Image
+                                        src={property.brandDetails?.image || property.brandDetails?.logo || '/property-details/builder-details/builder-logo.png'}
+                                        alt="Brand Logo"
+                                        width={30}
+                                        height={30}
+                                        className="object-contain"
+                                        unoptimized
+                                    />
+                                </div>
+                                <div className="flex flex-col">
+                                    <h4 className={`text-[11px] font-extrabold leading-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>{brandName}</h4>
+                                    <span className={`text-[8.5px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Workspace</span>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mb-2.5">
+                                <div className="flex items-center gap-1.5">
+                                    <Image src="/property-details/builder-details/cities.png" alt="Cities" width={10} height={10} />
+                                    <span className={`text-[8.5px] font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                                        {typeof brandStats.cities === 'number' ? `${brandStats.cities}+ Cities` : (String(brandStats.cities || '').toLowerCase().includes('cities') ? brandStats.cities : `${safeDisplay(brandStats.cities)} Cities`)}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <Image src="/property-details/builder-details/coworking.png" alt="Coworking" width={10} height={10} />
+                                    <span className={`text-[8.5px] font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                                        {(() => {
+                                            const v = typeof brandStats.spaces === 'number' ? `${brandStats.spaces}+` : String(safeDisplay(brandStats.spaces)).replace(/Coworking\s*/gi, '').trim();
+                                            return v.toLowerCase().endsWith('spaces') ? v : `${v} Coworking Spaces`;
+                                        })()}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <Image src="/property-details/builder-details/clients.png" alt="Clients" width={10} height={10} />
+                                    <span className={`text-[8.5px] font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                                        {typeof brandStats.clients === 'number' ? `${brandStats.clients}+ Clients` : (String(brandStats.clients || '').toLowerCase().includes('clients') ? brandStats.clients : `${safeDisplay(brandStats.clients)} Clients`)}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <Image src="/property-details/builder-details/seats.png" alt="Seats" width={10} height={10} />
+                                    <span className={`text-[8.5px] font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                                        {typeof brandStats.seats === 'number' ? `${brandStats.seats}+ Seats` : (String(brandStats.seats || '').toLowerCase().includes('seats') ? brandStats.seats : `${safeDisplay(brandStats.seats)} Seats`)}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <p className={`text-[10px] leading-relaxed mb-1 line-clamp-3 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                {brandDescription}
+                            </p>
+                            <a
+                                href={`/property-details/${(property.propertyName || property.name || 'property').toLowerCase().replace(/\s+/g, '-')}`}
+                                onClick={handleViewDetailsClick}
+                                className="text-blue-700 text-[10px] font-bold flex items-center gap-0.5 hover:underline transition-all"
+                            >
+                                Read more <ChevronDown className="w-3 h-3" />
+                            </a>
+                        </div>
+
                         {/* Contact - Provider + Phone + WhatsApp */}
-                        <div className="flex items-center justify-between mb-4">
-                            <h4 className={`text-base max-[480px]:text-sm font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{brandName}</h4>
-                            <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-between mb-3 px-1">
+                            <div className="flex flex-col">
+                                <span className={`text-[9px] uppercase font-bold ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Contact Provider</span>
+                                <h4 className={`text-[14px] max-[480px]:text-xs font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{brandName}</h4>
+                            </div>
+                            <div className="flex items-center gap-1.5">
                                 <a
                                     href={sellerPhoneNumber ? `tel:${String(sellerPhoneNumber).replace(/[^0-9+]/g, '')}` : '#'}
                                     onClick={(e) => sellerPhoneNumber && handlePhoneClick(e, sellerPhoneNumber)}
-                                    className={`w-11 h-11 rounded-full flex items-center justify-center ${isDark ? 'bg-blue-900/40' : 'bg-blue-100'}`}
+                                    className={`w-9 h-9 rounded-full flex items-center justify-center ${isDark ? 'bg-blue-900/40' : 'bg-blue-100'}`}
                                     aria-label="Call"
                                 >
-                                    <svg className={`w-5 h-5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className={`w-4 h-4 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                     </svg>
                                 </a>
@@ -761,10 +880,10 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                     href={`https://wa.me/${safeDisplay(sellerPhoneNumber)?.replace(/[^0-9]/g, '') || '918151915199'}?text=Hi, I am interested in ${encodeURIComponent(name || 'this property')}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="w-11 h-11 rounded-full flex items-center justify-center bg-green-500/90"
+                                    className="w-9 h-9 rounded-full flex items-center justify-center bg-green-500/90"
                                     aria-label="WhatsApp"
                                 >
-                                    <Image src="/whatsapp.svg" alt="WhatsApp" width={24} height={24} />
+                                    <Image src="/whatsapp.svg" alt="WhatsApp" width={20} height={20} />
                                 </a>
                             </div>
                         </div>
@@ -772,13 +891,13 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                 </div>
 
                 {/* Fixed CTA Button - extra bottom padding on mobile for safe area + nav clearance */}
-                <div className={`p-4 max-[480px]:pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] border-t transition-colors ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-white border-gray-100'}`}>
+                <div className={`p-3 max-[480px]:pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] border-t transition-colors ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-white border-gray-100'}`}>
                     <a
                         href={`/property-details/${(property.propertyName || property.name || 'property').toLowerCase().replace(/\s+/g, '-')}`}
                         onClick={handleViewDetailsClick}
-                        className="block w-full bg-blue-600 hover:bg-blue-700 text-white py-4 max-[480px]:py-3 rounded-xl text-center font-semibold text-base max-[480px]:text-sm"
+                        className="block w-[70%] mx-auto bg-blue-600 hover:bg-blue-700 text-white py-3 max-[480px]:py-2.5 rounded-xl text-center font-semibold text-[14px] max-[480px]:text-xs"
                     >
-                        View Full Details
+                        View Details
                     </a>
                 </div>
             </div>
@@ -789,35 +908,32 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
     const desktopModal = (
         <div
             role="dialog"
-            className={`hidden md:block z-50 shadow-2xl rounded-2xl overflow-hidden transition-colors ${centerInMapArea ? 'absolute left-1/2 bottom-4 -translate-x-1/2' : 'fixed bottom-4 left-1/2 -translate-x-1/2'} ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}
-            style={{ width: '680px', maxWidth: '95vw', height: '260px' }}
+            className={`hidden md:block z-50 shadow-2xl rounded-2xl transition-colors ${centerInMapArea ? 'absolute left-1/2 bottom-4 -translate-x-1/2' : 'fixed bottom-4 left-1/2 -translate-x-1/2'} ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}
+            style={{ width: '780px', maxWidth: '95vw', height: '240px' }}
             tabIndex="-1"
         >
-            <div className="flex h-full">
+            <div className="flex h-full relative">
+                {/* Top RATED Badge - Ultra compact version of the original structure */}
+                {isTopRated && (
+                    <div className="absolute top-0 left-[240px] -translate-x-1/2 z-30 bg-red-500 text-white px-0.5 py-0.5 rounded-b-sm shadow-md flex flex-col items-center justify-center min-w-[20px]">
+                        <div className="flex gap-0.5 mb-0">
+                            {[1, 2, 3].map((i) => (
+                                <Star key={i} className="w-[3px] h-[3px] fill-white text-white" />
+                            ))}
+                        </div>
+                        <span className="text-[5.5px] font-bold leading-none tracking-tighter">TOP</span>
+                        <span className="text-[5.5px] font-bold leading-none tracking-tighter">RATED</span>
+                        <div className="flex gap-0.5 mt-0">
+                            {[1, 2, 3].map((i) => (
+                                <Star key={i} className="w-[3px] h-[3px] fill-white text-white" />
+                            ))}
+                        </div>
+                    </div>
+                )}
                 {/* Left Section - Image Carousel (40% width) */}
-                <div className={`w-[260px] relative flex-shrink-0 ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                <div className={`w-[240px] relative flex-shrink-0 rounded-l-2xl overflow-hidden ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
                     <div className="relative h-full">
-                        {/* Top RATED Badge - Exact match to image */}
-                        {isTopRated && (
-                            <div className="absolute top-1.5 right-1.5 z-20 bg-red-500 text-white px-1.5 py-1 rounded-t-lg shadow-lg flex flex-col items-center justify-center">
-                                {/* Three stars above */}
-                                <div className="flex gap-0.5 mb-0.5">
-                                    {[1, 2, 3].map((i) => (
-                                        <Star key={i} className="w-1 h-1 fill-white text-white" />
-                                    ))}
-                                </div>
-                                {/* TOP text */}
-                                <span className="text-[8px] font-bold leading-tight">TOP</span>
-                                {/* RATED text */}
-                                <span className="text-[8px] font-bold leading-tight">RATED</span>
-                                {/* Three stars below */}
-                                <div className="flex gap-0.5 mt-0.5">
-                                    {[1, 2, 3].map((i) => (
-                                        <Star key={i} className="w-1 h-1 fill-white text-white" />
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+
 
                         {/* Action Icons - Top Left (close, favourite, share, ...) */}
                         <div className="absolute top-1.5 left-1.5 z-20 flex gap-0.5">
@@ -877,8 +993,8 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                         <div className="relative h-full w-full">
                                             <Image
                                                 alt="Property image"
-                                                width={260}
-                                                height={260}
+                                                width={240}
+                                                height={240}
                                                 className="h-full w-full object-cover"
                                                 loading="lazy"
                                                 src={img}
@@ -914,45 +1030,50 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                 </div>
 
                 {/* Right Section - Details (60% width) */}
-                <div className="flex-1 flex flex-col overflow-hidden relative">
-                    <div className="flex-1 flex flex-col p-2 pb-3">
+                <div className="flex-1 flex flex-col overflow-hidden rounded-r-2xl relative">
+                    <div className="flex-1 flex flex-col pl-5 pr-8 p-2 pb-0">
                         {/* Property Header - Title/rating on left, Price on right */}
                         <section className="mb-1.5">
                             <div className="flex items-start justify-between mb-1">
                                 <div className="flex-1">
-                                    <div className="flex items-center gap-1.5 mb-0.5">
-                                        <h1 className={`text-base font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(name)}</h1>
+                                    <div className="flex items-center justify-between w-full mb-0.5">
+                                        <h1 className={`text-[19px] font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(name)}</h1>
                                         <div className="flex items-center gap-1.5">
-                                            <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-400/90">
-                                                <Star className="w-2.5 h-2.5 fill-amber-700 text-amber-700" />
-                                                <span className="text-[10px] font-bold text-gray-900">{rating.toFixed(1)}</span>
+                                            <div className="flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-[#fff4e5]">
+                                                <Star className="w-3.5 h-3.5 fill-[#f97316] text-[#f97316]" />
+                                                <span className="text-[12px] font-bold text-[#f97316]">{rating.toFixed(1)}</span>
                                             </div>
-                                            {is_verified && (
-                                                <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" aria-label="Verified">
-                                                    <path d="M12 1L14.4 4.2L18.3 3.4L18.1 7.4L21.6 9.2L19.4 12.5L21.6 15.8L18.1 17.6L18.3 21.6L14.4 20.8L12 24L9.6 20.8L5.7 21.6L5.9 17.6L2.4 15.8L4.6 12.5L2.4 9.2L5.9 7.4L5.7 3.4L9.6 4.2L12 1Z" fill="#FBBF24" />
-                                                    <path d="M8.5 12.5L10.5 14.5L15.5 9.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                                </svg>
-                                            )}
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-1 mb-0.5">
-                                        <MapPin className={`w-3.5 h-3.5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
-                                        <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                                            in {safeDisplay(layer_location)}{location_district ? `, ${safeDisplay(location_district)}` : ''}
-                                            {property.state_name ? `, ${safeDisplay(property.state_name)}` : ''}
-                                        </span>
+                                    <div className="flex items-center justify-between w-full mb-0">
+                                        <div className="flex items-center gap-1.5">
+                                            <MapPin className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                                            <span className={`text-[13.5px] ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                                in {safeDisplay(layer_location)}{location_district ? `, ${safeDisplay(location_district)}` : ''}
+                                                {property.state_name ? `, ${safeDisplay(property.state_name)}` : ''}
+                                            </span>
+                                        </div>
+                                        {is_verified && (
+                                            <BadgeCheck className="w-4 h-4 text-[#3b82f6] fill-[#3b82f6]/10" />
+                                        )}
                                     </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <span className={`px-2 py-1 rounded-full text-[10px] font-medium flex items-center gap-1 ${isDark ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-700'}`}>
-                                            <Check className="w-2.5 h-2.5" />
-                                            Best price guaranteed
-                                        </span>
+                                    <div className="flex items-start gap-1 mt-0.5 max-w-full overflow-hidden">
+                                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-l-2xl bg-gradient-to-r from-[#e3f2e6] via-[#e3f2e6]/70 to-transparent shrink-0">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0 mt-0.5">
+                                                <path d="M11.455 1.579a1.5 1.5 0 011.09 0l2.365.882a1.5 1.5 0 001.32-.158l2.094-1.424a1.5 1.5 0 011.838.252l1.79 1.79a1.5 1.5 0 01.252 1.838l-1.424 2.094a1.5 1.5 0 00-.158 1.32l.882 2.365a1.5 1.5 0 010 1.09l-.882 2.365a1.5 1.5 0 00.158 1.32l1.424 2.094a1.5 1.5 0 01-.252 1.838l-1.79 1.79a1.5 1.5 0 01-1.838.252l-2.094-1.424a1.5 1.5 0 00-1.32-.158l-2.365.882a1.5 1.5 0 01-1.09 0l-2.365-.882a1.5 1.5 0 00-1.32.158l-2.094 1.424a1.5 1.5 0 01-1.838-.252l-1.79-1.79a1.5 1.5 0 01-.252-1.838l1.424-2.094a1.5 1.5 0 00.158-1.32l-.882-2.365a1.5 1.5 0 010-1.09l.882-2.365a1.5 1.5 0 00-.158-1.32l-1.424-2.094a1.5 1.5 0 01.252-1.838l1.79-1.79a1.5 1.5 0 011.838-.252l2.094 1.424a1.5 1.5 0 001.32.158l2.365-.882z" fill="#307f43" />
+                                                <path d="M9 10.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm6 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm-6.2-5.8l6.4-6.4 1.4 1.4-6.4 6.4-1.4-1.4z" fill="white" />
+                                            </svg>
+                                            <span className="text-[6.5px] font-medium text-[#307f43] leading-[1.1] max-w-[100px]">
+                                                Best price guaranteed - save up to {discountPct}% with <strong className="font-serif">Buildersinfo</strong>
+                                            </span>
+                                            <Info className="w-2 h-2 text-[#307f43] opacity-70 shrink-0 mt-0.5" strokeWidth={1.5} />
+                                        </div>
                                         <a
                                             href={sellerPhoneNumber ? `tel:${String(sellerPhoneNumber).replace(/[^0-9+]/g, '')}` : '#'}
                                             onClick={(e) => sellerPhoneNumber && handlePhoneClick(e, sellerPhoneNumber)}
-                                            className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-gray-100 hover:bg-gray-200'}`}
+                                            className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-gray-100 hover:bg-gray-200'}`}
                                         >
-                                            <svg className={`w-3.5 h-3.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg className={`w-3 h-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                             </svg>
                                         </a>
@@ -960,122 +1081,160 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                             href={`https://wa.me/${safeDisplay(sellerPhoneNumber)?.replace(/[^0-9]/g, '') || '918151915199'}?text=Hi, I am interested in ${encodeURIComponent(name || 'this property')}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-gray-100 hover:bg-gray-200'}`}
+                                            className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-gray-100 hover:bg-gray-200'}`}
                                         >
-                                            <Image src="/whatsapp.svg" alt="WhatsApp" width={16} height={16} />
+                                            <Image src="/whatsapp.svg" alt="WhatsApp" width={14} height={14} />
                                         </a>
                                     </div>
                                 </div>
                                 {/* Price on Right Side - Stacked vertically */}
-                                <div className="flex flex-col items-end">
-                                    {originalPrice && originalPrice !== discountedPrice && (
-                                        <span className={`text-sm line-through mb-0.5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{safeDisplay(originalPrice)}</span>
-                                    )}
-                                    <span className="text-lg font-bold text-blue-600">{safeDisplay(discountedPrice)}</span>
+                                <div className="flex-1 ml-4 flex flex-col items-end">
+                                    <div className={`flex items-center gap-2.5 border-[3px] border-gray-400 rounded-xl px-5 py-2 w-full justify-center ${isDark ? 'bg-[#282c34]' : 'bg-white'}`}>
+                                        {originalPrice && originalPrice !== discountedPrice ? (
+                                            <>
+                                                <div className="relative px-1">
+                                                    <span className={`italic font-serif text-xs ${isDark ? 'text-green-500 text-opacity-80' : 'text-green-700 text-opacity-80'}`}>
+                                                        {safeDisplay(originalPrice)}
+                                                    </span>
+                                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                        <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                                            <line x1="0" y1="100" x2="100" y2="0" stroke="#ef4444" strokeWidth="6" />
+                                                            <line x1="0" y1="0" x2="100" y2="100" stroke="#ef4444" strokeWidth="6" />
+                                                        </svg>
+                                                    </div>
+                                                </div>
+                                                <svg width="24" height="12" viewBox="0 0 24 12" fill="none" className={isDark ? 'text-gray-400' : 'text-gray-500'}>
+                                                    <path d="M1 6H23M23 6L17 1M23 6L17 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                                </svg>
+                                            </>
+                                        ) : null}
+                                        <span className={`italic font-serif text-base font-bold ${isDark ? 'text-green-400' : 'text-green-700'}`}>
+                                            {safeDisplay(discountedPrice)}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </section>
 
-                        {/* Bottom Section - Amenities and About Brand Side by Side - Aligned to bottom */}
-                        <div className="flex gap-2 mt-auto">
-                            {/* Left Column - Amenities */}
-                            <section className="flex-1">
-                                <div className="grid grid-cols-4 gap-1.5">
-                                    {(displayedAmenities.length > 0 ? displayedAmenities.slice(0, 8) : [
-                                        { name: "Guest Check-in", icon: "👤" },
-                                        { name: "Delivery Acceptance", icon: "🔔" },
-                                        { name: "Package Notification", icon: "📦" },
-                                        { name: "Fire Safety", icon: "🚨" },
-                                        { name: "Guest Management", icon: "⚙️" },
-                                        { name: "Video Surveillance", icon: "📹" },
-                                        { name: "Keycard Access", icon: "🔑" },
-                                        { name: "Tea", icon: "☕" }
-                                    ]).map((amenity, index) => (
-                                        <div key={index} className="flex flex-col items-center gap-0.5">
-                                            <div className={`w-7 h-7 rounded-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'}`}>
-                                                {amenity.image ? (
-                                                    <Image
-                                                        src={amenity.image}
-                                                        alt={amenity.name}
-                                                        width={18}
-                                                        height={18}
-                                                        className="object-contain"
-                                                        unoptimized
-                                                    />
-                                                ) : (
-                                                    <span className="text-xs">{amenity.icon || '📦'}</span>
-                                                )}
+                        {/* Bottom Section - Amenities and About Brand Side by Side - Aligned to bottom with fixed height */}
+                        <div className="flex items-stretch gap-2 h-[45%]">
+                            {/* Left Column - Amenities - Show all with scrollbar - Full Height */}
+                            <section className="flex-1 flex flex-col">
+                                <div className="h-full overflow-y-auto pr-0.5 scrollbar-ultra-thin">
+                                    <div className="grid grid-cols-4 gap-1.5">
+                                        {(displayedAmenities.length > 0 ? displayedAmenities : [
+                                            { name: "Guest Check-in", icon: "👤" },
+                                            { name: "Delivery Acceptance", icon: "🔔" },
+                                            { name: "Package Notification", icon: "📦" },
+                                            { name: "Fire Safety", icon: "🚨" },
+                                            { name: "Guest Management", icon: "⚙️" },
+                                            { name: "Video Surveillance", icon: "📹" },
+                                            { name: "Keycard Access", icon: "🔑" },
+                                            { name: "Tea", icon: "☕" }
+                                        ]).map((amenity, index) => (
+                                            <div key={index} className="flex flex-col items-center gap-0.5 pb-1.5">
+                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'}`}>
+                                                    {amenity.image ? (
+                                                        <Image
+                                                            src={amenity.image}
+                                                            alt={amenity.name}
+                                                            width={12}
+                                                            height={12}
+                                                            className="object-contain"
+                                                            unoptimized
+                                                        />
+                                                    ) : (
+                                                        <span className="text-[8px]">{amenity.icon || '📦'}</span>
+                                                    )}
+                                                </div>
+                                                <span className={`text-[6.5px] text-center leading-tight ${isDark ? 'text-gray-400' : 'text-gray-700'}`}>{amenity.name}</span>
                                             </div>
-                                            <span className={`text-[8px] text-center leading-tight ${isDark ? 'text-gray-400' : 'text-gray-700'}`}>{amenity.name}</span>
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
                                 </div>
                             </section>
 
-                            {/* Right Column - About the Brand */}
-                            <section className="flex-1">
-                                <h3 className={`text-[9px] font-semibold mb-0.5 uppercase pb-0.5 border-b-2 ${isDark ? 'text-gray-400 border-blue-500' : 'text-gray-600 border-blue-500'}`}>ABOUT THE BRAND</h3>
-                                <h4 className={`text-[10px] font-semibold mb-0.5 ${isDark ? 'text-white' : 'text-gray-900'}`}>{brandName}</h4>
-                                <p className={`text-[9px] mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Workspace</p>
-                                <div className="grid grid-cols-2 gap-1 mb-1">
-                                    <div className="flex items-center gap-0.5">
-                                        <Building2 className={`w-2.5 h-2.5 flex-shrink-0 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
-                                        <span className={`text-[9px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                            {/* Right Column - About the Brand - Ultra Compact */}
+                            <section className={`ml-6 flex-1 flex flex-col border-[3px] border-gray-400 rounded-2xl p-2 pb-1.5 ${isDark ? 'bg-[#282c34]' : 'bg-white'}`}>
+                                <div className="mb-1">
+                                    <h3 className={`text-[8.5px] font-extrabold uppercase ${isDark ? 'text-gray-200' : 'text-[#2e2e2e]'}`}>ABOUT THE BRAND</h3>
+                                    <div className="w-6 h-0.5 bg-blue-800 mt-0.5"></div>
+                                </div>
+
+                                <div className="flex items-center gap-2 mb-1.5">
+                                    <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0 bg-white shadow-sm flex items-center justify-center p-0.5">
+                                        <Image
+                                            src={property.brandDetails?.image || property.brandDetails?.logo || '/property-details/builder-details/builder-logo.png'}
+                                            alt="Brand Logo"
+                                            width={22}
+                                            height={22}
+                                            className="object-contain"
+                                            unoptimized
+                                        />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <h4 className={`text-[9px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>{brandName}</h4>
+                                        <span className={`text-[6.5px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Workspace</span>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-x-2 gap-y-1 mb-1.5">
+                                    <div className="flex items-center gap-1.5">
+                                        <Image src="/property-details/builder-details/cities.png" alt="Cities" width={7} height={7} />
+                                        <span className={`text-[7.5px] font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                                             {typeof brandStats.cities === 'number' ? `${brandStats.cities}+ Cities` : (String(brandStats.cities || '').toLowerCase().includes('cities') ? brandStats.cities : `${safeDisplay(brandStats.cities)} Cities`)}
                                         </span>
                                     </div>
-                                    <div className="flex items-center gap-0.5">
-                                        <svg className={`w-2.5 h-2.5 flex-shrink-0 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                        </svg>
-                                        <span className={`text-[9px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                                    <div className="flex items-center gap-1.5">
+                                        <Image src="/property-details/builder-details/coworking.png" alt="Coworking" width={7} height={7} />
+                                        <span className={`text-[7.5px] font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                                            {(() => {
+                                                const v = typeof brandStats.spaces === 'number' ? `${brandStats.spaces}+` : String(safeDisplay(brandStats.spaces)).replace(/Coworking\s*/gi, '').trim();
+                                                const final = v.toLowerCase().endsWith('spaces') ? v : `${v} Coworking Spaces`;
+                                                return final.length > 20 ? v : final;
+                                            })()}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <Image src="/property-details/builder-details/clients.png" alt="Clients" width={7} height={7} />
+                                        <span className={`text-[7.5px] font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                                             {typeof brandStats.clients === 'number' ? `${brandStats.clients}+ Clients` : (String(brandStats.clients || '').toLowerCase().includes('clients') ? brandStats.clients : `${safeDisplay(brandStats.clients)} Clients`)}
                                         </span>
                                     </div>
-                                    <div className="flex items-center gap-0.5">
-                                        <Building2 className={`w-2.5 h-2.5 flex-shrink-0 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
-                                        <span className={`text-[9px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                                            {(() => {
-                                        const v = typeof brandStats.spaces === 'number' ? `${brandStats.spaces}+` : String(safeDisplay(brandStats.spaces)).replace(/Coworking\s*/gi, '').trim();
-                                        return v.toLowerCase().endsWith('spaces') ? v : `${v} Spaces`;
-                                    })()}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-0.5">
-                                        <svg className={`w-2.5 h-2.5 flex-shrink-0 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                        </svg>
-                                        <span className={`text-[9px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                                    <div className="flex items-center gap-1.5">
+                                        <Image src="/property-details/builder-details/seats.png" alt="Seats" width={7} height={7} />
+                                        <span className={`text-[7.5px] font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                                             {typeof brandStats.seats === 'number' ? `${brandStats.seats}+ Seats` : (String(brandStats.seats || '').toLowerCase().includes('seats') ? brandStats.seats : `${safeDisplay(brandStats.seats)} Seats`)}
                                         </span>
                                     </div>
                                 </div>
-                                <p className={`text-[9px] leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                                    {brandDescription.length > 80 ? brandDescription.substring(0, 80) + '...' : brandDescription}
+
+                                <div className="mt-auto">
+                                    <p className={`text-[8px] leading-[1.1] mb-1 line-clamp-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                        {brandDescription}
+                                    </p>
                                     <a
                                         href={`/property-details/${(property.propertyName || property.name || 'property').toLowerCase().replace(/\s+/g, '-')}`}
                                         onClick={handleViewDetailsClick}
-                                        className="text-blue-600 hover:underline ml-1"
+                                        className="text-blue-700 text-[8px] font-bold flex items-center gap-0.5 hover:underline transition-all"
                                     >
-                                        Read more
+                                        Read more <ChevronDown className="w-2 h-2" />
                                     </a>
-                                </p>
+                                </div>
                             </section>
                         </div>
                     </div>
                 </div>
 
-                {/* View Details Button - Right Edge (Vertical) - Part of modal structure */}
-                <div className="w-7 flex-shrink-0 h-full">
-                    <a
-                        href={`/property-details/${(property.propertyName || property.name || 'property').toLowerCase().replace(/\s+/g, '-')}`}
-                        onClick={handleViewDetailsClick}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-1 rounded-l-lg shadow-lg transition-colors cursor-pointer writing-vertical-rl text-[9px] font-medium h-full w-full flex items-center justify-center"
-                        style={{ writingMode: 'vertical-rl' }}
-                    >
-                        View Details
-                    </a>
-                </div>
+                {/* View Details Button - HALF inside, HALF outside, 70% height, ROTATED to point left, THIN text, FIXED position */}
+                <a
+                    href={`/property-details/${(property.propertyName || property.name || 'property').toLowerCase().replace(/\s+/g, '-')}`}
+                    onClick={handleViewDetailsClick}
+                    className="absolute -right-[9px] top-1/2 -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white rounded-none shadow-xl transition-all cursor-pointer writing-vertical-rl text-[9px] h-[70%] w-[20px] flex items-center justify-center z-50 py-3 rotate-180"
+                    style={{ writingMode: 'vertical-rl' }}
+                >
+                    View Details
+                </a>
             </div>
         </div>
     );

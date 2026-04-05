@@ -3,35 +3,35 @@
 
 const amenityIconMap = {
     // Beverages & Food
-    "tea": "/amenities/Tea.svg",
-    "coffee": "/amenities/coffee.svg",
-    "milk": "/amenities/milk.svg",
-    "water": "/amenities/water.svg",
-    "food vendor": "/amenities/Food%20Vendor.svg",
+    "tea": "/amenities/Tea.png",
+    "coffee": "/amenities/coffee.png",
+    "milk": "/amenities/milk.png",
+    "water": "/amenities/water.png",
+    "food vendor": "/amenities/Food%20Vendor.png",
     
     // Pantry & Kitchen
-    "pantry available 24/7": "/amenities/Pantry.svg",
-    "pantry": "/amenities/Pantry.svg",
-    "cups/mugs": "/amenities/Pantry.svg",
-    "cups & mugs": "/amenities/Pantry.svg",
+    "pantry available 24/7": "/amenities/Pantry.png",
+    "pantry": "/amenities/Pantry.png",
+    "cups/mugs": "/amenities/Pantry.png",
+    "cups & mugs": "/amenities/Pantry.png",
     
     // Cleaning & Maintenance
-    "daily upkeep of bathrooms...": "/amenities/Daily%20Upkeep.svg",
-    "daily upkeep of bathrooms": "/amenities/Daily%20Upkeep.svg",
-    "daily upkeep": "/amenities/Daily%20Upkeep.svg",
+    "daily upkeep of bathrooms...": "/amenities/Daily%20Upkeep.png",
+    "daily upkeep of bathrooms": "/amenities/Daily%20Upkeep.png",
+    "daily upkeep": "/amenities/Daily%20Upkeep.png",
     "deep cleaning": "/property-details/amenties/deep-cleaning.png",
     "general cleaning": "/property-details/amenties/general-cleaning.png",
-    "nightly trash": "/amenities/Nightly%20Thrash.svg",
-    "nightly trash removal": "/amenities/Nightly%20Thrash.svg",
+    "nightly trash": "/amenities/Nightly%20Thrash.png",
+    "nightly trash removal": "/amenities/Nightly%20Thrash.png",
     "pest extermination": "/property-details/amenties/pest-extermination.png",
     
     // Internet & Tech
-    "high - speed wi-fi 24/7": "/amenities/wifi.svg",
-    "high-speed wi-fi 24/7": "/amenities/wifi.svg",
-    "high speed wi-fi": "/amenities/wifi.svg",
-    "wi-fi": "/amenities/wifi.svg",
-    "wifi": "/amenities/wifi.svg",
-    "high - speed wi-fi": "/amenities/wifi.svg",
+    "high - speed wi-fi 24/7": "/amenities/wifi.png",
+    "high-speed wi-fi 24/7": "/amenities/wifi.png",
+    "high speed wi-fi": "/amenities/wifi.png",
+    "wi-fi": "/amenities/wifi.png",
+    "wifi": "/amenities/wifi.png",
+    "high - speed wi-fi": "/amenities/wifi.png",
     
     // Meeting & Conference
     "conference room access": "/property-details/amenties/club.png",
@@ -50,13 +50,13 @@ const amenityIconMap = {
     "ev charging": "/property-details/amenties/ev-charging-space.png",
     
     // Security & Safety
-    "building security": "/amenities/security.svg",
-    "gated community": "/amenities/security.svg",
-    "security guard": "/amenities/security.svg",
-    "fire alarm": "/amenities/Fire%20%26%20seafty.svg",
-    "fire extinguisher": "/amenities/Fire%20%26%20seafty.svg",
-    "fire safety": "/amenities/Fire%20%26%20seafty.svg",
-    "fire noc": "/amenities/Fire%20%26%20seafty.svg",
+    "building security": "/amenities/security.png",
+    "gated community": "/amenities/security.png",
+    "security guard": "/amenities/security.png",
+    "fire alarm": "/amenities/Fire%20%26%20seafty.png",
+    "fire extinguisher": "/amenities/Fire%20%26%20seafty.png",
+    "fire safety": "/amenities/Fire%20%26%20seafty.png",
+    "fire noc": "/amenities/Fire%20%26%20seafty.png",
     "smoke detector": "/property-details/amenties/smoke-detector.png",
     "first aid kit": "/property-details/amenties/first-aidkit.png",
     "first-aid kit": "/property-details/amenties/first-aidkit.png",
@@ -87,12 +87,12 @@ const amenityIconMap = {
     "tape/paper": "/property-details/amenties/tape-paper.png",
     
     // Reception & Guest Services
-    "guest check-in": "/amenities/Guest%20Check%20in.svg",
-    "guest checkin": "/amenities/Guest%20Check%20in.svg",
-    "guest check in": "/amenities/Guest%20Check%20in.svg",
+    "guest check-in": "/amenities/Guest%20Check%20in.png",
+    "guest checkin": "/amenities/Guest%20Check%20in.png",
+    "guest check in": "/amenities/Guest%20Check%20in.png",
     "guest management": "/property-details/amenties/guest-management.png",
-    "delivery acceptance": "/amenities/Delivery.svg",
-    "package notification": "/amenities/Package%20Notification.svg",
+    "delivery acceptance": "/amenities/Delivery.png",
+    "package notification": "/amenities/Package%20Notification.png",
     
     // Workspace
     "open desk": "/property-details/amenties/open-desk.png",
@@ -110,27 +110,27 @@ const amenityIconMap = {
     "playground": "/property-details/amenties/playground.png",
 };
 
-// All available amenity icons from `public/amenities` (svg files).
+// All available amenity icons from `public/amenities` (png files).
 const AVAILABLE_ICONS = [
-    "/amenities/Tea.svg",
-    "/amenities/coffee.svg",
-    "/amenities/milk.svg",
-    "/amenities/water.svg",
-    "/amenities/Food%20Vendor.svg",
-    "/amenities/Cafeteria.svg",
-    "/amenities/Pantry.svg",
-    "/amenities/Daily%20Upkeep.svg",
-    "/amenities/Nightly%20Thrash.svg",
-    "/amenities/Fire%20%26%20seafty.svg",
-    "/amenities/security.svg",
-    "/amenities/wifi.svg",
-    "/amenities/Guest%20Check%20in.svg",
-    "/amenities/Delivery.svg",
-    "/amenities/Package%20Notification.svg",
+    "/amenities/Tea.png",
+    "/amenities/coffee.png",
+    "/amenities/milk.png",
+    "/amenities/water.png",
+    "/amenities/Food%20Vendor.png",
+    "/amenities/Cafeteria.png",
+    "/amenities/Pantry.png",
+    "/amenities/Daily%20Upkeep.png",
+    "/amenities/Nightly%20Thrash.png",
+    "/amenities/Fire%20%26%20seafty.png",
+    "/amenities/security.png",
+    "/amenities/wifi.png",
+    "/amenities/Guest%20Check%20in.png",
+    "/amenities/Delivery.png",
+    "/amenities/Package%20Notification.png",
 ];
 
 // Default icon for unmapped amenities
-const DEFAULT_ICON = "/amenities/security.svg";
+const DEFAULT_ICON = "/amenities/security.png";
 
 /**
  * Gets a random icon from available icons based on amenity name (deterministic)

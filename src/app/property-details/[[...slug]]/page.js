@@ -60,7 +60,8 @@ import {
     Calendar,
     X,
     Wifi,
-    Footprints
+    Footprints,
+    BadgeCheck
 } from "lucide-react";
 import PDFViewer from "@/components/PDFViewer";
 import GoogleMap from "@/components/GoogleMap";
@@ -81,31 +82,31 @@ import { calculatePrices } from "@/utils/priceUtils";
 
 // Dummy data for nearby landmarks (extended array when API returns empty)
 const NEARBY_CATEGORIES = [
-    { id: "school", label: "Schools", icon: "school", localIcon: "/property-details/view-in-map/schools.svg" },
-    { id: "bus", label: "Bus Stops", icon: "building", localIcon: "/property-details/view-in-map/bus-stops.svg" },
-    { id: "hospital", label: "Hospitals", icon: "hospital", localIcon: "/property-details/view-in-map/hospitals.svg" },
-    { id: "bank", label: "Banks", icon: "banknote", localIcon: "/property-details/view-in-map/banks.svg" },
-    { id: "temple", label: "Temples", icon: "building2", localIcon: "/property-details/view-in-map/temples.svg" },
-    { id: "atm", label: "ATMs", icon: "briefcase", localIcon: "/property-details/view-in-map/atms.svg" },
+    { id: "school", label: "Schools", icon: "school", localIcon: "/property-details/view-in-map/schools.png" },
+    { id: "bus", label: "Bus Stops", icon: "building", localIcon: "/property-details/view-in-map/bus-stops.png" },
+    { id: "hospital", label: "Hospitals", icon: "hospital", localIcon: "/property-details/view-in-map/hospitals.png" },
+    { id: "bank", label: "Banks", icon: "banknote", localIcon: "/property-details/view-in-map/banks.png" },
+    { id: "temple", label: "Temples", icon: "building2", localIcon: "/property-details/view-in-map/temples.png" },
+    { id: "atm", label: "ATMs", icon: "briefcase", localIcon: "/property-details/view-in-map/atms.png" },
     { id: "mall", label: "Malls", icon: "hotel" },
 ];
 // Defaults for icon fallbacks
-const DEFAULT_AMENITY_ICON = "/amenities/security.svg";
-const DEFAULT_CUSTOM_INFRA_ICON = "/custom-infra/Meeting%20Room.svg";
+const DEFAULT_AMENITY_ICON = "/amenities/security.png";
+const DEFAULT_CUSTOM_INFRA_ICON = "/custom-infra/Meeting%20Room.png";
 
 function getCustomInfraIconSrc(name, fallbackId) {
     if (!name) return DEFAULT_CUSTOM_INFRA_ICON;
     const n = String(name).toLowerCase();
 
-    if (n.includes("meeting") && n.includes("room")) return "/custom-infra/Meeting%20Room.svg";
-    if (n.includes("private") && n.includes("cabin")) return "/custom-infra/Private%20Cabin.svg";
-    if (n.includes("reception") && n.includes("area")) return "/custom-infra/Reception%20Area.svg";
+    if (n.includes("meeting") && n.includes("room")) return "/custom-infra/Meeting%20Room.png";
+    if (n.includes("private") && n.includes("cabin")) return "/custom-infra/Private%20Cabin.png";
+    if (n.includes("reception") && n.includes("area")) return "/custom-infra/Reception%20Area.png";
     // Filename casing in assets: `Recreational area.svg`
-    if (n.includes("recreational") && n.includes("area")) return "/custom-infra/Recreational%20area.svg";
-    if (n.includes("pantry")) return "/custom-infra/Pantry.svg";
+    if (n.includes("recreational") && n.includes("area")) return "/custom-infra/Recreational%20area.png";
+    if (n.includes("pantry")) return "/custom-infra/Pantry.png";
 
     // Last-resort (only if backend provides numeric ids matching filenames)
-    if (fallbackId != null) return `/custom-infra/${fallbackId}.svg`;
+    if (fallbackId != null) return `/custom-infra/${fallbackId}.png`;
 
     return DEFAULT_CUSTOM_INFRA_ICON;
 }
@@ -122,7 +123,7 @@ function resolveCorporateLogoSrc(val) {
     // If it's already a URL or a local path, use it as-is.
     if (/^https?:\/\//i.test(str)) {
         // If the URL points to a corporates-logo SVG, convert it to our local public path.
-        const match = str.match(/\/([^\/?#]+\.svg)(?:[?#]|$)/i) || str.match(/\/([^\/?#]+\.svg)$/i);
+        const match = str.match(/\/([^\/?#]+\.(?:svg|png))(?:[?#]|$)/i) || str.match(/\/([^\/?#]+\.(?:svg|png))$/i);
         if (match?.[1]) {
             try {
                 const decoded = decodeURIComponent(match[1]);
@@ -135,25 +136,25 @@ function resolveCorporateLogoSrc(val) {
     }
     if (str.startsWith("/")) return str;
 
-    // If backend provides just a filename like `Dell.svg`
-    if (str.toLowerCase().endsWith(".svg")) {
+    // If backend provides just a filename like `Dell.png`
+    if (str.toLowerCase().endsWith(".svg") || str.toLowerCase().endsWith(".png")) {
         return `/corporates-logo/${str}`;
     }
 
     // Normalize to match our small set of available logos.
     const key = str.toLowerCase().replace(/\s+/g, "");
     const fileByKey = {
-        "dell": "Dell.svg",
-        "hp": "Hp.svg",
-        "ge": "GE.svg",
-        "pepsi": "Pepsi.svg",
-        "p&g": "p&G.svg",
+        "dell": "Dell.png",
+        "hp": "Hp.png",
+        "ge": "GE.png",
+        "pepsi": "Pepsi.png",
+        "p&g": "p&G.png",
     };
 
     const file = fileByKey[key];
     if (!file) return null;
 
-    // Encode for filenames with `&` (e.g. `p&G.svg`)
+    // Encode for filenames with `&` (e.g. `p&G.png`)
     return `/corporates-logo/${encodeURIComponent(file)}`;
 }
 
@@ -166,8 +167,8 @@ function getCorporateLogoDisplayName(val) {
     const seg = str.split("/").pop() || str;
     // Remove query/hash
     const noQ = seg.split("?")[0].split("#")[0];
-    // Remove .svg extension
-    const noExt = noQ.replace(/\.svg$/i, "");
+    // Remove .svg or .png extension
+    const noExt = noQ.replace(/\.(?:svg|png)$/i, "");
 
     try {
         return decodeURIComponent(noExt);
@@ -684,7 +685,7 @@ function PropertyDetailsContent() {
         const fetchPropertyFromAPI = async () => {
             const idParamFromQuery = searchParams.get('id');
             const typeParam = searchParams.get('type');
-            
+
             // Handle slug for SEO-friendly URL: /property-details/[property-name]
             const slug = params?.slug;
             let slugString = "";
@@ -1370,7 +1371,7 @@ function PropertyDetailsContent() {
         : `${brandDisplayName} Workspace, established in 2014, specializes in providing Zero CapEx, Enterprise Grade, Customized managed office spaces. With 26+ locations in Bangalore and an expansion to Mumbai, ${brandDisplayName}'s flagship HSR campus is the largest in India, offering over 8,000 seats...`;
 
     return (
-        <main className="property-details-compact min-h-screen bg-secondary pb-44 md:pb-0">
+        <main className="property-details-compact min-h-screen bg-secondary pb-44 md:pb-0 pt-6">
             {/* Slider boundary banner - shows when prev/next at first/last slide */}
             {sliderBanner.show && (
                 <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 rounded-lg bg-gray-900/90 text-white text-sm font-medium shadow-lg animate-fade-in" role="status">
@@ -1387,7 +1388,7 @@ function PropertyDetailsContent() {
                                 <div className="inline-flex items-center rounded-lg border px-2.5 py-0.5 text-xs font-semibold bg-amber-100 text-amber-700 border-amber-200">
                                     {safeDisplay(property.ratings?.overall)} <Star className="h-3 w-3 ml-1 fill-current" />
                                 </div>
-                                <img src="https://cdn-icons-png.flaticon.com/512/5253/5253968.png" alt="Verified" className="w-5 h-5 object-contain" />
+                                <BadgeCheck className="w-5 h-5 text-blue-500 fill-blue-500/10" />
                             </div>
                         </div>
                         <div className="flex items-center gap-4 pl-8">
@@ -1440,7 +1441,7 @@ function PropertyDetailsContent() {
                                 </div>
                                 {/* Verified tick */}
                                 <div className="ml-2 md:ml-6 flex items-center justify-center">
-                                    <img src="https://cdn-icons-png.flaticon.com/512/5253/5253968.png" alt="Verified" className="w-5 h-5 md:w-6 md:h-6" />
+                                    <BadgeCheck className="w-5 h-5 md:w-6 md:h-6 text-blue-500 fill-blue-500/10" />
                                 </div>
                             </div>
                         </div>
@@ -1508,9 +1509,9 @@ function PropertyDetailsContent() {
                                             {((property.seatLayoutPDFs?.[0]?.url || property.seatLayoutPDFs?.[0]) || property.pdf) && (
                                                 <div className="gallery-pdf-cta-float pointer-events-none absolute z-[20]">
                                                     <img
-                                                        src="/property-details/pdf-download.svg"
+                                                        src="/property-details/pdf-download.png"
                                                         alt="Download PDF Brochure"
-                                                        className="pointer-events-auto cursor-pointer drop-shadow-md hover:scale-105 transition-transform w-[50px] h-[50px]"
+                                                        className="pointer-events-auto cursor-pointer drop-shadow-md hover:scale-105 transition-transform w-[50px] h-[50px] object-contain"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             const pdfObj = property.seatLayoutPDFs?.[0]
@@ -1526,17 +1527,19 @@ function PropertyDetailsContent() {
                                             <div className="relative h-full w-full overflow-hidden rounded-2xl bg-muted shadow-sm">
                                                 {galleryInlineVideoActive && galleryVideoUrl ? (
                                                     <video
+                                                        key={galleryVideoUrl}
                                                         ref={galleryInlineVideoRef}
+                                                        src={galleryVideoUrl}
                                                         className="h-full w-full object-cover bg-black"
                                                         controls
                                                         playsInline
                                                         autoPlay
+                                                        muted
+                                                        loop
+                                                        preload="auto"
                                                         poster={galleryVideoThumb || undefined}
-                                                        onLoadedData={(e) => {
-                                                            e.currentTarget.play().catch(() => { });
-                                                        }}
                                                     >
-                                                        <source src={galleryVideoUrl} type={getVideoMimeType(galleryVideoUrl, galleryVideoContentType)} />
+                                                        Your browser does not support the video tag.
                                                     </video>
                                                 ) : (
                                                     <>
@@ -1587,7 +1590,7 @@ function PropertyDetailsContent() {
                                         </div>
                                     </div>
                                     <div className="w-full min-w-0 self-stretch pb-2 relative col-span-1">
-                                        <div className="gallery-thumb-strip flex w-full min-w-0 flex-nowrap items-center justify-start gap-2">
+                                        <div className="gallery-thumb-strip flex w-full min-w-0 flex-nowrap items-center justify-between gap-1 px-1">
                                             {images.length === 0 ? null : (() => {
                                                 const total = images.length;
                                                 /** Max 9 cells: if more than 9 images, 8 thumbs + "Show all" on the 9th */
@@ -1675,7 +1678,7 @@ function PropertyDetailsContent() {
                                 <div className="grid grid-cols-1 gap-6 p-5 md:grid-cols-3 md:px-6 md:py-5">
                                     <div className="flex min-w-0 items-start gap-3">
                                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary/35 bg-background">
-                                            <img src="/property-details/other-details/property.svg" alt="Property Type" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
+                                            <img src="/property-details/other-details/property.png" alt="Property Type" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
                                         </div>
                                         <div className="min-w-0 pt-0.5">
                                             <p className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -1697,7 +1700,7 @@ function PropertyDetailsContent() {
                                     </div>
                                     <div className="flex min-w-0 items-start gap-3">
                                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary/35 bg-background">
-                                            <img src="/property-details/other-details/furnshing.svg" alt="Furnishing" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
+                                            <img src="/property-details/other-details/furnshing.png" alt="Furnishing" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
                                         </div>
                                         <div className="min-w-0 pt-0.5">
                                             <p className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -1711,7 +1714,7 @@ function PropertyDetailsContent() {
                                     </div>
                                     <div className="flex min-w-0 items-start gap-3">
                                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary/35 bg-background">
-                                            <img src="/property-details/other-details/building.svg" alt="Building Lease" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
+                                            <img src="/property-details/other-details/building.png" alt="Building Lease" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
                                         </div>
                                         <div className="min-w-0 pt-0.5">
                                             <p className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -1732,7 +1735,7 @@ function PropertyDetailsContent() {
                                 <div className="grid grid-cols-1 gap-6 p-5 md:grid-cols-3 md:px-6 md:py-5">
                                     <div className="flex min-w-0 items-start gap-3">
                                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary/35 bg-background">
-                                            <img src="/property-details/other-details/property.svg" alt="Min Inventory" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
+                                            <img src="/property-details/other-details/property.png" alt="Min Inventory" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
                                         </div>
                                         <div className="min-w-0 pt-0.5">
                                             <p className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -1746,7 +1749,7 @@ function PropertyDetailsContent() {
                                     </div>
                                     <div className="flex min-w-0 items-start gap-3">
                                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary/35 bg-background">
-                                            <img src="/property-details/other-details/property.svg" alt="Max Inventory" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
+                                            <img src="/property-details/other-details/property.png" alt="Max Inventory" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
                                         </div>
                                         <div className="min-w-0 pt-0.5">
                                             <p className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -1760,7 +1763,7 @@ function PropertyDetailsContent() {
                                     </div>
                                     <div className="flex min-w-0 items-start gap-3">
                                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary/35 bg-background">
-                                            <img src="/property-details/other-details/property.svg" alt="Capacity" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
+                                            <img src="/property-details/other-details/property.png" alt="Capacity" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
                                         </div>
                                         <div className="min-w-0 pt-0.5">
                                             <p className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -1833,50 +1836,40 @@ function PropertyDetailsContent() {
                                                 </div>
                                             );
                                         })}
-                                        <div className="flex flex-col items-center gap-2">
-                                            <button
-                                                onClick={() => setShowAmenitiesModal(true)}
-                                                className="flex items-center justify-center h-16 w-16 rounded-full bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:bg-gray-50 transition-colors cursor-pointer"
-                                            >
-                                                <CirclePlus className="h-8 w-8 text-primary" />
-                                            </button>
-                                            <button onClick={() => setShowAmenitiesModal(true)} className="text-xs font-medium text-muted-foreground hover:underline truncate w-full cursor-pointer">View All</button>
-                                        </div>
+
                                     </div>
                                 </div>
                             </div>
 
                             {/* Why choose Buildersinfo — horizontal banner (reference layout) */}
-                            <div className="rounded-xl border border-gray-200/90 bg-[#f4f6f9] p-6 shadow-sm dark:border-border dark:bg-muted/30 md:p-8">
-                                <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between lg:gap-10">
-                                    <div className="shrink-0 lg:max-w-[14rem]">
-                                        <h3 className="text-left text-lg font-bold leading-snug text-neutral-900 dark:text-foreground">
-                                            Why choose Buildersinfo?
+                            <div className="rounded-xl border border-[#eceff2] bg-[#f7f8ff] p-5 md:p-6 shadow-sm sm:mx-0 -mx-4">
+                                <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
+                                    <div className="shrink-0 lg:max-w-[16rem]">
+                                        <h3 className="text-left text-[15px] md:text-[16px] font-bold leading-snug text-black">
+                                            Why choose Buildersinfo ?
                                         </h3>
                                     </div>
-                                    <ul className="flex min-w-0 flex-1 flex-col gap-3.5">
+                                    <ul className="flex min-w-0 flex-1 flex-col gap-2 lg:pl-6">
                                         {[
                                             "Zero brokerage fee",
                                             "Design & layout support",
                                             "Largest network of offices",
                                             "Your own office consultant",
                                         ].map((line) => (
-                                            <li key={line} className="flex items-center gap-3">
-                                                <span
-                                                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
-                                                    aria-hidden
-                                                >
-                                                    <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
-                                                </span>
-                                                <span className="text-sm font-medium text-neutral-900 dark:text-foreground">{line}</span>
+                                            <li key={line} className="flex items-center gap-2">
+                                                <CircleCheckBig
+                                                    className="h-3.5 w-3.5 shrink-0 text-[#6b7280] md:h-4 md:w-4"
+                                                    strokeWidth={1.5}
+                                                />
+                                                <span className="text-[11px] md:text-[12px] font-medium text-[#4b5563] leading-tight">{line}</span>
                                             </li>
                                         ))}
                                     </ul>
-                                    <div className="flex shrink-0 justify-start lg:justify-end lg:pt-0.5">
+                                    <div className="flex shrink-0 justify-start lg:justify-end">
                                         <button
                                             type="button"
                                             onClick={() => handleShowInterestModal("consultation")}
-                                            className="inline-flex w-full items-center justify-center rounded-md border border-indigo-600 bg-white px-5 py-2.5 text-sm font-medium text-indigo-600 shadow-sm transition-colors hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 dark:border-indigo-400 dark:bg-card dark:text-indigo-400 dark:hover:bg-indigo-950/40 sm:w-auto"
+                                            className="inline-flex w-full items-center justify-center rounded-lg border border-[#4c5fd5] bg-white px-5 py-2 text-[12px] font-bold text-[#4c5fd5] transition-all hover:bg-[#4c5fd5]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4c5fd5]/30 sm:w-auto cursor-pointer"
                                         >
                                             Get Free Consultation
                                         </button>
@@ -1992,7 +1985,7 @@ function PropertyDetailsContent() {
                                                         {b.name}
                                                     </span>
                                                     <div className="flex shrink-0 items-center gap-1.5">
-                                                        <img src="/property-details/step-location.svg" alt="Distance" className="h-[20px] w-[20px] object-contain opacity-70" aria-hidden />
+                                                        <img src="/property-details/step-location.png" alt="Distance" className="h-[20px] w-[20px] object-contain opacity-70" aria-hidden />
                                                         <span className="text-muted-foreground tabular-nums">{b.distance}</span>
                                                     </div>
                                                 </li>
@@ -2040,7 +2033,7 @@ function PropertyDetailsContent() {
                                                 <div className="w-3 h-3 rounded-full border-2 border-gray-800 dark:border-gray-200 bg-white shrink-0" aria-hidden />
                                                 <div className="flex-1 h-0 border-t border-dashed border-gray-400 min-w-[20px]" />
                                                 <div className="w-10 h-10 rounded-full border-2 border-gray-300 bg-white flex items-center justify-center shrink-0">
-                                                    <img src="/property-details/car-path.svg" alt="Car" className="h-5 w-5 object-contain drop-shadow-sm" />
+                                                    <img src="/property-details/car-path.png" alt="Car" className="h-5 w-5 object-contain drop-shadow-sm" />
                                                 </div>
                                                 <div className="flex-1 h-0 border-t border-dashed border-gray-400 min-w-[20px]" />
                                                 <div className="w-3 h-3 rounded-full border-2 border-gray-800 dark:border-gray-200 bg-white shrink-0" aria-hidden />
@@ -2097,7 +2090,7 @@ function PropertyDetailsContent() {
                                                     <div className="flex flex-wrap gap-4">
                                                         {r.driving && (
                                                             <div className="flex items-center gap-2">
-                                                                <img src="/property-details/car-path.svg" alt="Car" className="h-5 w-5 object-contain drop-shadow-sm" />
+                                                                <img src="/property-details/car-path.png" alt="Car" className="h-5 w-5 object-contain drop-shadow-sm" />
                                                                 <span className="text-sm font-medium">{r.driving.duration.text} ({r.driving.distance.text})</span>
                                                             </div>
                                                         )}
@@ -2142,14 +2135,14 @@ function PropertyDetailsContent() {
                                         : "";
                                     return (
                                         <>
-                                            <div className="px-5 pt-5 pb-5">
-                                                <h3 className="text-[15.5px] text-gray-900 dark:text-gray-100 leading-snug">
+                                            <div className="px-4 pt-4 pb-3">
+                                                <h3 className="text-[12.5px] text-gray-900 dark:text-gray-100 leading-snug">
                                                     Interested in <span className="font-bold">{propTitle}</span> ?
                                                 </h3>
 
-                                                <div className="mt-5 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 justify-between">
-                                                    <div className="flex items-start gap-4 flex-1 min-w-0">
-                                                        <div className="relative h-[90px] w-[75px] shrink-0 overflow-hidden bg-gray-100 dark:bg-gray-800 border-none rounded-[2px]">
+                                                <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 justify-between">
+                                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                        <div className="relative h-[44px] w-[36px] shrink-0 overflow-hidden bg-gray-100 dark:bg-gray-800 border-none rounded-[2px]">
                                                             {agentImage ? (
                                                                 <img src={agentImage} alt={agentName} className="h-full w-full object-cover object-top" />
                                                             ) : (
@@ -2158,67 +2151,67 @@ function PropertyDetailsContent() {
                                                                 </div>
                                                             )}
                                                         </div>
-                                                        <div className="flex flex-col min-w-0 flex-1 pt-0.5">
-                                                            <p className="text-[14.5px] text-gray-900 dark:text-gray-100 mb-2">
+                                                        <div className="flex flex-col min-w-0 flex-1 h-[44px] justify-between py-0.5">
+                                                            <p className="text-[11px] text-gray-900 dark:text-gray-100 leading-none">
                                                                 Say Hi To <span className="font-bold">{agentName}</span>
                                                             </p>
-                                                            <div className="flex items-center gap-4 flex-wrap w-full mb-3">
+                                                            <div className="flex items-center gap-1.5 flex-wrap w-full leading-none">
                                                                 {agentPhone && (
                                                                     <a
                                                                         href={`tel:${agentPhone.replace(/[^0-9+]/g, "")}`}
                                                                         onClick={(e) => handlePhoneClick(e, agentPhone)}
-                                                                        className="text-[12.5px] text-gray-900 dark:text-gray-300 tracking-wide hover:underline"
+                                                                        className="text-[10px] text-gray-900 dark:text-gray-300 tracking-wide hover:underline"
                                                                     >
                                                                         {maskedPhone}
                                                                     </a>
                                                                 )}
-                                                                <div className="flex items-center gap-2.5">
-                                                                    {agentPhone && (
-                                                                        <a
-                                                                            href={`tel:${agentPhone.replace(/[^0-9+]/g, "")}`}
-                                                                            onClick={(e) => handlePhoneClick(e, agentPhone)}
-                                                                            className="inline-flex shrink-0 hover:opacity-80 transition-opacity"
-                                                                            title="Call"
-                                                                        >
-                                                                            <img src="/property-details/agent-social/call.svg" alt="Call" className="h-[26px] w-[26px] object-contain drop-shadow-sm" />
-                                                                        </a>
-                                                                    )}
-                                                                    {agentEmail && (
-                                                                        <a
-                                                                            href={`mailto:${agentEmail}`}
-                                                                            onClick={(e) => handleEmailClick(e, agentEmail, `Inquiry: ${propTitle || ""}`)}
-                                                                            className="inline-flex shrink-0 hover:opacity-80 transition-opacity"
-                                                                            title="Message"
-                                                                        >
-                                                                            <img src="/property-details/agent-social/message.svg" alt="Message" className="h-[26px] w-[26px] object-contain drop-shadow-sm" />
-                                                                        </a>
-                                                                    )}
-                                                                    {(property.agentDetails?.whatsapp || agentPhone) && (
-                                                                        <a
-                                                                            href={`https://wa.me/${(property.agentDetails?.whatsapp || agentPhone).replace(/[^0-9]/g, "")}?text=Hi, I'm interested in ${encodeURIComponent(propTitle)}`}
-                                                                            target="_blank"
-                                                                            rel="noopener noreferrer"
-                                                                            className="inline-flex shrink-0 hover:opacity-80 transition-opacity"
-                                                                            title="WhatsApp"
-                                                                        >
-                                                                            <img src="/property-details/agent-social/whatsapp.svg" alt="WhatsApp" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
-                                                                        </a>
-                                                                    )}
-                                                                </div>
                                                             </div>
                                                             <div>
-                                                                <span className="inline-flex items-center rounded-md border border-[#86cfa2] bg-[#f0f9f3] px-2.5 py-0.5 text-[11px] font-bold text-[#1f8c4c] dark:bg-[#1a8e48]/10 dark:border-[#1a8e48]/40 dark:text-[#4ade80]">
+                                                                <span className="inline-flex items-center rounded-md border border-[#86cfa2] bg-[#f0f9f3] px-1 py-0 text-[8px] font-bold text-[#1f8c4c] dark:bg-[#1a8e48]/10 dark:border-[#1a8e48]/40 dark:text-[#4ade80]">
                                                                     {agentTag}
                                                                 </span>
                                                             </div>
                                                         </div>
                                                     </div>
 
-                                                    <div className="shrink-0 w-full sm:w-auto mt-2 sm:mt-0 sm:pt-4 sm:pr-2">
+                                                    <div className="shrink-0 w-full sm:w-auto mt-3 sm:mt-0 flex items-center gap-2">
+                                                        <div className="flex items-center gap-3 px-1">
+                                                            {agentPhone && (
+                                                                <a
+                                                                    href={`tel:${agentPhone.replace(/[^0-9+]/g, "")}`}
+                                                                    onClick={(e) => handlePhoneClick(e, agentPhone)}
+                                                                    className="inline-flex shrink-0 hover:opacity-80 transition-opacity"
+                                                                    title="Call"
+                                                                >
+                                                                    <img src="/property-details/agent-social/call.png" alt="Call" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
+                                                                </a>
+                                                            )}
+                                                            {agentEmail && (
+                                                                <a
+                                                                    href={`mailto:${agentEmail}`}
+                                                                    onClick={(e) => handleEmailClick(e, agentEmail, `Inquiry: ${propTitle || ""}`)}
+                                                                    className="inline-flex shrink-0 hover:opacity-80 transition-opacity"
+                                                                    title="Message"
+                                                                >
+                                                                    <img src="/property-details/agent-social/message.png" alt="Message" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
+                                                                </a>
+                                                            )}
+                                                            {(property.agentDetails?.whatsapp || agentPhone) && (
+                                                                <a
+                                                                    href={`https://wa.me/${(property.agentDetails?.whatsapp || agentPhone).replace(/[^0-9]/g, "")}?text=Hi, I'm interested in ${encodeURIComponent(propTitle)}`}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="inline-flex shrink-0 hover:opacity-80 transition-opacity"
+                                                                    title="WhatsApp"
+                                                                >
+                                                                    <img src="/property-details/agent-social/whatsapp.png" alt="WhatsApp" className="h-[20px] w-[20px] object-contain drop-shadow-sm" />
+                                                                </a>
+                                                            )}
+                                                        </div>
                                                         <button
                                                             type="button"
                                                             onClick={(e) => agentPhone && handlePhoneClick(e, agentPhone)}
-                                                            className="inline-flex h-12 w-full sm:w-auto items-center justify-center rounded-[6px] border border-[#a4ecbe] bg-[#f1fdf5] px-5 sm:px-6 text-[18px] font-bold text-[#208346] hover:bg-[#e6fceb] dark:bg-[#1f5431] dark:border-[#2d7644] dark:text-white dark:hover:bg-[#1b482a] transition-colors shadow-sm"
+                                                            className="inline-flex h-5.5 items-center justify-center rounded-[3px] border border-[#a4ecbe] bg-[#f1fdf5] px-2 text-[10px] font-bold text-[#208346] hover:bg-[#e6fceb] dark:bg-[#1f5431] dark:border-[#2d7644] dark:text-white dark:hover:bg-[#1b482a] transition-colors shadow-sm"
                                                         >
                                                             Contact {(agentName && agentName.split(" ")[0]) || agentName || "Agent"}
                                                         </button>
@@ -2226,18 +2219,18 @@ function PropertyDetailsContent() {
                                                 </div>
                                             </div>
 
-                                            <div className="px-5 pb-6">
-                                                <div className="bg-[#eff2f4] dark:bg-gray-800/60 rounded-[4px] p-5">
+                                            <div className="px-4 pb-4">
+                                                <div className="bg-[#eff2f4] dark:bg-gray-800/60 rounded-[4px] p-3.5">
                                                     {agentTagline ? (
-                                                        <p className="text-[15px] leading-relaxed text-[#414d55] dark:text-gray-300">
+                                                        <p className="text-[12px] leading-relaxed text-[#414d55] dark:text-gray-300">
                                                             {agentTagline}
                                                         </p>
                                                     ) : (
-                                                        <p className="text-[15px] leading-[1.6] text-[#414d55] dark:text-gray-300">
+                                                        <p className="text-[12px] leading-[1.6] text-[#414d55] dark:text-gray-300">
                                                             {agentName ? agentName.split(" ")[0] : "Agent"}&apos;s team assisted 500+ corporates in Bangalore to move into their new office.
                                                         </p>
                                                     )}
-                                                    <div className="mt-4 flex flex-wrap items-center gap-4 sm:gap-6">
+                                                    <div className="mt-3.5 px-2 flex flex-wrap items-center justify-between w-full gap-y-3">
                                                         {(assistedLogos.length > 0 ? assistedLogos.slice(0, 5) : [
                                                             { name: "Pepsi", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Pepsi_logo_2014.svg/120px-Pepsi_logo_2014.svg.png" },
                                                             { name: "GE", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/General_Electric_logo.svg/120px-General_Electric_logo.svg.png" },
@@ -2254,7 +2247,7 @@ function PropertyDetailsContent() {
                                                             return logoSrc ? (
                                                                 <div
                                                                     key={i}
-                                                                    className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full border border-gray-200 bg-white shadow-sm flex items-center justify-center p-1.5"
+                                                                    className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full border border-gray-200 bg-white shadow-sm flex items-center justify-center p-0"
                                                                 >
                                                                     <img alt={logoName || ""} src={logoSrc} className="h-full w-full object-contain" />
                                                                 </div>
@@ -2271,37 +2264,37 @@ function PropertyDetailsContent() {
                                                 </div>
                                             </div>
 
-                                            <div className="px-5 pb-6 pt-3">
-                                                <h3 className="mb-4 text-[15px] font-bold tracking-tight text-gray-900 dark:text-gray-100">Why Clients Choose Us for Consultation</h3>
+                                            <div className="px-4 pb-4 pt-1">
+                                                <h3 className="mb-2.5 text-[12.5px] font-bold tracking-tight text-gray-900 dark:text-gray-100">Why Clients Choose Us for Consultation</h3>
                                                 <div className="rounded-[8px] border border-gray-200 dark:border-gray-700 bg-white dark:bg-card">
                                                     <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-                                                        <li className="flex gap-4 px-4 py-3.5 md:px-5 md:py-4">
-                                                            <div className="flex h-11 w-11 shrink-0 items-center justify-center">
-                                                                <img src="/why-us/zero-brokerage.svg" alt="" className="h-10 w-10 object-contain" />
+                                                        <li className="flex gap-3 px-3 py-2.5">
+                                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center">
+                                                                <img src="/why-us/zero-brokerage.png" alt="" className="h-8 w-8 object-contain" />
                                                             </div>
                                                             <div className="min-w-0 pt-0.5">
-                                                                <h4 className="text-[13.5px] font-bold text-[#354048] dark:text-gray-200 mb-0.5">Zero Brokerage</h4>
-                                                                <p className="text-[12.5px] text-[#6b7b8a] dark:text-gray-400">100% Service, 0% Brokerage</p>
+                                                                <h4 className="text-[11.5px] font-bold text-[#354048] dark:text-gray-200 mb-0.5">Zero Brokerage</h4>
+                                                                <p className="text-[10.5px] text-[#6b7b8a] dark:text-gray-400">100% Service, 0% Brokerage</p>
                                                             </div>
                                                         </li>
-                                                        <li className="flex gap-4 px-4 py-3.5 md:px-5 md:py-4">
-                                                            <div className="flex h-11 w-11 shrink-0 items-center justify-center">
-                                                                <img src="/why-us/low-price.svg" alt="" className="h-10 w-10 object-contain" />
+                                                        <li className="flex gap-3 px-3 py-2.5">
+                                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center">
+                                                                <img src="/why-us/low-price.png" alt="" className="h-8 w-8 object-contain" />
                                                             </div>
                                                             <div className="min-w-0 pt-0.5">
-                                                                <h4 className="text-[13.5px] font-bold text-[#354048] dark:text-gray-200 mb-0.5">Lowest Price Guaranteed</h4>
-                                                                <p className="text-[12.5px] leading-[1.4] text-[#6b7b8a] dark:text-gray-400">
+                                                                <h4 className="text-[11.5px] font-bold text-[#354048] dark:text-gray-200 mb-0.5">Lowest Price Guaranteed</h4>
+                                                                <p className="text-[10.5px] leading-[1.4] text-[#6b7b8a] dark:text-gray-400">
                                                                     Highly unlikely, but if you find a lower price anywhere, tell us and we will match it.
                                                                 </p>
                                                             </div>
                                                         </li>
-                                                        <li className="flex gap-4 px-4 py-3.5 md:px-5 md:py-4">
-                                                            <div className="flex h-11 w-11 shrink-0 items-center justify-center">
-                                                                <img src="/why-us/full-service.svg" alt="" className="h-10 w-10 object-contain" />
+                                                        <li className="flex gap-3 px-3 py-2.5">
+                                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center">
+                                                                <img src="/why-us/full-service.png" alt="" className="h-8 w-8 object-contain" />
                                                             </div>
                                                             <div className="min-w-0 pt-0.5">
-                                                                <h4 className="text-[13.5px] font-bold text-[#354048] dark:text-gray-200 mb-0.5">Full Service Support</h4>
-                                                                <p className="text-[12.5px] leading-[1.4] text-[#6b7b8a] dark:text-gray-400">
+                                                                <h4 className="text-[11.5px] font-bold text-[#354048] dark:text-gray-200 mb-0.5">Full Service Support</h4>
+                                                                <p className="text-[10.5px] leading-[1.4] text-[#6b7b8a] dark:text-gray-400">
                                                                     Our sales personnel are accountable for every step
                                                                 </p>
                                                             </div>
@@ -2311,9 +2304,9 @@ function PropertyDetailsContent() {
                                                 <button
                                                     type="button"
                                                     onClick={() => handleShowInterestModal("callback")}
-                                                    className="mt-5 flex w-full items-center justify-center gap-2 rounded-[6px] bg-[#f8d01d] px-4 py-[13px] text-[15px] font-bold text-[#141414] shadow-sm hover:bg-[#e6bf15] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/80"
+                                                    className="mt-5 flex w-full items-center justify-center gap-2 rounded-[6px] bg-[#f8d01d] px-4 py-[10px] text-[13px] font-bold text-[#141414] shadow-sm hover:bg-[#e6bf15] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/80"
                                                 >
-                                                    <Phone className="h-[18px] w-[18px] shrink-0 fill-current" strokeWidth={2.5} />
+                                                    <Phone className="h-[15px] w-[15px] shrink-0 fill-current" strokeWidth={2.5} />
                                                     Request More Information or a Callback
                                                 </button>
                                             </div>
@@ -2324,68 +2317,68 @@ function PropertyDetailsContent() {
                             {/* About the brand */}
                             <div
                                 id="brand"
-                                className="rounded-xl border border-gray-200/90 bg-white p-6 shadow-sm dark:border-border dark:bg-card md:p-8"
+                                className="rounded-xl border border-gray-200/90 bg-white p-3.5 shadow-sm dark:border-border dark:bg-card"
                             >
                                 <div>
-                                    <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-900 dark:text-slate-100 md:text-xs">
+                                    <h3 className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-900 dark:text-slate-100">
                                         About the Brand
                                     </h3>
-                                    <div className="mt-2.5 h-1 w-9 rounded-sm bg-blue-600 dark:bg-blue-500" aria-hidden />
+                                    <div className="mt-1.5 h-0.5 w-6 rounded-sm bg-blue-600 dark:bg-blue-500" aria-hidden />
                                 </div>
 
-                                <div className="mt-6 flex items-center gap-4">
+                                <div className="mt-4 flex items-center gap-4">
                                     <img
                                         alt={`${brandDisplayName} logo`}
-                                        src="/property-details/builder-details/builder-logo.svg"
-                                        className="h-12 w-12 shrink-0 object-contain md:h-14 md:w-14"
+                                        src="/property-details/builder-details/builder-logo.png"
+                                        className="h-8 w-8 shrink-0 object-contain"
                                     />
                                     <div className="min-w-0">
-                                        <h4 className="text-lg font-bold leading-tight text-foreground md:text-xl">{brandDisplayName}</h4>
-                                        <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                                        <h4 className="text-[13px] font-bold leading-tight text-foreground">{brandDisplayName}</h4>
+                                        <p className="mt-0.5 text-[8px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                                             Workspace
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className="mt-7 grid grid-cols-2 gap-x-4 gap-y-5 text-sm">
-                                    <div className="flex min-w-0 items-center gap-2.5">
-                                        <img src="/property-details/builder-details/cities.svg" alt="Cities" className="h-[20px] w-[20px] shrink-0 object-contain drop-shadow-sm" />
+                                <div className="mt-3.5 grid grid-cols-2 gap-x-3 gap-y-2.5 text-[9.5px]">
+                                    <div className="flex min-w-0 items-center gap-1.5">
+                                        <img src="/property-details/builder-details/cities.png" alt="Cities" className="h-[14px] w-[14px] shrink-0 object-contain" />
                                         <span className="font-medium text-foreground">
                                             {brandStats.cities}+ Cities
                                         </span>
                                     </div>
-                                    <div className="flex min-w-0 items-center gap-2.5">
-                                        <img src="/property-details/builder-details/coworking.svg" alt="Coworking Spaces" className="h-[20px] w-[20px] shrink-0 object-contain drop-shadow-sm" />
+                                    <div className="flex min-w-0 items-center gap-1.5">
+                                        <img src="/property-details/builder-details/coworking.png" alt="Coworking Spaces" className="h-[14px] w-[14px] shrink-0 object-contain" />
                                         <span className="font-medium text-foreground">
-                                            {brandStats.spaces}+ Coworking Spaces
+                                            {brandStats.spaces}+ Spaces
                                         </span>
                                     </div>
-                                    <div className="flex min-w-0 items-center gap-2.5">
-                                        <img src="/property-details/builder-details/clients.svg" alt="Clients" className="h-[20px] w-[20px] shrink-0 object-contain drop-shadow-sm" />
+                                    <div className="flex min-w-0 items-center gap-1.5">
+                                        <img src="/property-details/builder-details/clients.png" alt="Clients" className="h-[14px] w-[14px] shrink-0 object-contain" />
                                         <span className="font-medium text-foreground">
                                             {brandStats.clients}+ Clients
                                         </span>
                                     </div>
-                                    <div className="flex min-w-0 items-center gap-2.5">
-                                        <img src="/property-details/builder-details/seats.svg" alt="Seats" className="h-[20px] w-[20px] shrink-0 object-contain drop-shadow-sm" />
+                                    <div className="flex min-w-0 items-center gap-1.5">
+                                        <img src="/property-details/builder-details/seats.png" alt="Seats" className="h-[14px] w-[14px] shrink-0 object-contain" />
                                         <span className="font-medium text-foreground">
                                             {brandStats.seats}+ Seats
                                         </span>
                                     </div>
                                 </div>
 
-                                <div className="mt-6 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                                <div className="mt-3 text-[10px] leading-relaxed text-slate-600 dark:text-slate-400">
                                     {showBrandDescription ? brandLongDesc : brandShortDesc}{" "}
                                     <button
                                         type="button"
                                         onClick={() => setShowBrandDescription(!showBrandDescription)}
-                                        className="inline-flex items-center gap-0.5 p-0 align-baseline text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+                                        className="inline-flex items-center gap-0.5 p-0 align-baseline text-[10px] font-medium text-blue-600 hover:underline dark:text-blue-400"
                                     >
                                         {showBrandDescription ? "Read less" : "Read more"}
                                         {showBrandDescription ? (
-                                            <ChevronUp className="h-4 w-4 shrink-0" aria-hidden />
+                                            <ChevronUp className="h-3.5 w-3.5 shrink-0" aria-hidden />
                                         ) : (
-                                            <ChevronDown className="h-4 w-4 shrink-0" aria-hidden />
+                                            <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden />
                                         )}
                                     </button>
                                 </div>
@@ -2393,42 +2386,42 @@ function PropertyDetailsContent() {
                                 <button
                                     type="button"
                                     onClick={() => handleShowInterestModal("brand")}
-                                    className="mt-8 flex w-full items-center justify-start gap-1 p-0 text-left text-sm font-medium text-blue-600 transition-colors hover:text-blue-700 hover:underline dark:text-blue-400 dark:hover:text-blue-300"
+                                    className="mt-3.5 flex w-full items-center justify-start gap-1 p-0 text-left text-[10.5px] font-medium text-blue-600 transition-colors hover:text-blue-700 hover:underline dark:text-blue-400 dark:hover:text-blue-300"
                                 >
                                     Interested in {brandDisplayName} Workspace? Connect with us
-                                    <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
+                                    <ArrowRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
                                 </button>
                             </div>
                             {/* Floor Plan */}
                             <div className="rounded-lg border bg-card shadow-sm">
-                                <div className="p-6"><h3 className="text-lg font-bold">Floor Plan</h3></div>
+                                <div className="px-3 py-1.5"><h3 className="text-[11px] font-bold">Floor Plan</h3></div>
                                 <div className="border-t" />
-                                <div className="p-6">
-                                    <div className="relative w-full rounded-lg overflow-hidden border bg-gray-50" style={{ aspectRatio: '4/3', minHeight: 200 }}>
+                                <div className="p-2.5">
+                                    <div className="relative w-full rounded-lg overflow-hidden border bg-gray-50" style={{ aspectRatio: '16/9', minHeight: 110 }}>
                                         {(typeof property.floorPlan === 'string' && property.floorPlan.trim()) ? (
                                             <Image
                                                 src={property.floorPlan.startsWith('http') ? property.floorPlan : `https://admin.buildersinfo.in${property.floorPlan.startsWith('/') ? property.floorPlan : '/' + property.floorPlan}`}
                                                 alt="Floor plan"
                                                 fill
-                                                className="object-contain p-4 cursor-pointer hover:opacity-90 transition-opacity"
+                                                className="object-cover cursor-pointer hover:opacity-90 transition-opacity"
                                                 onClick={(e) => setFullScreenImage(e.currentTarget.src)}
                                                 unoptimized
-                                                sizes="(max-width: 400px) 100vw, 400px"
+                                                sizes="100vw"
                                             />
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">No floor plan available</div>
+                                            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-[11px]">No floor plan available</div>
                                         )}
                                     </div>
                                 </div>
                             </div>
                             {/* Opening Hours */}
                             <div className="rounded-lg border theme-bg-card theme-shadow-sm">
-                                <div className="flex flex-col space-y-1.5 p-6">
-                                    <h3 className="text-lg font-bold leading-none tracking-tight">Opening Hours</h3>
+                                <div className="flex flex-col space-y-1 p-3">
+                                    <h3 className="text-[11.5px] font-bold leading-none tracking-tight">Opening Hours</h3>
                                 </div>
                                 <div data-orientation="horizontal" role="none" className="shrink-0 bg-border h-[1px] w-full" />
-                                <div className="p-6 pt-6">
-                                    <ul className="space-y-3 text-sm">
+                                <div className="p-3 space-y-2 pt-3">
+                                    <ul className="space-y-1.5 text-[9.5px]">
                                         <li className="flex justify-between items-center">
                                             <span className="text-muted-foreground">Monday - Friday</span>
                                             <span className="font-medium">{(() => {
@@ -2449,7 +2442,7 @@ function PropertyDetailsContent() {
                                             {(() => {
                                                 const v = property?.openingHours?.sunday;
                                                 const str = typeof v === 'string' ? (v.trim() || '') : (v?.enabled ? `${v.open || ''} - ${v.close || ''}`.trim() : '');
-                                                return str ? <span className="font-medium">{str}</span> : <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-red-500 text-white">Closed</span>;
+                                                return str ? <span className="font-medium text-[9px]">{str}</span> : <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[8px] font-semibold bg-red-500 text-white leading-none">Closed</span>;
                                             })()}
                                         </li>
                                     </ul>
@@ -2585,13 +2578,12 @@ function PropertyDetailsContent() {
                                 </button>
                             </div>
 
-                            {/* Rating & Reviews - Right sidebar (DB: ratings, reviews) */}
                             <div ref={reviewsRef} id="ratings-reviews" className="rounded-lg border bg-card text-card-foreground shadow-sm">
-                                <div className="flex flex-col space-y-1.5 p-6">
+                                <div className="flex flex-col space-y-1 p-2.5">
                                     <div className="flex justify-between items-center">
-                                        <h3 className="text-lg font-bold leading-none tracking-tight">Rating &amp; Reviews</h3>
+                                        <h3 className="text-[10.5px] font-bold leading-none tracking-tight">Rating &amp; Reviews</h3>
                                         {!hasUserSubmittedReview ? (
-                                            <button onClick={handleAddReview} className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 rounded-lg px-3 cursor-pointer">
+                                            <button onClick={handleAddReview} className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-[9px] font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-6 rounded-md px-1.5 cursor-pointer">
                                                 Rate property
                                             </button>
                                         ) : (
@@ -2602,18 +2594,18 @@ function PropertyDetailsContent() {
                                     </div>
                                 </div>
                                 <div data-orientation="horizontal" role="none" className="shrink-0 bg-border h-[1px] w-full" />
-                                <div className="p-6 space-y-8 pt-6">
+                                <div className="p-2.5 space-y-3 pt-2.5">
                                     <div>
-                                        <p className="text-sm mb-4">Overall rating based on {ratingDisplay.totalRatings} reviews.</p>
-                                        <div className="grid grid-cols-1 gap-6">
+                                        <p className="text-[9px] mb-2">Overall rating based on {ratingDisplay.totalRatings} reviews.</p>
+                                        <div className="grid grid-cols-1 gap-2.5">
                                             <div className="flex flex-col items-center justify-center">
-                                                <p className="text-4xl font-bold">{ratingDisplay.overall}</p>
-                                                <div className="flex items-center">
+                                                <p className="text-[22px] font-bold leading-tight">{ratingDisplay.overall}</p>
+                                                <div className="flex items-center gap-0.5">
                                                     {[1, 2, 3, 4, 5].map((star) => (
-                                                        <Star key={star} className={`w-5 h-5 ${star <= Math.round(ratingDisplay.overall) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+                                                        <Star key={star} className={`w-3 h-3 ${star <= Math.round(ratingDisplay.overall) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
                                                     ))}
                                                 </div>
-                                                <p className="text-sm text-muted-foreground mt-1">{ratingDisplay.totalRatings} ratings</p>
+                                                <p className="text-[9px] text-muted-foreground mt-0.5">{ratingDisplay.totalRatings} ratings</p>
                                             </div>
                                             <div>
                                                 {[5, 4, 3, 2, 1].map((star) => {
@@ -2621,12 +2613,15 @@ function PropertyDetailsContent() {
                                                     const total = ratingDisplay.totalRatings || 1;
                                                     const percentage = Math.round((count / total) * 100);
                                                     return (
-                                                        <div key={star} className="flex items-center gap-3">
-                                                            <span className="text-sm w-16 whitespace-nowrap flex-shrink-0">{star} star</span>
-                                                            <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden leading-none">
-                                                                <div className="h-full bg-yellow-400" style={{ width: `${percentage}%` }} />
+                                                        <div key={star} className="flex items-center gap-3 py-1">
+                                                            <span className="text-[10px] font-medium w-10 whitespace-nowrap flex-shrink-0 uppercase tracking-tight">{star} star</span>
+                                                            <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden leading-none">
+                                                                <div
+                                                                    className="h-full bg-yellow-400 rounded-full"
+                                                                    style={{ width: `${percentage}%` }}
+                                                                />
                                                             </div>
-                                                            <span className="text-sm w-10 text-right flex-shrink-0">{percentage}%</span>
+                                                            <span className="text-[10px] font-bold w-7 text-right flex-shrink-0">{percentage}%</span>
                                                         </div>
                                                     );
                                                 })}
@@ -2807,8 +2802,8 @@ function PropertyDetailsContent() {
                                                         </div>
                                                         <div className="flex justify-between items-end mt-5">
                                                             <div className="flex items-center gap-2">
-                                                                <div className="bg-black text-white w-7 h-6 flex items-center justify-center rounded-[4px]">
-                                                                    <img src="https://cdn-icons-png.flaticon.com/512/3593/3593976.png" className="w-3.5 h-3.5 invert brightness-0" alt="Workspace" style={{ filter: 'brightness(0) invert(1)' }} />
+                                                                <div className="bg-black text-white flex items-center justify-center rounded-[4px] px-1.5 py-0.5 text-[10px] font-bold">
+                                                                    {p?.ratingScore || (4.0 + (idx % 10) / 10).toFixed(1)}
                                                                 </div>
                                                                 <span className="text-[11px] font-extrabold text-black">{p?.ratingLabel || "Excellent"}</span>
                                                             </div>
@@ -2869,47 +2864,6 @@ function PropertyDetailsContent() {
             </div>
 
             {/* Download App - Full width at bottom */}
-            < section className="relative bg-primary text-primary-foreground overflow-hidden py-16" >
-                <div className="absolute -top-10 -left-10 w-32 h-32 bg-primary-foreground/10 rounded-full"></div>
-                <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-primary-foreground/10 rounded-full"></div>
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                    <div className="grid md:grid-cols-2 items-center gap-8">
-                        <div className="text-center md:text-left">
-                            <h2 className="text-2xl md:text-4xl font-bold mb-4">Brokerage - Free Real Estate at Your Fingertips</h2>
-                            <p className="text-primary-foreground/80 mb-8 max-w-md mx-auto md:mx-0 text-sm md:text-base">Buildersinfo is India&apos;s first brokerage-free real estate discovery platform. Find properties, projects and builders in your city.</p>
-                            <div className="flex items-center justify-center md:justify-start gap-4">
-                                <a className="inline-block transition-transform hover:scale-105" href="#">
-                                    <img
-                                        alt="Download on the App Store"
-                                        src="https://c.housingcdn.com/demand/s/client/common/assets/app-store.10009972.png"
-                                        width="144"
-                                        height="48"
-                                        className="h-12 w-auto"
-                                    />
-                                </a>
-                                <a className="inline-block transition-transform hover:scale-105" href="#">
-                                    <img
-                                        alt="Get it on Google Play"
-                                        src="https://c.housingcdn.com/demand/s/client/common/assets/google-play.2c209e8c.png"
-                                        width="144"
-                                        height="48"
-                                        className="h-12 w-auto"
-                                    />
-                                </a>
-                            </div>
-                        </div>
-                        <div className="relative h-full min-h-[250px] md:min-h-[300px] hidden md:flex items-center justify-center">
-                            <img
-                                alt="BuildersInfo App on a phone"
-                                src="https://i.ibb.co/v6CN21Pt/image-Photoroom.png"
-                                width="300"
-                                height="300"
-                                className="object-contain"
-                            />
-                        </div>
-                    </div>
-                </div>
-            </section >
 
             {/* Fixed Bottom Action Bar - sits above footer nav (footer ~56px) */}
             <div className="fixed left-0 right-0 bg-white border-t border-gray-200 p-4 md:hidden z-30" style={{ bottom: '56px' }}>
@@ -3223,49 +3177,7 @@ function PropertyDetailsContent() {
             }
 
             {/* All Amenities Modal - grouped by category (DB: amenities) */}
-            {showAmenitiesModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" role="dialog" aria-modal="true" aria-labelledby="amenities-modal-title" onClick={() => setShowAmenitiesModal(false)}>
-                    <div className="fixed left-[50%] top-[50%] z-50 w-full max-w-xl max-h-[min(90vh,90svh)] translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg flex flex-col" onClick={(e) => e.stopPropagation()} style={{ maxHeight: 'min(90vh, 90svh)' }}>
-                        <div className="flex flex-col space-y-1.5 text-center sm:text-left shrink-0">
-                            <h2 id="amenities-modal-title" className="tracking-tight text-2xl font-bold">All Amenities</h2>
-                        </div>
-                        <button type="button" onClick={() => setShowAmenitiesModal(false)} className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 p-1 z-10" aria-label="Close">
-                            <X className="h-5 w-5" />
-                        </button>
-                        <div className="overflow-y-auto flex-1 min-h-0 pt-4 -mt-2 pr-2 pb-32 max-[525px]:pb-36">
-                            <div className="space-y-6">
-                                {(() => {
-                                    const amenities = property?.amenities || [];
-                                    const grouped = amenities.reduce((acc, a) => {
-                                        const name = typeof a === 'object' ? a?.name : a;
-                                        if (!name) return acc;
-                                        const category = getAmenityCategory(a, name);
-                                        if (!acc[category]) acc[category] = [];
-                                        const iconSrc = mapAmenityToObject(name)?.image || DEFAULT_AMENITY_ICON;
-                                        acc[category].push({ name, iconSrc });
-                                        return acc;
-                                    }, {});
-                                    return AMENITY_CATEGORY_ORDER.map((cat) => (
-                                        <div key={cat}>
-                                            <h3 className="font-semibold text-lg mb-4">{AMENITY_CATEGORY_LABELS[cat]}</h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                {(grouped[cat] || []).map((item, i) => (
-                                                    <div key={`${item.name}-${i}`} className="flex items-center gap-3">
-                                                        <div className="flex items-center justify-center h-10 w-10 rounded-full bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)] shrink-0">
-                                                            <img src={item.iconSrc} alt={item.name} className="h-5 w-5 object-contain" />
-                                                        </div>
-                                                        <span className="text-sm">{item.name}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    ));
-                                })()}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+
 
             {/* Rating Submit Modal */}
             {showRatingModal && (
@@ -4191,38 +4103,32 @@ function PropertyDetailsContent() {
                                     {[1, 2, 3, 4, 5].map((star) => (
                                         <Star
                                             key={star}
-                                            className={`w-5 h-5 ${(property.ratings?.overall > 0 && star <= property.ratings.overall) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
+                                            className={`w-5 h-5 ${(ratingDisplay.overall > 0 && star <= Math.round(ratingDisplay.overall)) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
                                                 }`}
                                         />
                                     ))}
                                 </div>
                                 <span className="text-base font-bold">
-                                    {property.ratings?.overall || 'N/A'} – {property.ratings?.totalRatings || 0} Ratings
+                                    {ratingDisplay.overall || 'N/A'} – {ratingDisplay.totalRatings || 0} Ratings
                                 </span>
                             </div>
 
                             {/* Rating Bars */}
                             <div className="space-y-1.5 mb-6 scroll-animate" data-animation="animate-fade-up">
                                 {[5, 4, 3, 2, 1].map((star) => {
-                                    const getBreakdownCount = (star) => {
-                                        if (!property.ratings?.breakdown) return 0;
-                                        // Handle both Map and object formats
-                                        const breakdown = property.ratings.breakdown;
-                                        return breakdown[star] || breakdown[String(star)] || 0;
-                                    };
-                                    const count = getBreakdownCount(star);
-                                    const percentage = property.ratings?.totalRatings ? (count / property.ratings.totalRatings) * 100 : 0;
+                                    const count = ratingDisplay.breakdown[star] || ratingDisplay.breakdown[String(star)] || 0;
+                                    const percentage = ratingDisplay.totalRatings ? Math.round((count / ratingDisplay.totalRatings) * 100) : 0;
 
                                     return (
-                                        <div key={star} className="flex items-center gap-4">
-                                            <span className="text-xs font-medium w-16 whitespace-nowrap flex-shrink-0">{star} Star</span>
-                                            <div className="flex-1 bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                                        <div key={star} className="flex items-center gap-3 py-1">
+                                            <span className="text-[10px] font-medium w-10 whitespace-nowrap flex-shrink-0 uppercase tracking-tight">{star} star</span>
+                                            <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden leading-none">
                                                 <div
-                                                    className="bg-yellow-400 h-1.5 rounded-full"
+                                                    className="h-full bg-yellow-400 rounded-full"
                                                     style={{ width: `${percentage}%` }}
                                                 />
                                             </div>
-                                            <span className="text-xs font-medium w-10 text-right flex-shrink-0">{Math.round(percentage)}%</span>
+                                            <span className="text-[10px] font-bold w-7 text-right flex-shrink-0">{percentage}%</span>
                                         </div>
                                     );
                                 })}
@@ -4392,47 +4298,6 @@ function PropertyDetailsContent() {
                 </div>
 
                 {/* Promotional Banner Section - Full Width */}
-                <section className="relative bg-primary text-primary-foreground overflow-hidden py-16 mt-6 md:mt-12 rounded-lg md:rounded-3xl scroll-animate" data-animation="animate-slide-top">
-                    <div className="absolute -top-10 -left-10 w-32 h-32 bg-primary-foreground/10 rounded-full"></div>
-                    <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-primary-foreground/10 rounded-full"></div>
-                    <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                        <div className="grid md:grid-cols-2 items-center gap-8">
-                            <div className="text-center md:text-left">
-                                <h2 className="text-2xl md:text-4xl font-bold mb-4">Brokerage - Free Real Estate at Your Fingertips</h2>
-                                <p className="text-primary-foreground/80 mb-8 max-w-md mx-auto md:mx-0 text-sm md:text-base">Buildersinfo is India&apos;s first brokerage-free real estate discovery platform. Find properties, projects and builders in your city.</p>
-                                <div className="flex items-center justify-center md:justify-start gap-4">
-                                    <a className="inline-block transition-transform hover:scale-105" href="#">
-                                        <img
-                                            alt="Download on the App Store"
-                                            src="https://c.housingcdn.com/demand/s/client/common/assets/app-store.10009972.png"
-                                            width="144"
-                                            height="48"
-                                            className="h-12 w-auto"
-                                        />
-                                    </a>
-                                    <a className="inline-block transition-transform hover:scale-105" href="#">
-                                        <img
-                                            alt="Get it on Google Play"
-                                            src="https://c.housingcdn.com/demand/s/client/common/assets/google-play.2c209e8c.png"
-                                            width="144"
-                                            height="48"
-                                            className="h-12 w-auto"
-                                        />
-                                    </a>
-                                </div>
-                            </div>
-                            <div className="relative h-full min-h-[250px] md:min-h-[300px] hidden md:flex items-center justify-center">
-                                <img
-                                    alt="BuildersInfo App on a phone"
-                                    src="https://i.ibb.co/v6CN21Pt/image-Photoroom.png"
-                                    width="300"
-                                    height="300"
-                                    className="object-contain"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </section>
 
                 {/* Reviews Modal - Desktop */}
                 {showReviewsModal && (
@@ -4780,16 +4645,29 @@ function PropertyDetailsContent() {
                 </div>
             )}
 
-            {/* Video Modal - separate modal for video */}
+            {/* Video Modal - full screen video */}
             {showVideoModal && (property.propertyVideos?.[0]?.url || property.video) && (
-                <div className="fixed inset-0 bg-black/90 flex flex-col z-[9999]" onClick={() => setShowVideoModal(false)}>
-                    <div className="flex items-center justify-between p-4 bg-black/50">
-                        <h3 className="text-white text-lg font-bold">Video</h3>
-                        <button onClick={(e) => { e.stopPropagation(); setShowVideoModal(false); }} className="p-2 rounded-full hover:bg-white/20 text-white cursor-pointer"><X className="h-6 w-6" /></button>
-                    </div>
-                    <div className="flex-1 flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
-                        <video controls autoPlay className="max-w-full max-h-[80vh] rounded-xl" src={property.propertyVideos?.[0]?.url || property.video}>
-                            <source src={property.propertyVideos?.[0]?.url || property.video} type={getVideoMimeType(property.propertyVideos?.[0]?.url || property.video)} />
+                <div className="fixed inset-0 bg-black flex flex-col z-[10000]" onClick={() => setShowVideoModal(false)}>
+                    {/* Absolute Close Button */}
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); setShowVideoModal(false); }} 
+                        className="absolute top-6 right-6 z-[10001] p-3 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm transition-all focus:outline-none cursor-pointer group"
+                        title="Close Video"
+                    >
+                        <X className="h-7 w-7 group-hover:scale-110 transition-transform" />
+                    </button>
+
+                    <div className="flex-1 w-full h-full overflow-hidden flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                        <video 
+                            key={property.propertyVideos?.[0]?.url || property.video}
+                            controls 
+                            autoPlay 
+                            muted 
+                            loop 
+                            preload="auto"
+                            className="w-full h-full object-contain" 
+                            src={property.propertyVideos?.[0]?.url || property.video}
+                        >
                             Your browser does not support the video tag.
                         </video>
                     </div>

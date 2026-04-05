@@ -184,4 +184,26 @@ body {
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
 }
+/* Ultra-thin scrollbar */
+.scrollbar-ultra-thin::-webkit-scrollbar {
+  width: 1px;
+  height: 1px;
+}
 
+.scrollbar-ultra-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-ultra-thin::-webkit-scrollbar-thumb {
+  background: var(--border-secondary);
+  border-radius: 10px;
+  opacity: 0.3;
+}
+
+.scrollbar-ultra-thin::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+.scrollbar-ultra-thin {
+  scrollbar-width: thin;
+}
