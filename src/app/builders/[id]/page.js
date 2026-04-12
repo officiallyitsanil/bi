@@ -212,7 +212,7 @@ export default function BuilderDetailPage() {
       {/* Sticky header on scroll - desktop only */}
       {scrolled && (
         <div className={`hidden md:block fixed top-[48px] left-0 right-0 z-40 backdrop-blur-sm border-t border-b shadow-sm ${isDark ? 'bg-[#1f2229]/95 border-gray-700 border-t-gray-700' : 'bg-white/95 border-gray-200 border-t-gray-100'}`}>
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-[425px]:px-3 py-3 flex justify-between items-center">
+          <div className="w-full px-4 sm:px-6 lg:px-8 max-[425px]:px-3 py-3 flex justify-between items-center">
             <div className="flex items-center gap-4">
               <div className={`relative w-10 h-10 rounded-full overflow-hidden border shrink-0 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
                 {builder.logo ? (
@@ -249,7 +249,7 @@ export default function BuilderDetailPage() {
         </div>
       )}
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-[425px]:px-3 py-10 pt-10 md:pt-7 pb-40 md:pb-10 max-[425px]:pb-36 max-[425px]:py-6">
+      <div className="w-full px-4 sm:px-6 lg:px-8 max-[425px]:px-3 py-10 pt-10 md:pt-7 pb-40 md:pb-10 max-[425px]:pb-36 max-[425px]:py-6">
         {/* Back + Breadcrumb */}
         <div className="flex items-center gap-2 -mt-2 mb-6 max-[425px]:mb-4">
           <button onClick={() => router.back()} className={`md:hidden p-2 -ml-2 rounded-lg max-[425px]:p-1.5 ${isDark ? 'hover:bg-white/10' : 'hover:bg-gray-200'}`}>

@@ -102,11 +102,11 @@ export default function FiltersModal({
 
   const handleSizeUnitChange = (unit) => {
     setSizeUnit(unit);
-    
+
     // Convert current size values when unit changes
     setLocalFilters((prev) => {
       const newSize = [...prev.size];
-      
+
       if (unit === 'Square Feet' && sizeUnit === 'Square Yards') {
         // Convert from square yards to square feet (1 sq yard = 9 sq feet)
         newSize[0] = Math.round(prev.size[0] * 9);
@@ -116,7 +116,7 @@ export default function FiltersModal({
         newSize[0] = Math.round(prev.size[0] / 9);
         newSize[1] = Math.round(prev.size[1] / 9);
       }
-      
+
       return { ...prev, size: newSize };
     });
   };
@@ -189,15 +189,13 @@ export default function FiltersModal({
 
                   key={t}
 
-                  className={`px-3 py-1.5 rounded-full border text-sm font-medium cursor-pointer flex items-center gap-2 capitalize ${
-
-                    localFilters.type[t]
+                  className={`px-3 py-1.5 rounded-full border text-sm font-medium cursor-pointer flex items-center gap-2 capitalize ${localFilters.type[t]
 
                       ? "border-black bg-gray-100"
 
                       : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
 
-                  }`}
+                    }`}
 
                 >
 
@@ -241,15 +239,13 @@ export default function FiltersModal({
 
                   key={opt}
 
-                  className={`px-3 py-1.5 rounded-full border text-sm font-medium cursor-pointer flex items-center gap-2 capitalize ${
-
-                    localFilters.listedBy[opt]
+                  className={`px-3 py-1.5 rounded-full border text-sm font-medium cursor-pointer flex items-center gap-2 capitalize ${localFilters.listedBy[opt]
 
                       ? "border-black bg-gray-100"
 
                       : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
 
-                  }`}
+                    }`}
 
                 >
 
@@ -483,7 +479,7 @@ export default function FiltersModal({
 
               <h3 className="text-base font-medium text-gray-900">Size</h3>
 
-              <select 
+              <select
                 value={sizeUnit}
                 onChange={(e) => handleSizeUnitChange(e.target.value)}
                 className="px-3 hover:cursor-pointer py-1.5 border border-gray-300 rounded-full text-sm bg-gray-100"

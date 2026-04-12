@@ -541,7 +541,7 @@ export default function BuildersPage() {
           />
         </div>
         <div className="absolute inset-0 bg-black/60 z-[1]" />
-        <div className="relative z-10 container mx-auto px-4 max-[425px]:px-3 w-full max-w-full">
+        <div className="relative z-10 px-4 max-[425px]:px-3 w-full max-w-full">
           <div className="grid md:grid-cols-2 gap-16 max-[425px]:gap-6 items-center">
             {/* Left: heading + search/filters box */}
             <div className="min-w-0">
@@ -673,7 +673,7 @@ export default function BuildersPage() {
 
       {/* Builders Section - Two-column layout per builder */}
       <div className={`min-h-screen overflow-x-hidden transition-colors ${isDark ? 'bg-[#1f2229]' : 'bg-gray-100'}`}>
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 max-[425px]:px-2 py-4 sm:py-6 max-[425px]:py-3">
+        <div className="w-full px-3 sm:px-4 max-[425px]:px-2 py-4 sm:py-6 max-[425px]:py-3">
           {/* Top bar: results + Sort by + view toggle — small */}
           <div className="flex flex-wrap items-center justify-between gap-2 mb-4 max-[425px]:mb-3">
             <p className={`text-xs max-[425px]:text-[11px] font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{sortedBuilders.length} results found</p>

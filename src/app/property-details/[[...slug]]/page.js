@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
+import { useTheme } from "@/context/ThemeContext";
 import {
     Share2,
     CornerUpRight,
@@ -53,6 +54,7 @@ import {
     GlassWater,
     Milk,
     CirclePlus,
+    Plus,
     Video,
     Clock,
     Car,
@@ -61,7 +63,6 @@ import {
     X,
     Wifi,
     Footprints,
-    BadgeCheck
 } from "lucide-react";
 import PDFViewer from "@/components/PDFViewer";
 import GoogleMap from "@/components/GoogleMap";
@@ -259,6 +260,7 @@ const AnimatedText = ({ children, className = "", delay = 0, lineColor = "#f8c02
 };
 
 function PropertyDetailsContent() {
+    const { isDark } = useTheme();
     const [activeTab, setActiveTab] = useState('amenities');
     const [selectedCapacity, setSelectedCapacity] = useState('6-15 Seats');
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -330,6 +332,9 @@ function PropertyDetailsContent() {
     const [travelResults, setTravelResults] = useState([]);
     const [travelLoading, setTravelLoading] = useState(false);
     const [travelError, setTravelError] = useState("");
+    const [visibleCount, setVisibleCount] = useState(9);
+    const thumbStripRef = useRef(null);
+
     const handleSliderNavClick = (e, isPrev) => {
         if (e.currentTarget.classList.contains("swiper-button-disabled")) {
             setSliderBanner({ show: true, msg: isPrev ? "First slide" : "No more slides" });
@@ -351,8 +356,10 @@ function PropertyDetailsContent() {
     const validateTourForm = () => {
         const err = {};
         if (!tourFormData.name?.trim()) err.name = "Name is required";
+        if (!tourFormData.phone?.trim()) err.phone = "Phone is required";
+        if (!tourFormData.email?.trim()) err.email = "Email is required";
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(tourFormData.email)) err.email = "Enter a valid email";
         if (!selectedTourTime) err.tourTime = "Please select a tour time";
-        if (tourFormData.email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(tourFormData.email)) err.email = "Enter a valid email";
         setTourFormErrors(err);
         return Object.keys(err).length === 0;
     };
@@ -441,6 +448,31 @@ function PropertyDetailsContent() {
         d.setDate(d.getDate() + i);
         return d;
     });
+
+    useEffect(() => {
+        const updateVisibleCount = () => {
+            if (thumbStripRef.current) {
+                const width = thumbStripRef.current.offsetWidth;
+                const gap = 12; // gap-3 (0.75rem = 12px)
+                const targetThumbWidth = 82; // Target width for thumbnails
+                // n * targetThumbWidth + (n-1) * gap <= width
+                // n * (targetThumbWidth + gap) - gap <= width
+                // n <= (width + gap) / (targetThumbWidth + gap)
+                const count = Math.floor((width + gap) / (targetThumbWidth + gap));
+                setVisibleCount(Math.min(12, Math.max(1, count)));
+            }
+        };
+
+        updateVisibleCount();
+        const resizeObserver = new ResizeObserver(updateVisibleCount);
+        if (thumbStripRef.current) {
+            resizeObserver.observe(thumbStripRef.current);
+        }
+
+        return () => {
+            resizeObserver.disconnect();
+        };
+    }, [property]);
     const searchParams = useSearchParams();
     const params = useParams();
 
@@ -750,14 +782,14 @@ function PropertyDetailsContent() {
 
                     setProperty(formattedProperty);
                 } else {
-                    console.error('❌ Property not found in database');
+                    console.error('âŒ Property not found in database');
                     console.error('Response was:', data);
                     console.error('data.success:', data.success);
                     console.error('data.property:', data.property);
                     console.error('Full response:', JSON.stringify(data, null, 2));
                 }
             } catch (error) {
-                console.error('❌ Error fetching property from API:', error);
+                console.error('âŒ Error fetching property from API:', error);
                 console.error('Error message:', error.message);
                 console.error('Error stack:', error.stack);
             }
@@ -1371,7 +1403,7 @@ function PropertyDetailsContent() {
         : `${brandDisplayName} Workspace, established in 2014, specializes in providing Zero CapEx, Enterprise Grade, Customized managed office spaces. With 26+ locations in Bangalore and an expansion to Mumbai, ${brandDisplayName}'s flagship HSR campus is the largest in India, offering over 8,000 seats...`;
 
     return (
-        <main className="property-details-compact min-h-screen bg-secondary pb-44 md:pb-0 pt-6">
+        <main className={`property-details-compact min-h-screen pb-44 md:pb-0 pt-6 transition-colors duration-300 ${isDark ? 'bg-[#121418]' : 'bg-secondary'}`}>
             {/* Slider boundary banner - shows when prev/next at first/last slide */}
             {sliderBanner.show && (
                 <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 rounded-lg bg-gray-900/90 text-white text-sm font-medium shadow-lg animate-fade-in" role="status">
@@ -1380,34 +1412,34 @@ function PropertyDetailsContent() {
             )}
             {/* Sticky Header - Desktop Only */}
             {showStickyHeader && (
-                <div className="hidden md:block fixed top-[48px] left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-t border-b border-gray-100 shadow-sm animate-fade-in">
-                    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
+                <div className={`hidden md:block fixed top-[48px] left-0 right-0 z-40 backdrop-blur-sm border-t border-b shadow-sm animate-fade-in ${isDark ? 'bg-[#121418]/95 border-gray-800' : 'bg-white/95 border-gray-100'}`}>
+                    <div className="w-full px-4 md:px-6 md:px-8 py-3 flex justify-between items-center">
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                                <h1 className="text-lg font-bold truncate">{safeDisplay(property.propertyName || property.name)}</h1>
+                                <h1 className={`text-lg font-bold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(property.propertyName || property.name)}</h1>
                                 <div className="inline-flex items-center rounded-lg border px-2.5 py-0.5 text-xs font-semibold bg-amber-100 text-amber-700 border-amber-200">
                                     {safeDisplay(property.ratings?.overall)} <Star className="h-3 w-3 ml-1 fill-current" />
                                 </div>
-                                <BadgeCheck className="w-5 h-5 text-blue-500 fill-blue-500/10" />
+                                <Image src="/property-details/verfication-badge.svg" alt="Verified" width={24} height={24} className="object-contain" unoptimized />
                             </div>
                         </div>
                         <div className="flex items-center gap-4 pl-8">
                             <div className="flex items-end gap-2">
-                                <p className="text-lg font-bold text-blue-600">{safeDisplay(discountedPrice)}</p>
-                                <p className="text-sm text-gray-400 line-through">{safeDisplay(originalPrice)}</p>
+                                <p className={`text-lg font-bold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>{safeDisplay(discountedPrice)}</p>
+                                <p className={`text-sm line-through ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{safeDisplay(originalPrice)}</p>
                             </div>
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={handleCall}
-                                    className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground px-4 py-2 h-11 rounded-lg cursor-pointer"
+                                    className={`inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border px-4 py-2 h-11 rounded-lg cursor-pointer ${isDark ? 'bg-gray-800 border-gray-700 text-white hover:bg-gray-700' : 'bg-background hover:bg-accent hover:text-accent-foreground border-input'}`}
                                 >
                                     Contact
                                 </button>
                                 <button
                                     onClick={handleWhatsApp}
-                                    className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 h-11 rounded-lg cursor-pointer"
+                                    className={`inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 border px-4 py-2 h-11 rounded-lg cursor-pointer ${isDark ? 'bg-emerald-900/20 text-emerald-400 border-emerald-800/40 hover:bg-emerald-900/30' : 'bg-[#f0fff4] text-[#128c7e] border-[#c6f6d5] hover:bg-[#dcfae6]'}`}
                                 >
-                                    <img src="https://www.buildersinfo.in/property-details/whatsapp.png" alt="WhatsApp" className="w-5 h-5 object-contain" />
+                                    <img src="/property-details/agent-social/whatsapp.png" alt="WhatsApp" className="w-5 h-5 object-contain" />
                                     <span className="ml-2">WhatsApp</span>
                                 </button>
                             </div>
@@ -1416,61 +1448,67 @@ function PropertyDetailsContent() {
                 </div>
             )}
 
-            <div className="w-full px-4 sm:px-6 lg:px-8 pt-6">
+            <div className="w-full px-8 pt-6">
                 {/* Title row spans full content width (above gallery + sidebar), like listing reference */}
                 <div id="info" className="md:pt-0 mb-6 w-full min-w-0">
-                    <div className="flex flex-col lg:flex-row justify-between items-start gap-6 lg:gap-4">
-                        <div className="flex-1 min-w-0">
-                            {/* Title and Badge Row */}
-                            <div className="flex flex-wrap items-center gap-3 md:gap-4">
-                                <h1 className="text-3xl md:text-[2.75rem] md:leading-[1.1] font-bold tracking-tight text-black">{safeDisplay(property.propertyName || property.name)}</h1>
-                                <div className="inline-flex items-center rounded-full px-3 py-1 md:px-4 md:py-1.5 text-sm md:text-base font-bold bg-[#fff4e5] text-[#f97316]">
-                                    <Star className="h-4 w-4 md:h-4 md:w-4 mr-1.5 fill-current" />
-                                    {safeDisplay(property.ratings?.overall)}
+                    <div className="flex flex-row justify-between items-start gap-4">
+                        <div className="flex-1 min-w-0 pl-6">
+                            <div className="flex flex-col gap-3 w-fit">
+                                {/* Title and Rating Row */}
+                                <div className="flex flex-row items-center justify-between w-full gap-5">
+                                    <h1 className={`!text-[2.8rem] leading-[1.1] font-bold tracking-tight whitespace-nowrap ${isDark ? 'text-white' : 'text-black'}`}>{safeDisplay(property.propertyName || property.name)}</h1>
+                                    <div className="inline-flex items-center rounded-full px-3 py-2 text-lg font-bold bg-[#fff4e5] text-[#f97316] shrink-0">
+                                        <Star className="h-6 w-6 mr-1.5 fill-current" />
+                                        {safeDisplay(property.ratings?.overall)}
+                                    </div>
                                 </div>
-                            </div>
 
-                            {/* Location and Verification Row */}
-                            <div className="flex items-center gap-4 mt-4 md:mt-6">
-                                <div className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-xl border border-gray-100 bg-[#faf9f6] shrink-0">
-                                    <MapPin className="h-5 w-5 md:h-6 md:w-6 text-[#f97316] fill-[#f97316]/20" />
-                                </div>
-                                <div className="flex flex-col justify-center">
-                                    <p className="text-sm md:text-[15px] text-gray-700 leading-tight">in {safeDisplay(property.displayAddress || property.addressDisplay || property.location)}</p>
-                                    <button type="button" onClick={openGoogleMaps} className="text-[#f97316] text-sm md:text-[15px] font-medium hover:underline text-left mt-0.5">View on Map</button>
-                                </div>
-                                {/* Verified tick */}
-                                <div className="ml-2 md:ml-6 flex items-center justify-center">
-                                    <BadgeCheck className="w-5 h-5 md:w-6 md:h-6 text-blue-500 fill-blue-500/10" />
+                                {/* Location and Verification Row */}
+                                <div className="flex flex-row items-center justify-between w-full gap-5">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`flex items-center justify-center w-13 h-13 rounded-xl border shrink-0 ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-[#e4e4e7] border-gray-100'}`}>
+                                            <MapPin className="h-8 w-8 text-[#f97316] fill-[#f97316]/20" />
+                                        </div>
+                                        <div className="flex flex-col justify-center">
+                                            <p className={`text-xl leading-tight ${isDark ? 'text-gray-400' : 'text-gray-700'}`}>in {safeDisplay(property.displayAddress || property.addressDisplay || property.location)}</p>
+                                            <button type="button" onClick={openGoogleMaps} className="text-[#f97316] text-xl font-semibold hover:underline text-left mt-0.5">View on Map</button>
+                                        </div>
+                                    </div>
+                                    {/* Verified tick */}
+                                    <div className="flex items-center justify-center shrink-0">
+                                        <Image src="/property-details/verfication-badge.svg" alt="Verified" width={36} height={36} className="object-contain" unoptimized />
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex shrink-0 items-center gap-2 md:gap-3 lg:-mt-1 mt-2">
-                            <button type="button" onClick={handleLike} className="flex items-center justify-center h-10 w-10 md:h-12 md:w-12 rounded-full bg-[#f4f4f5] hover:bg-[#e4e4e7] text-gray-700 transition" aria-label="Save">
-                                <Heart className={`h-4 w-4 md:h-[1.15rem] md:w-[1.15rem] ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
+                        <div className="flex shrink-0 items-center gap-8 mt-4">
+                            <button type="button" onClick={handleLike} className={`flex items-center justify-center h-13 w-13 rounded-full transition aria-label="Save" ${isDark ? 'bg-gray-800 text-white hover:bg-gray-700' : 'bg-[#f4f4f5] text-gray-700 hover:bg-[#e4e4e7]'}`}>
+                                <Heart className={`h-[1.2rem] w-[1.2rem] ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
                             </button>
-                            <button type="button" onClick={handleShare} className="flex items-center justify-center h-10 w-10 md:h-12 md:w-12 rounded-full bg-[#f4f4f5] hover:bg-[#e4e4e7] text-gray-700 transition" aria-label="Share">
-                                <Share2 className="h-4 w-4 md:h-[1.15rem] md:w-[1.15rem]" />
+                            <button type="button" onClick={handleShare} className={`flex items-center justify-center h-13 w-13 rounded-full transition aria-label="Share" ${isDark ? 'bg-gray-800 text-white hover:bg-gray-700' : 'bg-[#f4f4f5] text-gray-700 hover:bg-[#e4e4e7]'}`}>
+                                <Share2 className="h-[1.2rem] w-[1.2rem]" />
                             </button>
                             {mapsExternalUrl && (
-                                <a href={mapsExternalUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center h-10 w-10 md:h-12 md:w-12 rounded-full bg-[#f4f4f5] hover:bg-[#e4e4e7] text-gray-700 transition" aria-label="Directions — open in Google Maps">
-                                    <CornerUpRight className="h-4 w-4 md:h-[1.15rem] md:w-[1.15rem]" />
+                                <a href={mapsExternalUrl} target="_blank" rel="noopener noreferrer" className={`flex items-center justify-center h-13 w-13 rounded-full transition aria-label="Directions â€” open in Google Maps" ${isDark ? 'bg-gray-800 text-white hover:bg-gray-700' : 'bg-[#f4f4f5] text-gray-700 hover:bg-[#e4e4e7]'}`}>
+                                    <CornerUpRight className="h-[1.2rem] w-[1.2rem]" />
                                 </a>
                             )}
                             {propertyDetailsFullUrl && (
-                                <a href={propertyDetailsFullUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center h-10 w-10 md:h-12 md:w-12 rounded-full bg-[#f4f4f5] hover:bg-[#e4e4e7] text-gray-700 transition" aria-label="Open property page in new tab">
-                                    <SquareArrowOutUpRight className="h-4 w-4 md:h-[1.15rem] md:w-[1.15rem]" />
+                                <a href={propertyDetailsFullUrl} target="_blank" rel="noopener noreferrer" className={`flex items-center justify-center h-13 w-13 rounded-full transition aria-label="Open property page in new tab" ${isDark ? 'bg-gray-800 text-white hover:bg-gray-700' : 'bg-[#f4f4f5] text-gray-700 hover:bg-[#e4e4e7]'}`}>
+                                    <SquareArrowOutUpRight className="h-[1.2rem] w-[1.2rem]" />
                                 </a>
                             )}
                         </div>
                     </div>
                 </div>
+                {/* Horizontal line between title and gallery */}
+                <div className={`h-px w-full mb-8 ${isDark ? 'bg-gray-800' : 'bg-gray-200'}`} />
 
-                <div className="flex flex-col lg:flex-row lg:items-start gap-6 w-full min-w-0">
+                <div className="flex flex-row items-start gap-7 w-full min-w-0">
                     {/* Main Content - ~65% on desktop: gallery + details */}
-                    <div className="w-full lg:flex-[13] lg:min-w-0">
+                    <div className="w-[67%] min-w-0 pl-6">
                         <div className="space-y-6">
                             {/* Image Gallery - Mobile: single image with arrows */}
                             <div
@@ -1480,9 +1518,9 @@ function PropertyDetailsContent() {
                                 onTouchEnd={handleTouchEnd}
                             >
                                 {/* Single column wrapper so thumb row is same width as the 3-col grid above */}
-                                <div className="grid w-full min-w-0 grid-cols-1 gap-y-2">
-                                    <div className="property-details-gallery grid w-full min-w-0 grid-cols-1 md:grid-cols-3 md:grid-rows-2 gap-2 md:h-[450px]">
-                                        <div className="relative md:col-span-2 md:row-span-2 rounded-2xl overflow-hidden group cursor-pointer aspect-[4/3] md:aspect-auto bg-muted">
+                                <div className="grid w-full min-w-0 grid-cols-1 gap-y-5">
+                                    <div className="property-details-gallery grid w-full min-w-0 grid-cols-1 md:grid-cols-5 md:grid-rows-2 gap-5 h-[450px]">
+                                        <div className="relative md:col-span-3 md:row-span-2 rounded-2xl overflow-hidden group cursor-pointer aspect-[4/3] md:aspect-auto bg-muted border border-gray-200">
                                             {images[currentImageIndex] ? (
                                                 <img
                                                     src={images[currentImageIndex]}
@@ -1494,9 +1532,9 @@ function PropertyDetailsContent() {
                                                 <div className="w-full h-full bg-muted" aria-hidden />
                                             )}
                                         </div>
-                                        <div className="relative md:col-span-1 md:row-span-1 aspect-[4/3] md:aspect-auto z-[1] overflow-visible">
+                                        <div className="relative md:col-span-2 md:row-span-1 aspect-[4/3] md:aspect-auto z-[1] overflow-visible">
                                             <div
-                                                className="relative h-full w-full rounded-2xl overflow-hidden cursor-pointer bg-muted"
+                                                className="relative h-full w-full rounded-2xl overflow-hidden cursor-pointer bg-muted border border-gray-200"
                                                 onClick={() => setFullScreenImage(images[1] || images[0])}
                                                 role="presentation"
                                             >
@@ -1523,8 +1561,8 @@ function PropertyDetailsContent() {
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="relative md:col-span-1 md:row-span-1 aspect-[4/3] md:aspect-auto z-[1] overflow-visible">
-                                            <div className="relative h-full w-full overflow-hidden rounded-2xl bg-muted shadow-sm">
+                                        <div className="relative md:col-span-2 md:row-span-1 aspect-[4/3] md:aspect-auto z-[1] overflow-visible">
+                                            <div className="relative h-full w-full overflow-hidden rounded-2xl bg-muted shadow-sm border border-gray-200">
                                                 {galleryInlineVideoActive && galleryVideoUrl ? (
                                                     <video
                                                         key={galleryVideoUrl}
@@ -1563,11 +1601,6 @@ function PropertyDetailsContent() {
                                                                 <CirclePlay className="h-10 w-10 text-white drop-shadow-md md:h-11 md:w-11" strokeWidth={1.25} />
                                                             </span>
                                                         </button>
-                                                        <div className="pointer-events-none absolute bottom-3 left-3 right-3 md:bottom-3.5 md:left-4 md:right-4" aria-hidden>
-                                                            <div className="relative h-0.5 w-full rounded-full bg-white/50">
-                                                                <span className="absolute -left-px -top-1.5 h-3 w-3 rounded-full bg-white shadow-md ring-2 ring-white/90" />
-                                                            </div>
-                                                        </div>
                                                     </>
                                                 )}
                                             </div>
@@ -1590,21 +1623,21 @@ function PropertyDetailsContent() {
                                         </div>
                                     </div>
                                     <div className="w-full min-w-0 self-stretch pb-2 relative col-span-1">
-                                        <div className="gallery-thumb-strip flex w-full min-w-0 flex-nowrap items-center justify-between gap-1 px-1">
+                                        <div ref={thumbStripRef} className="gallery-thumb-strip flex w-full min-w-0 flex-nowrap items-center gap-3 overflow-hidden">
                                             {images.length === 0 ? null : (() => {
                                                 const total = images.length;
-                                                /** Max 9 cells: if more than 9 images, 8 thumbs + "Show all" on the 9th */
-                                                const MAX_THUMB_STRIP = 9;
+                                                /** Dynamic cells: based on measured width, if more than visibleCount images, visibleCount-1 thumbs + "Show all" */
                                                 const cellClass =
-                                                    "relative m-0 h-20 w-28 shrink-0 cursor-pointer overflow-hidden rounded-xl";
-                                                if (total <= MAX_THUMB_STRIP) {
+                                                    "relative m-0 h-20 flex-1 shrink-0 cursor-pointer overflow-hidden rounded-xl border border-gray-200 min-w-0";
+                                                
+                                                if (total <= visibleCount) {
                                                     return images.map((img, i) => (
                                                         <div key={i} className={cellClass} onClick={() => setCurrentImageIndex(i)}>
                                                             <img src={img} alt="" className="h-full w-full object-cover" />
                                                         </div>
                                                     ));
                                                 }
-                                                const plainCount = MAX_THUMB_STRIP - 1;
+                                                const plainCount = visibleCount - 1;
                                                 return [
                                                     ...images.slice(0, plainCount).map((img, i) => (
                                                         <div key={`t-${i}`} className={cellClass} onClick={() => setCurrentImageIndex(i)}>
@@ -1631,29 +1664,29 @@ function PropertyDetailsContent() {
                                 </div>
                             </div>
 
-                            {/* Specs Card — layout aligned to listing summary reference */}
-                            <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm" id="specs">
+                            {/* Specs Card â€” layout aligned to listing summary reference */}
+                            <div className={`overflow-hidden rounded-xl border transition-colors ${isDark ? 'border-gray-800 bg-[#1f2229]' : 'border-gray-200 bg-card'}`} id="specs">
                                 <div className="p-5 md:p-6">
-                                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                                         <div className="min-w-0 flex-1">
-                                            <h2 className="text-[20px] font-normal leading-snug tracking-tight text-gray-900 md:text-[22px]">{specsCardTitle}</h2>
+                                            <h2 className={`text-[20px] font-normal leading-snug tracking-tight md:text-[22px] ${isDark ? 'text-white' : 'text-gray-900'}`}>{specsCardTitle}</h2>
                                             <div className="mt-3 flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-                                                <span className="text-[13.5px] text-gray-900">
+                                                <span className={`text-[13.5px] ${isDark ? 'text-gray-400' : 'text-gray-900'}`}>
                                                     Quoted price{isNegotiablePrice ? " (negotiable)" : ""}
                                                 </span>
                                                 {showSeatOriginalStrike && (
-                                                    <span className="text-[16px] text-gray-500 line-through">
+                                                    <span className={`text-[16px] line-through ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
                                                         {safeDisplay(originalPricePerSeat)}
                                                     </span>
                                                 )}
-                                                <span className="font-serif text-[30px] font-bold tracking-tight text-[#17592f] md:text-[34px]">
+                                                <span className={`font-serif text-[30px] font-bold tracking-tight md:text-[34px] ${isDark ? 'text-emerald-400' : 'text-[#17592f]'}`}>
                                                     {safeDisplay(discountedPricePerSeat ?? discountedPrice)}
                                                 </span>
-                                                <span className="text-[13.5px] text-gray-900">/ seat / month</span>
+                                                <span className={`text-[13.5px] ${isDark ? 'text-gray-400' : 'text-gray-900'}`}>/ seat / month</span>
                                             </div>
                                         </div>
                                         <div
-                                            className="relative inline-flex w-full max-w-full shrink-0 items-start justify-between gap-3 rounded-l-[2rem] bg-gradient-to-r from-[#e3f2e6] via-[#e3f2e6]/70 to-transparent py-2.5 pl-3 pr-2 lg:w-auto lg:max-w-fit mt-1 lg:mt-0"
+                                            className="relative inline-flex w-full max-w-full shrink-0 items-start justify-between gap-3 rounded-l-[2rem] bg-gradient-to-r from-[#e3f2e6] via-[#e3f2e6]/70 to-transparent py-2.5 pl-3 pr-2 md:w-auto md:max-w-fit mt-1 md:mt-0"
                                             role="note"
                                         >
                                             <div className="flex flex-1 items-start gap-2.5">
@@ -1677,15 +1710,15 @@ function PropertyDetailsContent() {
 
                                 <div className="grid grid-cols-1 gap-6 p-5 md:grid-cols-3 md:px-6 md:py-5">
                                     <div className="flex min-w-0 items-start gap-3">
-                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary/35 bg-background">
+                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
                                             <img src="/property-details/other-details/property.png" alt="Property Type" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
                                         </div>
                                         <div className="min-w-0 pt-0.5">
-                                            <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>
                                                 Property Type
                                                 <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden />
                                             </p>
-                                            <p className="mt-1 break-words text-sm font-bold text-foreground">
+                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
                                                 {safeDisplay(
                                                     property.displayPropertyType ||
                                                     property.propertySubtype ||
@@ -1699,29 +1732,29 @@ function PropertyDetailsContent() {
                                         </div>
                                     </div>
                                     <div className="flex min-w-0 items-start gap-3">
-                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary/35 bg-background">
+                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
                                             <img src="/property-details/other-details/furnshing.png" alt="Furnishing" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
                                         </div>
                                         <div className="min-w-0 pt-0.5">
-                                            <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>
                                                 Furnishing level
                                                 <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden />
                                             </p>
-                                            <p className="mt-1 break-words text-sm font-bold text-foreground">
+                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
                                                 {safeDisplay(property.furnishingLevel || property.furnishingStatus || property.furnishing)}
                                             </p>
                                         </div>
                                     </div>
                                     <div className="flex min-w-0 items-start gap-3">
-                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary/35 bg-background">
+                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
                                             <img src="/property-details/other-details/building.png" alt="Building Lease" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
                                         </div>
                                         <div className="min-w-0 pt-0.5">
-                                            <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>
                                                 Building Lease
                                                 <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden />
                                             </p>
-                                            <p className="mt-1 break-words text-sm font-bold text-foreground">
+                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
                                                 {safeDisplay(property.buildingLease)}
                                             </p>
                                         </div>
@@ -1729,48 +1762,48 @@ function PropertyDetailsContent() {
                                 </div>
 
                                 <div className="px-5 md:px-6">
-                                    <div className="h-px w-full bg-gray-200 dark:bg-border" />
+                                    <div className={`h-px w-full ${isDark ? 'bg-gray-800' : 'bg-gray-200'}`} />
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-6 p-5 md:grid-cols-3 md:px-6 md:py-5">
                                     <div className="flex min-w-0 items-start gap-3">
-                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary/35 bg-background">
+                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
                                             <img src="/property-details/other-details/property.png" alt="Min Inventory" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
                                         </div>
                                         <div className="min-w-0 pt-0.5">
-                                            <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>
                                                 Min. inventory unit
                                                 <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden />
                                             </p>
-                                            <p className="mt-1 break-words text-sm font-bold text-foreground">
+                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
                                                 {safeDisplay(property.minInventoryUnit)}
                                             </p>
                                         </div>
                                     </div>
                                     <div className="flex min-w-0 items-start gap-3">
-                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary/35 bg-background">
+                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
                                             <img src="/property-details/other-details/property.png" alt="Max Inventory" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
                                         </div>
                                         <div className="min-w-0 pt-0.5">
-                                            <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>
                                                 Max. inventory unit
                                                 <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden />
                                             </p>
-                                            <p className="mt-1 break-words text-sm font-bold text-foreground">
+                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
                                                 {safeDisplay(property.maxInventoryUnit)}
                                             </p>
                                         </div>
                                     </div>
                                     <div className="flex min-w-0 items-start gap-3">
-                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary/35 bg-background">
+                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
                                             <img src="/property-details/other-details/property.png" alt="Capacity" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
                                         </div>
                                         <div className="min-w-0 pt-0.5">
-                                            <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>
                                                 Single floor Capacity
                                                 <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden />
                                             </p>
-                                            <p className="mt-1 break-words text-sm font-bold text-foreground">
+                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
                                                 {safeDisplay(property.singleFloorCapacity)}
                                             </p>
                                         </div>
@@ -1781,13 +1814,13 @@ function PropertyDetailsContent() {
                             {/* Custom Infrastructure - DB: customInfrastructure */}
                             {property.customInfrastructure && property.customInfrastructure.length > 0 && (
                                 <div
-                                    className="rounded-xl border border-gray-200/90 bg-[#f4f4fb] px-5 py-6 shadow-sm dark:border-border dark:bg-muted/25"
+                                    className={`rounded-xl px-5 py-6 transition-colors ${isDark ? 'bg-[#282c34]' : 'bg-[#f4f4fb]'}`}
                                     id="custom-infra"
                                 >
-                                    <h3 className="mb-6 text-left text-lg font-bold leading-snug text-foreground md:text-xl">
-                                        Custom infrastructure possible in your Managed Office <span aria-hidden>✨</span>
+                                    <h3 className={`mb-6 text-left text-lg font-bold leading-snug md:text-xl ${isDark ? 'text-white' : 'text-foreground'}`}>
+                                        Custom infrastructure possible in your Managed Office <span aria-hidden>âœ¨</span>
                                     </h3>
-                                    <div className="grid grid-cols-2 justify-items-center gap-x-4 gap-y-8 sm:grid-cols-3 md:grid-cols-5 md:gap-x-2 md:gap-y-0 lg:gap-x-6">
+                                    <div className="grid grid-cols-2 justify-items-center gap-x-4 gap-y-8 md:grid-cols-3 md:grid-cols-5 md:gap-x-2 md:gap-y-0 md:gap-x-6">
                                         {property.customInfrastructure.map((item, i) => {
                                             const name = typeof item === "object" ? item?.name : item;
                                             const id = typeof item === "object" && item?.id != null ? item.id : i + 1;
@@ -1817,22 +1850,22 @@ function PropertyDetailsContent() {
                             )}
 
                             {/* Amenities - DB: amenities (id, name, category) */}
-                            <div className="rounded-lg border theme-bg-card theme-shadow-sm" id="amenities">
+                            <div className={`rounded-lg border transition-colors ${isDark ? 'border-gray-800 bg-[#1f2229]' : 'border-gray-200 theme-bg-card theme-shadow-sm'}`} id="amenities">
                                 <div className="flex flex-col space-y-1.5 p-6">
-                                    <h3 className="text-lg font-bold leading-none tracking-tight">Amenities</h3>
+                                    <h3 className={`text-lg font-bold leading-none tracking-tight ${isDark ? 'text-white' : ''}`}>Amenities</h3>
                                 </div>
-                                <div data-orientation="horizontal" role="none" className="shrink-0 bg-border h-[1px] w-full" />
+                                <div data-orientation="horizontal" role="none" className={`shrink-0 h-[1px] w-full ${isDark ? 'bg-gray-800' : 'bg-gray-200'}`} />
                                 <div className="p-6 pt-6">
-                                    <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 gap-x-4 gap-y-6">
+                                    <div className="grid grid-cols-4 md:grid-cols-5 md:grid-cols-7 gap-x-4 gap-y-6">
                                         {(property.amenities || []).map((amenity, i) => {
                                             const name = typeof amenity === 'object' ? amenity?.name : amenity;
                                             const iconSrc = mapAmenityToObject(name)?.image || DEFAULT_AMENITY_ICON;
                                             return (
                                                 <div key={`${name}-${i}`} className="flex flex-col items-center text-center gap-2">
-                                                    <div className="flex items-center justify-center h-16 w-16 rounded-full bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]">
+                                                    <div className={`flex items-center justify-center h-16 w-16 rounded-full transition-shadow ${isDark ? 'bg-[#282c34] shadow-none' : 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'}`}>
                                                         <img src={iconSrc} alt={name} className="h-8 w-8 text-primary object-contain" />
                                                     </div>
-                                                    <p className="text-xs font-medium text-muted-foreground truncate w-full">{name}</p>
+                                                    <p className={`text-xs font-medium truncate w-full ${isDark ? 'text-gray-400' : 'text-muted-foreground'}`}>{name}</p>
                                                 </div>
                                             );
                                         })}
@@ -1841,15 +1874,15 @@ function PropertyDetailsContent() {
                                 </div>
                             </div>
 
-                            {/* Why choose Buildersinfo — horizontal banner (reference layout) */}
-                            <div className="rounded-xl border border-[#eceff2] bg-[#f7f8ff] p-5 md:p-6 shadow-sm sm:mx-0 -mx-4">
-                                <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
-                                    <div className="shrink-0 lg:max-w-[16rem]">
-                                        <h3 className="text-left text-[15px] md:text-[16px] font-bold leading-snug text-black">
+                            {/* Why choose Buildersinfo â€” horizontal banner (reference layout) */}
+                            <div className={`rounded-md border pl-8 pr-18 py-4 md:mx-0 -mx-4 transition-colors ${isDark ? 'border-gray-800 bg-[#282c34]' : 'border-gray-200 bg-[#f4f4fb]'}`}>
+                                <div className="flex flex-row items-center justify-between gap-12">
+                                    <div className="shrink-0 max-w-[20rem]">
+                                        <h3 className={`text-left text-[22px] font-bold leading-snug ${isDark ? 'text-white' : 'text-black'}`}>
                                             Why choose Buildersinfo ?
                                         </h3>
                                     </div>
-                                    <ul className="flex min-w-0 flex-1 flex-col gap-2 lg:pl-6">
+                                    <ul className="flex min-w-0 flex-1 flex-col gap-3 pl-8">
                                         {[
                                             "Zero brokerage fee",
                                             "Design & layout support",
@@ -1858,18 +1891,18 @@ function PropertyDetailsContent() {
                                         ].map((line) => (
                                             <li key={line} className="flex items-center gap-2">
                                                 <CircleCheckBig
-                                                    className="h-3.5 w-3.5 shrink-0 text-[#6b7280] md:h-4 md:w-4"
+                                                    className={`h-3.5 w-3.5 shrink-0 md:h-4 md:w-4 ${isDark ? 'text-gray-400' : 'text-[#6b7280]'}`}
                                                     strokeWidth={1.5}
                                                 />
-                                                <span className="text-[11px] md:text-[12px] font-medium text-[#4b5563] leading-tight">{line}</span>
+                                                <span className={`text-[15px] font-medium leading-tight ${isDark ? 'text-gray-400' : 'text-[#4b5563]'}`}>{line}</span>
                                             </li>
                                         ))}
                                     </ul>
-                                    <div className="flex shrink-0 justify-start lg:justify-end">
+                                    <div className="flex shrink-0 justify-end">
                                         <button
                                             type="button"
                                             onClick={() => handleShowInterestModal("consultation")}
-                                            className="inline-flex w-full items-center justify-center rounded-lg border border-[#4c5fd5] bg-white px-5 py-2 text-[12px] font-bold text-[#4c5fd5] transition-all hover:bg-[#4c5fd5]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4c5fd5]/30 sm:w-auto cursor-pointer"
+                                            className="inline-flex w-full items-center justify-center rounded-lg border border-[#4c5fd5] bg-white px-8 py-3 text-[14px] font-bold text-[#4c5fd5] transition-all hover:bg-[#4c5fd5]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4c5fd5]/30 md:w-auto cursor-pointer"
                                         >
                                             Get Free Consultation
                                         </button>
@@ -1880,15 +1913,16 @@ function PropertyDetailsContent() {
                             {/* Nearby Landmarks */}
                             <div
                                 id="nearby"
-                                className="overflow-hidden rounded-xl border border-gray-200 bg-white text-card-foreground shadow-sm dark:border-border dark:bg-card"
+                                className={`overflow-hidden rounded-xl border transition-colors ${isDark ? 'border-gray-800 bg-[#1f2229]' : 'border-gray-200 bg-white'}`}
                             >
-                                <div className="px-6 pb-4 pt-6">
-                                    <h3 className="text-lg font-bold leading-tight tracking-tight text-neutral-900 dark:text-foreground">
+                                <div className="px-6 pb-1 pt-6">
+                                    <h3 className={`text-lg font-bold leading-tight tracking-tight ${isDark ? 'text-white' : 'text-neutral-900'}`}>
                                         Nearby Landmarks - {safeDisplay(property.propertyName || property.name)}
                                     </h3>
                                 </div>
-                                <div className="h-px w-full bg-border" />
-                                <div className="p-6 pt-5">
+
+                                <div className="p-6 pt-0">
+                                    <div className={`h-px w-full mb-4 ${isDark ? 'bg-gray-800' : 'bg-gray-200'}`} />
                                     <div className="relative mb-6 h-56 w-full overflow-hidden rounded-lg bg-gradient-to-br from-slate-200 via-slate-100 to-slate-200 dark:from-muted dark:via-muted/80 dark:to-muted">
                                         <div
                                             className="pointer-events-none absolute inset-0 opacity-[0.35]"
@@ -1923,8 +1957,8 @@ function PropertyDetailsContent() {
                                                         setShowMoreNearby(false);
                                                     }}
                                                     className={`flex h-10 shrink-0 items-center gap-2 rounded-md border px-3.5 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${isActive
-                                                        ? "border-black bg-black text-white hover:bg-neutral-900 dark:border-white dark:bg-white dark:text-black dark:hover:bg-neutral-200"
-                                                        : "border-gray-200 bg-white text-neutral-900 hover:bg-gray-50 dark:border-border dark:bg-card dark:text-foreground dark:hover:bg-muted"
+                                                        ? (isDark ? 'border-white bg-white text-black' : 'border-black bg-black text-white hover:bg-neutral-900')
+                                                        : (isDark ? 'border-gray-700 bg-gray-800 text-white hover:bg-gray-700' : 'border-gray-200 bg-white text-neutral-900 hover:bg-gray-50')
                                                         }`}
                                                 >
                                                     {cat.localIcon ? (
@@ -1967,7 +2001,7 @@ function PropertyDetailsContent() {
                                             )?.label || activeCategory;
                                         const propNm = safeDisplay(property.propertyName || property.name);
                                         return (
-                                            <p className="mb-3 text-sm font-bold text-neutral-900 dark:text-foreground">
+                                            <p className={`mb-3 text-sm font-bold ${isDark ? 'text-gray-300' : 'text-neutral-900'}`}>
                                                 {nearbyLabel} Near by {propNm}
                                             </p>
                                         );
@@ -1979,14 +2013,14 @@ function PropertyDetailsContent() {
                                             .map((b, i) => (
                                                 <li
                                                     key={i}
-                                                    className="flex items-center justify-between gap-3 py-3 text-sm first:pt-0"
+                                                    className={`flex items-center justify-between gap-3 py-3 text-sm first:pt-0 ${isDark ? 'border-gray-700' : 'border-gray-200'}`}
                                                 >
-                                                    <span className="min-w-0 flex-1 font-medium text-neutral-900 dark:text-foreground">
+                                                    <span className={`min-w-0 flex-1 font-medium ${isDark ? 'text-gray-300' : 'text-neutral-900'}`}>
                                                         {b.name}
                                                     </span>
                                                     <div className="flex shrink-0 items-center gap-1.5">
                                                         <img src="/property-details/step-location.png" alt="Distance" className="h-[20px] w-[20px] object-contain opacity-70" aria-hidden />
-                                                        <span className="text-muted-foreground tabular-nums">{b.distance}</span>
+                                                        <span className={`tabular-nums ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>{b.distance}</span>
                                                     </div>
                                                 </li>
                                             ))}
@@ -1997,7 +2031,7 @@ function PropertyDetailsContent() {
                                             <button
                                                 type="button"
                                                 onClick={() => setShowMoreNearby(!showMoreNearby)}
-                                                className="rounded-md border border-gray-200 bg-white px-8 py-2 text-sm font-medium text-neutral-900 shadow-sm transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:border-border dark:bg-card dark:text-foreground dark:hover:bg-muted"
+                                                className={`rounded-md border px-8 py-2 text-sm font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${isDark ? 'border-gray-700 bg-gray-800 text-white hover:bg-gray-700' : 'border-gray-200 bg-white text-neutral-900 hover:bg-gray-50'}`}
                                             >
                                                 {showMoreNearby ? "View Less" : "View More"}
                                             </button>
@@ -2007,14 +2041,14 @@ function PropertyDetailsContent() {
                             </div>
 
                             {/* Check Travel Time */}
-                            <div className="rounded-lg border theme-bg-card theme-shadow-sm">
-                                <div className="flex flex-col space-y-1.5 p-6">
-                                    <h3 className="text-lg font-bold leading-none tracking-tight">Check Travel Time</h3>
+                            <div className="">
+                                <div className="flex flex-col space-y-1.5 p-6 pl-0">
+                                    <h3 className={`text-lg font-bold leading-none tracking-tight ${isDark ? 'text-white' : ''}`}>Check Travel Time</h3>
                                 </div>
-                                <div data-orientation="horizontal" role="none" className="shrink-0 bg-border h-[1px] w-full" />
+                                <div data-orientation="horizontal" role="none" className={`shrink-0 mt-1 h-[1.5px] w-[98%] mx-auto ${isDark ? 'bg-gray-800' : 'bg-gray-200'}`} />
                                 <div className="p-6 space-y-4 pt-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-4 p-4 border rounded-lg">
-                                        <div className="relative">
+                                    <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-4 pt-4">
+                                        <div className="relative min-h-[56px] flex flex-col justify-center">
                                             <PlacesAutocompleteInput
                                                 value={travelOriginInput}
                                                 onChange={(v) => { setTravelOriginInput(v); if (!v) { setTravelOrigin(null); setTravelError(""); } }}
@@ -2025,36 +2059,36 @@ function PropertyDetailsContent() {
                                                 className="w-full"
                                             />
                                             {travelError && (
-                                                <p className="text-xs text-red-500 mt-1">{travelError}</p>
+                                                <p className="text-[11px] text-red-500 absolute -bottom-5 left-1 font-medium">{travelError}</p>
                                             )}
                                         </div>
                                         <div className="flex items-center justify-center my-2 md:my-0 shrink-0">
                                             <div className="hidden md:flex items-center justify-center gap-0 min-w-[120px]">
-                                                <div className="w-3 h-3 rounded-full border-2 border-gray-800 dark:border-gray-200 bg-white shrink-0" aria-hidden />
-                                                <div className="flex-1 h-0 border-t border-dashed border-gray-400 min-w-[20px]" />
-                                                <div className="w-10 h-10 rounded-full border-2 border-gray-300 bg-white flex items-center justify-center shrink-0">
-                                                    <img src="/property-details/car-path.png" alt="Car" className="h-5 w-5 object-contain drop-shadow-sm" />
+                                                <div className={`w-5 h-5 rounded-full border-2 shrink-0 ${isDark ? 'border-gray-700 bg-[#1f2229]' : 'border-gray-800 bg-white'}`} aria-hidden />
+                                                <div className={`flex-1 h-0 border-t border-dashed min-w-[20px] ${isDark ? 'border-gray-700' : 'border-gray-400'}`} />
+                                                <div className={`w-16 h-16 rounded-full border-2 flex items-center justify-center shrink-0 shadow-sm ${isDark ? 'border-gray-700 bg-[#1f2229]' : 'border-gray-300 bg-white'}`}>
+                                                    <img src="/property-details/car-path.png" alt="Car" className="h-10 w-10 object-contain drop-shadow-sm" />
                                                 </div>
-                                                <div className="flex-1 h-0 border-t border-dashed border-gray-400 min-w-[20px]" />
-                                                <div className="w-3 h-3 rounded-full border-2 border-gray-800 dark:border-gray-200 bg-white shrink-0" aria-hidden />
+                                                <div className={`flex-1 h-0 border-t border-dashed min-w-[20px] ${isDark ? 'border-gray-700' : 'border-gray-400'}`} />
+                                                <div className={`w-5 h-5 rounded-full border-2 shrink-0 ${isDark ? 'border-gray-700 bg-[#1f2229]' : 'border-gray-800 bg-white'}`} aria-hidden />
                                             </div>
                                             <div className="md:hidden flex items-center justify-center gap-1">
-                                                <div className="w-3 h-3 rounded-full border-2 border-gray-800 bg-white" />
-                                                <ArrowDown className="h-5 w-5 text-violet-600" />
-                                                <div className="w-3 h-3 rounded-full border-2 border-gray-800 bg-white" />
+                                                <div className="w-5 h-5 rounded-full border-2 border-gray-800 bg-white" />
+                                                <ArrowDown className="h-7 w-7 text-violet-600" />
+                                                <div className="w-5 h-5 rounded-full border-2 border-gray-800 bg-white" />
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-2 p-2 border rounded-lg">
-                                            <div className="relative w-12 h-12 rounded-md overflow-hidden shrink-0 bg-muted">
+                                        <div className={`flex items-center gap-3 p-3 border rounded-lg min-h-[60px] ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
+                                            <div className={`relative w-14 h-14 rounded-md overflow-hidden shrink-0 ${isDark ? 'bg-gray-700' : 'bg-muted'}`}>
                                                 {images[0] ? (
                                                     <img src={images[0]} alt="" className="w-full h-full object-cover" />
                                                 ) : (
                                                     <div className="w-full h-full bg-muted" aria-hidden />
                                                 )}
                                             </div>
-                                            <div>
-                                                <p className="font-semibold text-sm">{safeDisplay(property.propertyName || property.name)}</p>
-                                                <p className="text-xs text-muted-foreground truncate max-w-[140px]">{safeDisplay(property.displayAddress || property.addressDisplay || property.location)}</p>
+                                            <div className="flex-1 min-w-0">
+                                                <p className={`font-bold text-[13px] leading-tight mb-1 ${isDark ? 'text-white' : ''}`}>{safeDisplay(property.propertyName || property.name)}</p>
+                                                <p className={`text-[11px] truncate ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>{safeDisplay(property.displayAddress || property.addressDisplay || property.location)}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -2062,12 +2096,12 @@ function PropertyDetailsContent() {
                                         type="button"
                                         onClick={handleShowTravelTime}
                                         disabled={travelLoading}
-                                        className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus:ring-offset-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full disabled:opacity-60 disabled:cursor-not-allowed"
+                                        className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-bold ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus:ring-offset-2 border py-4 px-4 w-full disabled:opacity-60 disabled:cursor-not-allowed shadow-none ${isDark ? 'border-gray-700 bg-gray-800 text-white hover:bg-gray-700' : 'border-gray-200 bg-transparent hover:bg-gray-50 text-gray-900'}`}
                                     >
                                         {travelLoading ? (
-                                            <span className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent" />
+                                            <span className="animate-spin rounded-full h-5 w-5 border-2 border-primary border-t-transparent" />
                                         ) : (
-                                            <CirclePlus className="mr-2 h-4 w-4" />
+                                            <Plus className="mr-2 h-5 w-5" />
                                         )}
                                         Show Travel Time
                                     </button>
@@ -2090,14 +2124,14 @@ function PropertyDetailsContent() {
                                                     <div className="flex flex-wrap gap-4">
                                                         {r.driving && (
                                                             <div className="flex items-center gap-2">
-                                                                <img src="/property-details/car-path.png" alt="Car" className="h-5 w-5 object-contain drop-shadow-sm" />
-                                                                <span className="text-sm font-medium">{r.driving.duration.text} ({r.driving.distance.text})</span>
+                                                                <img src="/property-details/car-path.png" alt="Car" className="h-10 w-10 object-contain drop-shadow-sm" />
+                                                                <span className="text-sm font-semibold">{r.driving.duration.text} ({r.driving.distance.text})</span>
                                                             </div>
                                                         )}
                                                         {r.walking && (
                                                             <div className="flex items-center gap-2">
-                                                                <Footprints className="h-5 w-5 text-primary" />
-                                                                <span className="text-sm font-medium">{r.walking.duration.text} ({r.walking.distance.text})</span>
+                                                                <Footprints className="h-10 w-10 text-primary" />
+                                                                <span className="text-sm font-semibold">{r.walking.duration.text} ({r.walking.distance.text})</span>
                                                             </div>
                                                         )}
                                                     </div>
@@ -2112,10 +2146,10 @@ function PropertyDetailsContent() {
                     </div>
 
                     {/* Sidebar - right column, top aligns with left section */}
-                    <div className="w-full lg:flex-[7] lg:flex-shrink-0 lg:self-start lg:min-w-0">
+                    <div className="flex-1 flex-shrink-0 self-start min-w-0">
                         <div className="sticky top-20 space-y-4">
-                            {/* Interested + social proof + Why Clients — single card (layout matches reference) */}
-                            <div className="rounded-xl border-none bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06)] dark:bg-card overflow-hidden">
+                            {/* Interested + social proof + Why Clients â€” single card (layout matches reference) */}
+                            <div className={`rounded-xl border-none transition-colors ${isDark ? 'bg-[#1f2229] border-gray-800 shadow-none' : 'bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06)]'}`}>
                                 {(() => {
                                     const agentName = safeDisplay(property.agentDetails?.name || property.agentName);
                                     const agentPhone = property.agentDetails?.phone || property.agentPhone || "";
@@ -2136,11 +2170,11 @@ function PropertyDetailsContent() {
                                     return (
                                         <>
                                             <div className="px-4 pt-4 pb-3">
-                                                <h3 className="text-[12.5px] text-gray-900 dark:text-gray-100 leading-snug">
+                                                <h3 className={`text-[12.5px] leading-snug ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                                                     Interested in <span className="font-bold">{propTitle}</span> ?
                                                 </h3>
 
-                                                <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 justify-between">
+                                                <div className="mt-3 flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between">
                                                     <div className="flex items-center gap-3 flex-1 min-w-0">
                                                         <div className="relative h-[44px] w-[36px] shrink-0 overflow-hidden bg-gray-100 dark:bg-gray-800 border-none rounded-[2px]">
                                                             {agentImage ? (
@@ -2152,7 +2186,7 @@ function PropertyDetailsContent() {
                                                             )}
                                                         </div>
                                                         <div className="flex flex-col min-w-0 flex-1 h-[44px] justify-between py-0.5">
-                                                            <p className="text-[11px] text-gray-900 dark:text-gray-100 leading-none">
+                                                            <p className={`text-[11px] leading-none ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                                                                 Say Hi To <span className="font-bold">{agentName}</span>
                                                             </p>
                                                             <div className="flex items-center gap-1.5 flex-wrap w-full leading-none">
@@ -2174,7 +2208,7 @@ function PropertyDetailsContent() {
                                                         </div>
                                                     </div>
 
-                                                    <div className="shrink-0 w-full sm:w-auto mt-3 sm:mt-0 flex items-center gap-2">
+                                                    <div className="shrink-0 w-full md:w-auto mt-3 md:mt-0 flex items-center gap-2">
                                                         <div className="flex items-center gap-3 px-1">
                                                             {agentPhone && (
                                                                 <a
@@ -2211,7 +2245,7 @@ function PropertyDetailsContent() {
                                                         <button
                                                             type="button"
                                                             onClick={(e) => agentPhone && handlePhoneClick(e, agentPhone)}
-                                                            className="inline-flex h-5.5 items-center justify-center rounded-[3px] border border-[#a4ecbe] bg-[#f1fdf5] px-2 text-[10px] font-bold text-[#208346] hover:bg-[#e6fceb] dark:bg-[#1f5431] dark:border-[#2d7644] dark:text-white dark:hover:bg-[#1b482a] transition-colors shadow-sm"
+                                                            className="inline-flex h-9 items-center justify-center rounded-lg border border-[#a4ecbe] bg-[#f1fdf5] px-5 text-sm font-bold text-[#208346] hover:bg-[#e6fceb] dark:bg-[#1f5431] dark:border-[#2d7644] dark:text-white dark:hover:bg-[#1b482a] transition-colors shadow-sm"
                                                         >
                                                             Contact {(agentName && agentName.split(" ")[0]) || agentName || "Agent"}
                                                         </button>
@@ -2220,17 +2254,17 @@ function PropertyDetailsContent() {
                                             </div>
 
                                             <div className="px-4 pb-4">
-                                                <div className="bg-[#eff2f4] dark:bg-gray-800/60 rounded-[4px] p-3.5">
+                                                <div className={`rounded-[4px] p-3.5 transition-colors ${isDark ? 'bg-[#282c34]' : 'bg-[#eff2f4]'}`}>
                                                     {agentTagline ? (
-                                                        <p className="text-[12px] leading-relaxed text-[#414d55] dark:text-gray-300">
+                                                        <p className={`text-[12px] leading-relaxed ${isDark ? 'text-gray-300' : 'text-[#414d55]'}`}>
                                                             {agentTagline}
                                                         </p>
                                                     ) : (
-                                                        <p className="text-[12px] leading-[1.6] text-[#414d55] dark:text-gray-300">
+                                                        <p className={`text-[12px] leading-[1.6] ${isDark ? 'text-gray-300' : 'text-[#414d55]'}`}>
                                                             {agentName ? agentName.split(" ")[0] : "Agent"}&apos;s team assisted 500+ corporates in Bangalore to move into their new office.
                                                         </p>
                                                     )}
-                                                    <div className="mt-3.5 px-2 flex flex-wrap items-center justify-between w-full gap-y-3">
+                                                    <div className="mt-3.5 px-2 flex flex-wrap items-center justify-between w-[90%] gap-y-3 mx-auto">
                                                         {(assistedLogos.length > 0 ? assistedLogos.slice(0, 5) : [
                                                             { name: "Pepsi", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Pepsi_logo_2014.svg/120px-Pepsi_logo_2014.svg.png" },
                                                             { name: "GE", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/General_Electric_logo.svg/120px-General_Electric_logo.svg.png" },
@@ -2264,37 +2298,37 @@ function PropertyDetailsContent() {
                                                 </div>
                                             </div>
 
-                                            <div className="px-4 pb-4 pt-1">
-                                                <h3 className="mb-2.5 text-[12.5px] font-bold tracking-tight text-gray-900 dark:text-gray-100">Why Clients Choose Us for Consultation</h3>
-                                                <div className="rounded-[8px] border border-gray-200 dark:border-gray-700 bg-white dark:bg-card">
-                                                    <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-                                                        <li className="flex gap-3 px-3 py-2.5">
-                                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center">
-                                                                <img src="/why-us/zero-brokerage.png" alt="" className="h-8 w-8 object-contain" />
+                                            <div className="px-5 pb-5 pt-2">
+                                                <h3 className={`mb-2.5 text-[12.5px] font-bold tracking-tight ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Why Clients Choose Us for Consultation</h3>
+                                                <div className={`rounded-[8px] border transition-colors ${isDark ? 'border-gray-700 bg-transparent' : 'border-gray-200 bg-white'}`}>
+                                                    <ul className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                                                        <li className="flex gap-4 px-5 py-5">
+                                                            <div className="flex h-12 w-12 shrink-0 items-center justify-center">
+                                                                <img src="/why-us/zero-brokerage.png" alt="" className="h-11 w-11 object-contain" />
                                                             </div>
                                                             <div className="min-w-0 pt-0.5">
-                                                                <h4 className="text-[11.5px] font-bold text-[#354048] dark:text-gray-200 mb-0.5">Zero Brokerage</h4>
-                                                                <p className="text-[10.5px] text-[#6b7b8a] dark:text-gray-400">100% Service, 0% Brokerage</p>
+                                                                <h4 className={`text-[11.5px] font-bold mb-0.5 ${isDark ? 'text-gray-200' : 'text-[#354048]'}`}>Zero Brokerage</h4>
+                                                                <p className={`text-[10.5px] ${isDark ? 'text-gray-400' : 'text-[#6b7b8a]'}`}>100% Service, 0% Brokerage</p>
                                                             </div>
                                                         </li>
-                                                        <li className="flex gap-3 px-3 py-2.5">
-                                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center">
-                                                                <img src="/why-us/low-price.png" alt="" className="h-8 w-8 object-contain" />
+                                                        <li className="flex gap-4 px-5 py-5">
+                                                            <div className="flex h-12 w-12 shrink-0 items-center justify-center">
+                                                                <img src="/why-us/low-price.png" alt="" className="h-11 w-11 object-contain" />
                                                             </div>
                                                             <div className="min-w-0 pt-0.5">
-                                                                <h4 className="text-[11.5px] font-bold text-[#354048] dark:text-gray-200 mb-0.5">Lowest Price Guaranteed</h4>
-                                                                <p className="text-[10.5px] leading-[1.4] text-[#6b7b8a] dark:text-gray-400">
+                                                                <h4 className={`text-[11.5px] font-bold mb-0.5 ${isDark ? 'text-gray-200' : 'text-[#354048]'}`}>Lowest Price Guaranteed</h4>
+                                                                <p className={`text-[10.5px] leading-[1.4] ${isDark ? 'text-gray-400' : 'text-[#6b7b8a]'}`}>
                                                                     Highly unlikely, but if you find a lower price anywhere, tell us and we will match it.
                                                                 </p>
                                                             </div>
                                                         </li>
-                                                        <li className="flex gap-3 px-3 py-2.5">
-                                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center">
-                                                                <img src="/why-us/full-service.png" alt="" className="h-8 w-8 object-contain" />
+                                                        <li className="flex gap-4 px-5 py-5">
+                                                            <div className="flex h-12 w-12 shrink-0 items-center justify-center">
+                                                                <img src="/why-us/full-service.png" alt="" className="h-11 w-11 object-contain" />
                                                             </div>
                                                             <div className="min-w-0 pt-0.5">
-                                                                <h4 className="text-[11.5px] font-bold text-[#354048] dark:text-gray-200 mb-0.5">Full Service Support</h4>
-                                                                <p className="text-[10.5px] leading-[1.4] text-[#6b7b8a] dark:text-gray-400">
+                                                                <h4 className={`text-[11.5px] font-bold mb-0.5 ${isDark ? 'text-gray-200' : 'text-[#354048]'}`}>Full Service Support</h4>
+                                                                <p className={`text-[10.5px] leading-[1.4] ${isDark ? 'text-gray-400' : 'text-[#6b7b8a]'}`}>
                                                                     Our sales personnel are accountable for every step
                                                                 </p>
                                                             </div>
@@ -2317,13 +2351,13 @@ function PropertyDetailsContent() {
                             {/* About the brand */}
                             <div
                                 id="brand"
-                                className="rounded-xl border border-gray-200/90 bg-white p-3.5 shadow-sm dark:border-border dark:bg-card"
+                                className={`rounded-xl border p-3.5 transition-colors ${isDark ? 'border-gray-800 bg-[#1f2229] shadow-none' : 'border-gray-200/90 bg-white shadow-sm'}`}
                             >
                                 <div>
-                                    <h3 className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-900 dark:text-slate-100">
+                                    <h3 className={`text-[9px] font-bold uppercase tracking-[0.14em] ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
                                         About the Brand
                                     </h3>
-                                    <div className="mt-1.5 h-0.5 w-6 rounded-sm bg-blue-600 dark:bg-blue-500" aria-hidden />
+                                    <div className={`mt-1.5 h-0.5 w-6 rounded-sm ${isDark ? 'bg-blue-500' : 'bg-blue-600'}`} aria-hidden />
                                 </div>
 
                                 <div className="mt-4 flex items-center gap-4">
@@ -2333,8 +2367,8 @@ function PropertyDetailsContent() {
                                         className="h-8 w-8 shrink-0 object-contain"
                                     />
                                     <div className="min-w-0">
-                                        <h4 className="text-[13px] font-bold leading-tight text-foreground">{brandDisplayName}</h4>
-                                        <p className="mt-0.5 text-[8px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                                        <h4 className={`text-[13px] font-bold leading-tight ${isDark ? 'text-white' : 'text-foreground'}`}>{brandDisplayName}</h4>
+                                        <p className={`mt-0.5 text-[8px] font-semibold uppercase tracking-[0.2em] ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>
                                             Workspace
                                         </p>
                                     </div>
@@ -2343,31 +2377,31 @@ function PropertyDetailsContent() {
                                 <div className="mt-3.5 grid grid-cols-2 gap-x-3 gap-y-2.5 text-[9.5px]">
                                     <div className="flex min-w-0 items-center gap-1.5">
                                         <img src="/property-details/builder-details/cities.png" alt="Cities" className="h-[14px] w-[14px] shrink-0 object-contain" />
-                                        <span className="font-medium text-foreground">
+                                        <span className={`font-medium ${isDark ? 'text-white' : 'text-foreground'}`}>
                                             {brandStats.cities}+ Cities
                                         </span>
                                     </div>
                                     <div className="flex min-w-0 items-center gap-1.5">
                                         <img src="/property-details/builder-details/coworking.png" alt="Coworking Spaces" className="h-[14px] w-[14px] shrink-0 object-contain" />
-                                        <span className="font-medium text-foreground">
+                                        <span className={`font-medium ${isDark ? 'text-white' : 'text-foreground'}`}>
                                             {brandStats.spaces}+ Spaces
                                         </span>
                                     </div>
                                     <div className="flex min-w-0 items-center gap-1.5">
                                         <img src="/property-details/builder-details/clients.png" alt="Clients" className="h-[14px] w-[14px] shrink-0 object-contain" />
-                                        <span className="font-medium text-foreground">
+                                        <span className={`font-medium ${isDark ? 'text-white' : 'text-foreground'}`}>
                                             {brandStats.clients}+ Clients
                                         </span>
                                     </div>
                                     <div className="flex min-w-0 items-center gap-1.5">
                                         <img src="/property-details/builder-details/seats.png" alt="Seats" className="h-[14px] w-[14px] shrink-0 object-contain" />
-                                        <span className="font-medium text-foreground">
+                                        <span className={`font-medium ${isDark ? 'text-white' : 'text-foreground'}`}>
                                             {brandStats.seats}+ Seats
                                         </span>
                                     </div>
                                 </div>
 
-                                <div className="mt-3 text-[10px] leading-relaxed text-slate-600 dark:text-slate-400">
+                                <div className={`mt-3 text-[10px] leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                                     {showBrandDescription ? brandLongDesc : brandShortDesc}{" "}
                                     <button
                                         type="button"
@@ -2392,12 +2426,152 @@ function PropertyDetailsContent() {
                                     <ArrowRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
                                 </button>
                             </div>
+
+                            {/* Schedule a Tour Sidebar Section */}
+                            <div className={`tour-card border mb-6 transition-all ${isDark ? '!bg-[#1f2229] !border-gray-800 shadow-none' : 'bg-white border-gray-100'}`}>
+                                <div className={`tour-header-box transition-colors ${isDark ? '!bg-gray-800 !border-gray-700' : ''}`}>
+                                    <h3 className={`${isDark ? '!text-white' : ''}`}>SCHEDULE A TOUR</h3>
+                                </div>
+
+                                <div className="tour-dates-container">
+                                    <Swiper
+                                        modules={[Navigation]}
+                                        navigation={{ prevEl: ".tour-dates-prev", nextEl: ".tour-dates-next" }}
+                                        spaceBetween={8}
+                                        slidesPerView={4}
+                                        className="w-full !py-3 !px-1"
+                                    >
+                                        {tourDates.map((date, i) => {
+                                            const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+                                            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                                            const dateStr = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+                                            const selectedStr = `${selectedTourDate.getFullYear()}-${selectedTourDate.getMonth()}-${selectedTourDate.getDate()}`;
+                                            const isSelected = dateStr === selectedStr;
+                                            return (
+                                                <SwiperSlide key={i}>
+                                                    <div
+                                                        onClick={() => setSelectedTourDate(date)}
+                                                        className={`date-card-item transition-all ${isSelected ? "active" : ""} ${isDark ? '!bg-gray-800 !border-gray-700' : ''}`}
+                                                        style={isDark ? { background: '#1f2229', borderColor: isSelected ? '#3b4fad' : '#374151' } : {}}
+                                                    >
+                                                        <span className={`day-name ${isDark ? '!text-gray-400' : ''}`}>{dayNames[date.getDay()]}</span>
+                                                        <span className={`day-num ${isDark ? '!text-white' : ''}`}>{date.getDate()}</span>
+                                                        <span className={`month-name ${isDark ? '!text-gray-400' : ''}`}>{monthNames[date.getMonth()]}</span>
+                                                    </div>
+                                                </SwiperSlide>
+                                            );
+                                        })}
+                                    </Swiper>
+                                    <button type="button" onClick={(e) => handleSliderNavClick(e, true)} className={`tour-dates-prev tour-nav-btn tour-nav-prev transition-colors ${isDark ? '!bg-gray-800 !text-white !border-gray-700 hover:!bg-gray-700' : ''}`}><ChevronLeft className="h-4 w-4" /></button>
+                                    <button type="button" onClick={(e) => handleSliderNavClick(e, false)} className={`tour-dates-next tour-nav-btn tour-nav-next transition-colors ${isDark ? '!bg-gray-800 !text-white !border-gray-700 hover:!bg-gray-700' : ''}`}><ChevronRight className="h-4 w-4" /></button>
+                                </div>
+
+                                <h4 className={`tour-label ${isDark ? 'text-white/90' : ''}`}>Tour Type</h4>
+                                <div className="tour-type-toggle">
+                                    <button
+                                        type="button"
+                                        onClick={() => setTourType("in-person")}
+                                        className={`tour-type-option transition-all ${tourType === "in-person" || tourType === "in-person" ? "active" : ""} ${isDark ? '!bg-gray-800 !text-gray-300 !border-gray-700' : ''}`}
+                                    >
+                                        In Person
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setTourType("video-chat")}
+                                        className={`tour-type-option transition-all ${tourType === "video-chat" ? "active" : ""} ${isDark ? '!bg-gray-800 !text-gray-300 !border-gray-700' : ''}`}
+                                    >
+                                        Video Chat
+                                    </button>
+                                </div>
+
+                                <form className="tour-form-container" onSubmit={handleTourSubmit}>
+                                    <div className="tour-select-wrapper">
+                                        <select
+                                            className={`tour-field transition-all ${tourFormErrors.tourTime ? 'border-red-500' : (isDark ? '!bg-gray-800 !text-white !border-gray-700' : '')}`}
+                                            value={selectedTourTime}
+                                            onChange={(e) => { setSelectedTourTime(e.target.value); setTourFormErrors((p) => ({ ...p, tourTime: '' })); }}
+                                            style={isDark ? { color: '#fff' } : {}}
+                                        >
+                                            <option value="" disabled>Time</option>
+                                            {TOUR_TIME_SLOTS.map(slot => (
+                                                <option key={slot} value={slot}>{slot}</option>
+                                            ))}
+                                        </select>
+                                        {tourFormErrors.tourTime && <p className="text-[10px] text-red-500 -mt-2 mb-2 w-[85%] mx-auto pl-1">{tourFormErrors.tourTime}</p>}
+                                    </div>
+
+                                    <div>
+                                        <input
+                                            name="name"
+                                            className={`tour-field transition-all ${tourFormErrors.name ? 'border-red-500' : (isDark ? '!bg-gray-800 !text-white !border-gray-700' : '')}`}
+                                            placeholder="Name"
+                                            value={tourFormData.name}
+                                            onChange={(e) => { setTourFormData((p) => ({ ...p, name: e.target.value })); setTourFormErrors((p) => ({ ...p, name: '' })); }}
+                                            style={isDark ? { color: '#fff' } : {}}
+                                        />
+                                        {tourFormErrors.name && <p className="text-[10px] text-red-500 -mt-2 mb-2 w-[85%] mx-auto pl-1">{tourFormErrors.name}</p>}
+                                    </div>
+
+                                    <div>
+                                        <input
+                                            name="phone"
+                                            className={`tour-field transition-all ${tourFormErrors.phone ? 'border-red-500' : (isDark ? '!bg-gray-800 !text-white !border-gray-700' : '')}`}
+                                            placeholder="Phone"
+                                            value={tourFormData.phone}
+                                            onChange={(e) => { setTourFormData((p) => ({ ...p, phone: e.target.value })); setTourFormErrors((p) => ({ ...p, phone: '' })); }}
+                                            style={isDark ? { color: '#fff' } : {}}
+                                        />
+                                        {tourFormErrors.phone && <p className="text-[10px] text-red-500 -mt-2 mb-2 w-[85%] mx-auto pl-1">{tourFormErrors.phone}</p>}
+                                    </div>
+
+                                    <div>
+                                        <input
+                                            name="email"
+                                            className={`tour-field transition-all ${tourFormErrors.email ? 'border-red-500' : (isDark ? '!bg-gray-800 !text-white !border-gray-700' : '')}`}
+                                            placeholder="Email"
+                                            type="email"
+                                            value={tourFormData.email}
+                                            onChange={(e) => { setTourFormData((p) => ({ ...p, email: e.target.value })); setTourFormErrors((p) => ({ ...p, email: '' })); }}
+                                            style={isDark ? { color: '#fff' } : {}}
+                                        />
+                                        {tourFormErrors.email && <p className="text-[10px] text-red-500 -mt-2 mb-2 w-[85%] mx-auto pl-1">{tourFormErrors.email}</p>}
+                                    </div>
+
+                                    <textarea
+                                        className={`tour-field min-h-[100px] resize-none transition-colors ${isDark ? '!bg-gray-800 !text-white !border-gray-700 placeholder:text-gray-500' : ''}`}
+                                        placeholder="Enter your Message"
+                                        value={tourFormData.message}
+                                        onChange={(e) => setTourFormData((p) => ({ ...p, message: e.target.value }))}
+                                        style={isDark ? { color: '#fff' } : {}}
+                                    />
+
+                                    {tourFormErrors.submit && (
+                                        <p className="text-xs text-red-500 mb-2">{tourFormErrors.submit}</p>
+                                    )}
+
+                                    <button
+                                        type="submit"
+                                        disabled={isSubmittingTour}
+                                        className={`tour-submit transition-colors ${isDark ? '!bg-blue-600 hover:!bg-blue-700 !border-none !text-white' : ''}`}
+                                    >
+                                        {isSubmittingTour ? "Submitting..." : "Submit a Tour Request"}
+                                    </button>
+                                </form>
+
+                                <div
+                                    className={`tour-footer-box transition-all ${isDark ? '!bg-gray-800 !text-white !border-gray-700' : ''}`}
+                                    style={isDark ? { background: '#1f2229', color: '#fff' } : {}}
+                                >
+                                    BOOK YOUR VIDEO TOUR NOW
+                                </div>
+                            </div>
+
                             {/* Floor Plan */}
-                            <div className="rounded-lg border bg-card shadow-sm">
-                                <div className="px-3 py-1.5"><h3 className="text-[11px] font-bold">Floor Plan</h3></div>
-                                <div className="border-t" />
+                            <div className={`rounded-lg border shadow-none mb-6 transition-colors ${isDark ? 'border-gray-800 bg-[#1f2229]' : 'border-gray-200 bg-card'}`}>
+                                <div className="px-3 py-1.5"><h3 className={`text-[11px] font-bold ${isDark ? 'text-white' : ''}`}>Floor Plan</h3></div>
+                                <div className={`border-t ${isDark ? 'border-gray-800' : 'border-gray-200'}`} />
                                 <div className="p-2.5">
-                                    <div className="relative w-full rounded-lg overflow-hidden border bg-gray-50" style={{ aspectRatio: '16/9', minHeight: 110 }}>
+                                    <div className={`relative w-full rounded-lg overflow-hidden border transition-colors ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'}`} style={{ aspectRatio: '16/9', minHeight: 110 }}>
                                         {(typeof property.floorPlan === 'string' && property.floorPlan.trim()) ? (
                                             <Image
                                                 src={property.floorPlan.startsWith('http') ? property.floorPlan : `https://admin.buildersinfo.in${property.floorPlan.startsWith('/') ? property.floorPlan : '/' + property.floorPlan}`}
@@ -2414,174 +2588,56 @@ function PropertyDetailsContent() {
                                     </div>
                                 </div>
                             </div>
+
                             {/* Opening Hours */}
-                            <div className="rounded-lg border theme-bg-card theme-shadow-sm">
+                            <div className={`rounded-lg border theme-shadow-sm mb-6 transition-colors ${isDark ? 'border-gray-800 bg-[#1f2229]' : 'border-gray-200 theme-bg-card'}`}>
                                 <div className="flex flex-col space-y-1 p-3">
-                                    <h3 className="text-[11.5px] font-bold leading-none tracking-tight">Opening Hours</h3>
+                                    <h3 className={`text-[11.5px] font-bold leading-none tracking-tight ${isDark ? 'text-white' : ''}`}>Opening Hours</h3>
                                 </div>
-                                <div data-orientation="horizontal" role="none" className="shrink-0 bg-border h-[1px] w-full" />
-                                <div className="p-3 space-y-2 pt-3">
-                                    <ul className="space-y-1.5 text-[9.5px]">
+                                <div data-orientation="horizontal" role="none" className={`shrink-0 h-[1px] w-full ${isDark ? 'bg-gray-800' : 'bg-gray-200'}`} />
+                                <div className={`p-3 space-y-2 pt-3 transition-colors ${isDark ? 'bg-gray-800/20' : 'bg-gray-50/50'}`}>
+                                    <ul className="space-y-2.5 text-[9px]">
                                         <li className="flex justify-between items-center">
-                                            <span className="text-muted-foreground">Monday - Friday</span>
-                                            <span className="font-medium">{(() => {
-                                                const v = property?.openingHours?.mondayFriday;
-                                                return typeof v === 'string' ? (v.trim() || '-') : (v?.enabled ? (`${v.open || ''} - ${v.close || ''}`.trim() || '-') : '-');
-                                            })()}</span>
+                                            <span className="text-muted-foreground font-medium">Monday - Friday</span>
+                                            <span className="font-bold bg-white px-1.5 py-0.5 rounded-full border border-gray-200 shadow-sm text-gray-900 text-[8.5px] min-w-[75px] text-center">
+                                                {(() => {
+                                                    const v = property?.openingHours?.mondayFriday;
+                                                    return typeof v === 'string' ? (v.trim() || '-') : (v?.enabled ? (`${v.open || ''} - ${v.close || ''}`.trim() || '-') : '-');
+                                                })()}
+                                            </span>
                                         </li>
                                         <li className="flex justify-between items-center">
-                                            <span className="text-muted-foreground">Saturday</span>
+                                            <span className="text-muted-foreground font-medium">Saturday</span>
                                             {(() => {
                                                 const v = property?.openingHours?.saturday;
                                                 const str = typeof v === 'string' ? (v.trim() || '') : (v?.enabled ? `${v.open || ''} - ${v.close || ''}`.trim() : '');
-                                                return str ? <span className="font-medium">{str}</span> : <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-red-500 text-white">Closed</span>;
+                                                return str ? (
+                                                    <span className="font-bold bg-white px-1.5 py-0.5 rounded-full border border-gray-200 shadow-sm text-gray-900 text-[8.5px] min-w-[75px] text-center">{str}</span>
+                                                ) : (
+                                                    <span className="inline-flex items-center rounded-full px-1 py-0.5 text-[8.5px] font-bold bg-[#ff4d4d] text-white min-w-[45px] justify-center tracking-wide">Closed</span>
+                                                );
                                             })()}
                                         </li>
                                         <li className="flex justify-between items-center">
-                                            <span className="text-muted-foreground">Sunday</span>
+                                            <span className="text-muted-foreground font-medium">Sunday</span>
                                             {(() => {
                                                 const v = property?.openingHours?.sunday;
                                                 const str = typeof v === 'string' ? (v.trim() || '') : (v?.enabled ? `${v.open || ''} - ${v.close || ''}`.trim() : '');
-                                                return str ? <span className="font-medium text-[9px]">{str}</span> : <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[8px] font-semibold bg-red-500 text-white leading-none">Closed</span>;
+                                                return str ? (
+                                                    <span className="font-bold bg-white px-1.5 py-0.5 rounded-full border border-gray-200 shadow-sm text-gray-900 text-[8.5px] min-w-[75px] text-center">{str}</span>
+                                                ) : (
+                                                    <span className="inline-flex items-center rounded-full px-1 py-0.5 text-[8.5px] font-bold bg-[#ff4d4d] text-white min-w-[45px] justify-center tracking-wide">Closed</span>
+                                                );
                                             })()}
                                         </li>
                                     </ul>
                                 </div>
                             </div>
 
-                            {/* Schedule a Tour Sidebar Section - Redesigned to match Reference */}
-                            <div className="tour-card border border-gray-100 mb-6">
-                                <div className="tour-header-box">
-                                    <h3>SCHEDULE A TOUR</h3>
-                                </div>
-
-                                <div className="tour-dates-container">
-                                    <Swiper
-                                        modules={[Navigation]}
-                                        navigation={{ prevEl: ".tour-dates-prev", nextEl: ".tour-dates-next" }}
-                                        spaceBetween={8}
-                                        slidesPerView={4}
-                                        className="w-full"
-                                    >
-                                        {tourDates.map((date, i) => {
-                                            const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-                                            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-                                            const dateStr = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-                                            const selectedStr = `${selectedTourDate.getFullYear()}-${selectedTourDate.getMonth()}-${selectedTourDate.getDate()}`;
-                                            const isSelected = dateStr === selectedStr;
-                                            return (
-                                                <SwiperSlide key={i}>
-                                                    <div
-                                                        onClick={() => setSelectedTourDate(date)}
-                                                        className={`date-card-item ${isSelected ? "active" : ""}`}
-                                                    >
-                                                        <span className="day-name">{dayNames[date.getDay()]}</span>
-                                                        <span className="day-num">{date.getDate()}</span>
-                                                        <span className="month-name">{monthNames[date.getMonth()]}</span>
-                                                    </div>
-                                                </SwiperSlide>
-                                            );
-                                        })}
-                                    </Swiper>
-                                    <button type="button" onClick={(e) => handleSliderNavClick(e, true)} className="tour-dates-prev tour-nav-btn tour-nav-prev"><ChevronLeft className="h-4 w-4" /></button>
-                                    <button type="button" onClick={(e) => handleSliderNavClick(e, false)} className="tour-dates-next tour-nav-btn tour-nav-next"><ChevronRight className="h-4 w-4" /></button>
-                                </div>
-
-                                <h4 className="tour-label">Tour Type</h4>
-                                <div className="tour-type-toggle">
-                                    <button
-                                        type="button"
-                                        onClick={() => setTourType("in-person")}
-                                        className={`tour-type-option ${tourType === "in-person" || tourType === "in-person" ? "active" : ""}`}
-                                    >
-                                        In Person
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setTourType("video-chat")}
-                                        className={`tour-type-option ${tourType === "video-chat" ? "active" : ""}`}
-                                    >
-                                        Video Chat
-                                    </button>
-                                </div>
-
-                                <form className="tour-form-container" onSubmit={handleTourSubmit}>
-                                    <div className="tour-select-wrapper">
-                                        <select
-                                            className={`tour-field ${tourFormErrors.tourTime ? 'border-red-500' : ''}`}
-                                            value={selectedTourTime}
-                                            onChange={(e) => { setSelectedTourTime(e.target.value); setTourFormErrors((p) => ({ ...p, tourTime: '' })); }}
-                                        >
-                                            <option value="" disabled>Time</option>
-                                            {TOUR_TIME_SLOTS.map(slot => (
-                                                <option key={slot} value={slot}>{slot}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <input
-                                            name="name"
-                                            className={`tour-field ${tourFormErrors.name ? 'border-red-500' : ''}`}
-                                            placeholder="Name"
-                                            value={tourFormData.name}
-                                            onChange={(e) => { setTourFormData((p) => ({ ...p, name: e.target.value })); setTourFormErrors((p) => ({ ...p, name: '' })); }}
-                                        />
-                                        {tourFormErrors.name && <p className="text-[10px] text-red-500 -mt-2 mb-2 ml-1">{tourFormErrors.name}</p>}
-                                    </div>
-
-                                    <input
-                                        className="tour-field"
-                                        placeholder="Phone"
-                                        value={tourFormData.phone}
-                                        onChange={(e) => setTourFormData((p) => ({ ...p, phone: e.target.value }))}
-                                    />
-
-                                    <div>
-                                        <input
-                                            name="email"
-                                            className={`tour-field ${tourFormErrors.email ? 'border-red-500' : ''}`}
-                                            placeholder="Email"
-                                            type="email"
-                                            value={tourFormData.email}
-                                            onChange={(e) => { setTourFormData((p) => ({ ...p, email: e.target.value })); setTourFormErrors((p) => ({ ...p, email: '' })); }}
-                                        />
-                                        {tourFormErrors.email && <p className="text-[10px] text-red-500 -mt-2 mb-2 ml-1">{tourFormErrors.email}</p>}
-                                    </div>
-
-                                    <textarea
-                                        className="tour-field min-h-[100px] resize-none"
-                                        placeholder="Enter your Message"
-                                        value={tourFormData.message}
-                                        onChange={(e) => setTourFormData((p) => ({ ...p, message: e.target.value }))}
-                                    />
-
-                                    {tourFormErrors.submit && (
-                                        <p className="text-xs text-red-500 mb-2">{tourFormErrors.submit}</p>
-                                    )}
-
-                                    <button
-                                        type="submit"
-                                        disabled={isSubmittingTour}
-                                        className="tour-submit"
-                                    >
-                                        {isSubmittingTour ? "Submitting..." : "Submit a Tour Request"}
-                                    </button>
-                                </form>
-
-                                <button
-                                    type="button"
-                                    onClick={handleTourSubmit}
-                                    className="tour-footer-box"
-                                >
-                                    BOOK YOUR VIDEO TOUR NOW
-                                </button>
-                            </div>
-
-                            <div ref={reviewsRef} id="ratings-reviews" className="rounded-lg border bg-card text-card-foreground shadow-sm">
+                            <div ref={reviewsRef} id="ratings-reviews" className={`rounded-lg border shadow-none transition-colors ${isDark ? 'border-gray-800 bg-[#1f2229]' : 'border-gray-200 bg-card text-card-foreground'}`}>
                                 <div className="flex flex-col space-y-1 p-2.5">
                                     <div className="flex justify-between items-center">
-                                        <h3 className="text-[10.5px] font-bold leading-none tracking-tight">Rating &amp; Reviews</h3>
+                                        <h3 className={`text-[10.5px] font-bold leading-none tracking-tight ${isDark ? 'text-white' : ''}`}>Rating &amp; Reviews</h3>
                                         {!hasUserSubmittedReview ? (
                                             <button onClick={handleAddReview} className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-[9px] font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-6 rounded-md px-1.5 cursor-pointer">
                                                 Rate property
@@ -2593,7 +2649,7 @@ function PropertyDetailsContent() {
                                         )}
                                     </div>
                                 </div>
-                                <div data-orientation="horizontal" role="none" className="shrink-0 bg-border h-[1px] w-full" />
+                                <div data-orientation="horizontal" role="none" className="shrink-0 bg-gray-200 h-[1px] w-full" />
                                 <div className="p-2.5 space-y-3 pt-2.5">
                                     <div>
                                         <p className="text-[9px] mb-2">Overall rating based on {ratingDisplay.totalRatings} reviews.</p>
@@ -2628,7 +2684,7 @@ function PropertyDetailsContent() {
                                             </div>
                                         </div>
                                     </div>
-                                    <div data-orientation="horizontal" role="none" className="shrink-0 bg-border h-[1px] w-full" />
+                                    <div data-orientation="horizontal" role="none" className="shrink-0 bg-gray-200 h-[1px] w-full" />
                                     <div>
                                         <div className="flex justify-between items-center mb-4">
                                             <h3 className="text-lg font-semibold">User Reviews ({property?.reviews?.length || 0})</h3>
@@ -2639,18 +2695,18 @@ function PropertyDetailsContent() {
                                             )}
                                         </div>
                                         {property?.reviews && property.reviews.length > 0 ? (
-                                            <div className="relative w-full">
+                                            <div className="relative w-full px-8">
                                                 <Swiper
                                                     modules={[Navigation]}
                                                     navigation={{ prevEl: ".reviews-prev", nextEl: ".reviews-next" }}
                                                     spaceBetween={16}
                                                     slidesPerView={1}
-                                                    className="w-full -mx-4 px-4"
+                                                    className="w-full"
                                                 >
                                                     {property.reviews.slice(0, 5).map((review, idx) => (
                                                         <SwiperSlide key={review._id || idx}>
                                                             <div className="p-1">
-                                                                <div className="rounded-lg bg-card text-card-foreground shadow-sm border">
+                                                                <div className="rounded-lg bg-card text-card-foreground shadow-sm border border-gray-200">
                                                                     <div className="p-4 space-y-3">
                                                                         <div className="flex justify-between items-start">
                                                                             <div className="flex items-center gap-3">
@@ -2690,8 +2746,8 @@ function PropertyDetailsContent() {
                                                 </Swiper>
                                                 {property.reviews.length > 1 && (
                                                     <>
-                                                        <button type="button" onClick={(e) => handleSliderNavClick(e, true)} className="reviews-prev swiper-nav-btn inline-flex items-center justify-center h-8 w-8 rounded-full border border-input bg-background hover:bg-accent absolute -left-4 top-1/2 -translate-y-1/2 z-10 cursor-pointer" aria-label="Previous slide"><ChevronLeft className="h-4 w-4" /></button>
-                                                        <button type="button" onClick={(e) => handleSliderNavClick(e, false)} className="reviews-next swiper-nav-btn inline-flex items-center justify-center h-8 w-8 rounded-full border border-input bg-background hover:bg-accent absolute -right-4 top-1/2 -translate-y-1/2 z-10 cursor-pointer" aria-label="Next slide"><ChevronRight className="h-4 w-4" /></button>
+                                                        <button type="button" onClick={(e) => handleSliderNavClick(e, true)} className="reviews-prev swiper-nav-btn inline-flex items-center justify-center h-8 w-8 rounded-full border border-input bg-background hover:bg-accent absolute left-0 top-1/2 -translate-y-1/2 z-10 cursor-pointer shadow-sm" aria-label="Previous slide"><ChevronLeft className="h-4 w-4" /></button>
+                                                        <button type="button" onClick={(e) => handleSliderNavClick(e, false)} className="reviews-next swiper-nav-btn inline-flex items-center justify-center h-8 w-8 rounded-full border border-input bg-background hover:bg-accent absolute right-0 top-1/2 -translate-y-1/2 z-10 cursor-pointer shadow-sm" aria-label="Next slide"><ChevronRight className="h-4 w-4" /></button>
                                                     </>
                                                 )}
                                             </div>
@@ -2712,19 +2768,19 @@ function PropertyDetailsContent() {
             </div>
 
             {/* Similar Properties - Boxed design */}
-            <div id="similar-properties" className="w-full px-4 sm:px-6 lg:px-8 mt-12 mb-8">
-                <section className="py-8 md:py-10 px-6 md:px-10 bg-[#fdf8e7] rounded-[24px] relative shadow-sm border border-[#f0e4c3]/10">
-                    <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-6 mb-8">
+            <div id="similar-properties" className="w-full px-6 md:px-12 mt-16 mb-12">
+                <section className={`py-16 px-12 rounded-[24px] relative shadow-sm border transition-colors ${isDark ? 'bg-[#121418] border-gray-800' : 'bg-[#fdf8e7] border-[#f0e4c3]/10'}`}>
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
                         <div>
-                            <h2 className="text-3xl md:text-[2.2rem] font-bold text-black mb-1.5 tracking-tight">Similar Properties</h2>
-                            <p className="text-gray-800 text-[13px] font-medium">Handpicked properties for you.</p>
+                            <h2 className={`!text-[1.5rem] font-bold mb-1.5 tracking-tight leading-tight ${isDark ? 'text-white' : 'text-black'}`}>Similar Properties</h2>
+                            <p className={`text-[13px] font-medium ${isDark ? 'text-gray-400' : 'text-gray-800'}`}>Handpicked properties for you.</p>
                         </div>
                         <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide flex-nowrap shrink-0">
                             {(property.similarLocations && property.similarLocations.length > 0 ? property.similarLocations : ["Koramangala", "MG Road", "HSR", "Indiranagar", "Hebbal"]).map((loc) => (
                                 <button
                                     key={loc}
                                     onClick={() => setSimilarLocationFilter(loc)}
-                                    className={`px-4 py-[7px] text-[11px] font-bold whitespace-nowrap shrink-0 transition-colors ${similarLocationFilter === loc ? "bg-black text-white rounded-[6px]" : "bg-white text-gray-600 border border-gray-200/80 hover:border-gray-300 rounded-[6px] shadow-[0_1px_2px_rgba(0,0,0,0.02)] cursor-pointer"}`}
+                                    className={`px-4 py-[7px] text-[11px] font-bold whitespace-nowrap shrink-0 transition-colors ${similarLocationFilter === loc ? "bg-black text-white rounded-[6px]" : `${isDark ? 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700' : 'bg-white text-gray-600 border border-gray-200/80 hover:border-gray-300'} rounded-[6px] shadow-[0_1px_2px_rgba(0,0,0,0.02)] cursor-pointer`}`}
                                 >
                                     {loc}
                                 </button>
@@ -2767,15 +2823,15 @@ function PropertyDetailsContent() {
                                     navigation={{ prevEl: ".similar-prev", nextEl: ".similar-next" }}
                                     spaceBetween={20}
                                     slidesPerView={1.2}
-                                    breakpoints={{ 640: { slidesPerView: 2.2 }, 1024: { slidesPerView: 4 } }}
+                                    breakpoints={{ 640: { slidesPerView: 2.2 }, 1024: { slidesPerView: 5 } }}
                                     slidesPerGroup={1}
                                     className="w-full !pb-2"
                                 >
                                     {filteredProps.map((p, idx) => (
                                         <SwiperSlide key={p?.id || p?.name || idx} className="h-auto">
                                             <Link href={`/property-details?id=${p?.id || '#'}`} className="block h-full">
-                                                <div className="rounded-[12px] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden group h-full border border-gray-100 flex flex-col hover:shadow-md transition-shadow">
-                                                    <div className="relative h-[200px] md:h-[180px] w-full shrink-0 overflow-hidden bg-gray-100">
+                                                <div className={`rounded-[12px] overflow-hidden group h-full flex flex-col transition-all ${isDark ? 'bg-[#1f2229] border-gray-800 shadow-none' : 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-gray-100 hover:shadow-md'}`}>
+                                                    <div className={`relative h-[200px] md:h-[180px] w-full shrink-0 overflow-hidden ${isDark ? 'bg-gray-800' : 'bg-gray-100'}`}>
                                                         <img src={p?.image || p?.images?.[0] || 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800'} alt={p?.name || ''} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 will-change-transform" />
                                                         {p?.badge ? (
                                                             <div className="absolute top-3 left-3 bg-[#1e8b4e] text-white text-[9px] font-bold px-2 py-0.5 rounded-[3px] shadow-sm uppercase tracking-wide">
@@ -2787,10 +2843,10 @@ function PropertyDetailsContent() {
                                                             </div>
                                                         )}
                                                     </div>
-                                                    <div className="p-4 flex flex-col flex-1 justify-between bg-white z-10">
+                                                    <div className="p-4 flex flex-col flex-1 justify-between z-10">
                                                         <div>
                                                             <div className="flex justify-between items-start mb-0.5">
-                                                                <h3 className="font-bold text-gray-900 text-[15px] md:text-[16px] leading-tight truncate pr-2">{safeDisplay(p?.name)}</h3>
+                                                                <h3 className={`font-bold text-[15px] md:text-[16px] leading-tight truncate pr-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(p?.name)}</h3>
                                                                 {(p?.ratingCount || idx === 0) && (
                                                                     <div className="flex items-center gap-[2px] shrink-0 pt-0.5">
                                                                         {[1, 2, 3, 4].map(star => <Star key={star} className="w-[10px] h-[10px] text-[#ffb800] fill-[#ffb800]" />)}
@@ -2803,12 +2859,12 @@ function PropertyDetailsContent() {
                                                         <div className="flex justify-between items-end mt-5">
                                                             <div className="flex items-center gap-2">
                                                                 <div className="bg-black text-white flex items-center justify-center rounded-[4px] px-1.5 py-0.5 text-[10px] font-bold">
-                                                                    {p?.ratingScore || (4.0 + (idx % 10) / 10).toFixed(1)}
+                                                                    {p?.rating || (4.0 + (idx % 10) / 10).toFixed(1)}
                                                                 </div>
-                                                                <span className="text-[11px] font-extrabold text-black">{p?.ratingLabel || "Excellent"}</span>
+                                                                <span className="text-[11px] font-extrabold text-black">{p?.ratingTag || "Excellent"}</span>
                                                             </div>
                                                             <div className="flex flex-col items-end">
-                                                                <p className="font-bold text-[1.15rem] text-gray-900 leading-none tracking-tight">
+                                                                <p className={`font-bold text-[1.15rem] leading-none tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
                                                                     {typeof p?.price === 'string' && p.price.includes('₹') ? p.price : `₹ ${safeDisplay(p?.price) || "5,999"}`}
                                                                 </p>
                                                             </div>
@@ -2832,10 +2888,10 @@ function PropertyDetailsContent() {
             </div>
 
             {/* Explore Top Coworking Locations */}
-            <div className="w-full px-4 sm:px-6 lg:px-8 mb-16">
-                <section className="py-8 md:py-10 px-6 md:px-10 bg-[#fdf8e7] rounded-[24px] relative shadow-sm border border-[#f0e4c3]/10">
-                    <h2 className="text-[1.2rem] md:text-xl font-bold mb-6 text-black tracking-tight">Explore Top Coworking Locations in Bangalore</h2>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-5">
+            <div className="w-full px-6 md:px-12 mt-16 mb-20">
+                <section className={`py-16 px-12 rounded-[24px] relative shadow-sm border transition-colors ${isDark ? 'bg-[#121418] border-gray-800' : 'bg-[#fdf8e7] border-[#f0e4c3]/10'}`}>
+                    <h2 className={`text-[1.2rem] md:text-xl font-bold mb-6 tracking-tight ${isDark ? 'text-white' : 'text-black'}`}>Explore Top Coworking Locations in Bangalore</h2>
+                    <div className="grid grid-cols-2 md:grid-cols-3 md:grid-cols-5 gap-4 md:gap-5">
                         {((property.exploreLocations && property.exploreLocations.length > 0) ? property.exploreLocations : [
                             { name: "HSR Layout", image: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800" },
                             { name: "Koramangala", image: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&q=80&w=800" },
@@ -2848,13 +2904,13 @@ function PropertyDetailsContent() {
                             { name: "Jayanagar", image: "https://images.unsplash.com/photo-1604328698692-f76ea9498e76?auto=format&fit=crop&q=80&w=800" },
                             { name: "Hebbal", image: "https://images.unsplash.com/photo-1577412647305-991150c7d163?auto=format&fit=crop&q=80&w=800" }
                         ]).map((loc, i) => (
-                            <Link key={i} href="#" className="rounded-[8px] border border-gray-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.02)] overflow-hidden group flex flex-col hover:shadow-md transition-shadow">
-                                <div className="relative aspect-[16/10] w-full bg-gray-100 overflow-hidden border-b border-gray-100">
+                            <Link key={i} href="#" className={`rounded-[8px] border shadow-[0_1px_3px_rgba(0,0,0,0.02)] overflow-hidden group flex flex-col hover:shadow-md transition-all ${isDark ? 'bg-[#1f2229] border-gray-800' : 'bg-white border-gray-200/80'}`}>
+                                <div className={`relative aspect-[16/10] w-full overflow-hidden border-b ${isDark ? 'bg-gray-800 border-gray-800' : 'bg-gray-100 border-gray-100'}`}>
                                     <img src={loc?.image || 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800'} alt={loc?.name || 'Explore'} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 will-change-transform" />
                                 </div>
                                 <div className="p-3">
-                                    <p className="text-[11px] text-gray-500 font-medium leading-none mb-1">Coworking Space in</p>
-                                    <h3 className="font-semibold text-[13px] text-gray-800 truncate mb-1.5 leading-tight">{safeDisplay(loc?.name)}</h3>
+                                    <p className={`text-[11px] font-medium leading-none mb-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Coworking Space in</p>
+                                    <h3 className={`font-semibold text-[13px] truncate mb-1.5 leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>{safeDisplay(loc?.name)}</h3>
                                     <p className="text-[11.5px] font-bold text-[#0070f3] hover:underline cursor-pointer leading-none">Explore Spaces</p>
                                 </div>
                             </Link>
@@ -2866,14 +2922,14 @@ function PropertyDetailsContent() {
             {/* Download App - Full width at bottom */}
 
             {/* Fixed Bottom Action Bar - sits above footer nav (footer ~56px) */}
-            <div className="fixed left-0 right-0 bg-white border-t border-gray-200 p-4 md:hidden z-30" style={{ bottom: '56px' }}>
+            <div className={`fixed left-0 right-0 border-t p-4 md:hidden z-30 transition-colors ${isDark ? 'bg-[#1f2229] border-gray-800' : 'bg-white border-gray-200'}`} style={{ bottom: '56px' }}>
                 <div className="flex gap-3">
                     <button
                         onClick={handleWhatsApp}
                         className="flex-1 bg-green-500 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors"
                     >
                         <img
-                            src="/property-details/whatsapp.png"
+                            src="/property-details/agent-social/whatsapp.png"
                             alt="WhatsApp"
                             className="w-5 h-5 object-contain"
                         />
@@ -2884,7 +2940,7 @@ function PropertyDetailsContent() {
                         className="flex-1 bg-green-500 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors"
                     >
                         <img
-                            src="/property-details/call-icon.png"
+                            src="/property-details/agent-social/call.png"
                             alt="Call"
                             className="w-5 h-5 object-contain"
                         />
@@ -2906,17 +2962,19 @@ function PropertyDetailsContent() {
             {/* Interest / Callback / Consultation Modal - all screens */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-2xl w-full max-w-sm p-6 pb-32 max-[525px]:pb-36 max-h-[min(90vh,90svh)] overflow-y-auto">
+                    <div className={`rounded-2xl w-full max-w-sm p-6 pb-32 max-[525px]:pb-36 max-h-[min(90vh,90svh)] overflow-y-auto transition-colors ${isDark ? 'bg-[#1f2229] border border-gray-800' : 'bg-white shadow-xl'}`}>
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-bold text-blue-600">
+                            <h3 className={`text-lg font-bold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
                                 {interestFormType === "callback" && "Request More Information or Callback"}
                                 {interestFormType === "consultation" && "Get Free Consultation"}
                                 {interestFormType === "brand" && "Connect with us"}
                                 {interestFormType === "property" && "Interested in this Property"}
                             </h3>
-                            <button onClick={() => setShowModal(false)} className="text-gray-500 hover:text-gray-700 cursor-pointer">✕</button>
+                            <button onClick={() => setShowModal(false)} className={`hover:text-gray-700 cursor-pointer transition-colors ${isDark ? 'text-gray-400 font-bold hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}>
+                                <X className="h-5 w-5" />
+                            </button>
                         </div>
-                        <p className="text-gray-600 text-sm mb-6">
+                        <p className={`text-sm mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                             {interestFormType === "callback" && "Share your details and we'll call you back soon."}
                             {interestFormType === "consultation" && "Get a free workspace consultation tailored to your needs."}
                             {interestFormType === "brand" && "Let us know how we can help with your workspace needs."}
@@ -2927,7 +2985,7 @@ function PropertyDetailsContent() {
                                 <p className="text-xs text-red-500">{interestFormErrors.submit}</p>
                             )}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Name *</label>
                                 <input
                                     type="text"
                                     name="name"
@@ -2935,12 +2993,12 @@ function PropertyDetailsContent() {
                                     placeholder="Enter your name"
                                     value={interestFormData.name}
                                     onChange={(e) => { handleInterestInputChange(e); setInterestFormErrors((p) => ({ ...p, name: '' })); }}
-                                    className={`w-full px-3 py-2 border rounded-lg ${interestFormErrors.name ? "border-red-500" : "border-gray-300"}`}
+                                    className={`w-full px-3 py-2 border rounded-lg transition-colors ${isDark ? 'bg-gray-800 border-gray-700 text-white placeholder:text-gray-500' : 'border-gray-300'}`}
                                 />
                                 {interestFormErrors.name && <p className="text-xs text-red-500 mt-1">{interestFormErrors.name}</p>}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Email *</label>
                                 <input
                                     type="email"
                                     name="email"
@@ -2948,12 +3006,12 @@ function PropertyDetailsContent() {
                                     placeholder="Enter your email"
                                     value={interestFormData.email}
                                     onChange={handleInterestInputChange}
-                                    className={`w-full px-3 py-2 border rounded-lg ${interestFormErrors.email ? "border-red-500" : "border-gray-300"}`}
+                                    className={`w-full px-3 py-2 border rounded-lg transition-colors ${isDark ? 'bg-gray-800 border-gray-700 text-white placeholder:text-gray-500' : 'border-gray-300'}`}
                                 />
                                 {interestFormErrors.email && <p className="text-xs text-red-500 mt-1">{interestFormErrors.email}</p>}
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
+                                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Phone *</label>
                                 <input
                                     type="tel"
                                     name="phone"
@@ -2961,18 +3019,18 @@ function PropertyDetailsContent() {
                                     placeholder="Enter phone number"
                                     value={interestFormData.phone}
                                     onChange={handleInterestInputChange}
-                                    className={`w-full px-3 py-2 border rounded-lg ${interestFormErrors.phone ? "border-red-500" : "border-gray-300"}`}
+                                    className={`w-full px-3 py-2 border rounded-lg transition-colors ${isDark ? 'bg-gray-800 border-gray-700 text-white placeholder:text-gray-500' : 'border-gray-300'}`}
                                 />
                                 {interestFormErrors.phone && <p className="text-xs text-red-500 mt-1">{interestFormErrors.phone}</p>}
                             </div>
                             {interestFormType === "callback" && (
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Preferred callback time</label>
+                                    <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Preferred callback time</label>
                                     <select
                                         name="preferredCallbackTime"
                                         value={interestFormData.preferredCallbackTime}
                                         onChange={handleInterestInputChange}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                        className={`w-full px-3 py-2 border rounded-lg transition-colors ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'border-gray-300'}`}
                                     >
                                         <option value="">Select preferred time</option>
                                         <option value="Morning (9 AM - 12 PM)">Morning (9 AM - 12 PM)</option>
@@ -2985,37 +3043,37 @@ function PropertyDetailsContent() {
                             {interestFormType === "consultation" && (
                                 <>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Company name</label>
+                                        <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Company name</label>
                                         <input
                                             type="text"
                                             name="companyName"
                                             placeholder="Your company (optional)"
                                             value={interestFormData.companyName}
                                             onChange={handleInterestInputChange}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                            className={`w-full px-3 py-2 border rounded-lg transition-colors ${isDark ? 'bg-gray-800 border-gray-700 text-white placeholder:text-gray-500' : 'border-gray-300'}`}
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Number of seats needed</label>
+                                        <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Number of seats needed</label>
                                         <input
                                             type="text"
                                             name="numberOfSeats"
                                             placeholder="e.g. 10, 20-30 (optional)"
                                             value={interestFormData.numberOfSeats}
                                             onChange={handleInterestInputChange}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                            className={`w-full px-3 py-2 border rounded-lg transition-colors ${isDark ? 'bg-gray-800 border-gray-700 text-white placeholder:text-gray-500' : 'border-gray-300'}`}
                                         />
                                     </div>
                                 </>
                             )}
                             {interestFormType === "brand" && (
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">I'm interested in</label>
+                                    <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>I&apos;m interested in</label>
                                     <select
                                         name="interestType"
                                         value={interestFormData.interestType}
                                         onChange={handleInterestInputChange}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                        className={`w-full px-3 py-2 border rounded-lg transition-colors ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'border-gray-300'}`}
                                     >
                                         <option value="">Select interest</option>
                                         <option value="New workspace">New workspace</option>
@@ -3026,20 +3084,20 @@ function PropertyDetailsContent() {
                                 </div>
                             )}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Message</label>
                                 <textarea
                                     name="message"
                                     placeholder={interestFormType === "callback" ? "What information do you need? (optional)" : "Enter your message (optional)"}
                                     rows={3}
                                     value={interestFormData.message}
                                     onChange={handleInterestInputChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none"
+                                    className={`w-full px-3 py-2 border rounded-lg resize-none transition-colors ${isDark ? 'bg-gray-800 border-gray-700 text-white placeholder:text-gray-500' : 'border-gray-300'}`}
                                 />
                             </div>
                             <button
                                 type="submit"
                                 disabled={isSubmittingInterest}
-                                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                                className={`w-full py-3 rounded-lg font-semibold transition-colors cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed ${isDark ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
                             >
                                 {isSubmittingInterest ? "Submitting..." : "Submit"}
                             </button>
@@ -3052,10 +3110,10 @@ function PropertyDetailsContent() {
             {
                 showReviewsModal && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-2xl w-full max-w-xl max-h-[min(90vh,90svh)] overflow-hidden flex flex-col">
+                        <div className={`rounded-2xl w-full max-w-xl max-h-[min(90vh,90svh)] overflow-hidden flex flex-col transition-colors ${isDark ? 'bg-[#1f2229] border border-gray-800 shadow-2xl' : 'bg-white'}`}>
                             {/* Modal Header */}
-                            <div className="flex items-center justify-between p-5 border-b sticky top-0 bg-white">
-                                <h3 className="text-xl font-bold">All Ratings & Reviews</h3>
+                            <div className={`flex items-center justify-between p-5 border-b sticky top-0 transition-colors ${isDark ? 'bg-[#1f2229] border-gray-800' : 'bg-white'}`}>
+                                <h3 className={`text-xl font-bold ${isDark ? 'text-white' : ''}`}>All Ratings & Reviews</h3>
                                 <div className="flex items-center gap-3">
                                     {/* Show Add Review button if: not logged in OR logged in but no review submitted */}
                                     {(!currentUser || (currentUser && !hasUserSubmittedReview)) && (
@@ -3071,9 +3129,9 @@ function PropertyDetailsContent() {
                                     )}
                                     <button
                                         onClick={() => setShowReviewsModal(false)}
-                                        className="text-gray-400 hover:text-gray-900 text-2xl w-8 h-8 flex items-center justify-center transition-colors cursor-pointer"
+                                        className={`w-8 h-8 flex items-center justify-center transition-all duration-300 cursor-pointer rounded-full ${isDark ? 'text-gray-400 hover:bg-white/10 hover:text-white' : 'text-gray-400 hover:bg-black/5 hover:text-gray-900'}`}
                                     >
-                                        ✕
+                                        <X className="h-4 w-4" />
                                     </button>
                                 </div>
                             </div>
@@ -3086,7 +3144,7 @@ function PropertyDetailsContent() {
                                             const isUserReview = isReviewByCurrentUser(review);
 
                                             return (
-                                                <div key={review._id || review.id || index} className="border-b pb-5 last:border-b-0 pt-2">
+                                                <div key={review._id || review.id || index} className={`border-b pb-5 last:border-b-0 pt-2 ${isDark ? 'border-gray-800' : 'border-gray-200'}`}>
                                                     <div className="flex items-start justify-between mb-3">
                                                         <div className="flex items-center gap-3">
                                                             <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
@@ -3094,12 +3152,12 @@ function PropertyDetailsContent() {
                                                             </div>
                                                             <div>
                                                                 <div className="flex items-center gap-2">
-                                                                    <span className="font-bold text-gray-900">{safeDisplay(review.user)}</span>
+                                                                    <span className={`font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(review.user)}</span>
                                                                     <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-800">
                                                                         {review.rating} <Star className="h-2.5 w-2.5 ml-0.5 fill-current" />
                                                                     </span>
                                                                 </div>
-                                                                <p className="text-xs text-gray-500">{safeDisplay(review.date)}</p>
+                                                                <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{safeDisplay(review.date)}</p>
                                                             </div>
                                                         </div>
                                                         {isUserReview && (
@@ -3132,22 +3190,22 @@ function PropertyDetailsContent() {
                                                     <div className="space-y-3 ml-13">
                                                         {review.goodThings && (
                                                             <div>
-                                                                <h4 className="font-semibold text-sm flex items-center gap-2 text-green-700">
+                                                                <h4 className={`font-semibold text-sm flex items-center gap-2 ${isDark ? 'text-green-500' : 'text-green-700'}`}>
                                                                     <CircleCheckBig className="h-4 w-4" /> Good things here
                                                                 </h4>
-                                                                <p className="text-sm text-gray-600 mt-1 leading-relaxed">{review.goodThings}</p>
+                                                                <p className={`text-sm mt-1 leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{review.goodThings}</p>
                                                             </div>
                                                         )}
                                                         {review.badThings && (
                                                             <div>
-                                                                <h4 className="font-semibold text-sm flex items-center gap-2 text-orange-700">
+                                                                <h4 className={`font-semibold text-sm flex items-center gap-2 ${isDark ? 'text-orange-500' : 'text-orange-700'}`}>
                                                                     <Wrench className="h-4 w-4" /> Things to improve
                                                                 </h4>
-                                                                <p className="text-sm text-gray-600 mt-1 leading-relaxed">{review.badThings}</p>
+                                                                <p className={`text-sm mt-1 leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{review.badThings}</p>
                                                             </div>
                                                         )}
                                                         {!review.goodThings && !review.badThings && review.comment && (
-                                                            <p className="text-sm text-gray-600 leading-relaxed">{review.comment}</p>
+                                                            <p className={`text-sm leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{review.comment}</p>
                                                         )}
                                                     </div>
                                                 </div>
@@ -3182,10 +3240,10 @@ function PropertyDetailsContent() {
             {/* Rating Submit Modal */}
             {showRatingModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[100]">
-                    <div className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg sm:max-w-md animate-in fade-in zoom-in duration-200">
-                        <div className="flex flex-col space-y-1.5 text-center sm:text-left">
-                            <h2 className="tracking-tight text-xl font-bold">Rate Property</h2>
-                            <p className="text-sm text-muted-foreground">Share your experience with the community.</p>
+                    <div className={`fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border p-6 shadow-lg md:rounded-lg md:max-w-md animate-in fade-in zoom-in duration-200 transition-colors ${isDark ? 'bg-[#1f2229] border-gray-800 shadow-2xl' : 'bg-background'}`}>
+                        <div className="flex flex-col space-y-1.5 text-center md:text-left">
+                            <h2 className={`tracking-tight text-xl font-bold ${isDark ? 'text-white' : ''}`}>Rate Property</h2>
+                            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-muted-foreground'}`}>Share your experience with the community.</p>
                         </div>
                         <form className="space-y-6 p-4 md:p-0" onSubmit={async (e) => {
                             e.preventDefault();
@@ -3319,12 +3377,12 @@ function PropertyDetailsContent() {
                             )}
 
                             <div className="space-y-2">
-                                <label className="text-sm leading-none flex items-center gap-2 font-semibold">
+                                <label className={`text-sm leading-none flex items-center gap-2 font-semibold ${isDark ? 'text-white' : ''}`}>
                                     <CircleCheckBig className="h-5 w-5 text-green-500" />
                                     Good things here
                                 </label>
                                 <textarea
-                                    className="flex w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-h-[100px] transition-all"
+                                    className={`flex w-full rounded-lg border px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-h-[100px] transition-all ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'border-input bg-background'}`}
                                     placeholder="Share what you liked about this property..."
                                     value={reviewGoodThings}
                                     onChange={(e) => setReviewGoodThings(e.target.value)}
@@ -3333,12 +3391,12 @@ function PropertyDetailsContent() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm leading-none flex items-center gap-2 font-semibold">
+                                <label className={`text-sm leading-none flex items-center gap-2 font-semibold ${isDark ? 'text-white' : ''}`}>
                                     <Wrench className="h-5 w-5 text-orange-500" />
                                     Things to improve
                                 </label>
                                 <textarea
-                                    className="flex w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-h-[100px] transition-all"
+                                    className={`flex w-full rounded-lg border px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-h-[100px] transition-all ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'border-input bg-background'}`}
                                     placeholder="What could be better? Your feedback helps..."
                                     value={reviewBadThings}
                                     onChange={(e) => setReviewBadThings(e.target.value)}
@@ -3493,9 +3551,9 @@ function PropertyDetailsContent() {
                     </div>
 
                     {/* Content Layout - Grid with sidebar for Property Info and Amenities only */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {/* Left Column */}
-                        <div className="lg:col-span-2 space-y-5">
+                        <div className="md:col-span-2 space-y-5">
                             {/* Property Info */}
                             <div className="bg-white rounded-2xl p-5 scroll-animate" data-animation="animate-slide-top">
                                 <h2 className="text-xl font-bold mb-2 scroll-animate" data-animation="animate-pop">{safeDisplay(property.propertyName || property.name)}</h2>
@@ -3524,7 +3582,7 @@ function PropertyDetailsContent() {
                                         className="flex-1 border-2 border-green-500 text-green-500 py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-green-50 cursor-pointer transition-colors"
                                     >
                                         <img
-                                            src="/property-details/whatsapp.png"
+                                            src="/property-details/agent-social/whatsapp.png"
                                             alt="WhatsApp"
                                             className="w-4 h-4 object-contain"
                                         />
@@ -3535,7 +3593,7 @@ function PropertyDetailsContent() {
                                         className="flex-1 bg-green-500 text-white py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-green-600 cursor-pointer transition-colors"
                                     >
                                         <img
-                                            src="/property-details/call-icon.png"
+                                            src="/property-details/agent-social/call.png"
                                             alt="Call"
                                             className="w-4 h-4 object-contain"
                                         />
@@ -3597,9 +3655,9 @@ function PropertyDetailsContent() {
                                         </AnimatedText>
                                         <div className="space-y-3 mt-5">
                                             {property.openingHours?.mondayFriday != null && (
-                                                <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
-                                                    <span className="text-base font-semibold text-gray-800">Monday - Friday</span>
-                                                    <span className="text-base font-semibold text-green-600">
+                                                <div className="flex justify-between items-center bg-gray-50/80 border border-gray-100 p-4 rounded-2xl scroll-animate" data-animation="animate-fade-up">
+                                                    <span className="text-base font-bold text-gray-800">Monday - Friday</span>
+                                                    <span className="text-[11.5px] font-bold bg-white text-gray-900 px-3 py-1 rounded-full border border-gray-200 shadow-sm">
                                                         {(() => {
                                                             const v = property.openingHours.mondayFriday;
                                                             return typeof v === 'string' ? (v.trim() || '-') : (v?.enabled ? `${safeDisplay(v.open)} - ${safeDisplay(v.close)}`.trim() || 'Open All Day' : 'Closed');
@@ -3608,25 +3666,31 @@ function PropertyDetailsContent() {
                                                 </div>
                                             )}
                                             {property.openingHours?.saturday != null && (
-                                                <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
-                                                    <span className="text-base font-semibold text-gray-800">Saturday</span>
-                                                    <span className="text-base font-semibold text-green-600">
-                                                        {(() => {
-                                                            const v = property.openingHours.saturday;
-                                                            return typeof v === 'string' ? (v.trim() || '-') : (v?.enabled ? `${safeDisplay(v.open)} - ${safeDisplay(v.close)}`.trim() || 'Open All Day' : 'Closed');
-                                                        })()}
-                                                    </span>
+                                                <div className="flex justify-between items-center bg-gray-50/80 border border-gray-100 p-4 rounded-2xl scroll-animate" data-animation="animate-fade-up">
+                                                    <span className="text-base font-bold text-gray-800">Saturday</span>
+                                                    {(() => {
+                                                        const v = property.openingHours.saturday;
+                                                        const str = typeof v === 'string' ? (v.trim() || '') : (v?.enabled ? `${safeDisplay(v.open)} - ${safeDisplay(v.close)}`.trim() : '');
+                                                        return str ? (
+                                                            <span className="text-[11.5px] font-bold bg-white text-gray-900 px-3 py-1 rounded-full border border-gray-200 shadow-sm">{str}</span>
+                                                        ) : (
+                                                            <span className="text-[11px] font-bold bg-[#ff4d4d] text-white px-2 py-1 rounded-full shadow-sm tracking-wide">Closed</span>
+                                                        );
+                                                    })()}
                                                 </div>
                                             )}
                                             {property.openingHours?.sunday != null && (
-                                                <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
-                                                    <span className="text-base font-semibold text-gray-800">Sunday</span>
-                                                    <span className="text-base font-semibold text-green-600">
-                                                        {(() => {
-                                                            const v = property.openingHours.sunday;
-                                                            return typeof v === 'string' ? (v.trim() || '-') : (v?.enabled ? `${safeDisplay(v.open)} - ${safeDisplay(v.close)}`.trim() || 'Open All Day' : 'Closed');
-                                                        })()}
-                                                    </span>
+                                                <div className="flex justify-between items-center bg-gray-50/80 border border-gray-100 p-4 rounded-2xl scroll-animate" data-animation="animate-fade-up">
+                                                    <span className="text-base font-bold text-gray-800">Sunday</span>
+                                                    {(() => {
+                                                        const v = property.openingHours.sunday;
+                                                        const str = typeof v === 'string' ? (v.trim() || '') : (v?.enabled ? `${safeDisplay(v.open)} - ${safeDisplay(v.close)}`.trim() : '');
+                                                        return str ? (
+                                                            <span className="text-[11.5px] font-bold bg-white text-gray-900 px-3 py-1 rounded-full border border-gray-200 shadow-sm">{str}</span>
+                                                        ) : (
+                                                            <span className="text-[11px] font-bold bg-[#ff4d4d] text-white px-2 py-1 rounded-full shadow-sm tracking-wide">Closed</span>
+                                                        );
+                                                    })()}
                                                 </div>
                                             )}
                                         </div>
@@ -4022,7 +4086,7 @@ function PropertyDetailsContent() {
                                             position: { lat: 28.6119, lng: 77.2110 },
                                             title: 'Shopping Mall',
                                             color: '#f59e0b',
-                                            icon: '🛍',
+                                            icon: 'ðŸ›',
                                             infoContent: '<div style="padding: 10px;"><strong>Connaught Place</strong><br/>Shopping & Dining<br/>0.2 km away</div>'
                                         }
                                     ]}
@@ -4073,7 +4137,7 @@ function PropertyDetailsContent() {
                         </div>
 
                         {/* Rating & Reviews Section - Full Width */}
-                        <div ref={reviewsRef} className="bg-white rounded-2xl p-5 mb-6 scroll-animate" data-animation="animate-slide-top">
+                        <div ref={reviewsRef} className="bg-white rounded-2xl p-5 mb-6 scroll-animate shadow-none" data-animation="animate-slide-top">
                             <div className="flex items-center justify-between mb-5">
                                 <AnimatedText className="text-lg font-bold inline-block" delay={1500} lineColor="#f8c02f">
                                     <h3>Rating & Reviews</h3>
@@ -4109,7 +4173,7 @@ function PropertyDetailsContent() {
                                     ))}
                                 </div>
                                 <span className="text-base font-bold">
-                                    {ratingDisplay.overall || 'N/A'} – {ratingDisplay.totalRatings || 0} Ratings
+                                    {ratingDisplay.overall || 'N/A'} â€“ {ratingDisplay.totalRatings || 0} Ratings
                                 </span>
                             </div>
 
@@ -4253,7 +4317,7 @@ function PropertyDetailsContent() {
 
                         {/* Property Layout Section - Full Width - Only show for commercial properties */}
                         {property.propertyType === 'commercial' && (
-                            <div ref={layoutRef} className="bg-white rounded-2xl p-5 mb-6 scroll-animate" data-animation="animate-slide-top">
+                            <div ref={layoutRef} className="bg-white rounded-2xl p-5 mb-6 scroll-animate shadow-none" data-animation="animate-slide-top">
                                 <div className="flex items-center justify-between mb-5">
                                     <AnimatedText className="text-lg font-bold inline-block" delay={2000} lineColor="#f8c02f">
                                         <h3>Property Layout</h3>
@@ -4321,9 +4385,9 @@ function PropertyDetailsContent() {
                                     )}
                                     <button
                                         onClick={() => setShowReviewsModal(false)}
-                                        className="text-gray-400 hover:text-gray-900 text-2xl w-10 h-10 flex items-center justify-center transition-colors cursor-pointer"
+                                        className="text-gray-400 hover:text-gray-900 hover:bg-black/5 rounded-full w-10 h-10 flex items-center justify-center transition-colors cursor-pointer"
                                     >
-                                        ✕
+                                        <X className="h-6 w-6" />
                                     </button>
                                 </div>
                             </div>
@@ -4634,7 +4698,7 @@ function PropertyDetailsContent() {
                         <button onClick={(e) => { e.stopPropagation(); setShowAllPhotosModal(false); }} className="p-2 rounded-full hover:bg-white/20 text-white cursor-pointer"><X className="h-6 w-6" /></button>
                     </div>
                     <div className="flex-1 overflow-y-auto p-4 pb-32 max-[525px]:pb-36" onClick={(e) => e.stopPropagation()}>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                        <div className="grid grid-cols-2 md:grid-cols-3 md:grid-cols-4 md:grid-cols-5 gap-3">
                             {images.map((img, i) => (
                                 <div key={i} className="aspect-square rounded-xl overflow-hidden bg-gray-800 cursor-pointer hover:opacity-90 transition-opacity" onClick={() => { setFullScreenImage(img); setShowAllPhotosModal(false); }}>
                                     <img src={img} alt="" className="w-full h-full object-cover" />
@@ -4649,8 +4713,8 @@ function PropertyDetailsContent() {
             {showVideoModal && (property.propertyVideos?.[0]?.url || property.video) && (
                 <div className="fixed inset-0 bg-black flex flex-col z-[10000]" onClick={() => setShowVideoModal(false)}>
                     {/* Absolute Close Button */}
-                    <button 
-                        onClick={(e) => { e.stopPropagation(); setShowVideoModal(false); }} 
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setShowVideoModal(false); }}
                         className="absolute top-6 right-6 z-[10001] p-3 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm transition-all focus:outline-none cursor-pointer group"
                         title="Close Video"
                     >
@@ -4658,14 +4722,14 @@ function PropertyDetailsContent() {
                     </button>
 
                     <div className="flex-1 w-full h-full overflow-hidden flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-                        <video 
+                        <video
                             key={property.propertyVideos?.[0]?.url || property.video}
-                            controls 
-                            autoPlay 
-                            muted 
-                            loop 
+                            controls
+                            autoPlay
+                            muted
+                            loop
                             preload="auto"
-                            className="w-full h-full object-contain" 
+                            className="w-full h-full object-contain"
                             src={property.propertyVideos?.[0]?.url || property.video}
                         >
                             Your browser does not support the video tag.
@@ -4683,9 +4747,9 @@ function PropertyDetailsContent() {
                     >
                         <button
                             onClick={() => setFullScreenImage(null)}
-                            className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-2xl font-bold transition-colors z-[10000]"
+                            className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors z-[10000]"
                         >
-                            ✕
+                            <X className="h-7 w-7" />
                         </button>
                         <img
                             src={fullScreenImage}
@@ -4720,34 +4784,34 @@ function PropertyDetailsContent() {
             <div className="fixed bottom-[130px] md:bottom-6 right-4 max-[525px]:right-3 z-50 flex flex-col items-end">
                 {/* Schedule a Tour Modal - Anchored floating popup */}
                 {showTourModal && (
-                    <div className="relative w-[360px] max-[425px]:w-[calc(100vw-32px)] mb-3 group/modal">
+                    <div className="relative w-[280px] max-[425px]:w-[calc(100vw-32px)] mb-3 group/modal">
                         {/* Compact Backdrop for anchored modal */}
                         <div className="fixed inset-0 z-[-1] bg-black/5 md:bg-transparent" onClick={() => setShowTourModal(false)} />
 
-                        <div className="bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden animate-slide-up-fade flex flex-col max-h-[min(80vh,80svh)]">
+                        <div className="bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden animate-slide-up-fade flex flex-col max-h-[min(70vh,70svh)]">
                             {/* Gradient Header */}
-                            <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-5 text-white">
+                            <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-3 text-white">
                                 <div className="flex justify-between items-center">
                                     <div>
-                                        <h3 className="text-lg font-bold flex items-center gap-2">
-                                            <Calendar className="h-5 w-5" />
+                                        <h3 className="text-sm font-bold flex items-center gap-1.5">
+                                            <Calendar className="h-3.5 w-3.5" />
                                             Schedule a Tour
                                         </h3>
-                                        <p className="text-blue-100 text-xs mt-0.5">Quickly book your property visit</p>
+                                        <p className="text-blue-100 text-[9px] mt-0.5">Quickly book your property visit</p>
                                     </div>
                                     <button
                                         onClick={() => setShowTourModal(false)}
-                                        className="p-1.5 rounded-full hover:bg-white/20 text-white transition-colors"
+                                        className="p-1 rounded-full hover:bg-white/20 text-white transition-colors"
                                     >
-                                        <X className="h-5 w-5" />
+                                        <X className="h-3.5 w-3.5" />
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="p-5 pb-32 max-[525px]:pb-36 overflow-y-auto space-y-5 custom-scrollbar">
+                            <div className="p-3 pb-5 overflow-y-auto space-y-3 custom-scrollbar">
                                 {/* Date Selection */}
-                                <div className="space-y-3">
-                                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">1. Choose Date</p>
+                                <div className="space-y-2">
+                                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">1. Choose Date</p>
                                     <div className="relative">
                                         <Swiper
                                             modules={[Navigation]}
@@ -4763,64 +4827,64 @@ function PropertyDetailsContent() {
                                                 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
                                                 const isSelected = date.toDateString() === selectedTourDate.toDateString();
                                                 return (
-                                                    <SwiperSlide key={i} className="!w-[64px]">
+                                                    <SwiperSlide key={i} className="!w-[50px]">
                                                         <div
                                                             onClick={() => setSelectedTourDate(date)}
-                                                            className={`p-2 border rounded-xl text-center cursor-pointer transition-all ${isSelected
+                                                            className={`p-1.5 border rounded-lg text-center cursor-pointer transition-all ${isSelected
                                                                 ? "bg-blue-600 border-blue-600 text-white shadow-md scale-105"
                                                                 : "bg-gray-50 border-gray-100 hover:border-blue-200 text-gray-600"
                                                                 }`}
                                                         >
-                                                            <p className="text-[9px] font-bold uppercase">{dayNames[date.getDay()]}</p>
-                                                            <p className="font-bold text-base leading-tight">{date.getDate()}</p>
-                                                            <p className="text-[9px] uppercase">{monthNames[date.getMonth()]}</p>
+                                                            <p className="text-[8px] font-bold uppercase">{dayNames[date.getDay()]}</p>
+                                                            <p className="font-bold text-sm leading-tight">{date.getDate()}</p>
+                                                            <p className="text-[8px] uppercase">{monthNames[date.getMonth()]}</p>
                                                         </div>
                                                     </SwiperSlide>
                                                 );
                                             })}
                                         </Swiper>
-                                        <button type="button" onClick={(e) => handleSliderNavClick(e, true)} className="tour-dates-modal-prev swiper-nav-btn absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full border bg-white shadow flex items-center justify-center cursor-pointer text-gray-600 hover:bg-gray-50"><ArrowLeft className="h-4 w-4" /></button>
-                                        <button type="button" onClick={(e) => handleSliderNavClick(e, false)} className="tour-dates-modal-next swiper-nav-btn absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full border bg-white shadow flex items-center justify-center cursor-pointer text-gray-600 hover:bg-gray-50"><ArrowRight className="h-4 w-4" /></button>
+                                        <button type="button" onClick={(e) => handleSliderNavClick(e, true)} className="tour-dates-modal-prev swiper-nav-btn absolute left-0 top-1/2 -translate-y-1/2 z-10 h-6 w-6 rounded-full border bg-white shadow flex items-center justify-center cursor-pointer text-gray-600 hover:bg-gray-50"><ArrowLeft className="h-3 w-3" /></button>
+                                        <button type="button" onClick={(e) => handleSliderNavClick(e, false)} className="tour-dates-modal-next swiper-nav-btn absolute right-0 top-1/2 -translate-y-1/2 z-10 h-6 w-6 rounded-full border bg-white shadow flex items-center justify-center cursor-pointer text-gray-600 hover:bg-gray-50"><ArrowRight className="h-3 w-3" /></button>
                                     </div>
                                 </div>
 
                                 {/* Tour Type & Time */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">2. Tour Type</p>
-                                        <div className="flex bg-gray-50 p-1 rounded-lg border border-gray-100">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1.5">
+                                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">2. Tour Type</p>
+                                        <div className="flex bg-gray-50 p-0.5 rounded-lg border border-gray-100">
                                             <button
                                                 onClick={() => setTourType("in-person")}
-                                                className={`flex-1 py-1.5 rounded-md text-[10px] font-bold transition-all ${tourType === "in-person" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}
+                                                className={`flex-1 py-1 rounded-md text-[9px] font-bold transition-all ${tourType === "in-person" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}
                                             >
                                                 In Person
                                             </button>
                                             <button
                                                 onClick={() => setTourType("video-chat")}
-                                                className={`flex-1 py-1.5 rounded-md text-[10px] font-bold transition-all ${tourType === "video-chat" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}
+                                                className={`flex-1 py-1 rounded-md text-[9px] font-bold transition-all ${tourType === "video-chat" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"}`}
                                             >
                                                 Video
                                             </button>
                                         </div>
                                     </div>
-                                    <div className="space-y-2 relative" ref={timeDropdownRef}>
-                                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">3. Pick Time</p>
+                                    <div className="space-y-1.5 relative" ref={timeDropdownRef}>
+                                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">3. Pick Time</p>
                                         <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); setShowTimeDropdown(!showTimeDropdown); setTourFormErrors((p) => ({ ...p, tourTime: '' })); }}
-                                            className={`w-full flex items-center justify-between bg-gray-50 border rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-gray-700 ${tourFormErrors.tourTime ? 'border-red-500' : 'border-gray-100'}`}
+                                            className={`w-full flex items-center justify-between bg-gray-50 border rounded-lg px-2 py-1 text-[9px] font-bold text-gray-700 ${tourFormErrors.tourTime ? 'border-red-500' : 'border-gray-100'}`}
                                         >
                                             <span className="truncate">{selectedTourTime || "Time"}</span>
-                                            <ChevronDown className="h-3 w-3 text-gray-400" />
+                                            <ChevronDown className="h-2.5 w-2.5 text-gray-400" />
                                         </button>
-                                        {tourFormErrors.tourTime && <p className="text-[10px] text-red-500 mt-0.5">{tourFormErrors.tourTime}</p>}
+                                        {tourFormErrors.tourTime && <p className="text-[9px] text-red-500 mt-0.5">{tourFormErrors.tourTime}</p>}
                                         {showTimeDropdown && (
-                                            <div className="absolute bottom-full left-0 right-0 mb-1 z-[60] max-h-40 overflow-y-auto bg-white border border-gray-100 rounded-lg shadow-xl p-1">
+                                            <div className="absolute bottom-full left-0 right-0 mb-1 z-[60] max-h-32 overflow-y-auto bg-white border border-gray-100 rounded-lg shadow-xl p-1">
                                                 {TOUR_TIME_SLOTS.map((slot) => (
                                                     <button
                                                         key={slot}
                                                         onClick={() => { setSelectedTourTime(slot); setShowTimeDropdown(false); }}
-                                                        className={`w-full px-2 py-1.5 text-left text-[10px] rounded hover:bg-blue-50 transition-colors ${selectedTourTime === slot ? "bg-blue-600 text-white" : "text-gray-600"}`}
+                                                        className={`w-full px-2 py-1 text-left text-[9px] rounded hover:bg-blue-50 transition-colors ${selectedTourTime === slot ? "bg-blue-600 text-white" : "text-gray-600"}`}
                                                     >
                                                         {slot}
                                                     </button>
@@ -4831,24 +4895,24 @@ function PropertyDetailsContent() {
                                 </div>
 
                                 {/* Form Fields - Updated to match User Snippet */}
-                                <form className="space-y-3" onSubmit={handleTourSubmit}>
+                                <form className="space-y-2" onSubmit={handleTourSubmit}>
                                     {tourFormErrors.submit && (
-                                        <p className="text-xs text-red-500">{tourFormErrors.submit}</p>
+                                        <p className="text-[10px] text-red-500 font-medium">{tourFormErrors.submit}</p>
                                     )}
-                                    <div className="grid grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-2 gap-2">
                                         <div>
                                             <input
                                                 name="name"
-                                                className={`w-full bg-gray-50 border rounded-lg px-3 py-2 text-[11px] outline-none focus:ring-1 focus:ring-blue-600 transition-all font-medium ${tourFormErrors.name ? 'border-red-500' : 'border-gray-100'}`}
+                                                className={`w-full bg-gray-50 border rounded-lg px-2 py-1.5 text-[10px] outline-none focus:ring-1 focus:ring-blue-600 transition-all font-medium ${tourFormErrors.name ? 'border-red-500' : 'border-gray-100'}`}
                                                 placeholder="Name"
                                                 value={tourFormData.name}
                                                 onChange={(e) => { handleTourInputChange(e); setTourFormErrors((p) => ({ ...p, name: '' })); }}
                                             />
-                                            {tourFormErrors.name && <p className="text-[10px] text-red-500 mt-0.5">{tourFormErrors.name}</p>}
+                                            {tourFormErrors.name && <p className="text-[9px] text-red-500 mt-0.5">{tourFormErrors.name}</p>}
                                         </div>
                                         <input
                                             name="phone"
-                                            className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-[11px] outline-none focus:ring-1 focus:ring-blue-600 transition-all font-medium"
+                                            className="w-full bg-gray-50 border border-gray-100 rounded-lg px-2 py-1.5 text-[10px] outline-none focus:ring-1 focus:ring-blue-600 transition-all font-medium"
                                             placeholder="Phone"
                                             value={tourFormData.phone}
                                             onChange={handleTourInputChange}
@@ -4857,32 +4921,29 @@ function PropertyDetailsContent() {
                                     <div>
                                         <input
                                             name="email"
-                                            className={`w-full bg-gray-50 border rounded-lg px-3 py-2 text-[11px] outline-none focus:ring-1 focus:ring-blue-600 transition-all font-medium ${tourFormErrors.email ? 'border-red-500' : 'border-gray-100'}`}
+                                            className={`w-full bg-gray-50 border rounded-lg px-2 py-1.5 text-[10px] outline-none focus:ring-1 focus:ring-blue-600 transition-all font-medium ${tourFormErrors.email ? 'border-red-500' : 'border-gray-100'}`}
                                             placeholder="Email"
                                             type="email"
                                             value={tourFormData.email}
                                             onChange={(e) => { handleTourInputChange(e); setTourFormErrors((p) => ({ ...p, email: '' })); }}
                                         />
-                                        {tourFormErrors.email && <p className="text-[10px] text-red-500 mt-0.5">{tourFormErrors.email}</p>}
+                                        {tourFormErrors.email && <p className="text-[9px] text-red-500 mt-0.5">{tourFormErrors.email}</p>}
                                     </div>
                                     <textarea
                                         name="message"
-                                        className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-[11px] outline-none focus:ring-1 focus:ring-blue-600 transition-all font-medium resize-none h-20"
-                                        placeholder="Enter your Message"
+                                        className="w-full bg-gray-50 border border-gray-100 rounded-lg px-2 py-1.5 text-[10px] outline-none focus:ring-1 focus:ring-blue-600 transition-all font-medium resize-none h-16"
+                                        placeholder="Message (Optional)"
                                         value={tourFormData.message}
                                         onChange={handleTourInputChange}
                                     />
-                                    {tourType === "in-person" ? (
-                                        <button type="submit" className="w-full bg-blue-600 text-white font-bold py-2.5 rounded-xl hover:bg-blue-700 shadow-md shadow-blue-100 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs">
-                                            Submit a Tour Request
-                                            <ArrowRight className="h-3.5 w-3.5" />
-                                        </button>
-                                    ) : (
-                                        <button type="submit" className="w-full bg-blue-600 text-white font-bold py-2.5 rounded-xl hover:bg-blue-700 shadow-md shadow-blue-100 transition-all active:scale-95 flex items-center justify-center gap-2 text-xs">
-                                            BOOK YOUR VIDEO TOUR NOW
-                                            <ArrowRight className="h-3.5 w-3.5" />
-                                        </button>
-                                    )}
+                                    <button
+                                        type="submit"
+                                        disabled={isSubmittingTour}
+                                        className="w-full bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 shadow-md shadow-blue-100 transition-all active:scale-95 flex items-center justify-center gap-1.5 text-[10px]"
+                                    >
+                                        {tourType === "in-person" ? "Submit Tour Request" : "Submit Video Tour"}
+                                        <ArrowRight className="h-3 w-3" />
+                                    </button>
                                 </form>
                             </div>
                         </div>

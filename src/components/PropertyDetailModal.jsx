@@ -28,7 +28,6 @@ const safeNumber = (value) => {
 };
 
 import {
-    MapPin,
     X,
     Heart,
     Share2,
@@ -50,7 +49,6 @@ import {
     Package,
     Flame,
     ChevronDown,
-    BadgeCheck,
     Info
 } from "lucide-react";
 import Image from "next/image";
@@ -569,7 +567,20 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
             <div className="absolute inset-0 bg-black/40" onClick={onClose}></div>
 
             {/* Modal Content - max 85vh on mobile so top is never cut off */}
-            <div className={`relative pb-20 max-[480px]:pb-28 w-full max-h-[min(88vh,88svh)] max-[480px]:max-h-[82vh] rounded-t-3xl overflow-hidden transition-colors ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}>
+            <div className={`relative pb-20 max-[480px]:pb-28 w-full max-h-[min(88vh,88svh)] max-[480px]:max-h-[82vh] rounded-t-3xl transition-colors ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}>
+                {/* Top RATED Badge - Mobile */}
+                {isTopRated && (
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 z-30">
+                        <Image
+                            src="/property-details/top-rated-badge.svg"
+                            alt="Top Rated"
+                            width={46}
+                            height={46}
+                            className="object-contain drop-shadow-xl"
+                            unoptimized
+                        />
+                    </div>
+                )}
                 {/* Drag Handle */}
                 <div className="flex justify-center py-2">
                     <div className={`w-12 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-300'}`}></div>
@@ -664,7 +675,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                         <div className="flex items-start justify-between gap-2 mb-3 max-[480px]:mb-3">
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between w-full">
-                                    <h1 className={`text-[21px] max-[480px]:text-[19px] font-bold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(name)}</h1>
+                                    <h1 className={`text-[15px] max-[480px]:text-[13px] font-bold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(name)}</h1>
                                     <div className="flex items-center gap-1.5">
                                         <div className="flex items-center gap-0.5 px-2 py-0.5 max-[480px]:px-1.5 max-[480px]:py-0.5 rounded-full bg-[#fff4e5]">
                                             <Star className="w-5 h-5 max-[480px]:w-4.5 max-[480px]:h-4.5 fill-[#f97316] text-[#f97316]" />
@@ -674,13 +685,13 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                 </div>
                                 <div className="flex items-center justify-between w-full mt-1">
                                     <div className="flex items-center gap-1.5">
-                                        <MapPin className={`w-4.5 h-4.5 max-[480px]:w-4 max-[480px]:h-4 flex-shrink-0 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                                        <Image src="/property-details/red-map-icon.svg" alt="Location" width={22} height={22} className="flex-shrink-0 object-contain" unoptimized />
                                         <span className={`text-[15.5px] max-[480px]:text-[14.5px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                                             in {safeDisplay(layer_location)}{location_district ? `, ${safeDisplay(location_district)}` : ''}{property.state_name ? `, ${safeDisplay(property.state_name)}` : ''}
                                         </span>
                                     </div>
                                     {is_verified && (
-                                        <BadgeCheck className="w-4.5 h-4.5 max-[480px]:w-4 max-[480px]:h-4 text-[#3b82f6] fill-[#3b82f6]/10" />
+                                        <Image src="/property-details/verfication-badge.svg" alt="Verified" width={26} height={26} className="object-contain" unoptimized />
                                     )}
                                 </div>
                             </div>
@@ -730,8 +741,8 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                 ? displayedAmenities.map((a, i) => ({ ...a, Icon: a.Icon || defaultAmenities[i % defaultAmenities.length]?.Icon || User }))
                                 : defaultAmenities;
                             return (
-                                <div className="mb-4">
-                                    <div className="max-h-[140px] overflow-y-auto pr-0.5 scrollbar-ultra-thin">
+                                <div className={`mb-4 max-h-[200px] overflow-y-auto pr-2 p-2 scrollbar-ultra-thin rounded-2xl border ${isDark ? 'bg-[#282c34] border-gray-700 shadow-none' : 'bg-white border-gray-100 shadow-[0_10px_40px_rgba(0,0,0,0.08)]'}`}>
+                                    <div className="p-2">
                                         <div className="grid grid-cols-4 gap-3">
                                             {amenitiesToShow.map((amenity, index) => {
                                                 const IconComp = amenity.Icon || User;
@@ -755,10 +766,10 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                         })()}
 
                         {/* Key Info - Price | Status | Reviews - 3 boxes */}
-                        <div className="grid grid-cols-3 gap-1.5 mb-3">
+                        <div className="grid grid-cols-3 gap-1.5 mb-3 mt-2">
                             <div className={`rounded-xl py-2 px-1.5 max-[480px]:py-1.5 max-[480px]:px-1 text-center flex flex-col items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
                                 <p className={`text-[11px] max-[480px]:text-[9px] mb-0.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Price</p>
-                                <div className={`flex items-center gap-1.5 border-2 border-gray-400 rounded-lg px-2.5 py-1.5 ${isDark ? 'bg-black/20' : 'bg-white'}`}>
+                                <div className={`flex items-center gap-1.5 px-2.5 py-1.5 ${isDark ? 'bg-black/20' : 'bg-white'}`}>
                                     {originalPrice && originalPrice !== discountedPrice ? (
                                         <>
                                             <div className="relative px-0.5">
@@ -794,7 +805,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                         </div>
 
                         {/* About the Brand - Mobile Card (as per design) */}
-                        <div className={`mb-5 p-3 border-2 border-gray-400 rounded-2xl ${isDark ? 'bg-[#282c34]' : 'bg-white'}`}>
+                        <div className={`mb-5 p-3 ${isDark ? 'bg-[#282c34]' : 'bg-white'}`}>
                             <div className="mb-1.5">
                                 <h3 className={`text-[9px] font-extrabold uppercase ${isDark ? 'text-gray-200' : 'text-[#2e2e2e]'}`}>ABOUT THE BRAND</h3>
                                 <div className="w-6 h-0.5 bg-blue-800 mt-0.5"></div>
@@ -915,19 +926,15 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
             <div className="flex h-full relative">
                 {/* Top RATED Badge - Ultra compact version of the original structure */}
                 {isTopRated && (
-                    <div className="absolute top-0 left-[240px] -translate-x-1/2 z-30 bg-red-500 text-white px-0.5 py-0.5 rounded-b-sm shadow-md flex flex-col items-center justify-center min-w-[20px]">
-                        <div className="flex gap-0.5 mb-0">
-                            {[1, 2, 3].map((i) => (
-                                <Star key={i} className="w-[3px] h-[3px] fill-white text-white" />
-                            ))}
-                        </div>
-                        <span className="text-[5.5px] font-bold leading-none tracking-tighter">TOP</span>
-                        <span className="text-[5.5px] font-bold leading-none tracking-tighter">RATED</span>
-                        <div className="flex gap-0.5 mt-0">
-                            {[1, 2, 3].map((i) => (
-                                <Star key={i} className="w-[3px] h-[3px] fill-white text-white" />
-                            ))}
-                        </div>
+                    <div className="absolute -top-2 left-[240px] -translate-x-1/2 z-30">
+                        <Image
+                            src="/property-details/top-rated-badge.svg"
+                            alt="Top Rated"
+                            width={46}
+                            height={46}
+                            className="object-contain drop-shadow-xl"
+                            unoptimized
+                        />
                     </div>
                 )}
                 {/* Left Section - Image Carousel (40% width) */}
@@ -1037,7 +1044,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                             <div className="flex items-start justify-between mb-1">
                                 <div className="flex-1">
                                     <div className="flex items-center justify-between w-full mb-0.5">
-                                        <h1 className={`text-[19px] font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(name)}</h1>
+                                        <h1 className={`text-[14px] font-semibold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(name)}</h1>
                                         <div className="flex items-center gap-1.5">
                                             <div className="flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-[#fff4e5]">
                                                 <Star className="w-3.5 h-3.5 fill-[#f97316] text-[#f97316]" />
@@ -1047,14 +1054,14 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                     </div>
                                     <div className="flex items-center justify-between w-full mb-0">
                                         <div className="flex items-center gap-1.5">
-                                            <MapPin className={`w-4 h-4 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                                            <Image src="/property-details/red-map-icon.svg" alt="Location" width={20} height={20} className="object-contain" unoptimized />
                                             <span className={`text-[13.5px] ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                                                 in {safeDisplay(layer_location)}{location_district ? `, ${safeDisplay(location_district)}` : ''}
                                                 {property.state_name ? `, ${safeDisplay(property.state_name)}` : ''}
                                             </span>
                                         </div>
                                         {is_verified && (
-                                            <BadgeCheck className="w-4 h-4 text-[#3b82f6] fill-[#3b82f6]/10" />
+                                            <Image src="/property-details/verfication-badge.svg" alt="Verified" width={24} height={24} className="object-contain" unoptimized />
                                         )}
                                     </div>
                                     <div className="flex items-start gap-1 mt-0.5 max-w-full overflow-hidden">
@@ -1088,8 +1095,8 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                     </div>
                                 </div>
                                 {/* Price on Right Side - Stacked vertically */}
-                                <div className="flex-1 ml-4 flex flex-col items-end">
-                                    <div className={`flex items-center gap-2.5 border-[3px] border-gray-400 rounded-xl px-5 py-2 w-full justify-center ${isDark ? 'bg-[#282c34]' : 'bg-white'}`}>
+                                <div className="flex-1 ml-4 mt-1.5 flex flex-col items-end">
+                                    <div className={`flex items-center gap-2.5 px-5 py-2 w-full justify-center ${isDark ? 'bg-[#282c34]' : 'bg-white'}`}>
                                         {originalPrice && originalPrice !== discountedPrice ? (
                                             <>
                                                 <div className="relative px-1">
@@ -1117,10 +1124,10 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                         </section>
 
                         {/* Bottom Section - Amenities and About Brand Side by Side - Aligned to bottom with fixed height */}
-                        <div className="flex items-stretch gap-2 h-[45%]">
+                        <div className="flex items-start gap-2 h-auto min-h-[90px]">
                             {/* Left Column - Amenities - Show all with scrollbar - Full Height */}
-                            <section className="flex-1 flex flex-col">
-                                <div className="h-full overflow-y-auto pr-0.5 scrollbar-ultra-thin">
+                            <section className={`flex-1 max-h-[120px] overflow-y-auto pr-2 p-2 scrollbar-ultra-thin rounded-2xl border ${isDark ? 'bg-[#282c34] border-gray-700 shadow-none' : 'bg-white border-gray-100 shadow-[0_10px_40px_rgba(0,0,0,0.08)]'}`}>
+                                <div className="p-2">
                                     <div className="grid grid-cols-4 gap-1.5">
                                         {(displayedAmenities.length > 0 ? displayedAmenities : [
                                             { name: "Guest Check-in", icon: "👤" },
@@ -1155,7 +1162,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                             </section>
 
                             {/* Right Column - About the Brand - Ultra Compact */}
-                            <section className={`ml-6 flex-1 flex flex-col border-[3px] border-gray-400 rounded-2xl p-2 pb-1.5 ${isDark ? 'bg-[#282c34]' : 'bg-white'}`}>
+                            <section className={`ml-6 flex-1 flex flex-col p-2 pb-1.5 ${isDark ? 'bg-[#282c34]' : 'bg-white'}`}>
                                 <div className="mb-1">
                                     <h3 className={`text-[8.5px] font-extrabold uppercase ${isDark ? 'text-gray-200' : 'text-[#2e2e2e]'}`}>ABOUT THE BRAND</h3>
                                     <div className="w-6 h-0.5 bg-blue-800 mt-0.5"></div>

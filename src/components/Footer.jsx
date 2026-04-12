@@ -22,7 +22,7 @@ export default function Footer() {
             .then((data) => {
                 if (data?.success && data?.config) setGlobalConfig(data.config);
             })
-            .catch(() => {});
+            .catch(() => { });
     }, []);
 
     useEffect(() => {
@@ -52,77 +52,72 @@ export default function Footer() {
 
     return (
         <>
-            <footer className={`md:hidden border-t fixed bottom-0 left-0 right-0 z-20 transition-colors ${
-                isDark 
-                    ? 'bg-[#1A1A1A] border-[#333333]' 
-                    : 'bg-white border-gray-300'
-            }`}>
-                <div className="flex items-center justify-around py-0.5">
-                    <Link href="/" className={`flex flex-col items-center justify-center flex-1 h-14 transition-colors duration-200 ${
-                        pathName === '/' 
-                            ? isDark ? 'text-white font-medium' : 'text-gray-900 font-medium' 
-                            : isDark ? 'text-gray-500' : 'text-gray-500'
+            {pathName !== '/' && (
+                <footer className={`md:hidden border-t fixed bottom-0 left-0 right-0 z-20 transition-colors ${isDark
+                        ? 'bg-[#1A1A1A] border-[#333333]'
+                        : 'bg-white border-gray-300'
                     }`}>
-                        <Map className="w-5 h-5 mb-0.5" />
-                        <span className="text-[0.65rem]">Map view</span>
-                    </Link>
-
-                    {globalConfig.isFullNavVisible && (
-                        <>
-                            <Link href="/residential" className="flex flex-col items-center justify-center flex-1 h-14">
-                                <span className={`py-1.5 px-3 rounded-full text-[0.7rem] font-semibold transition-colors duration-200 ${
-                                    pathName === '/residential' 
-                                        ? isDark ? 'text-yellow-400 bg-yellow-500/20' : 'text-gray-900 bg-[#ffefad]' 
-                                        : isDark ? 'text-gray-400 bg-transparent' : 'text-gray-500 bg-transparent'
-                                }`}>
-                                    Residential
-                                </span>
-                            </Link>
-
-                            <Link href="/builders" className={`flex flex-col items-center justify-center flex-1 h-14 transition-colors duration-200 ${
-                                pathName === '/builders' 
-                                    ? isDark ? 'text-white font-medium' : 'text-gray-900 font-medium' 
-                                    : isDark ? 'text-gray-500' : 'text-gray-500'
-                            }`}>
-                                <Image src="/crown.svg" alt="Crown" width={20} height={20} />
-                                <span className="text-[0.65rem] mt-0.5">Builders</span>
-                            </Link>
-
-                            <Link href="/commercial" className="flex flex-col items-center justify-center flex-1 h-14">
-                                <span className={`py-1.5 px-3 rounded-full text-[0.7rem] font-semibold transition-colors duration-200 ${
-                                    pathName === '/commercial' 
-                                        ? isDark ? 'text-yellow-400 bg-yellow-500/20' : 'text-gray-900 bg-[#ffefad]' 
-                                        : isDark ? 'text-gray-400 bg-transparent' : 'text-gray-500 bg-transparent'
-                                }`}>
-                                    Commercial
-                                </span>
-                            </Link>
-                        </>
-                    )}
-
-                    {currentUser ? (
-                        <Link href="/dashboard" className={`flex flex-col items-center justify-center flex-1 h-14 transition-colors duration-200 ${
-                            pathName === '/dashboard' 
-                                ? isDark ? 'text-white font-medium' : 'text-gray-900 font-medium' 
+                    <div className="flex items-center justify-around py-0.5">
+                        <Link href="/" className={`flex flex-col items-center justify-center flex-1 h-14 transition-colors duration-200 ${pathName === '/'
+                                ? isDark ? 'text-white font-medium' : 'text-gray-900 font-medium'
                                 : isDark ? 'text-gray-500' : 'text-gray-500'
-                        }`}>
-                            <User className="w-5 h-5 mb-0.5" />
-                            <span className="text-[0.65rem]">Profile</span>
+                            }`}>
+                            <Map className="w-5 h-5 mb-0.5" />
+                            <span className="text-[0.65rem]">Map view</span>
                         </Link>
-                    ) : (
-                        <button onClick={() => setIsLoginOpen(true)} className={`flex flex-col items-center justify-center flex-1 h-14 ${
-                            isDark ? 'text-gray-500' : 'text-gray-500'
-                        }`}>
-                            <User className="w-5 h-5 mb-0.5" />
-                            <span className="text-[0.65rem]">Login</span>
-                        </button>
-                    )}
-                </div>
-            </footer>
+
+                        {globalConfig.isFullNavVisible && (
+                            <>
+                                <Link href="/residential" className="flex flex-col items-center justify-center flex-1 h-14">
+                                    <span className={`py-1.5 px-3 rounded-full text-[0.7rem] font-semibold transition-colors duration-200 ${pathName === '/residential'
+                                            ? isDark ? 'text-yellow-400 bg-yellow-500/20' : 'text-gray-900 bg-[#ffefad]'
+                                            : isDark ? 'text-gray-400 bg-transparent' : 'text-gray-500 bg-transparent'
+                                        }`}>
+                                        Residential
+                                    </span>
+                                </Link>
+
+                                <Link href="/builders" className={`flex flex-col items-center justify-center flex-1 h-14 transition-colors duration-200 ${pathName === '/builders'
+                                        ? isDark ? 'text-white font-medium' : 'text-gray-900 font-medium'
+                                        : isDark ? 'text-gray-500' : 'text-gray-500'
+                                    }`}>
+                                    <Image src="/crown.svg" alt="Crown" width={20} height={20} />
+                                    <span className="text-[0.65rem] mt-0.5">Builders</span>
+                                </Link>
+
+                                <Link href="/commercial" className="flex flex-col items-center justify-center flex-1 h-14">
+                                    <span className={`py-1.5 px-3 rounded-full text-[0.7rem] font-semibold transition-colors duration-200 ${pathName === '/commercial'
+                                            ? isDark ? 'text-yellow-400 bg-yellow-500/20' : 'text-gray-900 bg-[#ffefad]'
+                                            : isDark ? 'text-gray-400 bg-transparent' : 'text-gray-500 bg-transparent'
+                                        }`}>
+                                        Commercial
+                                    </span>
+                                </Link>
+                            </>
+                        )}
+
+                        {currentUser ? (
+                            <Link href="/dashboard" className={`flex flex-col items-center justify-center flex-1 h-14 transition-colors duration-200 ${pathName === '/dashboard'
+                                    ? isDark ? 'text-white font-medium' : 'text-gray-900 font-medium'
+                                    : isDark ? 'text-gray-500' : 'text-gray-500'
+                                }`}>
+                                <User className="w-5 h-5 mb-0.5" />
+                                <span className="text-[0.65rem]">Profile</span>
+                            </Link>
+                        ) : (
+                            <button onClick={() => setIsLoginOpen(true)} className={`flex flex-col items-center justify-center flex-1 h-14 ${isDark ? 'text-gray-500' : 'text-gray-500'
+                                }`}>
+                                <User className="w-5 h-5 mb-0.5" />
+                                <span className="text-[0.65rem]">Login</span>
+                            </button>
+                        )}
+                    </div>
+                </footer>
+            )}
 
             {pathName !== '/' && (
                 <footer className={`hidden md:block border-t transition-colors duration-300 ${isDark ? 'bg-[#1A1A1A] border-[#333333]' : 'bg-[#F8F8F8] border-[#E5E7EB]'}`}>
-                    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-5">
+                    <div className="px-4 sm:px-6 lg:px-8 py-5">
                         <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
                             <div className="space-y-2 md:col-span-2">
                                 <Link href="/">

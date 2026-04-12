@@ -92,7 +92,7 @@ export default function Header() {
                     ${isDark ? 'bg-[#1f2229] border-gray-800' : 'bg-white border-gray-100'}
                 `}
             >
-                <div className="container mx-auto px-4 md:px-8">
+                <div className="px-4 md:px-8">
                     <div className="flex items-center justify-between">
                         {/* Left: Logo + Location */}
                         <div className="flex items-center gap-2">

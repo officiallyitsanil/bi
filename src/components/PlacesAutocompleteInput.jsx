@@ -208,15 +208,15 @@ export default function PlacesAutocompleteInput({
 
   if (!isLoaded) {
     return (
-      <div className={`flex items-center gap-2 px-3 py-2.5 border rounded-lg ${isDark ? "border-gray-600 bg-[#282c34]" : "border-gray-200"} ${className}`}>
-        {IconLeft && <IconLeft className={`w-4 h-4 flex-shrink-0 ${isDark ? "text-gray-500" : "text-gray-400"}`} />}
+      <div className={`flex items-center gap-2 px-2.5 py-2.5 border rounded-lg ${isDark ? "border-gray-600 bg-[#282c34]" : "border-gray-200"} ${className}`}>
+        {IconLeft && <IconLeft className={`w-3.5 h-3.5 flex-shrink-0 ${isDark ? "text-gray-500" : "text-gray-400"}`} />}
         <input
           type="text"
           value={value}
           onChange={(e) => onChange?.(e.target.value)}
           placeholder={placeholder}
           disabled={disabled}
-          className={`flex-1 text-sm outline-none bg-transparent min-w-0 ${isDark ? "text-white placeholder-gray-500" : "text-gray-600 placeholder-gray-400"} ${inputClassName}`}
+          className={`flex-1 text-xs outline-none bg-transparent min-w-0 ${isDark ? "text-white placeholder-gray-500" : "text-gray-600 placeholder-gray-400"} ${inputClassName}`}
         />
         {hasValue ? (
           <button
@@ -228,7 +228,7 @@ export default function PlacesAutocompleteInput({
             <X className="w-4 h-4" strokeWidth={2} />
           </button>
         ) : (
-          IconRight && <IconRight className={`w-4 h-4 flex-shrink-0 ${isDark ? "text-gray-500" : "text-gray-400"}`} />
+          IconRight && <IconRight className={`w-3.5 h-3.5 flex-shrink-0 ${isDark ? "text-gray-500" : "text-gray-400"}`} />
         )}
       </div>
     );
@@ -237,9 +237,9 @@ export default function PlacesAutocompleteInput({
   return (
     <div ref={containerRef} className={`relative ${className}`}>
       <div
-        className={`flex items-center gap-2 px-3 py-2.5 border rounded-lg ${isDark ? "border-gray-600 bg-[#282c34]" : "border-gray-200"} ${showDropdown && predictions.length ? "rounded-b-none border-b-0" : ""}`}
+        className={`flex items-center gap-2 px-2.5 py-2.5 border rounded-lg ${isDark ? "border-gray-600 bg-[#282c34]" : "border-gray-200"} ${showDropdown && predictions.length ? "rounded-b-none border-b-0" : ""}`}
       >
-        {IconLeft && <IconLeft className={`w-4 h-4 flex-shrink-0 ${isDark ? "text-gray-500" : "text-gray-400"}`} />}
+        {IconLeft && <IconLeft className={`w-3.5 h-3.5 flex-shrink-0 ${isDark ? "text-gray-500" : "text-gray-400"}`} />}
         <input
           type="text"
           value={value}
@@ -253,7 +253,7 @@ export default function PlacesAutocompleteInput({
           placeholder={placeholder}
           disabled={disabled}
           autoComplete="off"
-          className={`flex-1 text-sm outline-none bg-transparent min-w-0 ${isDark ? "text-white placeholder-gray-500" : "text-gray-600 placeholder-gray-400"} ${inputClassName}`}
+          className={`flex-1 text-xs outline-none bg-transparent min-w-0 ${isDark ? "text-white placeholder-gray-500" : "text-gray-600 placeholder-gray-400"} ${inputClassName}`}
         />
         {hasValue ? (
           <button
@@ -275,7 +275,7 @@ export default function PlacesAutocompleteInput({
           className={`absolute top-full left-0 right-0 z-[600] rounded-b-lg border shadow-xl max-h-48 overflow-y-auto border-t-0 ${isDark ? "bg-[#282c34] border-gray-600" : "bg-white border-gray-200"}`}
         >
           {isLoading ? (
-            <div className={`px-4 py-3 text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>Loading...</div>
+            <div className={`px-3 py-2 text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>Loading...</div>
           ) : (
             predictions.map((p, i) => (
               <button
@@ -285,9 +285,9 @@ export default function PlacesAutocompleteInput({
                   e.preventDefault();
                   handleSelect(p);
                 }}
-                className={`w-full text-left px-4 py-2.5 border-b last:border-b-0 transition-colors ${i === selectedIndex ? (isDark ? "bg-gray-700" : "bg-gray-100") : ""} ${isDark ? "border-gray-600 hover:bg-gray-700 text-gray-200" : "border-gray-100 hover:bg-gray-50 text-gray-800"}`}
+                className={`w-full text-left px-3 py-2 border-b last:border-b-0 transition-colors ${i === selectedIndex ? (isDark ? "bg-gray-700" : "bg-gray-100") : ""} ${isDark ? "border-gray-600 hover:bg-gray-700 text-gray-200" : "border-gray-100 hover:bg-gray-50 text-gray-800"}`}
               >
-                <span className="text-sm">{p.description}</span>
+                <span className="text-xs">{p.description}</span>
               </button>
             ))
           )}

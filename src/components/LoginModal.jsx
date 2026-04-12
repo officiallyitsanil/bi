@@ -70,10 +70,10 @@ export default function LoginModal({ onClose, onProceed }) {
     // Render the verifier and wait for it to be ready
     try {
       const widgetId = await verifier.render();
-      
+
       // Wait briefly to ensure reCAPTCHA is fully initialized
       await new Promise(resolve => setTimeout(resolve, 300));
-      
+
       return verifier;
     } catch (error) {
       console.error("Error rendering reCAPTCHA:", error);
@@ -99,7 +99,7 @@ export default function LoginModal({ onClose, onProceed }) {
     try {
       // Always reinitialize recaptcha for a fresh token
       let appVerifier = recaptchaVerifier || window.recaptchaVerifier;
-      
+
       // Clear existing verifier and create a new one
       if (appVerifier) {
         try {
@@ -111,7 +111,7 @@ export default function LoginModal({ onClose, onProceed }) {
 
       // Initialize and wait for reCAPTCHA to be verified
       appVerifier = await initializeRecaptcha();
-      
+
       // Small delay to ensure token is ready
       await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -128,7 +128,7 @@ export default function LoginModal({ onClose, onProceed }) {
       setTimeout(() => setResendAvailable(true), 30000);
     } catch (error) {
       console.error("Error sending OTP:", error);
-      
+
       // Clear recaptcha on error
       if (window.recaptchaVerifier) {
         try {
@@ -141,7 +141,7 @@ export default function LoginModal({ onClose, onProceed }) {
       }
 
       let errorMessage = "Failed to send OTP.\n\n";
-      
+
       // Log full error details for debugging
       console.error("Full error details:", {
         code: error.code,
@@ -150,11 +150,11 @@ export default function LoginModal({ onClose, onProceed }) {
         response: error.customData?.serverResponse,
         customData: error.customData
       });
-      
+
       // Log the current origin/hostname
       console.error("Current origin:", window.location.origin);
       console.error("Current hostname:", window.location.hostname);
-      
+
       if (error.code === "auth/invalid-app-credential") {
         errorMessage += "⚠️ LOCALHOST CONFIGURATION ISSUE ⚠️\n\n";
         errorMessage += "reCAPTCHA is working, but Firebase is rejecting the request.\n\n";
@@ -182,7 +182,7 @@ export default function LoginModal({ onClose, onProceed }) {
       } else {
         errorMessage += `Error: ${error.message || error.code || "Unknown error"}`;
       }
-      
+
       alert(errorMessage);
     } finally {
       setLoading(false);
@@ -229,12 +229,12 @@ export default function LoginModal({ onClose, onProceed }) {
       }
 
       const backendData = await response.json();
-      
-      onProceed(userCredential.user); 
+
+      onProceed(userCredential.user);
 
     } catch (error) {
       console.error("Error during login process:", error);
-      setOtpError(true); 
+      setOtpError(true);
     } finally {
       setLoading(false);
     }
@@ -346,11 +346,10 @@ export default function LoginModal({ onClose, onProceed }) {
                     value={val}
                     onChange={(e) => handleOTPChange(i, e.target.value)}
                     onKeyDown={handleOtpKeyDown}
-                    className={`w-12 h-12 text-center text-xl border-2 rounded-lg outline-none transition-colors ${
-                      otpError
+                    className={`w-12 h-12 text-center text-xl border-2 rounded-lg outline-none transition-colors ${otpError
                         ? "border-red-500"
                         : "border-gray-300 focus:border-black"
-                    }`}
+                      }`}
                     maxLength="1"
                   />
                 ))}
@@ -375,11 +374,10 @@ export default function LoginModal({ onClose, onProceed }) {
                 <button
                   onClick={handleResend}
                   disabled={!resendAvailable || loading}
-                  className={`py-2 flex items-center justify-center text-sm mx-auto ${
-                    resendAvailable && !loading
+                  className={`py-2 flex items-center justify-center text-sm mx-auto ${resendAvailable && !loading
                       ? "text-black font-medium"
                       : "text-gray-400 cursor-not-allowed"
-                  }`}
+                    }`}
                 >
                   Resend OTP
                   <RotateCcw className="w-3 h-3 ml-2" />

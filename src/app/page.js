@@ -1455,7 +1455,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className={`h-screen md:h-[87vh] flex flex-col relative transition-colors ${isDark ? 'bg-[#1f2229]' : 'bg-gray-100'}`}>
+    <div className={`h-full flex flex-col relative transition-colors ${isDark ? 'bg-[#1f2229]' : 'bg-gray-100'}`}>
       <VisitorTracker onLocationUpdate={handleLocationUpdate} />
 
       {/* Scrollbar Styles for Mobile Modals */}
@@ -1495,156 +1495,27 @@ export default function HomePage() {
         }
         /* Left drawer – smaller font sizes */
         .left-drawer-panel { font-size: 0.8125rem; }
-        .left-drawer-panel .text-sm { font-size: 0.75rem !important; }
         .left-drawer-panel .text-lg { font-size: 0.875rem !important; }
         .left-drawer-panel .text-base { font-size: 0.8125rem !important; }
+        .left-drawer-panel .text-sm { font-size: 0.7rem !important; }
+        .left-drawer-panel .text-xs { font-size: 0.625rem !important; }
+        .left-drawer-panel h3 { font-size: 0.725rem !important; line-height: 1rem !important; margin-bottom: 0.5rem !important; }
+        .left-drawer-panel label span { font-size: 0.7rem !important; }
+        .left-drawer-panel button span { font-size: 0.7rem !important; }
+        .left-drawer-panel .gap-2 { gap: 0.375rem !important; }
+        .left-drawer-panel .gap-3 { gap: 0.5rem !important; }
+        .left-drawer-panel .p-4 { padding: 0.75rem !important; }
       `}} />
 
-      {/* Mobile Header - Only visible on screens < 480px */}
-      <div className={`md:hidden sticky top-0 z-50 transition-colors ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}>
-        <div className="flex items-center justify-between px-3 py-2">
-          {/* Left: Logo + India */}
-          <div className="flex items-center gap-2">
-            <Link href="/">
-              <Image src="/logo.png" width={80} height={40} className="w-20 h-auto" alt="Logo" />
-            </Link>
-            <div className="flex items-center gap-1">
-              <Globe className={`w-3.5 h-3.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} strokeWidth={1.5} />
-              <span className={`text-xs font-medium ${isDark ? 'text-white' : 'text-black'}`}>India</span>
-            </div>
-          </div>
-
-          {/* Right: Theme Toggle + Menu/Profile pill */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={toggleTheme}
-              className={`hover:cursor-pointer p-1.5 rounded-full transition-colors ${isDark ? 'text-yellow-400 hover:bg-white/10' : 'text-gray-700 hover:bg-gray-100'}`}
-            >
-              {isDark ? (
-                <Sun className="w-5 h-5" strokeWidth={1.5} />
-              ) : (
-                <Moon className="w-5 h-5" strokeWidth={1.5} />
-              )}
-            </button>
-            {/* Menu + Profile Pill Button - same as desktop: whole unit, opens right drawer */}
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className={`flex items-center gap-2 px-2.5 py-1.5 border rounded-full transition-colors cursor-pointer ${isDark
-                ? 'border-gray-600 bg-[#282c34] hover:bg-white/10'
-                : 'border-gray-300 bg-white hover:bg-gray-100'
-                }`}
-            >
-              <Menu className={`w-4 h-4 ${isDark ? 'text-white' : 'text-black'}`} strokeWidth={1.5} />
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                <User className="w-3.5 h-3.5 text-blue-600" strokeWidth={2} fill="none" />
-              </div>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Search Bar - Floating on map with gap from header */}
-      <div className="md:hidden absolute top-20 left-0 right-0 z-40 px-3">
-        <form onSubmit={handleSearch} className="relative search-container">
-          <div className={`rounded-full pl-4 pr-3 py-2.5 w-full flex items-center gap-2 shadow-lg transition-colors ${isDark ? 'bg-[#282c34]' : 'bg-white'}`}>
-            <Search className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={handleSearchInputChange}
-              onFocus={() => {
-                setIsSearchFocused(true);
-                setShowSuggestions(true);
-              }}
-              onBlur={() => {
-                setTimeout(() => {
-                  setIsSearchFocused(false);
-                  setShowSuggestions(false);
-                }, 150);
-              }}
-              placeholder="Search 'Kora'"
-              className={`flex-1 outline-none text-sm font-medium bg-transparent mobile-search-input-field ${isDark ? 'text-white placeholder:text-gray-500' : 'text-gray-700 placeholder:text-gray-400'}`}
-              style={{ background: 'transparent', border: 'none', padding: 0 }}
-            />
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setShowCitySelector(false);
-                  setShowFiltersView(true);
-                }}
-                className={`transition-colors cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                <SlidersHorizontal className="w-5 h-5" />
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setShowFiltersView(false);
-                  setShowCitySelector(true);
-                }}
-                className={`transition-colors cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                <Globe className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Mobile Suggestions Dropdown */}
-          {showSuggestions && (
-            <div className={`absolute top-full left-0 right-0 rounded-lg shadow-xl mt-1 max-h-60 overflow-y-auto z-50 border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'bg-white border-gray-200'}`}>
-              {suggestions.length > 0 ? (
-                suggestions.map((suggestion, index) => (
-                  <div
-                    key={index}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      setSearchQuery(suggestion.text);
-                      setShowSuggestions(false);
-                      if (typeof window !== 'undefined' && window.innerWidth < 480) {
-                        setShowFiltersView(false);
-                        setShowCitySelector(false);
-                      }
-
-                      // If suggestion has a marker (property), zoom to it
-                      if (suggestion.marker && suggestion.marker.position) {
-                        setMapCenter(suggestion.marker.position);
-                        setZoomLevel(ZOOM_LOCATION);
-                        setSearchQuery(suggestion.text);
-                        if (typeof window !== 'undefined' && window.innerWidth < 480) setSelectedMarker(null);
-                        return;
-                      }
-
-                      // If no marker, just set the search query to filter properties
-                      setSearchQuery(suggestion.text);
-                    }}
-                    className={`px-3 py-2 cursor-pointer border-b last:border-b-0 transition-all duration-200 ${isDark ? 'hover:bg-gray-700 border-gray-700' : 'hover:bg-gray-100 border-gray-100'}`}
-                  >
-                    <div className={`text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{suggestion.displayText}</div>
-                  </div>
-                ))
-              ) : (
-                <div className={`px-3 py-2 text-sm ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-                  No suggestions found
-                </div>
-              )}
-            </div>
-          )}
-        </form>
-      </div>
-
-      <main className="flex-1 relative flex pb-20 max-[525px]:pb-24 md:pb-0 min-h-0">
-        <div className="hidden md:flex md:shrink-0 relative h-full min-h-0 overflow-hidden" style={{ maxWidth: isDrawerCollapsed ? 0 : 328, transition: 'max-width 300ms ease-in-out' }}>
-          <div className={`left-drawer-panel w-[328px] shadow-lg flex flex-col h-full min-h-0 overflow-hidden shrink-0 ${isDark ? 'bg-[#1f2229]' : 'bg-gray-50'} ${isLoadingProperties ? 'opacity-30 pointer-events-none' : ''}`}>
+      {/* Unified Search and Drawer Layout */}
+      <div className="flex-1 relative flex pb-0 min-h-0">
+        <div className="flex shrink-0 relative h-full min-h-0 overflow-hidden" style={{ width: isDrawerCollapsed ? '0%' : '20%', minWidth: isDrawerCollapsed ? '0%' : '20%', maxWidth: isDrawerCollapsed ? '0%' : '20%', transition: 'all 300ms ease-in-out' }}>
+          <div className={`left-drawer-panel w-full shadow-lg flex flex-col h-full min-h-0 overflow-hidden shrink-0 ${isDark ? 'bg-[#1f2229]' : 'bg-gray-50'} ${isLoadingProperties ? 'opacity-30 pointer-events-none' : ''}`}>
             <div className={`flex-shrink-0 z-20 px-3 pt-3 ${showFiltersView || showCitySelector ? 'pb-0' : 'pb-3'} ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}>
               <form onSubmit={handleSearch} className={showFiltersView || showCitySelector ? 'mb-2' : 'mb-3'}>
                 <div className="relative search-container">
-                  <div className={`rounded-lg pl-3 pr-2.5 py-2.5 w-full flex items-center gap-2 ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
-                    <Search className={`w-4 h-4 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                  <div className={`rounded-lg pl-2 pr-2 py-1.5 w-full flex items-center gap-1.5 ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                    <Search className={`w-3.5 h-3.5 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                     <div
                       className="flex-1 flex items-center gap-1.5 min-w-0 relative cursor-text"
                       onClick={() => {
@@ -1657,10 +1528,10 @@ export default function HomePage() {
                         }
                       }}
                     >
-                      <span className={`text-sm font-medium whitespace-nowrap ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Search</span>
+                      <span className={`text-xs font-medium whitespace-nowrap ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Search</span>
                       <div className="flex-1 relative min-w-0">
                         {searchQuery && !isSearchFocused && (
-                          <span className={`text-sm font-medium cursor-text pointer-events-none ${isDark ? 'text-white' : 'text-gray-700'}`}>"{searchQuery}"</span>
+                          <span className={`text-xs font-medium cursor-text pointer-events-none ${isDark ? 'text-white' : 'text-gray-700'}`}>"{searchQuery}"</span>
                         )}
                         <input
                           type="text"
@@ -1678,7 +1549,7 @@ export default function HomePage() {
                           }}
                           placeholder=""
                           disabled={isLoadingProperties}
-                          className={`w-full outline-none text-sm font-medium bg-transparent search-input-field ${isDark ? 'text-white' : 'text-gray-700'} ${searchQuery && !isSearchFocused ? 'absolute inset-0 opacity-0' : ''
+                          className={`w-full outline-none text-xs font-medium bg-transparent search-input-field ${isDark ? 'text-white' : 'text-gray-700'} ${searchQuery && !isSearchFocused ? 'absolute inset-0 opacity-0' : ''
                             } ${isLoadingProperties ? 'cursor-not-allowed' : ''}`}
                           style={{ background: 'transparent', border: 'none', padding: 0 }}
                         />
@@ -1696,7 +1567,7 @@ export default function HomePage() {
                         disabled={isLoadingProperties}
                         className={`transition-colors ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'}`}
                       >
-                        <SlidersHorizontal className="w-4 h-4" />
+                        <SlidersHorizontal className="w-3.5 h-3.5" />
                       </button>
                       <button
                         type="button"
@@ -1709,7 +1580,7 @@ export default function HomePage() {
                         disabled={isLoadingProperties}
                         className={`transition-colors ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'}`}
                       >
-                        <Globe className="w-4 h-4" />
+                        <Globe className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
@@ -1742,7 +1613,7 @@ export default function HomePage() {
                             }}
                             className={`px-4 py-2.5 cursor-pointer border-b last:border-b-0 transition-all duration-200 ${isDark ? 'hover:bg-gray-700 border-gray-700' : 'hover:bg-gray-100 border-gray-100'}`}
                           >
-                            <div className={`text-sm ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{suggestion.displayText}</div>
+                            <div className={`text-xs ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{suggestion.displayText}</div>
                           </div>
                         ))
                       ) : (
@@ -1768,7 +1639,7 @@ export default function HomePage() {
                         }));
                       }}
                       disabled={isLoadingProperties}
-                      className={`flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${propertyTypeFilter === 'all'
+                      className={`flex-1 px-2 py-1 rounded-md text-xs font-medium transition-all ${propertyTypeFilter === 'all'
                         ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
                         : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
                         } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
@@ -1784,12 +1655,12 @@ export default function HomePage() {
                         }));
                       }}
                       disabled={isLoadingProperties}
-                      className={`flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${propertyTypeFilter === 'commercial'
+                      className={`flex-1 px-2 py-1 rounded-md text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${propertyTypeFilter === 'commercial'
                         ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
                         : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
                         } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                     >
-                      <Building2 className="w-3.5 h-3.5" />
+                      <Building2 className="w-3 h-3" />
                       Commercial
                     </button>
                     <button
@@ -1801,12 +1672,12 @@ export default function HomePage() {
                         }));
                       }}
                       disabled={isLoadingProperties}
-                      className={`flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${propertyTypeFilter === 'residential'
+                      className={`flex-1 px-2 py-1 rounded-md text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${propertyTypeFilter === 'residential'
                         ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
                         : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
                         } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                     >
-                      <Home className="w-3.5 h-3.5" />
+                      <Home className="w-3 h-3" />
                       Residential
                     </button>
                   </div>
@@ -1816,7 +1687,7 @@ export default function HomePage() {
                     <button
                       onClick={() => setListingTypeFilter(listingTypeFilter === 'forSale' ? 'all' : 'forSale')}
                       disabled={isLoadingProperties}
-                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'forSale'
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'forSale'
                         ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
                         : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
                         } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
@@ -1878,7 +1749,7 @@ export default function HomePage() {
                   {/* Properties Count and Sort */}
                   {getFilteredMarkers().length > 0 && (
                     <div className={`flex items-center justify-between pt-2 border-t ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
-                      <p className="text-sm">
+                      <p className="text-xs">
                         <span className={`font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{getFilteredMarkers().length} {getFilteredMarkers().length === 1 ? 'property' : 'properties'}</span>
                         <span className={isDark ? 'text-gray-400' : 'text-gray-500'}> found</span>
                       </p>
@@ -1886,10 +1757,10 @@ export default function HomePage() {
                         <button
                           onClick={() => setShowSortDropdown(!showSortDropdown)}
                           disabled={isLoadingProperties}
-                          className={`flex items-center gap-1 text-sm transition-colors px-2 py-1 rounded ${isDark ? 'text-gray-400 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-600 hover:bg-yellow-100 hover:text-yellow-900'} ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                          className={`flex items-center gap-1 text-xs transition-colors px-1.5 py-1 rounded ${isDark ? 'text-gray-400 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-600 hover:bg-yellow-100 hover:text-yellow-900'} ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                         >
                           <span>Sort by</span>
-                          <ChevronDown className={`w-4 h-4 transition-transform ${showSortDropdown ? 'rotate-180' : ''}`} />
+                          <ChevronDown className={`w-3 h-3 transition-transform ${showSortDropdown ? 'rotate-180' : ''}`} />
                         </button>
 
                         {showSortDropdown && (
@@ -2089,12 +1960,12 @@ export default function HomePage() {
                         <button
                           key={city}
                           onClick={() => zoomToCity(city, { clearSearch: true })}
-                          className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-colors cursor-pointer ${isDark ? 'hover:bg-[#282c34]' : 'hover:bg-gray-50'}`}
+                          className={`flex flex-col items-center gap-1.5 p-2 rounded-lg transition-colors cursor-pointer ${isDark ? 'hover:bg-[#282c34]' : 'hover:bg-gray-50'}`}
                         >
-                          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
-                            <MapPin className="w-6 h-6 text-blue-500" />
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                            <MapPin className="w-5 h-5 text-blue-500" />
                           </div>
-                          <span className={`text-xs text-center font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{city}</span>
+                          <span className={`text-[10px] text-center font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{city}</span>
                         </button>
                       ))}
                     </div>
@@ -2112,12 +1983,12 @@ export default function HomePage() {
                       <button
                         key={city}
                         onClick={() => zoomToCity(city, { clearSearch: true })}
-                        className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-colors cursor-pointer ${isDark ? 'hover:bg-[#282c34]' : 'hover:bg-gray-50'}`}
+                        className={`flex flex-col items-center gap-1.5 p-2 rounded-lg transition-colors cursor-pointer ${isDark ? 'hover:bg-[#282c34]' : 'hover:bg-gray-50'}`}
                       >
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
-                          <Building2 className="w-6 h-6 text-blue-500" />
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                          <Building2 className="w-5 h-5 text-blue-500" />
                         </div>
-                        <span className={`text-xs text-center font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{city}</span>
+                        <span className={`text-[10px] text-center font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{city}</span>
                       </button>
                     ))}
                   </div>
@@ -2144,7 +2015,7 @@ export default function HomePage() {
                         <button
                           key={city}
                           onClick={() => zoomToCity(city, { zoomLevel: ZOOM_CITY, clearSearch: true, closeSelector: false })}
-                          className={`w-full px-0 py-3 text-left text-sm transition-colors cursor-pointer border-b last:border-b-0 ${isDark ? 'text-gray-300 hover:text-white hover:bg-[#282c34] border-gray-700' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50 border-gray-100'}`}
+                          className={`w-full px-0 py-2.5 text-left text-xs transition-colors cursor-pointer border-b last:border-b-0 ${isDark ? 'text-gray-300 hover:text-white hover:bg-[#282c34] border-gray-700' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50 border-gray-100'}`}
                         >
                           {city}
                         </button>
@@ -2166,7 +2037,7 @@ export default function HomePage() {
                     >
                       <ChevronLeft className="w-5 h-5" />
                     </button>
-                    <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>Filters</h2>
+                    <h2 className={`text-base font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>Filters</h2>
                   </div>
                   <button
                     onClick={() => {
@@ -2235,7 +2106,7 @@ export default function HomePage() {
                       setAmenitiesPills({ security24x7: false, powerBackup: false, visitorParking: false, attachedMarket: false, swimmingPool: false, clubhouse: false, centralAC: false, kidsPlayArea: false, intercom: false, vaastuCompliant: false, airConditioned: false, lift: false });
                       setAppliedFilters(null); // list will use current (cleared) snapshot
                     }}
-                    className="text-blue-500 text-sm font-medium hover:text-blue-600 cursor-pointer"
+                    className="text-blue-500 text-xs font-medium hover:text-blue-600 cursor-pointer"
                   >
                     Clear all
                   </button>
@@ -2314,12 +2185,12 @@ export default function HomePage() {
                             type: { commercial: true, residential: false }
                           }));
                         }}
-                        className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${buildingType === 'commercial'
+                        className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${buildingType === 'commercial'
                           ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
                           : isDark ? 'text-gray-400' : 'text-gray-600'
                           }`}
                       >
-                        <Building2 className="w-3.5 h-3.5" />
+                        <Building2 className="w-3 h-3" />
                         Commercial
                       </button>
                       <button
@@ -2331,12 +2202,12 @@ export default function HomePage() {
                             type: { commercial: false, residential: true }
                           }));
                         }}
-                        className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${buildingType === 'residential'
+                        className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${buildingType === 'residential'
                           ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
                           : isDark ? 'text-gray-400' : 'text-gray-600'
                           }`}
                       >
-                        <Home className="w-3.5 h-3.5" />
+                        <Home className="w-3 h-3" />
                         Residential
                       </button>
                     </div>
@@ -2369,10 +2240,10 @@ export default function HomePage() {
                                   }`}
                               >
                                 {propertyTypes[item.key] && (
-                                  <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                                  <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
                                 )}
                               </div>
-                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                              <span className={`text-[11px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
                             </label>
                           ))}
                         </div>
@@ -2386,7 +2257,7 @@ export default function HomePage() {
                             <select
                               value={budgetLumpsum.min}
                               onChange={(e) => setBudgetLumpsum(prev => ({ ...prev, min: e.target.value }))}
-                              className={`w-full px-3 py-2.5 border rounded-lg text-sm appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
+                              className={`w-full px-2 py-1.5 border rounded-lg text-xs appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
                             >
                               <option value="">Min</option>
                               <option value="5">₹5 Lac</option>
@@ -2400,7 +2271,7 @@ export default function HomePage() {
                             <select
                               value={budgetLumpsum.max}
                               onChange={(e) => setBudgetLumpsum(prev => ({ ...prev, max: e.target.value }))}
-                              className={`w-full px-3 py-2.5 border rounded-lg text-sm appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
+                              className={`w-full px-2 py-1.5 border rounded-lg text-xs appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
                             >
                               <option value="">Max</option>
                               <option value="25">₹25 Lac</option>
@@ -2421,7 +2292,7 @@ export default function HomePage() {
                             <select
                               value={budgetPerSeat.min}
                               onChange={(e) => setBudgetPerSeat(prev => ({ ...prev, min: e.target.value }))}
-                              className={`w-full px-3 py-2.5 border rounded-lg text-sm appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
+                              className={`w-full px-2 py-1.5 border rounded-lg text-xs appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
                             >
                               <option value="">Min</option>
                               <option value="5000">₹5,000</option>
@@ -2434,7 +2305,7 @@ export default function HomePage() {
                             <select
                               value={budgetPerSeat.max}
                               onChange={(e) => setBudgetPerSeat(prev => ({ ...prev, max: e.target.value }))}
-                              className={`w-full px-3 py-2.5 border rounded-lg text-sm appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
+                              className={`w-full px-2 py-1.5 border rounded-lg text-xs appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
                             >
                               <option value="">Max</option>
                               <option value="10000">₹10,000</option>
@@ -2454,7 +2325,7 @@ export default function HomePage() {
                             <select
                               value={sizeFilter.min}
                               onChange={(e) => setSizeFilter(prev => ({ ...prev, min: e.target.value }))}
-                              className={`w-full px-3 py-2.5 border rounded-lg text-sm appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
+                              className={`w-full px-2 py-1.5 border rounded-lg text-xs appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
                             >
                               <option value="">Min</option>
                               <option value="500">500 sq ft</option>
@@ -2468,7 +2339,7 @@ export default function HomePage() {
                             <select
                               value={sizeFilter.max}
                               onChange={(e) => setSizeFilter(prev => ({ ...prev, max: e.target.value }))}
-                              className={`w-full px-3 py-2.5 border rounded-lg text-sm appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
+                              className={`w-full px-2 py-1.5 border rounded-lg text-xs appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
                             >
                               <option value="">Max</option>
                               <option value="1000">1000 sq ft</option>
@@ -2499,10 +2370,10 @@ export default function HomePage() {
                                   }`}
                               >
                                 {furnishing[item.key] && (
-                                  <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                                  <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
                                 )}
                               </div>
-                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                              <span className={`text-[11px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
                             </label>
                           ))}
                         </div>
@@ -2560,7 +2431,7 @@ export default function HomePage() {
                                   <span className="w-2 h-2 rounded-full bg-blue-500 pointer-events-none" />
                                 )}
                               </span>
-                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{opt.label}</span>
+                            <span className={`text-[11px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{opt.label}</span>
                             </label>
                           ))}
                         </div>
@@ -2648,7 +2519,7 @@ export default function HomePage() {
                                   <Check className="w-3 h-3 text-white" strokeWidth={3} />
                                 )}
                               </div>
-                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                              <span className={`text-[11px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
                             </label>
                           ))}
                         </div>
@@ -2670,7 +2541,7 @@ export default function HomePage() {
                               key={item.key}
                               type="button"
                               onClick={() => setFloors(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
-                              className={`px-3 py-2 rounded-full text-sm font-medium transition-all border ${floors[item.key]
+                              className={`px-2 py-1.5 rounded-full text-[11px] font-medium transition-all border ${floors[item.key]
                                 ? 'bg-blue-500 text-white border-blue-500'
                                 : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
                                 }`}
@@ -2748,7 +2619,7 @@ export default function HomePage() {
                                   <Check className="w-3 h-3 text-white" strokeWidth={3} />
                                 )}
                               </div>
-                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                              <span className={`text-[11px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
                             </label>
                           ))}
                         </div>
@@ -2793,7 +2664,7 @@ export default function HomePage() {
                                   <Check className="w-3 h-3 text-white" strokeWidth={3} />
                                 )}
                               </div>
-                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                              <span className={`text-[11px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
                             </label>
                           ))}
                         </div>
@@ -2820,13 +2691,13 @@ export default function HomePage() {
                               key={item.key}
                               type="button"
                               onClick={() => setResidentialPropertyType(prev => prev === item.key ? '' : item.key)}
-                              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium transition-all border ${residentialPropertyType === item.key
+                              className={`flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-full text-[10px] font-medium transition-all border ${residentialPropertyType === item.key
                                 ? 'bg-blue-500 text-white border-blue-500'
                                 : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                                 }`}
                             >
                               {residentialPropertyType === item.key && (
-                                <Check className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={2.5} />
+                                <Check className="w-3 h-3 flex-shrink-0" strokeWidth={2.5} />
                               )}
                               <span>{item.label}</span>
                             </button>
@@ -2874,7 +2745,7 @@ export default function HomePage() {
                                   <Check className="w-3 h-3 text-white" strokeWidth={3} />
                                 )}
                               </div>
-                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                              <span className={`text-[11px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
                             </label>
                           ))}
                         </div>
@@ -2920,7 +2791,7 @@ export default function HomePage() {
                                   <Check className="w-3 h-3 text-white" strokeWidth={3} />
                                 )}
                               </div>
-                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
+                              <span className={`text-[11px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
                             </label>
                           ))}
                         </div>
@@ -2948,12 +2819,12 @@ export default function HomePage() {
                               key={item.key}
                               type="button"
                               onClick={() => setBedrooms(prev => prev === item.key ? '' : item.key)}
-                              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all border ${bedrooms === item.key
+                              className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-all border ${bedrooms === item.key
                                 ? 'bg-blue-500 text-white border-blue-500'
                                 : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                                 }`}
                             >
-                              {bedrooms === item.key && <Check className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={2.5} />}
+                              {bedrooms === item.key && <Check className="w-3 h-3 flex-shrink-0" strokeWidth={2.5} />}
                               <span>{item.label}</span>
                             </button>
                           ))}
@@ -2972,12 +2843,12 @@ export default function HomePage() {
                               key={item.key}
                               type="button"
                               onClick={() => setSaleType(prev => prev === item.key ? '' : item.key)}
-                              className={`flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg text-sm font-medium transition-all border ${saleType === item.key
+                              className={`flex items-center justify-center gap-1.5 w-full px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all border ${saleType === item.key
                                 ? 'bg-blue-500 text-white border-blue-500'
                                 : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                                 }`}
                             >
-                              {saleType === item.key && <Check className="w-3.5 h-3.5" strokeWidth={2.5} />}
+                              {saleType === item.key && <Check className="w-3 h-3" strokeWidth={2.5} />}
                               <span>{item.label}</span>
                             </button>
                           ))}
@@ -2996,12 +2867,12 @@ export default function HomePage() {
                               key={item.key}
                               type="button"
                               onClick={() => setConstructionStatus(prev => prev === item.key ? '' : item.key)}
-                              className={`flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg text-sm font-medium transition-all border ${constructionStatus === item.key
+                              className={`flex items-center justify-center gap-1.5 w-full px-2 py-1.5 rounded-lg text-[11px] font-medium transition-all border ${constructionStatus === item.key
                                 ? 'bg-blue-500 text-white border-blue-500'
                                 : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                                 }`}
                             >
-                              {constructionStatus === item.key && <Check className="w-3.5 h-3.5" strokeWidth={2.5} />}
+                              {constructionStatus === item.key && <Check className="w-3 h-3" strokeWidth={2.5} />}
                               <span>{item.label}</span>
                             </button>
                           ))}
@@ -3017,12 +2888,12 @@ export default function HomePage() {
                               key={n}
                               type="button"
                               onClick={() => setWashrooms(prev => prev === n ? '' : n)}
-                              className={`flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg text-sm font-medium transition-all border ${washrooms === n
+                              className={`flex items-center justify-center gap-1 w-full px-1 py-1.5 rounded-lg text-[11px] font-medium transition-all border ${washrooms === n
                                 ? 'bg-blue-500 text-white border-blue-500'
                                 : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                                 }`}
                             >
-                              {washrooms === n && <Check className="w-3.5 h-3.5" strokeWidth={2.5} />}
+                              {washrooms === n && <Check className="w-2.5 h-2.5" strokeWidth={2.5} />}
                               <span>+{n}</span>
                             </button>
                           ))}
@@ -3228,11 +3099,11 @@ export default function HomePage() {
                 </div>
 
                 {/* Apply Filters Button - only apply filter data when clicked, not on every checkbox/radio change */}
-                <div className={`sticky bottom-0 p-4 border-t ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-white border-gray-200'}`}>
+                <div className={`sticky bottom-0 p-3 border-t ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-white border-gray-200'}`}>
                   <button
                     onClick={handleApplyFilters}
                     disabled={isApplyingFilters}
-                    className="w-full py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                    className="w-full py-2.5 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
                   >
                     Apply Filters
                   </button>
@@ -3313,7 +3184,7 @@ export default function HomePage() {
                             </a>
                           </div>
                         </div>
-                        <p className={`text-[10px] mb-0.5 truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                        <p className={`text-[9px] mb-0.5 truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                           <span>in {marker.address?.locality || marker.address?.district || marker.address?.state}</span>
                           {marker.address?.district && marker.address?.locality && marker.address.district !== marker.address.locality && (
                             <span>, {marker.address.district}</span>
@@ -3337,7 +3208,7 @@ export default function HomePage() {
                             return (
                               <p className="text-xs">
                                 <span className="font-bold text-orange-500">{marker.pricePerAcre}</span>
-                                <span className={`text-[10px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>/sq.ft</span>
+                                <span className={`text-[9px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>/sq.ft</span>
                               </p>
                             );
                           }
@@ -3352,60 +3223,61 @@ export default function HomePage() {
             ) : null}
           </div>
 
-          {/* Compact search bar when collapsed - same position as drawer search (top left) */}
-          {isDrawerCollapsed && (
-            <div className="hidden md:block absolute top-0 left-0 z-20 pointer-events-auto">
-              <CollapsedDrawerSearch
-                searchQuery={searchQuery}
-                onSearchChange={handleSearchInputChange}
-                onSearch={handleSearch}
-                onSuggestionSelect={(suggestion) => {
-                  setSearchQuery(suggestion.text);
-                  setShowSuggestions(false);
-                  if (typeof window !== 'undefined' && window.innerWidth < 480) {
-                    setShowFiltersView(false);
-                    setShowCitySelector(false);
-                  }
-                  if (suggestion.marker?.position) {
-                    setMapCenter(suggestion.marker.position);
-                    setZoomLevel(ZOOM_LOCATION);
-                  }
-                }}
-                suggestions={suggestions}
-                showSuggestions={showSuggestions}
-                onFocus={() => {
-                  setIsSearchFocused(true);
-                  setShowSuggestions(true);
-                }}
-                onBlur={() => {
-                  setTimeout(() => {
-                    setIsSearchFocused(false);
-                    setShowSuggestions(false);
-                  }, 150);
-                }}
-                isSearchFocused={isSearchFocused}
-                onFilterClick={() => {
-                  setShowCitySelector(false);
-                  setShowFiltersView(true);
-                  setIsDrawerCollapsed(false);
-                }}
-                onGlobeClick={() => {
-                  setShowFiltersView(false);
-                  setShowCitySelector(true);
-                  setIsDrawerCollapsed(false);
-                }}
-                isDark={isDark}
-                isLoadingProperties={isLoadingProperties}
-              />
-            </div>
-          )}
         </div>
 
-        {/* Toggle Button - outside overflow-hidden so it stays visible when collapsed */}
+        {/* Compact search bar when collapsed - same position as drawer search (top left) */}
+        {isDrawerCollapsed && (
+          <div className="hidden md:block absolute top-0 left-0 z-20 pointer-events-auto">
+            <CollapsedDrawerSearch
+              searchQuery={searchQuery}
+              onSearchChange={handleSearchInputChange}
+              onSearch={handleSearch}
+              onSuggestionSelect={(suggestion) => {
+                setSearchQuery(suggestion.text);
+                setShowSuggestions(false);
+                if (typeof window !== 'undefined' && window.innerWidth < 480) {
+                  setShowFiltersView(false);
+                  setShowCitySelector(false);
+                }
+                if (suggestion.marker?.position) {
+                  setMapCenter(suggestion.marker.position);
+                  setZoomLevel(ZOOM_LOCATION);
+                }
+              }}
+              suggestions={suggestions}
+              showSuggestions={showSuggestions}
+              onFocus={() => {
+                setIsSearchFocused(true);
+                setShowSuggestions(true);
+              }}
+              onBlur={() => {
+                setTimeout(() => {
+                  setIsSearchFocused(false);
+                  setShowSuggestions(false);
+                }, 150);
+              }}
+              isSearchFocused={isSearchFocused}
+              onFilterClick={() => {
+                setShowCitySelector(false);
+                setShowFiltersView(true);
+                setIsDrawerCollapsed(false);
+              }}
+              onGlobeClick={() => {
+                setShowFiltersView(false);
+                setShowCitySelector(true);
+                setIsDrawerCollapsed(false);
+              }}
+              isDark={isDark}
+              isLoadingProperties={isLoadingProperties}
+            />
+          </div>
+        )}
+
+        {/* Toggle Button - always visible, relative to 20% width */}
         <button
           onClick={() => setIsDrawerCollapsed(!isDrawerCollapsed)}
-          className="hidden md:block absolute left-0 top-1/2 -translate-y-1/2 z-30 bg-blue-600 hover:bg-blue-700 text-white px-2 py-4 rounded-r-lg shadow-lg transition-all duration-300 ease-in-out cursor-pointer"
-          style={{ left: isDrawerCollapsed ? 0 : 328, transition: 'left 300ms ease-in-out' }}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-30 bg-blue-600 hover:bg-blue-700 text-white px-2 py-4 rounded-r-lg shadow-lg transition-all duration-300 ease-in-out cursor-pointer"
+          style={{ left: isDrawerCollapsed ? '0%' : '20%', transition: 'left 300ms ease-in-out' }}
           aria-label={isDrawerCollapsed ? "Expand drawer" : "Collapse drawer"}
         >
           {isDrawerCollapsed ? (
@@ -3468,14 +3340,7 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* Mobile List View Button - Bottom Left above footer */}
-          <button
-            onClick={() => setShowMobileList(!showMobileList)}
-            className="md:hidden absolute bottom-16 left-3 z-10 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg shadow-lg flex items-center gap-2 transition-colors cursor-pointer"
-          >
-            <List className="w-4 h-4" />
-            <span className="text-sm font-medium">List View</span>
-          </button>
+
 
           {/* Property Detail Modal - bottom-aligned, horizontally centered in map area */}
           {selectedCity && (
@@ -3610,1666 +3475,7 @@ export default function HomePage() {
             )}
           </div>
         </div>
-
-        {/* Mobile Filters Modal */}
-        {showFiltersView && (
-          <div className="md:hidden fixed inset-0 z-50 flex items-end">
-            {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/40" onClick={() => {
-              setShowFiltersView(false);
-              setShowCitySelector(false);
-            }}></div>
-
-            {/* Modal Content */}
-            <div className={`relative w-full rounded-t-3xl overflow-hidden flex flex-col ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`} style={{ maxHeight: 'min(90vh, 90svh)' }}>
-              {/* Drag Handle */}
-              <div className="flex justify-center py-3 flex-shrink-0">
-                <div className={`w-12 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-300'}`}></div>
-              </div>
-
-              {/* Scrollable Content */}
-              <div
-                className="overflow-y-auto mobile-modal-scroll flex-1 min-h-0"
-                style={{
-                  scrollbarWidth: 'thin',
-                  scrollbarColor: isDark ? '#4b5563 #2d3139' : '#cbd5e1 #f1f5f9'
-                }}
-              >
-                {/* Filters Header */}
-                <div className={`flex items-center justify-between px-4 py-3 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => {
-                        setShowFiltersView(false);
-                        setShowCitySelector(false);
-                      }}
-                      className={`cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>Filters</h2>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setSearchType('locality');
-                      setBuildingType('commercial');
-                      setPropertyTypeFilter('all');
-                      setFilters(prev => ({
-                        ...prev,
-                        type: { commercial: false, residential: false }
-                      }));
-                      setPropertyTypes({
-                        officeSpace: false, coWorking: false, shop: false, showroom: false,
-                        godownWarehouse: false, industrialShed: false, industrialBuilding: false,
-                        otherBusiness: false, restaurantCafe: false,
-                      });
-                      setBudgetLumpsum({ min: '', max: '' });
-                      setBudgetPerSeat({ min: '', max: '' });
-                      setFilterLocalitySearch('');
-                      setSizeFilter({ min: '', max: '' });
-                      setFurnishing({ full: false, none: false, semi: false });
-                      setBuildingTypeOptions({
-                        independentHouse: false,
-                        mall: false,
-                        independentShop: false,
-                        businessPark: false,
-                        standaloneBuilding: false,
-                      });
-                      setAvailability('');
-                      setParking({ public: false, reserved: false });
-                      setShowOnly({ withPhotos: true, removeSeen: false });
-                      setAmenities({ powerBackup: false, lift: false });
-                      setFloors({
-                        ground: false,
-                        '1to3': false,
-                        '4to6': false,
-                        '7to9': false,
-                        '10above': false,
-                        custom: false,
-                      });
-                      setPropertyAge({
-                        lessThan1: false,
-                        '1to5': false,
-                        '5to10': false,
-                        moreThan10: false,
-                      });
-                      setResidentialPropertyType('');
-                      setResidentialLocalitySearch('');
-                      setResidentialLocalities({ mysoreRoad: false, sampangiRamaNagar: false, hebbal: false, banashankari: false });
-                      setResidentialSocietySearch('');
-                      setResidentialSocieties({ godrejTiara: false, sobhaInfinia: false, snnClermont: false, lntRaintreeBoulevard: false });
-                      setBedrooms('');
-                      setSaleType('');
-                      setConstructionStatus('');
-                      setWashrooms('');
-                      setFloorFilter('');
-                      setFacing('');
-                      setReraRegistered(false);
-                      setPropertiesWithOffers(false);
-                      setFurnishingStatus('');
-                      setPostedBy('');
-                      setPossessionStatus('');
-                      setCommercialLocalitySearch('');
-                      setCommercialLocalities({ mysoreRoad: false, sampangiRamaNagar: false, hebbal: false, banashankari: false });
-                      setCommercialSocietySearch('');
-                      setCommercialSocieties({ godrejTiara: false, sobhaInfinia: false, snnClermont: false, lntRaintreeBoulevard: false });
-                      setAmenitiesPills({ security24x7: false, powerBackup: false, visitorParking: false, attachedMarket: false, swimmingPool: false, clubhouse: false, centralAC: false, kidsPlayArea: false, intercom: false, vaastuCompliant: false, airConditioned: false, lift: false });
-                      setAppliedFilters(null); // list will use current (cleared) snapshot
-                    }}
-                    className="text-blue-500 text-sm font-medium hover:text-blue-600 cursor-pointer"
-                  >
-                    Clear all
-                  </button>
-                </div>
-
-                {/* Filters Content */}
-                <div className="p-4 space-y-6 pb-32 max-[525px]:pb-36">
-                  {/* Search Type - segmented control (single bar, selected segment highlighted) */}
-                  <div>
-                    <h3 className={`text-xs font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>Search Type</h3>
-                    <div className={`flex rounded-lg p-0.5 ${isDark ? 'bg-[#282c34]' : 'bg-gray-200'}`}>
-                      <button
-                        onClick={() => setSearchType('locality')}
-                        className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-medium transition-all ${searchType === 'locality'
-                          ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
-                          : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
-                          }`}
-                      >
-                        <MapPin className="w-3 h-3 flex-shrink-0" />
-                        Locality
-                      </button>
-                      <button
-                        onClick={() => setSearchType('metro')}
-                        className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-medium transition-all ${searchType === 'metro'
-                          ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
-                          : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
-                          }`}
-                      >
-                        <Building2 className="w-3 h-3 flex-shrink-0" />
-                        Along Metro
-                      </button>
-                      <button
-                        onClick={() => setSearchType('travel')}
-                        className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-[9px] font-medium transition-all ${searchType === 'travel'
-                          ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
-                          : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
-                          }`}
-                      >
-                        <Clock className="w-3 h-3 flex-shrink-0" />
-                        Travel time
-                      </button>
-                    </div>
-                  </div>
-
-                  <PlacesAutocompleteInput
-                    value={filterLocalitySearch}
-                    onChange={setFilterLocalitySearch}
-                    onSelect={({ lat, lng }) => {
-                      setMapCenter({ lat, lng });
-                      setZoomLevel(ZOOM_LOCATION);
-                      if (typeof window !== 'undefined' && window.innerWidth < 480) {
-                        setShowFiltersView(false);
-                        setShowCitySelector(false);
-                      }
-                    }}
-                    placeholder={searchType === 'locality' ? 'Search upto 3 localities or landmarks' : searchType === 'metro' ? 'Search metro stations' : 'Search office or destination'}
-                    mapCenter={mapCenter}
-                    type={searchType === 'locality' ? 'locality' : searchType === 'metro' ? 'metro' : 'travel'}
-                    isDark={isDark}
-                    iconLeft={MapPin}
-                    iconRight={Target}
-                    disabled={isLoadingProperties}
-                  />
-
-                  {/* Building Type */}
-                  <div>
-                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Building Type</h3>
-                    <div className={`rounded-full p-1 flex ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
-                      <button
-                        onClick={() => {
-                          setBuildingType('commercial');
-                          setPropertyTypeFilter('commercial');
-                          setFilters(prev => ({
-                            ...prev,
-                            type: { commercial: true, residential: false }
-                          }));
-                        }}
-                        className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${buildingType === 'commercial'
-                          ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
-                          : isDark ? 'text-gray-400' : 'text-gray-600'
-                          }`}
-                      >
-                        <Building2 className="w-3.5 h-3.5" />
-                        Commercial
-                      </button>
-                      <button
-                        onClick={() => {
-                          setBuildingType('residential');
-                          setPropertyTypeFilter('residential');
-                          setFilters(prev => ({
-                            ...prev,
-                            type: { commercial: false, residential: true }
-                          }));
-                        }}
-                        className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${buildingType === 'residential'
-                          ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
-                          : isDark ? 'text-gray-400' : 'text-gray-600'
-                          }`}
-                      >
-                        <Home className="w-3.5 h-3.5" />
-                        Residential
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Commercial-only filters (mobile) */}
-                  {buildingType === 'commercial' && (
-                    <>
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Property Type</h3>
-                        <div className="grid grid-cols-2 gap-2">
-                          {[
-                            { key: 'officeSpace', label: 'Office Space' },
-                            { key: 'coWorking', label: 'Co-Working' },
-                            { key: 'shop', label: 'Shop' },
-                            { key: 'showroom', label: 'Showroom' },
-                            { key: 'godownWarehouse', label: 'Godown/Warehouse' },
-                            { key: 'industrialShed', label: 'Industrial Shed' },
-                            { key: 'industrialBuilding', label: 'Industrial Building' },
-                            { key: 'otherBusiness', label: 'Other business' },
-                            { key: 'restaurantCafe', label: 'Restaurant/Cafe' },
-                          ].map(item => (
-                            <label key={item.key} className="flex items-center gap-2 cursor-pointer">
-                              <div
-                                onClick={() => setPropertyTypes(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
-                                className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors ${propertyTypes[item.key]
-                                  ? 'bg-blue-500 border-blue-500'
-                                  : 'border-blue-500'
-                                  }`}
-                              >
-                                {propertyTypes[item.key] && (
-                                  <Check className="w-3 h-3 text-white" strokeWidth={3} />
-                                )}
-                              </div>
-                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Budget (lumsum)</h3>
-                        <div className="flex gap-3">
-                          <div className="flex-1">
-                            <select
-                              value={budgetLumpsum.min}
-                              onChange={(e) => setBudgetLumpsum(prev => ({ ...prev, min: e.target.value }))}
-                              className={`w-full px-3 py-2.5 border rounded-lg text-sm appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
-                            >
-                              <option value="">Min</option>
-                              <option value="5">₹5 Lac</option>
-                              <option value="10">₹10 Lac</option>
-                              <option value="25">₹25 Lac</option>
-                              <option value="50">₹50 Lac</option>
-                              <option value="100">₹1 Cr</option>
-                            </select>
-                          </div>
-                          <div className="flex-1">
-                            <select
-                              value={budgetLumpsum.max}
-                              onChange={(e) => setBudgetLumpsum(prev => ({ ...prev, max: e.target.value }))}
-                              className={`w-full px-3 py-2.5 border rounded-lg text-sm appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
-                            >
-                              <option value="">Max</option>
-                              <option value="25">₹25 Lac</option>
-                              <option value="50">₹50 Lac</option>
-                              <option value="100">₹1 Cr</option>
-                              <option value="200">₹2 Cr</option>
-                              <option value="500">₹5 Cr</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Budget (per seat) */}
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Budget (per seat)</h3>
-                        <div className="flex gap-3">
-                          <div className="flex-1">
-                            <select
-                              value={budgetPerSeat.min}
-                              onChange={(e) => setBudgetPerSeat(prev => ({ ...prev, min: e.target.value }))}
-                              className={`w-full px-3 py-2.5 border rounded-lg text-sm appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
-                            >
-                              <option value="">Min</option>
-                              <option value="5000">₹5,000</option>
-                              <option value="7500">₹7,500</option>
-                              <option value="10000">₹10,000</option>
-                              <option value="15000">₹15,000</option>
-                            </select>
-                          </div>
-                          <div className="flex-1">
-                            <select
-                              value={budgetPerSeat.max}
-                              onChange={(e) => setBudgetPerSeat(prev => ({ ...prev, max: e.target.value }))}
-                              className={`w-full px-3 py-2.5 border rounded-lg text-sm appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
-                            >
-                              <option value="">Max</option>
-                              <option value="10000">₹10,000</option>
-                              <option value="15000">₹15,000</option>
-                              <option value="20000">₹20,000</option>
-                              <option value="25000">₹25,000</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Size */}
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Size</h3>
-                        <div className="flex gap-3">
-                          <div className="flex-1">
-                            <select
-                              value={sizeFilter.min}
-                              onChange={(e) => setSizeFilter(prev => ({ ...prev, min: e.target.value }))}
-                              className={`w-full px-3 py-2.5 border rounded-lg text-sm appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
-                            >
-                              <option value="">Min</option>
-                              <option value="500">500 sq ft</option>
-                              <option value="1000">1000 sq ft</option>
-                              <option value="2000">2000 sq ft</option>
-                              <option value="5000">5000 sq ft</option>
-                              <option value="10000">10000 sq ft</option>
-                            </select>
-                          </div>
-                          <div className="flex-1">
-                            <select
-                              value={sizeFilter.max}
-                              onChange={(e) => setSizeFilter(prev => ({ ...prev, max: e.target.value }))}
-                              className={`w-full px-3 py-2.5 border rounded-lg text-sm appearance-none cursor-pointer ${isDark ? 'bg-[#282c34] border-gray-600 text-gray-300' : 'bg-white border-gray-200 text-gray-600'}`}
-                            >
-                              <option value="">Max</option>
-                              <option value="1000">1000 sq ft</option>
-                              <option value="2000">2000 sq ft</option>
-                              <option value="5000">5000 sq ft</option>
-                              <option value="10000">10000 sq ft</option>
-                              <option value="50000">50000 sq ft</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Furnishing - checkboxes, 2 columns side by side */}
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Furnishing</h3>
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                          {[
-                            { key: 'full', label: 'Full' },
-                            { key: 'none', label: 'None' },
-                            { key: 'semi', label: 'Semi' },
-                          ].map(item => (
-                            <label key={item.key} className="flex items-center gap-2 cursor-pointer">
-                              <div
-                                onClick={() => setFurnishing(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
-                                className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${furnishing[item.key]
-                                  ? 'bg-blue-500 border-blue-500'
-                                  : 'border-blue-500'
-                                  }`}
-                              >
-                                {furnishing[item.key] && (
-                                  <Check className="w-3 h-3 text-white" strokeWidth={3} />
-                                )}
-                              </div>
-                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Building Type - checkboxes, 2 columns side by side */}
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Building Type</h3>
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                          {[
-                            { key: 'independentHouse', label: 'Independent House' },
-                            { key: 'mall', label: 'Mall' },
-                            { key: 'independentShop', label: 'Independent shop' },
-                            { key: 'businessPark', label: 'Business Park' },
-                            { key: 'standaloneBuilding', label: 'Standalone building' },
-                          ].map(item => (
-                            <label key={item.key} className="flex items-center gap-2 cursor-pointer">
-                              <div
-                                onClick={() => setBuildingTypeOptions(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
-                                className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${buildingTypeOptions[item.key]
-                                  ? 'bg-blue-500 border-blue-500'
-                                  : 'border-blue-500'
-                                  }`}
-                              >
-                                {buildingTypeOptions[item.key] && (
-                                  <Check className="w-3 h-3 text-white" strokeWidth={3} />
-                                )}
-                              </div>
-                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Availability - radio, 2 columns side by side */}
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Availability</h3>
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                          {[
-                            { value: 'immediate', label: 'Immediate' },
-                            { value: 'within30', label: 'Within 30 Days' },
-                            { value: 'within15', label: 'Within 15 Days' },
-                            { value: 'after30', label: 'After 30 Days' },
-                          ].map(opt => (
-                            <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
-                              <span className="relative inline-flex items-center justify-center w-4 h-4 rounded-full border-2 border-blue-500 flex-shrink-0 cursor-pointer">
-                                <input
-                                  type="radio"
-                                  name="availability-mobile"
-                                  checked={availability === opt.value}
-                                  onChange={() => setAvailability(prev => prev === opt.value ? '' : opt.value)}
-                                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                />
-                                {availability === opt.value && (
-                                  <span className="w-2 h-2 rounded-full bg-blue-500 pointer-events-none" />
-                                )}
-                              </span>
-                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{opt.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Parking - checkboxes, 2 columns side by side */}
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Parking</h3>
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                          {[
-                            { key: 'public', label: 'Public' },
-                            { key: 'reserved', label: 'Reserved' },
-                          ].map(item => (
-                            <label key={item.key} className="flex items-center gap-2 cursor-pointer">
-                              <div
-                                onClick={() => setParking(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
-                                className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${parking[item.key]
-                                  ? 'bg-blue-500 border-blue-500'
-                                  : 'border-blue-500'
-                                  }`}
-                              >
-                                {parking[item.key] && (
-                                  <Check className="w-3 h-3 text-white" strokeWidth={3} />
-                                )}
-                              </div>
-                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Show Only - vertical list */}
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Show Only</h3>
-                        <div className="flex flex-col gap-2">
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <div
-                              onClick={() => setShowOnly(prev => ({ ...prev, withPhotos: !prev.withPhotos }))}
-                              className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${showOnly.withPhotos
-                                ? 'bg-blue-500 border-blue-500'
-                                : 'border-blue-500'
-                                }`}
-                            >
-                              {showOnly.withPhotos && (
-                                <Check className="w-3 h-3 text-white" strokeWidth={3} />
-                              )}
-                            </div>
-                            <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>With Photos</span>
-                          </label>
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <div
-                              onClick={() => setShowOnly(prev => ({ ...prev, removeSeen: !prev.removeSeen }))}
-                              className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${showOnly.removeSeen
-                                ? 'bg-blue-500 border-blue-500'
-                                : 'border-blue-500'
-                                }`}
-                            >
-                              {showOnly.removeSeen && (
-                                <Check className="w-3 h-3 text-white" strokeWidth={3} />
-                              )}
-                            </div>
-                            <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Remove Seen Properties</span>
-                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">New</span>
-                          </label>
-                        </div>
-                      </div>
-
-                      {/* Amenities - checkboxes side by side on one row */}
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Amenities</h3>
-                        <div className="flex flex-wrap gap-x-6 gap-y-2">
-                          {[
-                            { key: 'powerBackup', label: 'Power Backup' },
-                            { key: 'lift', label: 'Lift' },
-                          ].map(item => (
-                            <label key={item.key} className="flex items-center gap-2 cursor-pointer">
-                              <div
-                                onClick={() => setAmenities(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
-                                className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${amenities[item.key]
-                                  ? 'bg-blue-500 border-blue-500'
-                                  : 'border-blue-500'
-                                  }`}
-                              >
-                                {amenities[item.key] && (
-                                  <Check className="w-3 h-3 text-white" strokeWidth={3} />
-                                )}
-                              </div>
-                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Floors - pill buttons, 2 rows x 3 columns */}
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Floors</h3>
-                        <div className="grid grid-cols-3 gap-2">
-                          {[
-                            { key: 'ground', label: 'Ground' },
-                            { key: '1to3', label: '1 to 3' },
-                            { key: '4to6', label: '4 to 6' },
-                            { key: '7to9', label: '7 to 9' },
-                            { key: '10above', label: '10 & above' },
-                            { key: 'custom', label: 'Custom' },
-                          ].map(item => (
-                            <button
-                              key={item.key}
-                              type="button"
-                              onClick={() => setFloors(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
-                              className={`px-3 py-2 rounded-full text-sm font-medium transition-all border ${floors[item.key]
-                                ? 'bg-blue-500 text-white border-blue-500'
-                                : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
-                                }`}
-                            >
-                              {item.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Property Age - checkboxes, 2 columns side by side */}
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Property Age</h3>
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                          {[
-                            { key: 'lessThan1', label: 'Less than a Year' },
-                            { key: '5to10', label: '5 to 10 year' },
-                            { key: '1to5', label: '1 to 5 year' },
-                            { key: 'moreThan10', label: 'More than 10 year' },
-                          ].map(item => (
-                            <label key={item.key} className="flex items-center gap-2 cursor-pointer">
-                              <div
-                                onClick={() => setPropertyAge(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
-                                className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${propertyAge[item.key]
-                                  ? 'bg-blue-500 border-blue-500'
-                                  : 'border-blue-500'
-                                  }`}
-                              >
-                                {propertyAge[item.key] && (
-                                  <Check className="w-3 h-3 text-white" strokeWidth={3} />
-                                )}
-                              </div>
-                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Localities (Commercial) - Google Places Autocomplete (mobile) */}
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Localities</h3>
-                        <div className="mb-3">
-                          <PlacesAutocompleteInput
-                            value={commercialLocalitySearch}
-                            onChange={setCommercialLocalitySearch}
-                            onSelect={({ lat, lng }) => {
-                              setMapCenter({ lat, lng });
-                              setZoomLevel(ZOOM_LOCATION);
-                              if (typeof window !== 'undefined' && window.innerWidth < 480) {
-                                setShowFiltersView(false);
-                                setShowCitySelector(false);
-                              }
-                            }}
-                            placeholder="Search localities"
-                            mapCenter={mapCenter}
-                            type="locality"
-                            isDark={isDark}
-                            iconLeft={Search}
-                            disabled={isLoadingProperties}
-                          />
-                        </div>
-                        <div className={`rounded-lg border p-3 space-y-2 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
-                          {[
-                            { key: 'mysoreRoad', label: 'Mysore Road' },
-                            { key: 'sampangiRamaNagar', label: 'Sampangi Rama Nagar' },
-                            { key: 'hebbal', label: 'Hebbal' },
-                            { key: 'banashankari', label: 'Banashankari' },
-                          ].map(item => (
-                            <label key={item.key} className="flex items-center gap-2 cursor-pointer">
-                              <div
-                                onClick={() => setCommercialLocalities(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
-                                className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${commercialLocalities[item.key] ? 'bg-blue-500 border-blue-500' : 'border-blue-500'}`}
-                              >
-                                {commercialLocalities[item.key] && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
-                              </div>
-                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Societies (Commercial) - Google Places Autocomplete (mobile) */}
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Societies</h3>
-                        <div className="mb-3">
-                          <PlacesAutocompleteInput
-                            value={commercialSocietySearch}
-                            onChange={setCommercialSocietySearch}
-                            onSelect={({ lat, lng }) => {
-                              setMapCenter({ lat, lng });
-                              setZoomLevel(ZOOM_LOCATION);
-                              if (typeof window !== 'undefined' && window.innerWidth < 480) {
-                                setShowFiltersView(false);
-                                setShowCitySelector(false);
-                              }
-                            }}
-                            placeholder="Search societies"
-                            mapCenter={mapCenter}
-                            type="society"
-                            isDark={isDark}
-                            iconLeft={Search}
-                            disabled={isLoadingProperties}
-                          />
-                        </div>
-                        <div className={`rounded-lg border p-3 space-y-2 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
-                          {[
-                            { key: 'godrejTiara', label: 'Godrej Tiara' },
-                            { key: 'sobhaInfinia', label: 'Sobha Infinia' },
-                            { key: 'snnClermont', label: 'SNN Clermont' },
-                            { key: 'lntRaintreeBoulevard', label: 'LnT Raintree Boulevard' },
-                          ].map(item => (
-                            <label key={item.key} className="flex items-center gap-2 cursor-pointer">
-                              <div
-                                onClick={() => setCommercialSocieties(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
-                                className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${commercialSocieties[item.key] ? 'bg-blue-500 border-blue-500' : 'border-blue-500'}`}
-                              >
-                                {commercialSocieties[item.key] && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
-                              </div>
-                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Residential-only filters (mobile) */}
-                  {buildingType === 'residential' && (
-                    <>
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Property Type</h3>
-                        <div className="grid grid-cols-2 gap-2">
-                          {[
-                            { key: 'plot', label: 'Plot' },
-                            { key: 'villa', label: 'Villa' },
-                            { key: 'apartment', label: 'Apartment' },
-                            { key: 'independentHouse', label: 'Independent House' },
-                            { key: 'builderFloor', label: 'Builder Floor' },
-                            { key: 'penthouse', label: 'Penthouse' },
-                          ].map(item => (
-                            <button
-                              key={item.key}
-                              type="button"
-                              onClick={() => setResidentialPropertyType(prev => prev === item.key ? '' : item.key)}
-                              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium transition-all border ${residentialPropertyType === item.key
-                                ? 'bg-blue-500 text-white border-blue-500'
-                                : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                                }`}
-                            >
-                              {residentialPropertyType === item.key && (
-                                <Check className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={2.5} />
-                              )}
-                              <span>{item.label}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Localities</h3>
-                        <div className="mb-3">
-                          <PlacesAutocompleteInput
-                            value={residentialLocalitySearch}
-                            onChange={setResidentialLocalitySearch}
-                            onSelect={({ lat, lng }) => {
-                              setMapCenter({ lat, lng });
-                              setZoomLevel(ZOOM_LOCATION);
-                              if (typeof window !== 'undefined' && window.innerWidth < 480) {
-                                setShowFiltersView(false);
-                                setShowCitySelector(false);
-                              }
-                            }}
-                            placeholder="Search localities"
-                            mapCenter={mapCenter}
-                            type="locality"
-                            isDark={isDark}
-                            iconLeft={Search}
-                            disabled={isLoadingProperties}
-                          />
-                        </div>
-                        <div className={`rounded-lg border p-3 space-y-2 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
-                          {[
-                            { key: 'mysoreRoad', label: 'Mysore Road' },
-                            { key: 'sampangiRamaNagar', label: 'Sampangi Rama Nagar' },
-                            { key: 'hebbal', label: 'Hebbal' },
-                            { key: 'banashankari', label: 'Banashankari' },
-                          ].map(item => (
-                            <label key={item.key} className="flex items-center gap-2 cursor-pointer">
-                              <div
-                                onClick={() => setResidentialLocalities(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
-                                className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${residentialLocalities[item.key] ? 'bg-blue-500 border-blue-500' : 'border-blue-500'
-                                  }`}
-                              >
-                                {residentialLocalities[item.key] && (
-                                  <Check className="w-3 h-3 text-white" strokeWidth={3} />
-                                )}
-                              </div>
-                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Societies (Residential) - search + checkboxes (mobile) */}
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Societies</h3>
-                        <div className="mb-3">
-                          <PlacesAutocompleteInput
-                            value={residentialSocietySearch}
-                            onChange={setResidentialSocietySearch}
-                            onSelect={({ lat, lng }) => {
-                              setMapCenter({ lat, lng });
-                              setZoomLevel(ZOOM_LOCATION);
-                              if (typeof window !== 'undefined' && window.innerWidth < 480) {
-                                setShowFiltersView(false);
-                                setShowCitySelector(false);
-                              }
-                            }}
-                            placeholder="Search societies"
-                            mapCenter={mapCenter}
-                            type="society"
-                            isDark={isDark}
-                            iconLeft={Search}
-                            disabled={isLoadingProperties}
-                          />
-                        </div>
-                        <div className={`rounded-lg border p-3 space-y-2 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
-                          {[
-                            { key: 'godrejTiara', label: 'Godrej Tiara' },
-                            { key: 'sobhaInfinia', label: 'Sobha Infinia' },
-                            { key: 'snnClermont', label: 'SNN Clermont' },
-                            { key: 'lntRaintreeBoulevard', label: 'LnT Raintree Boulevard' },
-                          ].map(item => (
-                            <label key={item.key} className="flex items-center gap-2 cursor-pointer">
-                              <div
-                                onClick={() => setResidentialSocieties(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
-                                className={`w-4 h-4 rounded border-2 flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${residentialSocieties[item.key] ? 'bg-blue-500 border-blue-500' : 'border-blue-500'
-                                  }`}
-                              >
-                                {residentialSocieties[item.key] && (
-                                  <Check className="w-3 h-3 text-white" strokeWidth={3} />
-                                )}
-                              </div>
-                              <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{item.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Bedrooms - pill buttons grid (residential mobile) - 3 cols */}
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Bedrooms</h3>
-                        <div className="grid grid-cols-3 gap-2">
-                          {[
-                            { key: '1bhk', label: '1 BHK' },
-                            { key: '1rk', label: '1 RK' },
-                            { key: '1.5bhk', label: '1.5 BHK' },
-                            { key: '2bhk', label: '2 BHK' },
-                            { key: '2.5bhk', label: '2.5 BHK' },
-                            { key: '3bhk', label: '3 BHK' },
-                            { key: '3.5bhk', label: '3.5 BHK' },
-                            { key: '4bhk', label: '4 BHK' },
-                            { key: '5bhk', label: '5 BHK' },
-                            { key: '6bhk', label: '6 BHK' },
-                            { key: '6plusbhk', label: '6+ BHK' },
-                            { key: 'studio', label: 'Studio' },
-                          ].map(item => (
-                            <button
-                              key={item.key}
-                              type="button"
-                              onClick={() => setBedrooms(prev => prev === item.key ? '' : item.key)}
-                              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all border ${bedrooms === item.key
-                                ? 'bg-blue-500 text-white border-blue-500'
-                                : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                                }`}
-                            >
-                              {bedrooms === item.key && <Check className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={2.5} />}
-                              <span>{item.label}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Sale Type - pill buttons (residential mobile) */}
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Sale Type</h3>
-                        <div className="grid grid-cols-2 gap-2">
-                          {[
-                            { key: 'new', label: 'New' },
-                            { key: 'resale', label: 'Resale' },
-                          ].map(item => (
-                            <button
-                              key={item.key}
-                              type="button"
-                              onClick={() => setSaleType(prev => prev === item.key ? '' : item.key)}
-                              className={`flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg text-sm font-medium transition-all border ${saleType === item.key
-                                ? 'bg-blue-500 text-white border-blue-500'
-                                : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                                }`}
-                            >
-                              {saleType === item.key && <Check className="w-3.5 h-3.5" strokeWidth={2.5} />}
-                              <span>{item.label}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Construction Status - pill buttons (residential mobile) */}
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Construction Status</h3>
-                        <div className="grid grid-cols-2 gap-2">
-                          {[
-                            { key: 'readyToMove', label: 'Ready To Move' },
-                            { key: 'underConstruction', label: 'Under Construction' },
-                          ].map(item => (
-                            <button
-                              key={item.key}
-                              type="button"
-                              onClick={() => setConstructionStatus(prev => prev === item.key ? '' : item.key)}
-                              className={`flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg text-sm font-medium transition-all border ${constructionStatus === item.key
-                                ? 'bg-blue-500 text-white border-blue-500'
-                                : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                                }`}
-                            >
-                              {constructionStatus === item.key && <Check className="w-3.5 h-3.5" strokeWidth={2.5} />}
-                              <span>{item.label}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Number of washrooms - pill buttons (residential mobile) */}
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Number of washrooms</h3>
-                        <div className="grid grid-cols-5 gap-2">
-                          {['1', '2', '3', '4', '5'].map(n => (
-                            <button
-                              key={n}
-                              type="button"
-                              onClick={() => setWashrooms(prev => prev === n ? '' : n)}
-                              className={`flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg text-sm font-medium transition-all border ${washrooms === n
-                                ? 'bg-blue-500 text-white border-blue-500'
-                                : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                                }`}
-                            >
-                              {washrooms === n && <Check className="w-3.5 h-3.5" strokeWidth={2.5} />}
-                              <span>+{n}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Floor - pill buttons (residential mobile) */}
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Floor</h3>
-                        <div className="grid grid-cols-4 gap-2">
-                          {[
-                            { key: 'basement', label: 'Basement' },
-                            { key: 'ground', label: 'Ground' },
-                            { key: '1to4', label: '1-4' },
-                            { key: '5to8', label: '5-8' },
-                            { key: '9to12', label: '9-12' },
-                            { key: '13to16', label: '13-16' },
-                            { key: '16plus', label: '16+' },
-                          ].map(item => (
-                            <button
-                              key={item.key}
-                              type="button"
-                              onClick={() => setFloorFilter(prev => prev === item.key ? '' : item.key)}
-                              className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all border ${floorFilter === item.key
-                                ? 'bg-blue-500 text-white border-blue-500'
-                                : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                                }`}
-                            >
-                              {floorFilter === item.key && <Check className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={2.5} />}
-                              <span>{item.label}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Facing - 8 directions (residential mobile) */}
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Facing</h3>
-                        <div className="grid grid-cols-2 gap-2">
-                          {[
-                            { key: 'east', label: 'East' },
-                            { key: 'northEast', label: 'North-East' },
-                            { key: 'south', label: 'South' },
-                            { key: 'southWest', label: 'South-West' },
-                            { key: 'north', label: 'North' },
-                            { key: 'northWest', label: 'North-West' },
-                            { key: 'southEast', label: 'South-East' },
-                            { key: 'west', label: 'West' },
-                          ].map(item => (
-                            <button
-                              key={item.key}
-                              type="button"
-                              onClick={() => setFacing(prev => prev === item.key ? '' : item.key)}
-                              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all border ${facing === item.key
-                                ? 'bg-blue-500 text-white border-blue-500'
-                                : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                                }`}
-                            >
-                              {facing === item.key && <Check className="w-3.5 h-3.5" strokeWidth={2.5} />}
-                              <span>{item.label}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* RERA & Properties with Offers - toggles (residential mobile) */}
-                      <div className="flex items-center justify-between">
-                        <h3 className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>RERA Registered Properties</h3>
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={reraRegistered}
-                          onClick={() => setReraRegistered(prev => !prev)}
-                          className={`relative w-10 h-6 rounded-full transition-colors cursor-pointer ${reraRegistered ? 'bg-blue-500' : isDark ? 'bg-gray-600' : 'bg-gray-300'}`}
-                        >
-                          <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${reraRegistered ? 'left-5' : 'left-1'}`} />
-                        </button>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <h3 className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>Properties with Offers</h3>
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={propertiesWithOffers}
-                          onClick={() => setPropertiesWithOffers(prev => !prev)}
-                          className={`relative w-10 h-6 rounded-full transition-colors cursor-pointer ${propertiesWithOffers ? 'bg-blue-500' : isDark ? 'bg-gray-600' : 'bg-gray-300'}`}
-                        >
-                          <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${propertiesWithOffers ? 'left-5' : 'left-1'}`} />
-                        </button>
-                      </div>
-
-                      {/* Furnishing Status - pill buttons (residential mobile) */}
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Furnishing Status</h3>
-                        <div className="grid grid-cols-2 gap-2">
-                          {[
-                            { key: 'furnished', label: 'Furnished' },
-                            { key: 'semiFurnished', label: 'Semi-Furnished' },
-                            { key: 'unfurnished', label: 'Unfurnished' },
-                            { key: 'gatedCommunities', label: 'Gated Communities' },
-                          ].map(item => (
-                            <button
-                              key={item.key}
-                              type="button"
-                              onClick={() => setFurnishingStatus(prev => prev === item.key ? '' : item.key)}
-                              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all border ${furnishingStatus === item.key
-                                ? 'bg-blue-500 text-white border-blue-500'
-                                : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                                }`}
-                            >
-                              {furnishingStatus === item.key && <Check className="w-3.5 h-3.5" strokeWidth={2.5} />}
-                              <span>{item.label}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Posted by - pill buttons (residential mobile) */}
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Posted by</h3>
-                        <div className="grid grid-cols-2 gap-2">
-                          {[
-                            { key: 'owners', label: 'Owners' },
-                            { key: 'partnerAgents', label: 'Partner Agents' },
-                          ].map(item => (
-                            <button
-                              key={item.key}
-                              type="button"
-                              onClick={() => setPostedBy(prev => prev === item.key ? '' : item.key)}
-                              className={`flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg text-sm font-medium transition-all border ${postedBy === item.key
-                                ? 'bg-blue-500 text-white border-blue-500'
-                                : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                                }`}
-                            >
-                              {postedBy === item.key && <Check className="w-3.5 h-3.5" strokeWidth={2.5} />}
-                              <span>{item.label}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Possession Status - pill buttons (residential mobile) */}
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Possession Status</h3>
-                        <div className="grid grid-cols-2 gap-2">
-                          {[
-                            { key: 'readyToMove', label: 'Ready To Move' },
-                            { key: 'underConstruction', label: 'Under Construction' },
-                          ].map(item => (
-                            <button
-                              key={item.key}
-                              type="button"
-                              onClick={() => setPossessionStatus(prev => prev === item.key ? '' : item.key)}
-                              className={`flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-lg text-sm font-medium transition-all border ${possessionStatus === item.key
-                                ? 'bg-blue-500 text-white border-blue-500'
-                                : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                                }`}
-                            >
-                              {possessionStatus === item.key && <Check className="w-3.5 h-3.5" strokeWidth={2.5} />}
-                              <span>{item.label}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Amenities - pill buttons (residential mobile) */}
-                      <div>
-                        <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Amenities</h3>
-                        <div className="grid grid-cols-2 gap-2">
-                          {[
-                            { key: 'security24x7', label: '24 x 7 Security' },
-                            { key: 'powerBackup', label: 'Power Backup' },
-                            { key: 'visitorParking', label: "Visitor's Parking" },
-                            { key: 'attachedMarket', label: 'Attached Market' },
-                            { key: 'swimmingPool', label: 'Swimming Pool' },
-                            { key: 'clubhouse', label: 'Clubhouse' },
-                            { key: 'centralAC', label: 'Central AC' },
-                            { key: 'kidsPlayArea', label: 'Kids Play Area' },
-                            { key: 'intercom', label: 'Intercom' },
-                            { key: 'vaastuCompliant', label: 'Vaastu Compliant' },
-                            { key: 'airConditioned', label: 'Air Conditioned' },
-                            { key: 'lift', label: 'Lift' },
-                          ].map(item => (
-                            <button
-                              key={item.key}
-                              type="button"
-                              onClick={() => setAmenitiesPills(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
-                              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all border ${amenitiesPills[item.key]
-                                ? 'bg-blue-500 text-white border-blue-500'
-                                : isDark ? 'border-gray-600 bg-[#282c34] text-gray-400 hover:bg-[#3a3f4b]' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                                }`}
-                            >
-                              {amenitiesPills[item.key] && <Check className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={2.5} />}
-                              <span>{item.label}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Apply Filters Button - only apply filter data when clicked, not on every checkbox/radio change */}
-              <div className={`flex-shrink-0 p-4 pb-24 max-[525px]:pb-28 border-t ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-white border-gray-200'}`}>
-                <button
-                  onClick={handleApplyFilters}
-                  disabled={isApplyingFilters}
-                  className="w-full py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  Apply Filters
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Mobile City Selector Modal */}
-        {showCitySelector && (
-          <div className="md:hidden fixed inset-0 z-50 flex items-end">
-            {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/40" onClick={() => setShowCitySelector(false)}></div>
-
-            {/* Modal Content */}
-            <div className={`relative w-full rounded-t-3xl overflow-hidden flex flex-col ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`} style={{ maxHeight: 'min(90vh, 90svh)' }}>
-              {/* Drag Handle */}
-              <div className="flex justify-center py-3 flex-shrink-0">
-                <div className={`w-12 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-300'}`}></div>
-              </div>
-
-              {/* Scrollable Content */}
-              <div
-                className="overflow-y-auto mobile-modal-scroll flex-1 min-h-0"
-                style={{
-                  scrollbarWidth: 'thin',
-                  scrollbarColor: isDark ? '#4b5563 #2d3139' : '#cbd5e1 #f1f5f9'
-                }}
-              >
-                {/* City Selector Header */}
-                <div className={`flex items-center gap-3 px-4 py-3 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-                  <button
-                    onClick={() => setShowCitySelector(false)}
-                    className={`cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>Country/City</h2>
-                  <div className="ml-auto">
-                    <button
-                      onClick={() => setShowCitySelector(false)}
-                      className={`cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'}`}
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Search Input - Google Places Autocomplete for cities */}
-                <div className={`px-4 py-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-                  <PlacesAutocompleteInput
-                    value={citySearchQuery}
-                    onChange={setCitySearchQuery}
-                    onSelect={({ description, lat, lng }) => {
-                      setMapCenter({ lat, lng });
-                      setZoomLevel(ZOOM_LOCATION);
-                      setCitySearchQuery(description.split(',')[0].trim());
-                      if (typeof window !== 'undefined' && window.innerWidth < 480) {
-                        setShowFiltersView(false);
-                        setShowCitySelector(false);
-                      }
-                    }}
-                    placeholder="Select or type your city"
-                    mapCenter={mapCenter}
-                    type="city"
-                    isDark={isDark}
-                    iconLeft={Search}
-                  />
-                </div>
-
-                {/* Detect Location and Reset City - same logic as Locate Me (bottom right) */}
-                <div className={`px-4 py-3 flex items-center justify-between border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-                  <button
-                    onClick={async () => {
-                      if (isDetectingLocation || isLoadingProperties) return;
-
-                      setIsDetectingLocation(true);
-                      try {
-                        const loc = await getUserLocation();
-                        // Core behavior: same as Locate Me - center map and zoom
-                        setMapCenter({ lat: loc.lat, lng: loc.lng });
-                        setZoomLevel(loc.isFallback ? ZOOM_INDIA : loc.isApproximate ? ZOOM_CITY : ZOOM_LOCATION);
-                        setDetectedUserLocation({ lat: loc.lat, lng: loc.lng });
-                        if (typeof window !== 'undefined' && window.innerWidth < 480) setShowCitySelector(false);
-
-                        // Optional: reverse geocode to show city name in search
-                        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-                        if (apiKey) {
-                          try {
-                            const reverseGeocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${loc.lat},${loc.lng}&key=${apiKey}`;
-                            const geocodeRes = await fetch(reverseGeocodeUrl);
-                            const geocodeData = await geocodeRes.json();
-
-                            let cityName = null;
-                            if (geocodeData.status === "OK" && geocodeData.results?.length > 0) {
-                              const addressComponents = geocodeData.results[0].address_components;
-                              for (const component of addressComponents) {
-                                if (component.types.includes('locality')) {
-                                  cityName = component.long_name;
-                                  break;
-                                } else if (component.types.includes('administrative_area_level_2')) {
-                                  cityName = component.long_name;
-                                }
-                              }
-                            }
-                            if (cityName) setCitySearchQuery(cityName);
-                            else setCitySearchQuery('');
-                          } catch {
-                            setCitySearchQuery('');
-                          }
-                        } else {
-                          setCitySearchQuery('');
-                        }
-                      } catch (error) {
-                        console.error('Error detecting location:', error);
-                      } finally {
-                        setIsDetectingLocation(false);
-                      }
-                    }}
-                    disabled={isLoadingProperties || isDetectingLocation}
-                    className={`flex items-center gap-2 text-blue-500 hover:text-blue-600 transition-colors ${(isLoadingProperties || isDetectingLocation) ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
-                  >
-                    {isDetectingLocation ? <Loader2 className="w-4 h-4 animate-spin" /> : <LocateFixed className="w-4 h-4" />}
-                    <span className="text-sm font-medium">{isDetectingLocation ? 'Detecting...' : 'Detect my location'}</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSelectedCity(null);
-                      setSelectedMarker(null);
-                      setMapCenter({ lat: 20.5937, lng: 78.9629 });
-                      setZoomLevel(ZOOM_INDIA);
-                      setCitySearchQuery('');
-                      setDetectedUserLocation(null);
-                    }}
-                    disabled={isLoadingProperties}
-                    className={`text-sm transition-colors ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
-                  >
-                    Reset City
-                  </button>
-                </div>
-
-                {/* Closer Cities - shown when user has detected their location */}
-                {detectedUserLocation && (
-                  <div className={`px-4 py-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Closer Cities</h3>
-                    <div className="grid grid-cols-3 gap-4">
-                      {sortCitiesByDistance(
-                        [...new Set(indianCities)],
-                        detectedUserLocation.lat,
-                        detectedUserLocation.lng,
-                        6
-                      ).map(city => (
-                        <button
-                          key={city}
-                          onClick={() => zoomToCity(city, { clearSearch: true })}
-                          className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-colors cursor-pointer ${isDark ? 'hover:bg-[#282c34]' : 'hover:bg-gray-50'}`}
-                        >
-                          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
-                            <MapPin className="w-6 h-6 text-blue-500" />
-                          </div>
-                          <span className={`text-xs text-center font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{city}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Top Cities Section - always visible for quick selection */}
-                <div className={`px-4 py-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-                  <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Top Cities</h3>
-                  <div className="grid grid-cols-3 gap-4">
-                    {[
-                      'Bangalore', 'Chennai', 'Delhi', 'Gurgaon', 'Hyderabad', 'Kolkata',
-                      'Lucknow', 'Mumbai', 'Navi Mumbai', 'Noida', 'Pune', 'Thane'
-                    ].map(city => (
-                      <button
-                        key={city}
-                        onClick={() => zoomToCity(city, { clearSearch: true })}
-                        className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-colors cursor-pointer ${isDark ? 'hover:bg-[#282c34]' : 'hover:bg-gray-50'}`}
-                      >
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
-                          <Building2 className="w-6 h-6 text-blue-500" />
-                        </div>
-                        <span className={`text-xs text-center font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{city}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Other Cities Section */}
-                <div className="px-4 py-4 pb-32 max-[525px]:pb-36">
-                  <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Other Cities</h3>
-                  <div className="space-y-0">
-                    {(() => {
-                      const filtered = [...new Set(indianCities)].filter(city =>
-                        !citySearchQuery || city.toLowerCase().includes(citySearchQuery.toLowerCase())
-                      ).filter(city =>
-                        !['Bangalore', 'Chennai', 'Delhi', 'Gurgaon', 'Hyderabad', 'Kolkata',
-                          'Lucknow', 'Mumbai', 'Navi Mumbai', 'Noida', 'Pune', 'Thane'].includes(city)
-                      );
-                      const list = filtered.length > 0 ? filtered : [...new Set(indianCities)].filter(city =>
-                        !['Bangalore', 'Chennai', 'Delhi', 'Gurgaon', 'Hyderabad', 'Kolkata',
-                          'Lucknow', 'Mumbai', 'Navi Mumbai', 'Noida', 'Pune', 'Thane'].includes(city)
-                      );
-                      return list.sort((a, b) => a.localeCompare(b));
-                    })()
-                      .map(city => (
-                        <button
-                          key={city}
-                          onClick={() => zoomToCity(city, { zoomLevel: ZOOM_CITY, clearSearch: true, closeSelector: false })}
-                          className={`w-full px-0 py-3 text-left text-sm transition-colors cursor-pointer border-b last:border-b-0 ${isDark ? 'text-gray-300 hover:text-white hover:bg-[#282c34] border-gray-700' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50 border-gray-100'}`}
-                        >
-                          {city}
-                        </button>
-                      ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Mobile List View Overlay */}
-        {showMobileList && (
-          <div className="md:hidden fixed inset-0 z-40 flex items-end">
-            {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/40" onClick={() => setShowMobileList(false)}></div>
-
-            {/* Modal Content */}
-            <div className={`relative w-full rounded-t-3xl overflow-hidden flex flex-col ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`} style={{ maxHeight: 'min(90vh, 90svh)' }}>
-              {/* Drag Handle */}
-              <div className="flex justify-center py-3 flex-shrink-0">
-                <div className={`w-12 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-300'}`}></div>
-              </div>
-
-              {/* Scrollable Content */}
-              <div className="overflow-y-auto mobile-modal-scroll flex-1 min-h-0" style={{ scrollbarWidth: 'thin', scrollbarColor: isDark ? '#4b5563 #2d3139' : '#cbd5e1 #f1f5f9' }}>
-                <div className={`sticky top-0 border-b z-10 ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-white border-gray-200'}`}>
-                  {/* Header */}
-                  <div className="px-3 py-2.5 flex items-center justify-between">
-                    <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>Properties</h2>
-                    <button
-                      onClick={() => setShowMobileList(false)}
-                      className={`cursor-pointer ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-
-                  {/* Category Filters - Segmented Control */}
-                  <div className="px-3 pb-3">
-                    <div className={`rounded-full p-1 flex mb-3 ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
-                      <button
-                        onClick={() => {
-                          setPropertyTypeFilter('all');
-                          setFilters(prev => ({
-                            ...prev,
-                            type: { commercial: false, residential: false }
-                          }));
-                        }}
-                        className={`flex-1 px-4 py-2 rounded-full text-sm font-medium transition-all ${propertyTypeFilter === 'all'
-                          ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
-                          : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
-                          }`}
-                      >
-                        All
-                      </button>
-                      <button
-                        onClick={() => {
-                          setPropertyTypeFilter('commercial');
-                          setFilters(prev => ({
-                            ...prev,
-                            type: { commercial: true, residential: false }
-                          }));
-                        }}
-                        className={`flex-1 px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${propertyTypeFilter === 'commercial'
-                          ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
-                          : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
-                          }`}
-                      >
-                        <Building2 className="w-3.5 h-3.5" />
-                        Commercial
-                      </button>
-                      <button
-                        onClick={() => {
-                          setPropertyTypeFilter('residential');
-                          setFilters(prev => ({
-                            ...prev,
-                            type: { commercial: false, residential: true }
-                          }));
-                        }}
-                        className={`flex-1 px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center justify-center gap-1.5 ${propertyTypeFilter === 'residential'
-                          ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
-                          : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
-                          }`}
-                      >
-                        <Home className="w-3.5 h-3.5" />
-                        Residential
-                      </button>
-                    </div>
-
-                    {/* Listing Type Filters */}
-                    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
-                      <button
-                        onClick={() => setListingTypeFilter(listingTypeFilter === 'forSale' ? 'all' : 'forSale')}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'forSale'
-                          ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
-                          : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
-                          }`}
-                      >
-                        For Sale
-                      </button>
-                      <button
-                        onClick={() => setListingTypeFilter(listingTypeFilter === 'forRent' ? 'all' : 'forRent')}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'forRent'
-                          ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
-                          : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
-                          }`}
-                      >
-                        For Rent
-                      </button>
-                      <button
-                        onClick={() => setListingTypeFilter(listingTypeFilter === 'readyToMove' ? 'all' : 'readyToMove')}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'readyToMove'
-                          ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
-                          : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
-                          }`}
-                      >
-                        Ready to Move
-                      </button>
-                      <button
-                        onClick={() => setListingTypeFilter(listingTypeFilter === 'newProjects' ? 'all' : 'newProjects')}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'newProjects'
-                          ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
-                          : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
-                          }`}
-                      >
-                        New Projects
-                      </button>
-                      <button
-                        onClick={() => setListingTypeFilter(listingTypeFilter === 'verified' ? 'all' : 'verified')}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'verified'
-                          ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
-                          : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
-                          }`}
-                      >
-                        Verified
-                      </button>
-                      <button
-                        onClick={() => setListingTypeFilter(listingTypeFilter === 'video' ? 'all' : 'video')}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'video'
-                          ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
-                          : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
-                          }`}
-                      >
-                        Video
-                      </button>
-                    </div>
-
-                    {/* Results Summary and Sort */}
-                    {getFilteredMarkers().length > 0 && (
-                      <div className={`flex items-center justify-between pt-2 mt-2 border-t ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
-                        <p className="text-sm">
-                          <span className={`font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{getFilteredMarkers().length} {getFilteredMarkers().length === 1 ? 'property' : 'properties'}</span>
-                          <span className={isDark ? 'text-gray-400' : 'text-gray-500'}> found</span>
-                        </p>
-                        <div className="relative sort-dropdown-container">
-                          <button
-                            onClick={() => setShowSortDropdown(!showSortDropdown)}
-                            className={`flex items-center gap-1 text-sm transition-colors px-2 py-1 rounded ${isDark ? 'text-gray-400 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-600 hover:bg-yellow-100 hover:text-yellow-900'}`}
-                          >
-                            <span>Sort by</span>
-                            <ChevronDown className={`w-4 h-4 transition-transform ${showSortDropdown ? 'rotate-180' : ''}`} />
-                          </button>
-
-                          {showSortDropdown && (
-                            <div className={`absolute right-0 top-full mt-1 w-40 rounded shadow-lg z-50 border text-xs ${isDark ? 'bg-[#282c34] border-gray-700' : 'bg-white border-gray-200'}`}>
-                              <div className="py-0.5">
-                                <button
-                                  onClick={() => {
-                                    setSortBy('uploadedDateLatest');
-                                    setShowSortDropdown(false);
-                                  }}
-                                  className={`w-full text-left px-2 py-1 transition-colors ${sortBy === 'uploadedDateLatest' ? (isDark ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-800') : (isDark ? 'text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-700 hover:bg-yellow-100 hover:text-yellow-900')}`}
-                                >
-                                  Uploaded Date (Latest)
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setSortBy('priceLow');
-                                    setShowSortDropdown(false);
-                                  }}
-                                  className={`w-full text-left px-2 py-1 transition-colors ${sortBy === 'priceLow' ? (isDark ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-800') : (isDark ? 'text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-700 hover:bg-yellow-100 hover:text-yellow-900')}`}
-                                >
-                                  Price (low to high)
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setSortBy('priceHigh');
-                                    setShowSortDropdown(false);
-                                  }}
-                                  className={`w-full text-left px-2 py-1 transition-colors ${sortBy === 'priceHigh' ? (isDark ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-800') : (isDark ? 'text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-700 hover:bg-yellow-100 hover:text-yellow-900')}`}
-                                >
-                                  Price (high to low)
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setSortBy('sizeLow');
-                                    setShowSortDropdown(false);
-                                  }}
-                                  className={`w-full text-left px-2 py-1 transition-colors ${sortBy === 'sizeLow' ? (isDark ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-800') : (isDark ? 'text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-700 hover:bg-yellow-100 hover:text-yellow-900')}`}
-                                >
-                                  Size (low to high)
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setSortBy('sizeHigh');
-                                    setShowSortDropdown(false);
-                                  }}
-                                  className={`w-full text-left px-2 py-1 transition-colors ${sortBy === 'sizeHigh' ? (isDark ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-800') : (isDark ? 'text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-700 hover:bg-yellow-100 hover:text-yellow-900')}`}
-                                >
-                                  Size (high to low)
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setSortBy('totalPriceLow');
-                                    setShowSortDropdown(false);
-                                  }}
-                                  className={`w-full text-left px-2 py-1 transition-colors ${sortBy === 'totalPriceLow' ? (isDark ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-800') : (isDark ? 'text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-700 hover:bg-yellow-100 hover:text-yellow-900')}`}
-                                >
-                                  Total Price (low to high)
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setSortBy('totalPriceHigh');
-                                    setShowSortDropdown(false);
-                                  }}
-                                  className={`w-full text-left px-2 py-1 transition-colors ${sortBy === 'totalPriceHigh' ? (isDark ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-800') : (isDark ? 'text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-700 hover:bg-yellow-100 hover:text-yellow-900')}`}
-                                >
-                                  Total Price (high to low)
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className={`p-3 space-y-3 pb-32 max-[525px]:pb-36 ${isDark ? 'bg-[#1f2229]' : ''}`}>
-                  {getFilteredMarkers().length === 0 ? (
-                    <div className={`flex flex-col items-center justify-center py-16 px-4 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                      <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${isDark ? 'bg-[#282c34]' : 'bg-gray-200'}`}>
-                        <Search className={`w-8 h-8 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-                      </div>
-                      <p className="font-medium text-base mb-1">No property found</p>
-                      <p className="text-sm">Try changing your search or filters.</p>
-                    </div>
-                  ) : getFilteredMarkers().map((marker, index) => {
-                    const isActiveMobile = selectedCity && (String(marker._id || marker.id) === String(selectedCity._id || selectedCity.id));
-                    return (
-                    <div
-                      key={`${marker.id}-${marker.propertyCategory || 'c'}-${index}`}
-                      className={`rounded-xl p-3 cursor-pointer transition-all shadow-sm ${isActiveMobile ? 'border-2 border-blue-500' : isDark ? '' : 'border border-gray-100'} ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-white hover:bg-[#fff3c5] hover:shadow-md'}`}
-                      onClick={() => {
-                        handleMarkerClick(marker);
-                        setShowMobileList(false);
-                      }}
-                    >
-                      <div className="flex gap-3">
-                        <div className="relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-muted">
-                          {(marker.featuredImageUrl || marker.images?.[0]) ? (
-                            <Image
-                              src={marker.featuredImageUrl || marker.images[0]}
-                              alt={marker.propertyName || '-'}
-                              width={90}
-                              height={90}
-                              className="rounded-lg object-cover w-20 h-20"
-                              unoptimized
-                            />
-                          ) : (
-                            <div className="w-full h-full rounded-lg bg-muted" aria-hidden />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2 mb-0.5">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <h3 className={`font-semibold text-sm leading-tight truncate ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                                {marker.propertyName || marker.name || '-'}
-                              </h3>
-                              {marker.isVerified && (
-                                <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none">
-                                  <path d="M12 1L14.4 4.2L18.3 3.4L18.1 7.4L21.6 9.2L19.4 12.5L21.6 15.8L18.1 17.6L18.3 21.6L14.4 20.8L12 24L9.6 20.8L5.7 21.6L5.9 17.6L2.4 15.8L4.6 12.5L2.4 9.2L5.9 7.4L5.7 3.4L9.6 4.2L12 1Z" fill="#FBBF24" />
-                                  <path d="M8.5 12.5L10.5 14.5L15.5 9.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1.5 flex-shrink-0">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleFavouriteToggle(marker);
-                                }}
-                                className={`p-1 rounded-full transition-colors ${propertyFavorites[marker._id || marker.id]
-                                  ? 'text-red-500'
-                                  : isDark ? 'text-gray-500 hover:text-red-500' : 'text-gray-300 hover:text-red-500'
-                                  }`}
-                              >
-                                <Heart
-                                  className="w-4 h-4"
-                                  fill={propertyFavorites[marker._id || marker.id] ? "currentColor" : "none"}
-                                  strokeWidth={2}
-                                />
-                              </button>
-                              <a
-                                href={`https://wa.me/${(marker.agentDetails?.phone || marker.sellerPhoneNumber)?.replace(/[^0-9]/g, '') || defaultWhatsappForWa}?text=Hi,%20I%20am%20interested%20in%20${encodeURIComponent(marker.propertyName || 'this property')}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                className={`p-1 rounded-full transition-colors ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
-                              >
-                                <Image src="/whatsapp.svg" alt="WhatsApp" width={18} height={18} />
-                              </a>
-                            </div>
-                          </div>
-                          <p className={`text-xs mb-1.5 truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                            <span>in {marker.address?.locality || marker.address?.district || marker.address?.state}</span>
-                            {marker.address?.district && marker.address?.locality && marker.address.district !== marker.address.locality && (
-                              <span>, {marker.address.district}</span>
-                            )}
-                            {marker.address?.state && (
-                              <span>, {marker.address.state}</span>
-                            )}
-                          </p>
-                          {(() => {
-                            const markerPrices = calculatePrices(marker);
-                            if (markerPrices.discountedPrice && markerPrices.discountedPrice !== '₹XX') {
-                              return (
-                                <p className="text-sm">
-                                  <span className="font-bold text-blue-500">{markerPrices.discountedPrice}</span>
-                                  {markerPrices.originalPrice && markerPrices.originalPrice !== markerPrices.discountedPrice && (
-                                    <span className={`line-through ml-2 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{markerPrices.originalPrice}</span>
-                                  )}
-                                </p>
-                              );
-                            } else if (marker.pricePerAcre && marker.pricePerAcre !== 'N/A') {
-                              return (
-                                <p className="text-sm">
-                                  <span className="font-bold text-orange-500">{marker.pricePerAcre}</span>
-                                  <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>/sq.ft</span>
-                                </p>
-                              );
-                            }
-                            return null;
-                          })()}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </main>
+      </div>
 
       {isMenuOpen && <MenuSideBar onClose={() => setIsMenuOpen(false)} />}
 
@@ -5281,55 +3487,7 @@ export default function HomePage() {
       )}
 
 
-      {/* Mobile Bottom Navigation Bar - Only visible on screens < 480px */}
-      <div className={`md:hidden fixed bottom-0 left-0 right-0 border-t z-50 transition-colors ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-white border-gray-200'}`}>
-        <div className="flex items-stretch">
-          <Link
-            href="/"
-            className="flex flex-col items-center justify-center gap-0.5 flex-1 py-2"
-          >
-            <svg className={`w-5 h-5 ${pathname === '/' ? 'text-blue-600' : isDark ? 'text-gray-500' : 'text-gray-500'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 7V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V7" />
-              <path d="M3 7L12 3L21 7" />
-              <path d="M12 11V19" />
-              <path d="M8 11V15" />
-              <path d="M16 11V15" />
-            </svg>
-            <span className={`text-[10px] font-medium ${pathname === '/' ? 'text-blue-600' : isDark ? 'text-gray-500' : 'text-gray-500'}`}>Map-View</span>
-          </Link>
-          {globalConfig.isFullNavVisible && (
-            <>
-              <Link
-                href="/commercial"
-                className="flex flex-col items-center justify-center gap-0.5 flex-1 py-2"
-              >
-                <Building2 className={`w-5 h-5 ${pathname === '/commercial' ? 'text-blue-600' : isDark ? 'text-gray-500' : 'text-gray-500'}`} strokeWidth={1.5} />
-                <span className={`text-[10px] font-medium ${pathname === '/commercial' ? 'text-blue-600' : isDark ? 'text-gray-500' : 'text-gray-500'}`}>Commercial</span>
-              </Link>
-              <Link
-                href="/residential"
-                className="flex flex-col items-center justify-center gap-0.5 flex-1 py-2"
-              >
-                <Home className={`w-5 h-5 ${pathname === '/residential' ? 'text-blue-600' : isDark ? 'text-gray-500' : 'text-gray-500'}`} strokeWidth={1.5} />
-                <span className={`text-[10px] font-medium ${pathname === '/residential' ? 'text-blue-600' : isDark ? 'text-gray-500' : 'text-gray-500'}`}>Residential</span>
-              </Link>
-              <Link
-                href="/builders"
-                className="flex flex-col items-center justify-center gap-0.5 flex-1 py-2"
-              >
-                <Image
-                  src="/crown.svg"
-                  width={20}
-                  height={20}
-                  alt="Builders"
-                  className={pathname === '/builders' ? 'opacity-100' : 'opacity-50'}
-                />
-                <span className={`text-[10px] font-medium ${pathname === '/builders' ? 'text-blue-600' : isDark ? 'text-gray-500' : 'text-gray-500'}`}>Builders</span>
-              </Link>
-            </>
-          )}
-        </div>
-      </div>
+
 
       {/* Add Property Modal */}
       {showAddPropertyModal && (

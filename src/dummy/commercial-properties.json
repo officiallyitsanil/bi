@@ -2,18 +2,18 @@
     {
         "_id": "66c1d2e3f4a5b6c7d8e9f001",
         "propertyCategory": "commercial",
-        "propertyName": "Prestige Tech Cloud",
+        "propertyName": "WeWork Vaishnavi Signature",
         "address": {
             "country": "India",
             "flat": "Ground Floor to 5th Floor",
             "street": "Outer Ring Road",
-            "city": "Bangalore",
-            "locality": "Marathahalli",
+            "city": "Hyderabad",
+            "locality": "Bellandur",
             "state": "Karnataka",
             "pincode": "560037",
             "district": "Bangalore East"
         },
-        "displayAddress": "Outer Ring Road, Marathahalli, Bangalore East, Karnataka 560037",
+        "displayAddress": "Bellandur, Hyderabad, Karnataka",
         "coordinates": {
             "latitude": 12.9561,
             "longitude": 77.6973
@@ -27,7 +27,7 @@
         "pricePerSeat": "₹145",
         "pricePerSqft": "₹92",
         "numberOfSeats": "6",
-        "furnishingLevel": "Fully Furnished",
+        "furnishingLevel": "Ready to move-in",
         "buildingLease": "Full Building / Partial Floors",
         "minInventoryUnit": "30 seats (1,500 sq. ft)",
         "maxInventoryUnit": "300 seats (1,5000 sq. ft)",
@@ -39,10 +39,10 @@
         "builderName": "Prestige Group",
         "facilities": "2W parking, 4D parking",
         "agentDetails": {
-            "name": "Amit Sharma",
-            "phone": "+91 9876543210",
+            "name": "Rohit",
+            "phone": "+91 89.....896",
             "email": "amit@builderinfo.com",
-            "whatsapp": "+91 9876543210",
+            "whatsapp": "+91 89.....896",
             "tag": "Builderinfo Expert",
             "image": "https://i.pravatar.cc/150?img=11",
             "tagline": "Rohit's team assisted 500+ corporates in Bangalore to move into their new office.",
@@ -55,9 +55,9 @@
             ]
         },
         "brandDetails": {
-            "name": "Prestige Group",
+            "name": "BHIVE WORKSPACE",
             "logo": "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=96",
-            "description": "Prestige Group's commercial portfolio includes world-class IT parks and office spaces.",
+            "description": "BHIVE Workspace, established in 2014, specializes in providing Zero CapEx, Enterprise Grade, Customized managed office spaces. With 26+ locations in Bangalore and an expansion to Mumbai, BHIVE's flagship HSR campus is the largest in India, offering over 8,000 seats..",
             "cities": 12,
             "clients": 500,
             "spaces": 15,
@@ -72,7 +72,7 @@
         "visitorCount": 1432,
         "nearbyPlaces": {
             "schools": [
-                { "name": "Ryan International", "distance": "2 km" },
+                { "name": "Ryan International", "distance": "2.0 km" },
                 { "name": "Delhi Public School", "distance": "0.8 km" },
                 { "name": "Euro School", "distance": "1.2 km" },
                 { "name": "Inventure Academy", "distance": "1.5 km" }
@@ -83,22 +83,22 @@
                 { "name": "ORR Bus Stop", "distance": "1.8 km" }
             ],
             "hospitals": [
-                { "name": "Chinmaya Mission Hospital", "distance": "5 km" },
-                { "name": "AIMs Hospital", "distance": "5 km" },
+                { "name": "Chinmaya Mission Hospital", "distance": "5.0 km" },
+                { "name": "AIMs Hospital", "distance": "5.0 km" },
                 { "name": "Apollo Hospital", "distance": "2.5 km" },
                 { "name": "Manipal Hospital", "distance": "3.2 km" }
             ],
             "banks": [
-                { "name": "State Bank of India", "distance": "5 km" },
+                { "name": "State Bank of India", "distance": "5.0 km" },
                 { "name": "HDFC Bank", "distance": "1.8 km" },
-                { "name": "ICICI Bank", "distance": "1.37 km" },
-                { "name": "Kotak Mahindra Bank", "distance": "1.22 km" }
+                { "name": "ICICI Bank", "distance": "1.4 km" },
+                { "name": "Kotak Mahindra Bank", "distance": "1.2 km" }
             ],
             "temples": [
-                { "name": "ISKCON Temple", "distance": "3 km" },
+                { "name": "ISKCON Temple", "distance": "3.0 km" },
                 { "name": "Maruthi Temple", "distance": "1.5 km" },
-                { "name": "Chamundeshwari Temple", "distance": "4 km" },
-                { "name": "Ganesha Temple", "distance": "2 km" }
+                { "name": "Chamundeshwari Temple", "distance": "4.0 km" },
+                { "name": "Ganesha Temple", "distance": "2.0 km" }
             ],
             "atms": [
                 { "name": "SBI ATM", "distance": "0.8 km" },
@@ -107,10 +107,10 @@
                 { "name": "Axis ATM", "distance": "1.6 km" }
             ],
             "malls": [
-                { "name": "Phoenix Mall", "distance": "2 km" },
+                { "name": "Phoenix Mall", "distance": "2.0 km" },
                 { "name": "Orion Mall", "distance": "3.5 km" },
-                { "name": "Forum Mall", "distance": "4 km" },
-                { "name": "Garuda Mall", "distance": "5 km" }
+                { "name": "Forum Mall", "distance": "4.0 km" },
+                { "name": "Garuda Mall", "distance": "5.0 km" }
             ]
         },
         "ratings": {
@@ -244,7 +244,7 @@
             "9",
             "custom"
         ],
-        "propertyType": "Office Space",
+        "propertyType": "Tech Park",
         "propertyLabel": "for-rent",
         "buildingType": "business-park",
         "furnishing": "semi",
@@ -258,21 +258,21 @@
         "similarLocations": ["Koramangala", "MG Road", "HSR", "Indiranagar", "Hebbal"],
         "allSimilarLocations": ["Koramangala", "MG Road", "HSR", "Indiranagar", "Hebbal", "Whitefield", "Bellandur", "Sanjay Nagar", "Electronic City", "JP Nagar", "Jayanagar", "Banashankari", "Rajajinagar", "Malleshwaram", "BTM Layout", "Marathahalli"],
         "similarProperties": [
-            { "id": "workshaala", "name": "Workshaala", "locality": "Koramangala", "price": "₹7,999", "rating": 4.8, "badge": "44% off", "image": "https://images.unsplash.com/photo-1600210492493-0946911123ea?w=600&q=80" },
-            { "id": "incubex", "name": "INCUBEX", "locality": "Koramangala", "price": "₹5,999", "rating": 4.2, "badge": "Best Price Guarantee", "image": "https://images.unsplash.com/photo-1556761175-4b46a572b786?w=600&q=80" },
-            { "id": "smart-space", "name": "Smart Space", "locality": "Koramangala", "price": "₹4,999", "rating": 3.9, "badge": "34% off", "image": "https://images.unsplash.com/photo-1579487785973-74d2ca7abdd5?w=600&q=80" },
-            { "id": "urban-vault", "name": "Urban Vault", "locality": "Koramangala", "price": "₹5,999", "rating": 4.2, "badge": "Best Price Guarantee", "image": "https://images.unsplash.com/photo-1577412647305-991150c7d163?w=600&q=80" },
-            { "id": "indiqube", "name": "Indiqube", "locality": "Koramangala", "price": "₹5,999", "rating": 4.2, "badge": "Best Price Guarantee", "image": "https://picsum.photos/seed/corporate-office-space/400/300" },
-            { "id": "the-hive", "name": "The Hive Koramangala", "locality": "Koramangala", "price": "₹6,499", "rating": 4.5, "badge": "20% off", "image": "https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80" },
-            { "id": "co-labs-kor", "name": "Co.Labs", "locality": "Koramangala", "price": "₹7,200", "rating": 4.6, "badge": "Best Price", "image": "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=600&q=80" },
-            { "id": "wework-mg", "name": "WeWork MG Road", "locality": "MG Road", "price": "₹12,000", "rating": 4.9, "badge": "Premium", "image": "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=600&q=80" },
-            { "id": "regus-mg", "name": "Regus MG Road", "locality": "MG Road", "price": "₹9,500", "rating": 4.4, "badge": "15% off", "image": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=80" },
-            { "id": "innov8-mg", "name": "Innov8", "locality": "MG Road", "price": "₹8,999", "rating": 4.7, "badge": "Popular", "image": "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=600&q=80" },
-            { "id": "seatspace-hsr", "name": "SeatSpace HSR", "locality": "HSR", "price": "₹5,500", "rating": 4.3, "badge": "25% off", "image": "https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?w=600&q=80" },
-            { "id": "collab-indira", "name": "Collab House", "locality": "Indiranagar", "price": "₹6,800", "rating": 4.5, "badge": "Best Price", "image": "https://images.unsplash.com/photo-1531973576160-7125cd663d86?w=600&q=80" },
-            { "id": "spacehub-indira", "name": "SpaceHub", "locality": "Indiranagar", "price": "₹7,400", "rating": 4.1, "badge": "New", "image": "https://images.unsplash.com/photo-1605797491749-0c6989a44356?w=600&q=80" },
-            { "id": "worknest-hebbal", "name": "WorkNest Hebbal", "locality": "Hebbal", "price": "₹6,200", "rating": 4.4, "badge": "30% off", "image": "https://images.unsplash.com/photo-1601762429744-46fe92ccd903?w=600&q=80" },
-            { "id": "desklab-hebbal", "name": "DeskLab", "locality": "Hebbal", "price": "₹5,800", "rating": 4.0, "badge": "Best Price", "image": "https://images.unsplash.com/photo-1614070776241-fb47cec38278?w=600&q=80" }
+            { "id": "workshaala", "name": "Workshaala", "locality": "Koramangala", "price": "₹7,999", "rating": 4.8, "ratingTag": "Excellent", "badge": "44% off", "image": "https://images.unsplash.com/photo-1600210492493-0946911123ea?w=600&q=80" },
+            { "id": "incubex", "name": "INCUBEX", "locality": "Koramangala", "price": "₹5,999", "rating": 4.2, "ratingTag": "Good", "badge": "Best Price Guarantee", "image": "https://images.unsplash.com/photo-1556761175-4b46a572b786?w=600&q=80" },
+            { "id": "smart-space", "name": "Smart Space", "locality": "Koramangala", "price": "₹4,999", "rating": 3.9, "ratingTag": "Good", "badge": "34% off", "image": "https://images.unsplash.com/photo-1579487785973-74d2ca7abdd5?w=600&q=80" },
+            { "id": "urban-vault", "name": "Urban Vault", "locality": "Koramangala", "price": "₹5,999", "rating": 4.2, "ratingTag": "Good", "badge": "Best Price Guarantee", "image": "https://images.unsplash.com/photo-1577412647305-991150c7d163?w=600&q=80" },
+            { "id": "indiqube", "name": "Indiqube", "locality": "Koramangala", "price": "₹5,999", "rating": 4.2, "ratingTag": "Good", "badge": "Best Price Guarantee", "image": "https://picsum.photos/seed/corporate-office-space/400/300" },
+            { "id": "the-hive", "name": "The Hive Koramangala", "locality": "Koramangala", "price": "₹6,499", "rating": 4.5, "ratingTag": "Very Good", "badge": "20% off", "image": "https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80" },
+            { "id": "co-labs-kor", "name": "Co.Labs", "locality": "Koramangala", "price": "₹7,200", "rating": 4.6, "ratingTag": "Very Good", "badge": "Best Price", "image": "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=600&q=80" },
+            { "id": "wework-mg", "name": "WeWork MG Road", "locality": "MG Road", "price": "₹12,000", "rating": 4.9, "ratingTag": "Excellent", "badge": "Premium", "image": "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=600&q=80" },
+            { "id": "regus-mg", "name": "Regus MG Road", "locality": "MG Road", "price": "₹9,500", "rating": 4.4, "ratingTag": "Very Good", "badge": "15% off", "image": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=80" },
+            { "id": "innov8-mg", "name": "Innov8", "locality": "MG Road", "price": "₹8,999", "rating": 4.7, "ratingTag": "Excellent", "badge": "Popular", "image": "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=600&q=80" },
+            { "id": "seatspace-hsr", "name": "SeatSpace HSR", "locality": "HSR", "price": "₹5,500", "rating": 4.3, "ratingTag": "Very Good", "badge": "25% off", "image": "https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?w=600&q=80" },
+            { "id": "collab-indira", "name": "Collab House", "locality": "Indiranagar", "price": "₹6,800", "rating": 4.5, "ratingTag": "Very Good", "badge": "Best Price", "image": "https://images.unsplash.com/photo-1531973576160-7125cd663d86?w=600&q=80" },
+            { "id": "spacehub-indira", "name": "SpaceHub", "locality": "Indiranagar", "price": "₹7,400", "rating": 4.1, "ratingTag": "Good", "badge": "New", "image": "https://images.unsplash.com/photo-1605797491749-0c6989a44356?w=600&q=80" },
+            { "id": "worknest-hebbal", "name": "WorkNest Hebbal", "locality": "Hebbal", "price": "₹6,200", "rating": 4.4, "ratingTag": "Very Good", "badge": "30% off", "image": "https://images.unsplash.com/photo-1601762429744-46fe92ccd903?w=600&q=80" },
+            { "id": "desklab-hebbal", "name": "DeskLab", "locality": "Hebbal", "price": "₹5,800", "rating": 4.0, "ratingTag": "Good", "badge": "Best Price", "image": "https://images.unsplash.com/photo-1614070776241-fb47cec38278?w=600&q=80" }
         ],
         "exploreLocations": [
             { "name": "Coworking Space in HSR Layout", "image": "https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?w=400&q=80" },

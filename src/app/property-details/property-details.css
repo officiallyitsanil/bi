@@ -181,8 +181,8 @@
 /* Reduce image gallery height */
 @media (min-width: 768px) {
   .property-details-compact .property-details-gallery {
-    height: 340px !important;
-    min-height: 340px !important;
+    height: 450px !important;
+    min-height: 450px !important;
   }
 }
 
@@ -402,13 +402,13 @@
 /* Wrapper positions CTA outside the photo (not clipped by rounded image) */
 .gallery-pdf-cta-float {
   top: -0.5rem;
-  right: -0.5rem;
+  right: -0.75rem;
 }
 
 @media (min-width: 768px) {
   .gallery-pdf-cta-float {
     top: -0.75rem;
-    right: -0.75rem;
+    right: -1rem;
   }
 }
 
@@ -509,28 +509,28 @@
 /* Watch video — pill floats past bottom-right edge (reference) */
 .gallery-watch-video-float {
   bottom: 0.65rem;
-  right: -0.55rem;
+  right: -0.75rem;
 }
 
 @media (min-width: 768px) {
   .gallery-watch-video-float {
     bottom: 0.85rem;
-    right: -0.75rem;
+    right: -1rem;
   }
 }
 
 .gallery-watch-video-pill {
-  font-size: 0.48rem;
+  font-size: 0.44rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   color: #fff;
-  padding: 0.2rem 0.6rem;
+  padding: 0.15rem 0.5rem;
   border-radius: 9999px;
   background: linear-gradient(180deg, #42a5f5 0%, #1e88e5 52%, #1565c0 100%);
   border: 1px solid rgba(255, 255, 255, 0.35);
   box-shadow:
-    2px 3px 0 rgba(12, 35, 72, 0.72),
-    1px 2px 5px rgba(0, 0, 0, 0.22);
+    1.5px 2px 0 rgba(12, 35, 72, 0.72),
+    1px 2px 4px rgba(0, 0, 0, 0.18);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   cursor: pointer;
 }
@@ -538,8 +538,8 @@
 .gallery-watch-video-pill:hover {
   transform: translateY(-1px);
   box-shadow:
-    6px 8px 0 rgba(12, 35, 72, 0.65),
-    4px 6px 14px rgba(0, 0, 0, 0.32);
+    4px 6px 0 rgba(12, 35, 72, 0.65),
+    3px 5px 12px rgba(0, 0, 0, 0.28);
 }
 
 .gallery-watch-video-pill:focus-visible {
@@ -615,9 +615,9 @@
 .tour-header-box {
   background-color: #f1f3ff;
   border: 1.5px solid #d8dfff !important;
-  margin: 6px auto 4px auto !important;
+  margin: 6px auto 10px auto !important;
   border-radius: 4px !important;
-  padding: 5px 6px;
+  padding: 10px 6px;
   text-align: center;
   width: 92% !important;
 }
@@ -634,8 +634,9 @@
 .tour-dates-container {
   padding: 0;
   position: relative;
-  margin: 8px auto 12px auto;
-  width: 92%;
+  margin: 4px auto 8px auto;
+  width: 85%;
+  overflow: visible !important;
 }
 
 .date-card-item {
@@ -646,7 +647,7 @@
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   background: #fff;
-  min-height: 60px;
+  min-height: 80px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -720,11 +721,11 @@
 }
 
 .tour-nav-prev {
-  left: -19px;
+  left: -14px;
 }
 
 .tour-nav-next {
-  right: -19px;
+  right: -14px;
 }
 
 .tour-label {
@@ -733,7 +734,7 @@
   color: #1a202c;
   margin: 6px auto 6px auto;
   padding: 0;
-  width: 92%;
+  width: 85%;
 }
 
 .tour-type-toggle {
@@ -741,7 +742,7 @@
   gap: 6px;
   padding: 0;
   margin: 0 auto 10px auto;
-  width: 92%;
+  width: 85%;
 }
 
 .tour-type-option {
@@ -771,7 +772,7 @@
 }
 
 .tour-field {
-  width: 92%;
+  width: 85%;
   padding: 6px 10px;
   border: 1.5px solid #edf2f7;
   border-radius: 4px;
@@ -795,32 +796,33 @@
 }
 
 .tour-submit {
-  width: 75% !important;
-  padding: 6px 8px;
-  background-color: #3b4fad;
-  color: #fff;
+  background-color: #3341c1;
+  color: #ffffff;
+  border-radius: 6px !important;
+  padding: 12px 16px;
+  text-align: center;
+  width: 70% !important;
   font-weight: 700;
-  border-radius: 4px;
-  border: none;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-size: 13px !important;
   cursor: pointer;
-  transition: all 0.2s;
-  font-size: 11px;
-  margin: 4px auto 10px auto;
+  margin: 12px auto 14px auto !important;
   display: block;
-  box-shadow: 0 4px 10px -2px rgba(59, 79, 173, 0.3);
+  transition: all 0.2s;
+  border: none !important;
 }
 
 .tour-submit:hover {
-  background-color: #2d3b8a;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 14px -3px rgba(59, 79, 173, 0.4);
+  background-color: #2a35a0;
+  box-shadow: 0 4px 12px rgba(51, 65, 193, 0.2);
 }
 
 .tour-footer-box {
   background-color: #f1f3ff;
   border: 1.5px solid #d8dfff !important;
   border-radius: 4px !important;
-  padding: 8px 6px;
+  padding: 10px 6px;
   text-align: center;
   width: 92% !important;
   color: #3b4fad;
@@ -828,15 +830,15 @@
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-size: 10.5px !important;
-  cursor: pointer;
+  cursor: default;
   margin: 0 auto 8px auto !important;
   display: block;
   transition: all 0.2s;
 }
 
 .tour-footer-box:hover {
-  background-color: #e8ebff;
-  border-color: #cbd5ff !important;
+  background-color: #f1f3ff;
+  border-color: #d8dfff !important;
 }
 
 .tour-select-wrapper {
