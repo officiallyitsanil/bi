@@ -49,7 +49,8 @@ import {
     Package,
     Flame,
     ChevronDown,
-    Info
+    Info,
+    Phone
 } from "lucide-react";
 import Image from "next/image";
 
@@ -560,353 +561,198 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
     const mobileModal = (
         <div
             role="dialog"
-            className="md:hidden fixed inset-0 z-50 flex items-end"
+            className="md:hidden fixed inset-0 z-[60] flex items-end"
             tabIndex="-1"
         >
             {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/40" onClick={onClose}></div>
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
 
-            {/* Modal Content - max 85vh on mobile so top is never cut off */}
-            <div className={`relative pb-20 max-[480px]:pb-28 w-full max-h-[min(88vh,88svh)] max-[480px]:max-h-[82vh] rounded-t-3xl transition-colors ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}>
-                {/* Top RATED Badge - Mobile */}
-                {isTopRated && (
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 z-30">
+            {/* Modal Content - Mobile Optimized Sheet */}
+            <div className={`relative w-full max-h-[92svh] rounded-t-[2.5rem] shadow-2xl overflow-hidden flex flex-col transition-colors ${isDark ? 'bg-[#121417]' : 'bg-[#F8FBFF]'}`}>
+                {/* Drag Handle */}
+                <div className="flex justify-center pt-3 pb-2 flex-shrink-0 z-40" onClick={onClose}>
+                    <div className={`w-12 h-1.2 rounded-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}></div>
+                </div>
+
+
+                {/* Scrollable Content */}
+                <div className="overflow-y-auto flex-1 scrollbar-hide pb-28">
+                    {/* Hero Section */}
+                    <div className="relative mx-4 mt-3 rounded-[2.5rem] overflow-hidden shadow-2xl aspect-[4/3]">
                         <Image
-                            src="/property-details/top-rated-badge.svg"
-                            alt="Top Rated"
-                            width={46}
-                            height={46}
-                            className="object-contain drop-shadow-xl"
+                            src={images[mobileSwiperIndex] || images[0] || '/property-placeholder.jpg'}
+                            alt={name}
+                            fill
+                            className="object-cover"
                             unoptimized
                         />
-                    </div>
-                )}
-                {/* Drag Handle */}
-                <div className="flex justify-center py-2">
-                    <div className={`w-12 h-1.5 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-300'}`}></div>
-                </div>
-
-                {/* Scrollable Content - smaller max on mobile so modal top stays visible */}
-                <div className="overflow-y-auto max-h-[calc(92vh-120px)] max-[480px]:max-h-[calc(85vh-140px)]">
-                    {/* Image Carousel - with padding around for max-[480px] */}
-                    <div className={`relative mx-3 rounded-2xl overflow-hidden h-44 max-[480px]:h-40 max-[480px]:mx-3 max-[480px]:mt-2 max-[480px]:rounded-2xl ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
-                        {/* Close - Top Left (mobile < 480px) */}
-                        <button
-                            onClick={onClose}
-                            className={`absolute top-3 left-3 z-20 w-9 h-9 rounded-full flex items-center justify-center ${isDark ? 'bg-black/40' : 'bg-white/90'}`}
-                            aria-label="Close"
-                        >
-                            <X className={`w-5 h-5 ${isDark ? 'text-gray-200' : 'text-gray-700'}`} />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                        
+                        {/* Top Left Close Button */}
+                        <button onClick={onClose} className="absolute top-5 left-5 w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/20 text-white z-10 shadow-lg">
+                            <X className="w-5 h-5" />
                         </button>
 
-                        {/* Share & Heart - Top Right (matching design) */}
-                        <div className="absolute top-3 right-3 z-20 flex gap-2">
-                            <button
-                                onClick={handleShare}
-                                className={`w-9 h-9 rounded-full flex items-center justify-center ${isDark ? 'bg-black/40' : 'bg-white/90'}`}
-                                aria-label="Share"
-                            >
-                                <Share2 className={`w-5 h-5 ${isDark ? 'text-gray-200' : 'text-gray-700'}`} />
-                            </button>
-                            <button
-                                onClick={handleFavouriteToggle}
-                                className={`w-9 h-9 rounded-full flex items-center justify-center ${isDark ? 'bg-black/40' : 'bg-white/90'}`}
-                                aria-label="Favorite"
-                            >
-                                <Heart className={`w-5 h-5 ${isFavourite ? 'fill-red-500 text-red-500' : isDark ? 'text-gray-200' : 'text-gray-700'}`} />
-                            </button>
+                        {/* Title Overlay */}
+                        <div className="absolute bottom-6 left-6 right-6 text-white text-left">
+                            <div className="flex items-center gap-2 mb-1">
+                                <h2 className="text-xl font-bold leading-tight">{safeDisplay(name)}</h2>
+                                {is_verified && (
+                                    <div className="p-0.5 bg-yellow-400 rounded-full shrink-0">
+                                        <Check className="w-3.5 h-3.5 text-black font-bold" strokeWidth={4} />
+                                    </div>
+                                )}
+                            </div>
+                            <p className="text-xs text-gray-300 font-medium opacity-90">in {safeDisplay(layer_location)}, {safeDisplay(location_district)}, Karnataka</p>
                         </div>
 
-                        <Swiper
-                            modules={[Navigation]}
-                            navigation={{
-                                prevEl: ".mobile-prop-prev",
-                                nextEl: ".mobile-prop-next",
-                            }}
-                            spaceBetween={0}
-                            slidesPerView={1}
-                            loop={true}
-                            onSlideChange={(sw) => setMobileSwiperIndex(sw.realIndex)}
-                            className="h-full"
-                        >
-                            {images.length > 0 ? images.map((img, i) => (
-                                <SwiperSlide key={i}>
-                                    <Image
-                                        alt="Property"
-                                        width={400}
-                                        height={200}
-                                        className="h-full w-full object-cover"
-                                        src={img}
-                                        unoptimized
-                                    />
-                                </SwiperSlide>
-                            )) : (
-                                <SwiperSlide>
-                                    <div className={`h-full w-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-200'}`}>
-                                        <span className={isDark ? 'text-gray-500' : 'text-gray-400'}>No Image</span>
-                                    </div>
-                                </SwiperSlide>
-                            )}
-                        </Swiper>
-
-                        {/* Navigation Arrows - circular semi-transparent */}
-                        <button className={`mobile-prop-prev absolute top-1/2 -translate-y-1/2 left-2 h-9 w-9 rounded-full flex items-center justify-center z-10 ${isDark ? 'bg-black/40' : 'bg-white/90'}`}>
-                            <ChevronLeft className={`h-5 w-5 ${isDark ? 'text-gray-200' : 'text-gray-700'}`} />
-                        </button>
-                        <button className={`mobile-prop-next absolute top-1/2 -translate-y-1/2 right-2 h-9 w-9 rounded-full flex items-center justify-center z-10 ${isDark ? 'bg-black/40' : 'bg-white/90'}`}>
-                            <ChevronRight className={`h-5 w-5 ${isDark ? 'text-gray-200' : 'text-gray-700'}`} />
-                        </button>
-
-                        {/* Pagination dots */}
-                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex gap-1.5">
-                            {(images.length > 0 ? images : [null]).slice(0, 5).map((_, i) => {
-                                const count = images.length || 1;
-                                const isActive = i === (mobileSwiperIndex % count);
-                                return (
-                                    <div key={i} className={`w-2 h-2 rounded-full ${isActive ? (isDark ? 'bg-white' : 'bg-gray-800/80') : isDark ? 'bg-white/50' : 'bg-gray-500/50'}`} />
-                                );
-                            })}
+                        {/* Top Right Floating Actions */}
+                        <div className="absolute top-5 right-5 flex flex-col gap-2">
+                            <button className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 text-white">
+                                <Share2 className="w-4.5 h-4.5" />
+                            </button>
+                            <button className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 text-white">
+                                <CornerUpRight className="w-4.5 h-4.5" />
+                            </button>
+                            <button onClick={handleFavouriteToggle} className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 text-white">
+                                <Heart className={`w-4.5 h-4.5 ${isFavourite ? 'fill-red-500 text-red-500 border-none' : ''}`} />
+                            </button>
                         </div>
                     </div>
 
-                    {/* Content - design matching image, extra bottom padding for scroll on max-[480px] */}
-                    <div className="px-4 pt-4 pb-24 max-[480px]:px-4 max-[480px]:pt-4 max-[480px]:pb-40">
-                        {/* Property Header - Name | Badge | Rating, Location below */}
-                        <div className="flex items-start justify-between gap-2 mb-3 max-[480px]:mb-3">
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between w-full">
-                                    <h1 className={`text-[15px] max-[480px]:text-[13px] font-bold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(name)}</h1>
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="flex items-center gap-0.5 px-2 py-0.5 max-[480px]:px-1.5 max-[480px]:py-0.5 rounded-full bg-[#fff4e5]">
-                                            <Star className="w-5 h-5 max-[480px]:w-4.5 max-[480px]:h-4.5 fill-[#f97316] text-[#f97316]" />
-                                            <span className="text-[13px] max-[480px]:text-[11.5px] font-bold text-[#f97316]">{rating.toFixed(1)}</span>
-                                        </div>
-                                    </div>
+                    {/* Thumbnail Row */}
+                    <div className="mt-4 px-4">
+                        <div className="flex gap-2 overflow-x-auto scrollbar-hide py-1">
+                            {images.map((img, i) => (
+                                <div 
+                                    key={i} 
+                                    onClick={() => setMobileSwiperIndex(i)}
+                                    className={`shrink-0 w-16 h-16 rounded-2xl overflow-hidden border-2 transition-all ${i === mobileSwiperIndex ? 'border-blue-500 p-0.5 scale-105 shadow-md' : 'border-transparent opacity-60'}`}
+                                >
+                                    <Image src={img} alt="thumb" width={64} height={64} className="w-full h-full object-cover rounded-xl" unoptimized />
                                 </div>
-                                <div className="flex items-center justify-between w-full mt-1">
-                                    <div className="flex items-center gap-1.5">
-                                        <Image src="/property-details/red-map-icon.svg" alt="Location" width={22} height={22} className="flex-shrink-0 object-contain" unoptimized />
-                                        <span className={`text-[15.5px] max-[480px]:text-[14.5px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                                            in {safeDisplay(layer_location)}{location_district ? `, ${safeDisplay(location_district)}` : ''}{property.state_name ? `, ${safeDisplay(property.state_name)}` : ''}
-                                        </span>
-                                    </div>
-                                    {is_verified && (
-                                        <Image src="/property-details/verfication-badge.svg" alt="Verified" width={26} height={26} className="object-contain" unoptimized />
-                                    )}
-                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Property Details Card */}
+                    <div className={`mx-4 mt-5 p-6 rounded-[2.5rem] shadow-sm transition-colors ${isDark ? 'bg-[#1A1D23] border border-gray-800' : 'bg-[#F2FBFF] border border-blue-50/50'}`}>
+                        <div className="flex justify-between items-center mb-4">
+                            <span className="px-3 py-1 bg-red-50 text-red-500 text-[10px] font-bold rounded-lg tracking-wider uppercase">RENT</span>
+                            <div className="flex gap-4">
+                                <Heart onClick={handleFavouriteToggle} className={`w-5 h-5 ${isFavourite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
+                                <CornerUpRight className="w-5 h-5 text-gray-400" />
                             </div>
                         </div>
 
-                        {/* Property Features - 3 horizontal boxes */}
-                        <div className="flex flex-wrap gap-1.5 mb-2">
-                            <span className={`px-2.5 py-1.5 max-[480px]:px-2 max-[480px]:py-1 rounded-xl max-[480px]:rounded-lg text-[11px] max-[480px]:text-[10px] font-medium flex items-center gap-1.5 max-[480px]:gap-1 ${isDark ? 'bg-[#282c34] text-blue-400' : 'bg-gray-100 text-gray-600'}`}>
-                                <Building2 className="w-3.5 h-3.5 max-[480px]:w-3 max-[480px]:h-3 flex-shrink-0" />
-                                {(property.propertyCategory || propertyType) === 'commercial' ? 'Commercial' : 'Residential'}
-                            </span>
-                            <span className={`px-2.5 py-1.5 max-[480px]:px-2 max-[480px]:py-1 rounded-xl max-[480px]:rounded-lg text-[11px] max-[480px]:text-[10px] font-medium flex items-center gap-1.5 max-[480px]:gap-1 ${isDark ? 'bg-[#282c34] text-blue-400' : 'bg-gray-100 text-gray-600'}`}>
-                                <svg className="w-3.5 h-3.5 max-[480px]:w-3 max-[480px]:h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                                </svg>
-                                {safeNumber(property.propertySize || property.carpetArea)} sq.ft
-                            </span>
-                            <span className={`px-2.5 py-1.5 max-[480px]:px-2 max-[480px]:py-1 rounded-xl max-[480px]:rounded-lg text-[11px] max-[480px]:text-[10px] font-medium flex items-center gap-1.5 max-[480px]:gap-1 ${isDark ? 'bg-[#282c34] text-blue-400' : 'bg-gray-100 text-gray-600'}`}>
-                                <svg className="w-3.5 h-3.5 max-[480px]:w-3 max-[480px]:h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                </svg>
-                                {safeDisplay(property.furnishingLevel || property.furnishingStatus || property.furnishing, 'Furnished')}
-                            </span>
-                        </div>
+                        <h3 className={`text-lg font-bold mb-5 ${isDark ? 'text-white' : 'text-[#2D3142]'}`}>{safeDisplay(name)}</h3>
 
-                        {/* Best Price Guaranteed Mobile */}
-                        <div className="flex items-start gap-1.5 mb-3 px-2 py-1 max-[480px]:py-0.5 rounded-l-2xl bg-gradient-to-r from-[#e3f2e6] via-[#e3f2e6]/70 to-transparent w-fit">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0 mt-0.5">
-                                <path d="M11.455 1.579a1.5 1.5 0 011.09 0l2.365.882a1.5 1.5 0 001.32-.158l2.094-1.424a1.5 1.5 0 011.838.252l1.79 1.79a1.5 1.5 0 01.252 1.838l-1.424 2.094a1.5 1.5 0 00-.158 1.32l.882 2.365a1.5 1.5 0 010 1.09l-.882 2.365a1.5 1.5 0 00.158 1.32l1.424 2.094a1.5 1.5 0 01-.252 1.838l-1.79 1.79a1.5 1.5 0 01-1.838.252l-2.094-1.424a1.5 1.5 0 00-1.32-.158l-2.365.882a1.5 1.5 0 01-1.09 0l-2.365-.882a1.5 1.5 0 00-1.32.158l-2.094 1.424a1.5 1.5 0 01-1.838-.252l-1.79-1.79a1.5 1.5 0 01-.252-1.838l1.424-2.094a1.5 1.5 0 00.158-1.32l-.882-2.365a1.5 1.5 0 010-1.09l.882-2.365a1.5 1.5 0 00-.158-1.32l-1.424-2.094a1.5 1.5 0 01.252-1.838l1.79-1.79a1.5 1.5 0 011.838-.252l2.094 1.424a1.5 1.5 0 001.32.158l2.365-.882z" fill="#307f43" />
-                                <path d="M9 10.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm6 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm-6.2-5.8l6.4-6.4 1.4 1.4-6.4 6.4-1.4-1.4z" fill="white" />
-                            </svg>
-                            <span className="text-[9px] font-medium text-[#307f43] leading-tight max-w-[160px]">
-                                Best price guaranteed - save up to {discountPct}% with <strong className="font-serif">Buildersinfo</strong>
-                            </span>
-                            <Info className="w-3 h-3 text-[#307f43] opacity-70 shrink-0 mt-0.5" strokeWidth={1.5} />
-                        </div>
-
-                        {/* Amenities - Show all with scrollbar */}
-                        {(() => {
-                            const defaultAmenities = [
-                                { name: "Guest Check-in", image: "/amenities/Guest%20Check%20in.png", Icon: User },
-                                { name: "Delivery Acceptance", image: "/amenities/Delivery.png", Icon: Bell },
-                                { name: "Package Notification", image: "/amenities/Package%20Notification.png", Icon: Package },
-                                { name: "Fire Safety", image: "/amenities/Fire%20%26%20seafty.png", Icon: Flame }
-                            ];
-                            const amenitiesToShow = displayedAmenities.length > 0
-                                ? displayedAmenities.map((a, i) => ({ ...a, Icon: a.Icon || defaultAmenities[i % defaultAmenities.length]?.Icon || User }))
-                                : defaultAmenities;
-                            return (
-                                <div className={`mb-4 max-h-[200px] overflow-y-auto pr-2 p-2 scrollbar-ultra-thin rounded-2xl border ${isDark ? 'bg-[#282c34] border-gray-700 shadow-none' : 'bg-white border-gray-100 shadow-[0_10px_40px_rgba(0,0,0,0.08)]'}`}>
-                                    <div className="p-2">
-                                        <div className="grid grid-cols-4 gap-3">
-                                            {amenitiesToShow.map((amenity, index) => {
-                                                const IconComp = amenity.Icon || User;
-                                                return (
-                                                    <div key={index} className="flex flex-col items-center gap-1.5 pb-2">
-                                                        <div className={`w-10 h-10 max-[480px]:w-8 max-[480px]:h-8 rounded-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'}`}>
-                                                            {amenity.image ? (
-                                                                <Image src={amenity.image} alt={amenity.name} width={18} height={18} className="object-contain" unoptimized />
-                                                            ) : (
-                                                                <IconComp className={`w-4 h-4 max-[480px]:w-3.5 max-[480px]:h-3.5 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} strokeWidth={2} />
-                                                            )}
-                                                        </div>
-                                                        <span className={`text-[8px] max-[480px]:text-[7px] text-center leading-tight ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{amenity.name}</span>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
+                        {/* Specs Row - Single horizontal row with icons */}
+                        <div className="flex items-center justify-between border-b pb-5 mb-5 border-gray-100 dark:border-gray-800">
+                            <div className="flex items-center gap-2">
+                                <div className={`p-1.5 rounded-lg ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-white text-gray-400'}`}>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 20v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8M5 10V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4M3 18h18" /></svg>
                                 </div>
-                            );
-                        })()}
-
-                        {/* Key Info - Price | Status | Reviews - 3 boxes */}
-                        <div className="grid grid-cols-3 gap-1.5 mb-3 mt-2">
-                            <div className={`rounded-xl py-2 px-1.5 max-[480px]:py-1.5 max-[480px]:px-1 text-center flex flex-col items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
-                                <p className={`text-[11px] max-[480px]:text-[9px] mb-0.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Price</p>
-                                <div className={`flex items-center gap-1.5 px-2.5 py-1.5 ${isDark ? 'bg-black/20' : 'bg-white'}`}>
-                                    {originalPrice && originalPrice !== discountedPrice ? (
-                                        <>
-                                            <div className="relative px-0.5">
-                                                <span className={`italic font-serif text-[10px] ${isDark ? 'text-green-500' : 'text-green-700'}`}>
-                                                    {String(originalPrice).replace(/[₹,]/g, '')}
-                                                </span>
-                                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                                    <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
-                                                        <line x1="10" y1="90" x2="90" y2="10" stroke="#ef4444" strokeWidth="8" />
-                                                        <line x1="10" y1="10" x2="90" y2="90" stroke="#ef4444" strokeWidth="8" />
-                                                    </svg>
-                                                </div>
-                                            </div>
-                                            <svg width="20" height="10" viewBox="0 0 24 12" fill="none" className={isDark ? 'text-gray-400' : 'text-gray-500'}>
-                                                <path d="M1 6H23M23 6L17 1M23 6L17 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                            </svg>
-                                        </>
-                                    ) : null}
-                                    <span className={`italic font-serif text-xs font-bold ${isDark ? 'text-green-500' : 'text-green-700'}`}>
-                                        {String(discountedPrice).replace(/[₹,]/g, '')}
-                                    </span>
+                                <span className={`text-[12px] font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{safeDisplay(property.bedroom, '3')} Bedroom</span>
+                            </div>
+                            <div className="h-4 w-px bg-gray-200 dark:bg-gray-700"></div>
+                            <div className="flex items-center gap-2">
+                                <div className={`p-1.5 rounded-lg ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-white text-gray-400'}`}>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/></svg>
                                 </div>
-                                <p className={`text-[10px] max-[480px]:text-[8px] mt-0.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>/sq.ft</p>
+                                <span className={`text-[12px] font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{safeDisplay(property.bathroom, '2')} Bathroom</span>
                             </div>
-                            <div className={`rounded-xl py-2 px-1.5 max-[480px]:py-1.5 max-[480px]:px-1 text-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
-                                <p className={`text-[11px] max-[480px]:text-[9px] mb-0.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Status</p>
-                                <p className={`text-[13px] max-[480px]:text-[11px] font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{availabilityStatus}</p>
-                            </div>
-                            <div className={`rounded-xl py-2 px-1.5 max-[480px]:py-1.5 max-[480px]:px-1 text-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
-                                <p className={`text-[11px] max-[480px]:text-[9px] mb-0.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Reviews</p>
-                                <p className={`text-[13px] max-[480px]:text-[11px] font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeNumber(reviews.length)}</p>
+                            <div className="h-4 w-px bg-gray-200 dark:bg-gray-700"></div>
+                            <div className="flex items-center gap-2">
+                                <div className={`p-1.5 rounded-lg ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-white text-gray-400'}`}>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+                                </div>
+                                <span className={`text-[12px] font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{safeNumber(property.propertySize || property.carpetArea)}m2</span>
                             </div>
                         </div>
 
-                        {/* About the Brand - Mobile Card (as per design) */}
-                        <div className={`mb-5 p-3 ${isDark ? 'bg-[#282c34]' : 'bg-white'}`}>
-                            <div className="mb-1.5">
-                                <h3 className={`text-[9px] font-extrabold uppercase ${isDark ? 'text-gray-200' : 'text-[#2e2e2e]'}`}>ABOUT THE BRAND</h3>
-                                <div className="w-6 h-0.5 bg-blue-800 mt-0.5"></div>
+                        {/* Location and Rating in one row */}
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-2">
+                                <Image src="/property-details/red-map-icon.svg" alt="loc" width={18} height={18} />
+                                <span className={`text-[12px] font-bold ${isDark ? 'text-gray-400' : 'text-gray-400'}`}>{safeDisplay(layer_location)}, {safeDisplay(location_district)}</span>
                             </div>
-
-                            <div className="flex items-center gap-2.5 mb-3">
-                                <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-white shadow-sm flex items-center justify-center p-1">
-                                    <Image
-                                        src={property.brandDetails?.image || property.brandDetails?.logo || '/property-details/builder-details/builder-logo.png'}
-                                        alt="Brand Logo"
-                                        width={30}
-                                        height={30}
-                                        className="object-contain"
-                                        unoptimized
-                                    />
-                                </div>
-                                <div className="flex flex-col">
-                                    <h4 className={`text-[11px] font-extrabold leading-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>{brandName}</h4>
-                                    <span className={`text-[8.5px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Workspace</span>
-                                </div>
+                            <div className="flex items-center gap-1">
+                                <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                                <span className={`text-[12px] font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{rating.toFixed(1)} <span className="text-gray-400 font-normal">/ {reviews.length || '270'} Review</span></span>
                             </div>
+                        </div>
 
-                            <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mb-2.5">
-                                <div className="flex items-center gap-1.5">
-                                    <Image src="/property-details/builder-details/cities.png" alt="Cities" width={10} height={10} />
-                                    <span className={`text-[8.5px] font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                                        {typeof brandStats.cities === 'number' ? `${brandStats.cities}+ Cities` : (String(brandStats.cities || '').toLowerCase().includes('cities') ? brandStats.cities : `${safeDisplay(brandStats.cities)} Cities`)}
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                    <Image src="/property-details/builder-details/coworking.png" alt="Coworking" width={10} height={10} />
-                                    <span className={`text-[8.5px] font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                                        {(() => {
-                                            const v = typeof brandStats.spaces === 'number' ? `${brandStats.spaces}+` : String(safeDisplay(brandStats.spaces)).replace(/Coworking\s*/gi, '').trim();
-                                            return v.toLowerCase().endsWith('spaces') ? v : `${v} Coworking Spaces`;
-                                        })()}
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                    <Image src="/property-details/builder-details/clients.png" alt="Clients" width={10} height={10} />
-                                    <span className={`text-[8.5px] font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                                        {typeof brandStats.clients === 'number' ? `${brandStats.clients}+ Clients` : (String(brandStats.clients || '').toLowerCase().includes('clients') ? brandStats.clients : `${safeDisplay(brandStats.clients)} Clients`)}
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                    <Image src="/property-details/builder-details/seats.png" alt="Seats" width={10} height={10} />
-                                    <span className={`text-[8.5px] font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                                        {typeof brandStats.seats === 'number' ? `${brandStats.seats}+ Seats` : (String(brandStats.seats || '').toLowerCase().includes('seats') ? brandStats.seats : `${safeDisplay(brandStats.seats)} Seats`)}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <p className={`text-[10px] leading-relaxed mb-1 line-clamp-3 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                                {brandDescription}
+                        {/* Price Display */}
+                        <div>
+                            <p className="text-2xl font-bold text-blue-600">
+                                {safeDisplay(discountedPrice)} <span className={`text-sm font-normal ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>/ Hourly</span>
                             </p>
-                            <a
-                                href={`/property-details/${(property.propertyName || property.name || 'property').toLowerCase().replace(/\s+/g, '-')}`}
-                                onClick={handleViewDetailsClick}
-                                className="text-blue-700 text-[10px] font-bold flex items-center gap-0.5 hover:underline transition-all"
-                            >
-                                Read more <ChevronDown className="w-3 h-3" />
-                            </a>
                         </div>
+                    </div>
 
-                        {/* Contact - Provider + Phone + WhatsApp */}
-                        <div className="flex items-center justify-between mb-3 px-1">
-                            <div className="flex flex-col">
-                                <span className={`text-[9px] uppercase font-bold ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Contact Provider</span>
-                                <h4 className={`text-[14px] max-[480px]:text-xs font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{brandName}</h4>
+                    {/* Agent Section */}
+                    <div className={`mx-4 mt-4 p-5 rounded-[2.5rem] flex items-center justify-between transition-colors shadow-sm ${isDark ? 'bg-[#1A1D23] border border-gray-800' : 'bg-white border border-blue-50/10'}`}>
+                        <div className="flex items-center gap-4">
+                            <div className="relative">
+                                <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-green-500 p-0.5">
+                                    <Image 
+                                        src={property.agentDetails?.profileImage || property.agentDetails?.image || "https://i.pravatar.cc/150?u=alexa"} 
+                                        alt="agent" 
+                                        width={56} 
+                                        height={56} 
+                                        className="w-full h-full rounded-full object-cover" 
+                                    />
+                                </div>
+                                <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
                             </div>
-                            <div className="flex items-center gap-1.5">
-                                <a
-                                    href={sellerPhoneNumber ? `tel:${String(sellerPhoneNumber).replace(/[^0-9+]/g, '')}` : '#'}
-                                    onClick={(e) => sellerPhoneNumber && handlePhoneClick(e, sellerPhoneNumber)}
-                                    className={`w-9 h-9 rounded-full flex items-center justify-center ${isDark ? 'bg-blue-900/40' : 'bg-blue-100'}`}
-                                    aria-label="Call"
-                                >
-                                    <svg className={`w-4 h-4 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                    </svg>
-                                </a>
-                                <a
-                                    href={`https://wa.me/${safeDisplay(sellerPhoneNumber)?.replace(/[^0-9]/g, '') || '918151915199'}?text=Hi, I am interested in ${encodeURIComponent(name || 'this property')}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="w-9 h-9 rounded-full flex items-center justify-center bg-green-500/90"
-                                    aria-label="WhatsApp"
-                                >
-                                    <Image src="/whatsapp.svg" alt="WhatsApp" width={20} height={20} />
-                                </a>
+                            <div>
+                                <h4 className={`text-[15px] font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(property.agentDetails?.name, 'Alexa Smith')}</h4>
+                                <p className={`text-[11px] font-medium ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Realestate Agent</p>
                             </div>
+                        </div>
+                        <div className="flex gap-2">
+                            <button className="w-11 h-11 rounded-full bg-blue-50 flex items-center justify-center text-blue-400">
+                                <Phone className="w-5 h-5" />
+                            </button>
+                            <button className="w-11 h-11 rounded-full bg-green-50 flex items-center justify-center text-green-500">
+                                <Image src="/whatsapp.svg" alt="wa" width={24} height={24} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Stats Section - Three cards in a row */}
+                    <div className="mx-4 mt-4 grid grid-cols-3 gap-3">
+                        <div className={`p-5 rounded-[2rem] flex flex-col items-center text-center transition-colors ${isDark ? 'bg-[#1A1D23]' : 'bg-[#EBF7FF]'}`}>
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-2">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                            </div>
+                            <span className={`text-[13px] font-bold ${isDark ? 'text-white' : 'text-[#2D3142]'}`}>7 Year</span>
+                            <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>Experience</span>
+                        </div>
+                        <div className={`p-5 rounded-[2rem] flex flex-col items-center text-center transition-colors ${isDark ? 'bg-[#1A1D23]' : 'bg-[#FFF6F0]'}`}>
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-2">
+                                <Users className="w-6 h-6 text-orange-400" strokeWidth={2.5} />
+                            </div>
+                            <span className={`text-[13px] font-bold ${isDark ? 'text-white' : 'text-[#2D3142]'}`}>500+</span>
+                            <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>Client</span>
+                        </div>
+                        <div className={`p-5 rounded-[2rem] flex flex-col items-center text-center transition-colors ${isDark ? 'bg-[#1A1D23]' : 'bg-[#FFF0F0]'}`}>
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-2">
+                                <Bell className="w-6 h-6 text-red-500" strokeWidth={2.5} />
+                            </div>
+                            <span className={`text-[13px] font-bold ${isDark ? 'text-white' : 'text-[#2D3142]'}`}>340</span>
+                            <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>Review</span>
                         </div>
                     </div>
                 </div>
 
-                {/* Fixed CTA Button - extra bottom padding on mobile for safe area + nav clearance */}
-                <div className={`p-3 max-[480px]:pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] border-t transition-colors ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-white border-gray-100'}`}>
+                {/* Bottom Action Bar */}
+                <div className={`p-4 pt-5 pb-14 border-t flex-shrink-0 transition-colors ${isDark ? 'bg-[#121417] border-gray-800' : 'bg-white border-gray-100'}`}>
                     <a
                         href={`/property-details/${(property.propertyName || property.name || 'property').toLowerCase().replace(/\s+/g, '-')}`}
                         onClick={handleViewDetailsClick}
-                        className="block w-[70%] mx-auto bg-blue-600 hover:bg-blue-700 text-white py-3 max-[480px]:py-2.5 rounded-xl text-center font-semibold text-[14px] max-[480px]:text-xs"
+                        className="block w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-[1.5rem] text-center font-bold text-[15px] shadow-xl shadow-blue-500/20 active:scale-[0.98] transition-all"
                     >
                         View Details
                     </a>
@@ -914,6 +760,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
             </div>
         </div>
     );
+
 
     // Desktop view (>= md breakpoint) - Exact match to image design
     const desktopModal = (
@@ -1100,7 +947,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                         {originalPrice && originalPrice !== discountedPrice ? (
                                             <>
                                                 <div className="relative px-1">
-                                                    <span className={`italic font-serif text-xs ${isDark ? 'text-green-500 text-opacity-80' : 'text-green-700 text-opacity-80'}`}>
+                                                    <span className={`text-xs ${isDark ? 'text-green-500 text-opacity-80' : 'text-green-700 text-opacity-80'}`}>
                                                         {safeDisplay(originalPrice)}
                                                     </span>
                                                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -1115,7 +962,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                                 </svg>
                                             </>
                                         ) : null}
-                                        <span className={`italic font-serif text-base font-bold ${isDark ? 'text-green-400' : 'text-green-700'}`}>
+                                        <span className={`text-base font-bold ${isDark ? 'text-green-400' : 'text-green-700'}`}>
                                             {safeDisplay(discountedPrice)}
                                         </span>
                                     </div>

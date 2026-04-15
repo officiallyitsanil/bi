@@ -1413,7 +1413,7 @@ function PropertyDetailsContent() {
             {/* Sticky Header - Desktop Only */}
             {showStickyHeader && (
                 <div className={`hidden md:block fixed top-[48px] left-0 right-0 z-40 backdrop-blur-sm border-t border-b shadow-sm animate-fade-in ${isDark ? 'bg-[#121418]/95 border-gray-800' : 'bg-white/95 border-gray-100'}`}>
-                    <div className="w-full px-4 md:px-6 md:px-8 py-3 flex justify-between items-center">
+                    <div className="w-full px-10 py-3 flex justify-between items-center">
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                                 <h1 className={`text-lg font-bold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(property.propertyName || property.name)}</h1>
@@ -1448,42 +1448,42 @@ function PropertyDetailsContent() {
                 </div>
             )}
 
-            <div className="w-full px-8 pt-6">
+            <div className="w-full px-4 md:px-10 pt-6">
                 {/* Title row spans full content width (above gallery + sidebar), like listing reference */}
                 <div id="info" className="md:pt-0 mb-6 w-full min-w-0">
-                    <div className="flex flex-row justify-between items-start gap-4">
-                        <div className="flex-1 min-w-0 pl-6">
-                            <div className="flex flex-col gap-3 w-fit">
+                    <div className="flex flex-col md:flex-row justify-between items-start gap-6 md:gap-4">
+                        <div className="flex-1 min-w-0">
+                            <div className="flex flex-col gap-3 w-full md:w-fit">
                                 {/* Title and Rating Row */}
-                                <div className="flex flex-row items-center justify-between w-full gap-5">
-                                    <h1 className={`!text-[2.8rem] leading-[1.1] font-bold tracking-tight whitespace-nowrap ${isDark ? 'text-white' : 'text-black'}`}>{safeDisplay(property.propertyName || property.name)}</h1>
-                                    <div className="inline-flex items-center rounded-full px-3 py-2 text-lg font-bold bg-[#fff4e5] text-[#f97316] shrink-0">
-                                        <Star className="h-6 w-6 mr-1.5 fill-current" />
+                                <div className="flex flex-row items-center justify-between w-full gap-3 sm:gap-5">
+                                    <h1 className={`text-3xl sm:text-4xl md:text-5xl lg:text-[2.8rem] leading-[1.1] font-bold tracking-tight ${isDark ? 'text-white' : 'text-black'}`}>{safeDisplay(property.propertyName || property.name)}</h1>
+                                    <div className="inline-flex items-center rounded-full px-2 py-1 sm:px-3 sm:py-2 text-sm sm:text-lg font-bold bg-[#fff4e5] text-[#f97316] shrink-0">
+                                        <Star className="h-4 w-4 sm:h-6 sm:w-6 mr-1 sm:mr-1.5 fill-current" />
                                         {safeDisplay(property.ratings?.overall)}
                                     </div>
                                 </div>
 
                                 {/* Location and Verification Row */}
-                                <div className="flex flex-row items-center justify-between w-full gap-5">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`flex items-center justify-center w-13 h-13 rounded-xl border shrink-0 ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-[#e4e4e7] border-gray-100'}`}>
-                                            <MapPin className="h-8 w-8 text-[#f97316] fill-[#f97316]/20" />
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-4 sm:gap-5">
+                                    <div className="flex items-center gap-3 sm:gap-4">
+                                        <div className={`flex items-center justify-center w-10 h-10 sm:w-13 sm:h-13 rounded-lg sm:rounded-xl border shrink-0 ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-[#e4e4e7] border-gray-100'}`}>
+                                            <MapPin className="h-6 w-6 sm:h-8 sm:w-8 text-[#f97316] fill-[#f97316]/20" />
                                         </div>
                                         <div className="flex flex-col justify-center">
-                                            <p className={`text-xl leading-tight ${isDark ? 'text-gray-400' : 'text-gray-700'}`}>in {safeDisplay(property.displayAddress || property.addressDisplay || property.location)}</p>
-                                            <button type="button" onClick={openGoogleMaps} className="text-[#f97316] text-xl font-semibold hover:underline text-left mt-0.5">View on Map</button>
+                                            <p className={`text-sm sm:text-xl leading-tight ${isDark ? 'text-gray-400' : 'text-gray-700'}`}>in {safeDisplay(property.displayAddress || property.addressDisplay || property.location)}</p>
+                                            <button type="button" onClick={openGoogleMaps} className="text-[#f97316] text-sm sm:text-xl font-semibold hover:underline text-left mt-0.5">View on Map</button>
                                         </div>
                                     </div>
                                     {/* Verified tick */}
-                                    <div className="flex items-center justify-center shrink-0">
-                                        <Image src="/property-details/verfication-badge.svg" alt="Verified" width={36} height={36} className="object-contain" unoptimized />
+                                    <div className="flex items-center justify-start sm:justify-center shrink-0">
+                                        <Image src="/property-details/verfication-badge.svg" alt="Verified" width={28} height={28} className="sm:w-[36px] sm:h-[36px] object-contain" unoptimized />
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex shrink-0 items-center gap-8 mt-4">
+                        <div className="flex shrink-0 items-center gap-4 md:gap-8 mt-2 md:mt-4">
                             <button type="button" onClick={handleLike} className={`flex items-center justify-center h-13 w-13 rounded-full transition aria-label="Save" ${isDark ? 'bg-gray-800 text-white hover:bg-gray-700' : 'bg-[#f4f4f5] text-gray-700 hover:bg-[#e4e4e7]'}`}>
                                 <Heart className={`h-[1.2rem] w-[1.2rem] ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
                             </button>
@@ -1506,9 +1506,9 @@ function PropertyDetailsContent() {
                 {/* Horizontal line between title and gallery */}
                 <div className={`h-px w-full mb-8 ${isDark ? 'bg-gray-800' : 'bg-gray-200'}`} />
 
-                <div className="flex flex-row items-start gap-7 w-full min-w-0">
+                <div className="flex flex-col md:flex-row items-start gap-7 md:gap-10 w-full min-w-0">
                     {/* Main Content - ~65% on desktop: gallery + details */}
-                    <div className="w-[67%] min-w-0 pl-6">
+                    <div className="w-full md:w-[70%] min-w-0">
                         <div className="space-y-6">
                             {/* Image Gallery - Mobile: single image with arrows */}
                             <div
@@ -1518,9 +1518,9 @@ function PropertyDetailsContent() {
                                 onTouchEnd={handleTouchEnd}
                             >
                                 {/* Single column wrapper so thumb row is same width as the 3-col grid above */}
-                                <div className="grid w-full min-w-0 grid-cols-1 gap-y-5">
-                                    <div className="property-details-gallery grid w-full min-w-0 grid-cols-1 md:grid-cols-5 md:grid-rows-2 gap-5 h-[450px]">
-                                        <div className="relative md:col-span-3 md:row-span-2 rounded-2xl overflow-hidden group cursor-pointer aspect-[4/3] md:aspect-auto bg-muted border border-gray-200">
+                                <div className="grid w-full min-w-0 grid-cols-1 gap-y-3 sm:gap-y-5">
+                                    <div className="property-details-gallery grid w-full min-w-0 grid-cols-1 md:grid-cols-5 md:grid-rows-2 gap-3 sm:gap-5 h-auto md:h-[450px]">
+                                        <div className="relative md:col-span-3 md:row-span-2 rounded-xl sm:rounded-2xl overflow-hidden group cursor-pointer aspect-[16/10] sm:aspect-auto bg-muted border border-gray-200">
                                             {images[currentImageIndex] ? (
                                                 <img
                                                     src={images[currentImageIndex]}
@@ -1532,7 +1532,7 @@ function PropertyDetailsContent() {
                                                 <div className="w-full h-full bg-muted" aria-hidden />
                                             )}
                                         </div>
-                                        <div className="relative md:col-span-2 md:row-span-1 aspect-[4/3] md:aspect-auto z-[1] overflow-visible">
+                                        <div className="hidden md:block relative md:col-span-2 md:row-span-1 aspect-[4/3] md:aspect-auto z-[1] overflow-visible">
                                             <div
                                                 className="relative h-full w-full rounded-2xl overflow-hidden cursor-pointer bg-muted border border-gray-200"
                                                 onClick={() => setFullScreenImage(images[1] || images[0])}
@@ -1561,7 +1561,7 @@ function PropertyDetailsContent() {
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="relative md:col-span-2 md:row-span-1 aspect-[4/3] md:aspect-auto z-[1] overflow-visible">
+                                        <div className="hidden md:block relative md:col-span-2 md:row-span-1 aspect-[4/3] md:aspect-auto z-[1] overflow-visible">
                                             <div className="relative h-full w-full overflow-hidden rounded-2xl bg-muted shadow-sm border border-gray-200">
                                                 {galleryInlineVideoActive && galleryVideoUrl ? (
                                                     <video
@@ -1623,7 +1623,7 @@ function PropertyDetailsContent() {
                                         </div>
                                     </div>
                                     <div className="w-full min-w-0 self-stretch pb-2 relative col-span-1">
-                                        <div ref={thumbStripRef} className="gallery-thumb-strip flex w-full min-w-0 flex-nowrap items-center gap-3 overflow-hidden">
+                                        <div ref={thumbStripRef} className="gallery-thumb-strip flex w-full min-w-0 flex-nowrap items-center gap-3 overflow-x-auto scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                                             {images.length === 0 ? null : (() => {
                                                 const total = images.length;
                                                 /** Dynamic cells: based on measured width, if more than visibleCount images, visibleCount-1 thumbs + "Show all" */
@@ -1669,37 +1669,33 @@ function PropertyDetailsContent() {
                                 <div className="p-5 md:p-6">
                                     <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                                         <div className="min-w-0 flex-1">
-                                            <h2 className={`text-[20px] font-normal leading-snug tracking-tight md:text-[22px] ${isDark ? 'text-white' : 'text-gray-900'}`}>{specsCardTitle}</h2>
-                                            <div className="mt-3 flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-                                                <span className={`text-[13.5px] ${isDark ? 'text-gray-400' : 'text-gray-900'}`}>
+                                            <h2 className={`text-lg sm:text-[20px] font-normal leading-snug tracking-tight md:text-[22px] ${isDark ? 'text-white' : 'text-gray-900'}`}>{specsCardTitle}</h2>
+                                            <div className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                                                <span className={`text-xs sm:text-[13.5px] ${isDark ? 'text-gray-400' : 'text-gray-900'}`}>
                                                     Quoted price{isNegotiablePrice ? " (negotiable)" : ""}
                                                 </span>
-                                                {showSeatOriginalStrike && (
-                                                    <span className={`text-[16px] line-through ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-                                                        {safeDisplay(originalPricePerSeat)}
-                                                    </span>
-                                                )}
-                                                <span className={`font-serif text-[30px] font-bold tracking-tight md:text-[34px] ${isDark ? 'text-emerald-400' : 'text-[#17592f]'}`}>
+ 
+                                                <span className={`text-xl sm:text-[24px] font-bold tracking-tight ${isDark ? 'text-emerald-400' : 'text-[#17592f]'}`}>
                                                     {safeDisplay(discountedPricePerSeat ?? discountedPrice)}
                                                 </span>
-                                                <span className={`text-[13.5px] ${isDark ? 'text-gray-400' : 'text-gray-900'}`}>/ seat / month</span>
+                                                <span className={`text-xs sm:text-[13.5px] ${isDark ? 'text-gray-400' : 'text-gray-900'}`}>/ seat / month</span>
                                             </div>
                                         </div>
                                         <div
-                                            className="relative inline-flex w-full max-w-full shrink-0 items-start justify-between gap-3 rounded-l-[2rem] bg-gradient-to-r from-[#e3f2e6] via-[#e3f2e6]/70 to-transparent py-2.5 pl-3 pr-2 md:w-auto md:max-w-fit mt-1 md:mt-0"
+                                            className="relative inline-flex w-full max-w-full shrink-0 items-start justify-between gap-3 rounded-l-2xl sm:rounded-l-[2rem] bg-gradient-to-r from-[#e3f2e6] via-[#e3f2e6]/70 to-transparent py-2 px-3 sm:py-2.5 sm:pl-3 sm:pr-2 md:w-auto md:max-w-fit mt-1 md:mt-0"
                                             role="note"
                                         >
-                                            <div className="flex flex-1 items-start gap-2.5">
-                                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0 mt-0.5">
+                                            <div className="flex flex-1 items-start gap-2 sm:gap-2.5">
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0 mt-0.5 sm:w-[22px] sm:h-[22px]">
                                                     <path d="M11.455 1.579a1.5 1.5 0 011.09 0l2.365.882a1.5 1.5 0 001.32-.158l2.094-1.424a1.5 1.5 0 011.838.252l1.79 1.79a1.5 1.5 0 01.252 1.838l-1.424 2.094a1.5 1.5 0 00-.158 1.32l.882 2.365a1.5 1.5 0 010 1.09l-.882 2.365a1.5 1.5 0 00.158 1.32l1.424 2.094a1.5 1.5 0 01-.252 1.838l-1.79 1.79a1.5 1.5 0 01-1.838.252l-2.094-1.424a1.5 1.5 0 00-1.32-.158l-2.365.882a1.5 1.5 0 01-1.09 0l-2.365-.882a1.5 1.5 0 00-1.32.158l-2.094 1.424a1.5 1.5 0 01-1.838-.252l-1.79-1.79a1.5 1.5 0 01-.252-1.838l1.424-2.094a1.5 1.5 0 00.158-1.32l-.882-2.365a1.5 1.5 0 010-1.09l.882-2.365a1.5 1.5 0 00-.158-1.32l-1.424-2.094a1.5 1.5 0 01.252-1.838l1.79-1.79a1.5 1.5 0 011.838-.252l2.094 1.424a1.5 1.5 0 001.32.158l2.365-.882z" fill="#307f43" />
                                                     <path d="M9 10.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm6 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm-6.2-5.8l6.4-6.4 1.4 1.4-6.4 6.4-1.4-1.4z" fill="white" />
                                                 </svg>
-                                                <span className="min-w-0 text-[15px] font-medium leading-snug tracking-tight text-[#307f43] max-w-[240px]">
+                                                <span className="min-w-0 text-[13px] sm:text-[15px] font-medium leading-snug tracking-tight text-[#307f43] max-w-[240px]">
                                                     Best price guaranteed - save up to {discountPct}% with{" "}
                                                     <strong className="font-serif font-medium tracking-wide">Buildersinfo</strong>
                                                 </span>
                                             </div>
-                                            <Info className="h-[20px] w-[20px] shrink-0 text-[#307f43] opacity-80 mt-[3px]" strokeWidth={1.5} aria-label="More info" />
+                                            <Info className="h-4 w-4 sm:h-[20px] sm:w-[20px] shrink-0 text-[#307f43] opacity-80 mt-[3px]" strokeWidth={1.5} aria-label="More info" />
                                         </div>
                                     </div>
                                 </div>
@@ -1820,7 +1816,7 @@ function PropertyDetailsContent() {
                                     <h3 className={`mb-6 text-left text-lg font-bold leading-snug md:text-xl ${isDark ? 'text-white' : 'text-foreground'}`}>
                                         Custom infrastructure possible in your Managed Office <span aria-hidden>âœ¨</span>
                                     </h3>
-                                    <div className="grid grid-cols-2 justify-items-center gap-x-4 gap-y-8 md:grid-cols-3 md:grid-cols-5 md:gap-x-2 md:gap-y-0 md:gap-x-6">
+                                    <div className="grid grid-cols-2 justify-items-center md:justify-items-start gap-x-4 gap-y-8 md:grid-cols-3 md:grid-cols-5 md:gap-x-2 md:gap-y-0 md:gap-x-6">
                                         {property.customInfrastructure.map((item, i) => {
                                             const name = typeof item === "object" ? item?.name : item;
                                             const id = typeof item === "object" && item?.id != null ? item.id : i + 1;
@@ -1828,18 +1824,18 @@ function PropertyDetailsContent() {
                                             return (
                                                 <div
                                                     key={`${name}-${i}`}
-                                                    className="flex w-full max-w-[8.5rem] flex-col items-center justify-start text-center md:max-w-none"
+                                                    className="flex w-full max-w-[9rem] flex-col items-center justify-start text-center md:max-w-none"
                                                 >
-                                                    <div className="flex h-9 w-9 items-center justify-center md:h-8 md:w-8">
+                                                    <div className="flex h-12 w-12 items-center justify-center md:h-14 md:w-14">
                                                         <img
                                                             src={iconSrc}
                                                             alt={name}
-                                                            className="h-8 w-8 object-contain opacity-90 dark:opacity-100"
-                                                            width={32}
-                                                            height={32}
+                                                            className="h-10 w-10 object-contain opacity-95 dark:opacity-100"
+                                                            width={40}
+                                                            height={40}
                                                         />
                                                     </div>
-                                                    <p className="mt-2.5 text-center text-xs font-normal leading-tight text-gray-700 dark:text-gray-300 md:text-sm">
+                                                    <p className={`mt-2.5 text-center text-sm font-bold leading-tight ${isDark ? 'text-gray-200' : 'text-gray-900'} md:text-base`}>
                                                         {name}
                                                     </p>
                                                 </div>
@@ -1875,14 +1871,14 @@ function PropertyDetailsContent() {
                             </div>
 
                             {/* Why choose Buildersinfo â€” horizontal banner (reference layout) */}
-                            <div className={`rounded-md border pl-8 pr-18 py-4 md:mx-0 -mx-4 transition-colors ${isDark ? 'border-gray-800 bg-[#282c34]' : 'border-gray-200 bg-[#f4f4fb]'}`}>
-                                <div className="flex flex-row items-center justify-between gap-12">
+                            <div className={`rounded-md border px-6 py-6 md:px-10 md:py-4 md:mx-0 -mx-4 transition-colors ${isDark ? 'border-gray-800 bg-[#282c34]' : 'border-gray-200 bg-[#f4f4fb]'}`}>
+                                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 md:gap-12">
                                     <div className="shrink-0 max-w-[20rem]">
                                         <h3 className={`text-left text-[22px] font-bold leading-snug ${isDark ? 'text-white' : 'text-black'}`}>
                                             Why choose Buildersinfo ?
                                         </h3>
                                     </div>
-                                    <ul className="flex min-w-0 flex-1 flex-col gap-3 pl-8">
+                                    <ul className="flex min-w-0 flex-1 flex-col md:flex-row gap-3 md:gap-8 md:pl-8">
                                         {[
                                             "Zero brokerage fee",
                                             "Design & layout support",
@@ -1898,11 +1894,11 @@ function PropertyDetailsContent() {
                                             </li>
                                         ))}
                                     </ul>
-                                    <div className="flex shrink-0 justify-end">
+                                    <div className="flex w-full md:w-auto shrink-0 justify-center md:justify-end">
                                         <button
                                             type="button"
                                             onClick={() => handleShowInterestModal("consultation")}
-                                            className="inline-flex w-full items-center justify-center rounded-lg border border-[#4c5fd5] bg-white px-8 py-3 text-[14px] font-bold text-[#4c5fd5] transition-all hover:bg-[#4c5fd5]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4c5fd5]/30 md:w-auto cursor-pointer"
+                                            className="inline-flex w-full items-center justify-center rounded-lg border border-[#4c5fd5] bg-white px-8 py-3 text-[14px] font-bold text-[#4c5fd5] transition-all hover:bg-[#4c5fd5]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4c5fd5]/30 cursor-pointer"
                                         >
                                             Get Free Consultation
                                         </button>
@@ -2042,7 +2038,7 @@ function PropertyDetailsContent() {
 
                             {/* Check Travel Time */}
                             <div className="">
-                                <div className="flex flex-col space-y-1.5 p-6 pl-0">
+                                <div className="flex flex-col space-y-1.5 p-6">
                                     <h3 className={`text-lg font-bold leading-none tracking-tight ${isDark ? 'text-white' : ''}`}>Check Travel Time</h3>
                                 </div>
                                 <div data-orientation="horizontal" role="none" className={`shrink-0 mt-1 h-[1.5px] w-[98%] mx-auto ${isDark ? 'bg-gray-800' : 'bg-gray-200'}`} />
@@ -2146,8 +2142,8 @@ function PropertyDetailsContent() {
                     </div>
 
                     {/* Sidebar - right column, top aligns with left section */}
-                    <div className="flex-1 flex-shrink-0 self-start min-w-0">
-                        <div className="sticky top-20 space-y-4">
+                    <div className="w-full md:flex-1 md:flex-shrink-0 md:self-start min-w-0">
+                        <div className="md:sticky md:top-20 space-y-4">
                             {/* Interested + social proof + Why Clients â€” single card (layout matches reference) */}
                             <div className={`rounded-xl border-none transition-colors ${isDark ? 'bg-[#1f2229] border-gray-800 shadow-none' : 'bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06)]'}`}>
                                 {(() => {
@@ -2351,7 +2347,7 @@ function PropertyDetailsContent() {
                             {/* About the brand */}
                             <div
                                 id="brand"
-                                className={`rounded-xl border p-3.5 transition-colors ${isDark ? 'border-gray-800 bg-[#1f2229] shadow-none' : 'border-gray-200/90 bg-white shadow-sm'}`}
+                                className={`rounded-xl border p-5 md:p-3.5 transition-colors ${isDark ? 'border-gray-800 bg-[#1f2229] shadow-none' : 'border-gray-200/90 bg-white shadow-sm'}`}
                             >
                                 <div>
                                     <h3 className={`text-[9px] font-bold uppercase tracking-[0.14em] ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
@@ -2364,38 +2360,38 @@ function PropertyDetailsContent() {
                                     <img
                                         alt={`${brandDisplayName} logo`}
                                         src="/property-details/builder-details/builder-logo.png"
-                                        className="h-8 w-8 shrink-0 object-contain"
+                                        className="h-8 w-8 sm:h-10 sm:w-10 shrink-0 object-contain"
                                     />
                                     <div className="min-w-0">
-                                        <h4 className={`text-[13px] font-bold leading-tight ${isDark ? 'text-white' : 'text-foreground'}`}>{brandDisplayName}</h4>
-                                        <p className={`mt-0.5 text-[8px] font-semibold uppercase tracking-[0.2em] ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>
+                                        <h4 className={`text-xs sm:text-[13px] font-bold leading-tight ${isDark ? 'text-white' : 'text-black'}`}>{brandDisplayName}</h4>
+                                        <p className={`mt-0.5 text-[8px] font-bold uppercase tracking-[0.2em] ${isDark ? 'text-white' : 'text-black'}`}>
                                             Workspace
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className="mt-3.5 grid grid-cols-2 gap-x-3 gap-y-2.5 text-[9.5px]">
-                                    <div className="flex min-w-0 items-center gap-1.5">
-                                        <img src="/property-details/builder-details/cities.png" alt="Cities" className="h-[14px] w-[14px] shrink-0 object-contain" />
-                                        <span className={`font-medium ${isDark ? 'text-white' : 'text-foreground'}`}>
+                                <div className="mt-3.5 grid grid-cols-2 gap-x-2 gap-y-2.5 text-[8.5px] sm:text-[9.5px]">
+                                    <div className="flex min-w-0 items-center gap-1">
+                                        <img src="/property-details/builder-details/cities.png" alt="Cities" className="h-[12px] w-[12px] sm:h-[14px] sm:w-[14px] shrink-0 object-contain" />
+                                        <span className={`font-normal ${isDark ? 'text-white' : 'text-gray-900'}`}>
                                             {brandStats.cities}+ Cities
                                         </span>
                                     </div>
-                                    <div className="flex min-w-0 items-center gap-1.5">
-                                        <img src="/property-details/builder-details/coworking.png" alt="Coworking Spaces" className="h-[14px] w-[14px] shrink-0 object-contain" />
-                                        <span className={`font-medium ${isDark ? 'text-white' : 'text-foreground'}`}>
+                                    <div className="flex min-w-0 items-center gap-1">
+                                        <img src="/property-details/builder-details/coworking.png" alt="Coworking Spaces" className="h-[12px] w-[12px] sm:h-[14px] sm:w-[14px] shrink-0 object-contain" />
+                                        <span className={`font-normal ${isDark ? 'text-white' : 'text-gray-900'}`}>
                                             {brandStats.spaces}+ Spaces
                                         </span>
                                     </div>
-                                    <div className="flex min-w-0 items-center gap-1.5">
-                                        <img src="/property-details/builder-details/clients.png" alt="Clients" className="h-[14px] w-[14px] shrink-0 object-contain" />
-                                        <span className={`font-medium ${isDark ? 'text-white' : 'text-foreground'}`}>
+                                    <div className="flex min-w-0 items-center gap-1">
+                                        <img src="/property-details/builder-details/clients.png" alt="Clients" className="h-[12px] w-[12px] sm:h-[14px] sm:w-[14px] shrink-0 object-contain" />
+                                        <span className={`font-normal ${isDark ? 'text-white' : 'text-gray-900'}`}>
                                             {brandStats.clients}+ Clients
                                         </span>
                                     </div>
-                                    <div className="flex min-w-0 items-center gap-1.5">
-                                        <img src="/property-details/builder-details/seats.png" alt="Seats" className="h-[14px] w-[14px] shrink-0 object-contain" />
-                                        <span className={`font-medium ${isDark ? 'text-white' : 'text-foreground'}`}>
+                                    <div className="flex min-w-0 items-center gap-1">
+                                        <img src="/property-details/builder-details/seats.png" alt="Seats" className="h-[12px] w-[12px] sm:h-[14px] sm:w-[14px] shrink-0 object-contain" />
+                                        <span className={`font-normal ${isDark ? 'text-white' : 'text-gray-900'}`}>
                                             {brandStats.seats}+ Seats
                                         </span>
                                     </div>
@@ -2598,7 +2594,7 @@ function PropertyDetailsContent() {
                                 <div className={`p-3 space-y-2 pt-3 transition-colors ${isDark ? 'bg-gray-800/20' : 'bg-gray-50/50'}`}>
                                     <ul className="space-y-2.5 text-[9px]">
                                         <li className="flex justify-between items-center">
-                                            <span className="text-muted-foreground font-medium">Monday - Friday</span>
+                                            <span className={`${isDark ? 'text-gray-300' : 'text-gray-900'} font-bold`}>Monday - Friday</span>
                                             <span className="font-bold bg-white px-1.5 py-0.5 rounded-full border border-gray-200 shadow-sm text-gray-900 text-[8.5px] min-w-[75px] text-center">
                                                 {(() => {
                                                     const v = property?.openingHours?.mondayFriday;
@@ -2607,7 +2603,7 @@ function PropertyDetailsContent() {
                                             </span>
                                         </li>
                                         <li className="flex justify-between items-center">
-                                            <span className="text-muted-foreground font-medium">Saturday</span>
+                                            <span className={`${isDark ? 'text-gray-300' : 'text-gray-900'} font-bold`}>Saturday</span>
                                             {(() => {
                                                 const v = property?.openingHours?.saturday;
                                                 const str = typeof v === 'string' ? (v.trim() || '') : (v?.enabled ? `${v.open || ''} - ${v.close || ''}`.trim() : '');
@@ -2619,7 +2615,7 @@ function PropertyDetailsContent() {
                                             })()}
                                         </li>
                                         <li className="flex justify-between items-center">
-                                            <span className="text-muted-foreground font-medium">Sunday</span>
+                                            <span className={`${isDark ? 'text-gray-300' : 'text-gray-900'} font-bold`}>Sunday</span>
                                             {(() => {
                                                 const v = property?.openingHours?.sunday;
                                                 const str = typeof v === 'string' ? (v.trim() || '') : (v?.enabled ? `${v.open || ''} - ${v.close || ''}`.trim() : '');
@@ -2768,8 +2764,8 @@ function PropertyDetailsContent() {
             </div>
 
             {/* Similar Properties - Boxed design */}
-            <div id="similar-properties" className="w-full px-6 md:px-12 mt-16 mb-12">
-                <section className={`py-16 px-12 rounded-[24px] relative shadow-sm border transition-colors ${isDark ? 'bg-[#121418] border-gray-800' : 'bg-[#fdf8e7] border-[#f0e4c3]/10'}`}>
+            <div id="similar-properties" className="w-full px-4 md:px-10 mt-16 mb-12">
+                <section className={`py-12 px-6 md:py-16 md:px-10 rounded-2xl md:rounded-[24px] relative shadow-sm border transition-colors ${isDark ? 'bg-[#121418] border-gray-800' : 'bg-[#fdf8e7] border-[#f0e4c3]/10'}`}>
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
                         <div>
                             <h2 className={`!text-[1.5rem] font-bold mb-1.5 tracking-tight leading-tight ${isDark ? 'text-white' : 'text-black'}`}>Similar Properties</h2>
@@ -2877,8 +2873,8 @@ function PropertyDetailsContent() {
                                 </Swiper>
                                 {filteredProps.length > 1 && (
                                     <>
-                                        <button type="button" onClick={(e) => handleSliderNavClick(e, true)} className="similar-prev swiper-nav-btn absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 md:-translate-x-5 z-10 w-9 h-9 md:w-10 md:h-10 rounded-full bg-[#0070f3] text-white shadow-[0_4px_12px_rgba(0,112,243,0.3)] flex items-center justify-center hover:bg-[#005bb5] transition-colors cursor-pointer" aria-label="Previous properties"><ChevronLeft className="h-5 w-5" /></button>
-                                        <button type="button" onClick={(e) => handleSliderNavClick(e, false)} className="similar-next swiper-nav-btn absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 md:translate-x-5 z-10 w-9 h-9 md:w-10 md:h-10 rounded-full bg-[#0070f3] text-white shadow-[0_4px_12px_rgba(0,112,243,0.3)] flex items-center justify-center hover:bg-[#005bb5] transition-colors cursor-pointer" aria-label="Next properties"><ChevronRight className="h-5 w-5" /></button>
+                                        <button type="button" onClick={(e) => handleSliderNavClick(e, true)} className="similar-prev swiper-nav-btn absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-6 z-10 w-9 h-9 md:w-10 md:h-10 rounded-full bg-[#0070f3] text-white shadow-[0_4px_12px_rgba(0,112,243,0.3)] flex items-center justify-center hover:bg-[#005bb5] transition-colors cursor-pointer" aria-label="Previous properties"><ChevronLeft className="h-5 w-5" /></button>
+                                        <button type="button" onClick={(e) => handleSliderNavClick(e, false)} className="similar-next swiper-nav-btn absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-6 z-10 w-9 h-9 md:w-10 md:h-10 rounded-full bg-[#0070f3] text-white shadow-[0_4px_12px_rgba(0,112,243,0.3)] flex items-center justify-center hover:bg-[#005bb5] transition-colors cursor-pointer" aria-label="Next properties"><ChevronRight className="h-5 w-5" /></button>
                                     </>
                                 )}
                             </div>
@@ -2888,8 +2884,8 @@ function PropertyDetailsContent() {
             </div>
 
             {/* Explore Top Coworking Locations */}
-            <div className="w-full px-6 md:px-12 mt-16 mb-20">
-                <section className={`py-16 px-12 rounded-[24px] relative shadow-sm border transition-colors ${isDark ? 'bg-[#121418] border-gray-800' : 'bg-[#fdf8e7] border-[#f0e4c3]/10'}`}>
+            <div className="w-full px-4 md:px-10 mt-16 mb-20">
+                <section className={`py-12 px-6 md:py-16 md:px-10 rounded-2xl md:rounded-[24px] relative shadow-sm border transition-colors ${isDark ? 'bg-[#121418] border-gray-800' : 'bg-[#fdf8e7] border-[#f0e4c3]/10'}`}>
                     <h2 className={`text-[1.2rem] md:text-xl font-bold mb-6 tracking-tight ${isDark ? 'text-white' : 'text-black'}`}>Explore Top Coworking Locations in Bangalore</h2>
                     <div className="grid grid-cols-2 md:grid-cols-3 md:grid-cols-5 gap-4 md:gap-5">
                         {((property.exploreLocations && property.exploreLocations.length > 0) ? property.exploreLocations : [

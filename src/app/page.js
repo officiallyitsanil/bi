@@ -315,6 +315,13 @@ export default function HomePage() {
     setIsLoadingLocation(false);
   };
 
+  // Mobile only: start with drawer collapsed (closed) to show map
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setIsDrawerCollapsed(true);
+    }
+  }, []);
+
   // Fetch user's location on initial load (fallback)
   useEffect(() => {
     const initializeLocation = async () => {
@@ -388,7 +395,7 @@ export default function HomePage() {
       .then((data) => {
         if (data?.success && data?.config) setGlobalConfig(data.config);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const defaultWhatsappForWa = useMemo(() => {
@@ -650,6 +657,11 @@ export default function HomePage() {
     }
     setSelectedMarker(marker);
     setSelectedCity(marker);
+
+    // On mobile, collapse the property list drawer when a property is selected
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setIsDrawerCollapsed(true);
+    }
   };
 
   const closeCityModal = () => {
@@ -1508,13 +1520,42 @@ export default function HomePage() {
       `}} />
 
       {/* Unified Search and Drawer Layout */}
-      <div className="flex-1 relative flex pb-0 min-h-0">
-        <div className="flex shrink-0 relative h-full min-h-0 overflow-hidden" style={{ width: isDrawerCollapsed ? '0%' : '20%', minWidth: isDrawerCollapsed ? '0%' : '20%', maxWidth: isDrawerCollapsed ? '0%' : '20%', transition: 'all 300ms ease-in-out' }}>
-          <div className={`left-drawer-panel w-full shadow-lg flex flex-col h-full min-h-0 overflow-hidden shrink-0 ${isDark ? 'bg-[#1f2229]' : 'bg-gray-50'} ${isLoadingProperties ? 'opacity-30 pointer-events-none' : ''}`}>
-            <div className={`flex-shrink-0 z-20 px-3 pt-3 ${showFiltersView || showCitySelector ? 'pb-0' : 'pb-3'} ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}>
-              <form onSubmit={handleSearch} className={showFiltersView || showCitySelector ? 'mb-2' : 'mb-3'}>
+      <div className="flex-1 relative flex flex-col md:flex-row pb-0 min-h-0">
+
+        {/* DESKTOP LEFT DRAWER / MOBILE BOTTOM MODAL WRAPPER */}
+        <div
+          className={`
+            shrink-0 z-50 transition-all duration-300 ease-in-out
+            md:relative md:flex md:h-full md:min-h-0 md:overflow-hidden
+            ${isDrawerCollapsed
+              ? 'md:w-0'
+              : 'md:w-[25%] lg:w-[20%]'
+            }
+            fixed inset-x-0 bottom-0 top-[30vh] md:top-0
+            ${isDrawerCollapsed ? 'translate-y-full invisible md:visible md:translate-y-0' : 'translate-y-0 visible'}
+            md:translate-y-0
+          `}
+        >
+          {/* Mobile Backdrop */}
+          {!isDrawerCollapsed && (
+            <div
+              className="md:hidden fixed inset-0 bg-black/40 -z-10"
+              onClick={() => setIsDrawerCollapsed(true)}
+              style={{ top: '-100vh' }}
+            ></div>
+          )}
+
+          <div className={`left-drawer-panel w-full shadow-2xl md:shadow-lg flex flex-col h-full min-h-0 overflow-hidden shrink-0 rounded-t-3xl md:rounded-none ${isDark ? 'bg-[#1f2229]' : 'bg-white'} ${isLoadingProperties ? 'opacity-30 pointer-events-none' : ''}`}>
+            {/* Mobile Drag Handle */}
+            <div className="md:hidden flex justify-center py-2.5 shrink-0" onClick={() => setIsDrawerCollapsed(true)}>
+              <div className={`w-14 h-1.5 rounded-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}></div>
+            </div>
+
+            <div className={`flex-shrink-0 z-20 px-3 md:pt-3 ${showFiltersView || showCitySelector ? 'pb-0' : 'pb-3'} ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}>
+              <form onSubmit={handleSearch} className={`${showFiltersView || showCitySelector ? 'mb-2' : 'mb-3'} hidden md:block`}>
                 <div className="relative search-container">
-                  <div className={`rounded-lg pl-2 pr-2 py-1.5 w-full flex items-center gap-1.5 ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                  {/* Desktop Search UI */}
+                  <div className={`hidden md:flex rounded-lg pl-2 pr-2 py-1.5 w-full items-center gap-1.5 ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
                     <Search className={`w-3.5 h-3.5 flex-shrink-0 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                     <div
                       className="flex-1 flex items-center gap-1.5 min-w-0 relative cursor-text"
@@ -1555,7 +1596,7 @@ export default function HomePage() {
                         />
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 flex-shrink-0">
+                    <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                       <button
                         type="button"
                         onClick={(e) => {
@@ -1567,7 +1608,7 @@ export default function HomePage() {
                         disabled={isLoadingProperties}
                         className={`transition-colors ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'}`}
                       >
-                        <SlidersHorizontal className="w-3.5 h-3.5" />
+                        <SlidersHorizontal className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </button>
                       <button
                         type="button"
@@ -1580,14 +1621,14 @@ export default function HomePage() {
                         disabled={isLoadingProperties}
                         className={`transition-colors ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'}`}
                       >
-                        <Globe className="w-3.5 h-3.5" />
+                        <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </button>
                     </div>
                   </div>
 
                   {/* Suggestions Dropdown */}
                   {showSuggestions && (
-                    <div className={`absolute top-full left-0 right-0 rounded-lg shadow-xl mt-1 max-h-60 overflow-y-auto z-500 border ${isDark ? 'bg-[#282c34] border-gray-700' : 'bg-white border-gray-200'}`}>
+                    <div className={`absolute top-full left-0 right-0 rounded-lg shadow-xl mt-1 max-h-60 overflow-y-auto z-[500] border ${isDark ? 'bg-[#282c34] border-gray-700' : 'bg-white border-gray-200'} hidden md:block`}>
                       {suggestions.length > 0 ? (
                         suggestions.map((suggestion, index) => (
                           <div
@@ -1629,7 +1670,7 @@ export default function HomePage() {
               {!showFiltersView && !showCitySelector && (
                 <>
                   {/* Category Filters - Segmented Control */}
-                  <div className={`rounded-lg p-0.5 flex mb-3 ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                  <div className={`rounded-lg p-0.5 flex mb-2.5 max-sm:mb-2 ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
                     <button
                       onClick={() => {
                         setPropertyTypeFilter('all');
@@ -1639,7 +1680,7 @@ export default function HomePage() {
                         }));
                       }}
                       disabled={isLoadingProperties}
-                      className={`flex-1 px-2 py-1 rounded-md text-xs font-medium transition-all ${propertyTypeFilter === 'all'
+                      className={`flex-1 px-2 py-1 rounded-md text-[10px] sm:text-xs font-medium transition-all ${propertyTypeFilter === 'all'
                         ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
                         : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
                         } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
@@ -1655,12 +1696,12 @@ export default function HomePage() {
                         }));
                       }}
                       disabled={isLoadingProperties}
-                      className={`flex-1 px-2 py-1 rounded-md text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${propertyTypeFilter === 'commercial'
+                      className={`flex-1 px-2 py-1 rounded-md text-[10px] sm:text-xs font-medium transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${propertyTypeFilter === 'commercial'
                         ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
                         : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
                         } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                     >
-                      <Building2 className="w-3 h-3" />
+                      <Building2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                       Commercial
                     </button>
                     <button
@@ -1672,22 +1713,22 @@ export default function HomePage() {
                         }));
                       }}
                       disabled={isLoadingProperties}
-                      className={`flex-1 px-2 py-1 rounded-md text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${propertyTypeFilter === 'residential'
+                      className={`flex-1 px-2 py-1 rounded-md text-[10px] sm:text-xs font-medium transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${propertyTypeFilter === 'residential'
                         ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
                         : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
                         } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                     >
-                      <Home className="w-3 h-3" />
+                      <Home className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                       Residential
                     </button>
                   </div>
 
                   {/* Listing Type Filters */}
-                  <div className="flex gap-1.5 mb-3 overflow-x-auto scrollbar-hide">
+                  <div className="flex gap-1.5 mb-2.5 max-sm:mb-2 overflow-x-auto scrollbar-hide">
                     <button
                       onClick={() => setListingTypeFilter(listingTypeFilter === 'forSale' ? 'all' : 'forSale')}
                       disabled={isLoadingProperties}
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'forSale'
+                      className={`px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'forSale'
                         ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
                         : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
                         } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
@@ -1697,9 +1738,9 @@ export default function HomePage() {
                     <button
                       onClick={() => setListingTypeFilter(listingTypeFilter === 'forRent' ? 'all' : 'forRent')}
                       disabled={isLoadingProperties}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'forRent'
+                      className={`px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'forRent'
                         ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
-                        : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
+                        : isDark ? 'bg-[#282c33] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
                         } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                     >
                       For Rent
@@ -1707,9 +1748,9 @@ export default function HomePage() {
                     <button
                       onClick={() => setListingTypeFilter(listingTypeFilter === 'readyToMove' ? 'all' : 'readyToMove')}
                       disabled={isLoadingProperties}
-                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'readyToMove'
+                      className={`px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'readyToMove'
                         ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
-                        : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
+                        : isDark ? 'bg-[#282c33] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
                         } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                     >
                       Ready to Move
@@ -1717,9 +1758,9 @@ export default function HomePage() {
                     <button
                       onClick={() => setListingTypeFilter(listingTypeFilter === 'newProjects' ? 'all' : 'newProjects')}
                       disabled={isLoadingProperties}
-                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'newProjects'
+                      className={`px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'newProjects'
                         ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
-                        : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
+                        : isDark ? 'bg-[#282c33] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
                         } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                     >
                       New Projects
@@ -1727,9 +1768,9 @@ export default function HomePage() {
                     <button
                       onClick={() => setListingTypeFilter(listingTypeFilter === 'verified' ? 'all' : 'verified')}
                       disabled={isLoadingProperties}
-                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'verified'
+                      className={`px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'verified'
                         ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
-                        : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
+                        : isDark ? 'bg-[#282c33] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
                         } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                     >
                       Verified
@@ -1737,9 +1778,9 @@ export default function HomePage() {
                     <button
                       onClick={() => setListingTypeFilter(listingTypeFilter === 'video' ? 'all' : 'video')}
                       disabled={isLoadingProperties}
-                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'video'
+                      className={`px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-medium transition-all whitespace-nowrap flex-shrink-0 ${listingTypeFilter === 'video'
                         ? isDark ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-400 text-black'
-                        : isDark ? 'bg-[#282c34] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
+                        : isDark ? 'bg-[#282c33] text-gray-400 border border-gray-600 hover:border-gray-500 hover:bg-yellow-500/20 hover:text-yellow-400' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-yellow-100 hover:text-yellow-900'
                         } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                     >
                       Video
@@ -2431,7 +2472,7 @@ export default function HomePage() {
                                   <span className="w-2 h-2 rounded-full bg-blue-500 pointer-events-none" />
                                 )}
                               </span>
-                            <span className={`text-[11px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{opt.label}</span>
+                              <span className={`text-[11px] ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{opt.label}</span>
                             </label>
                           ))}
                         </div>
@@ -3123,100 +3164,100 @@ export default function HomePage() {
                 ) : getFilteredMarkers().map((marker, index) => {
                   const isActive = selectedCity && (String(marker._id || marker.id) === String(selectedCity._id || selectedCity.id));
                   return (
-                  <div
-                    key={`${marker.id}-${marker.propertyCategory || 'c'}-${index}`}
-                    className={`rounded-lg p-2 cursor-pointer transition-all shadow-sm ${isActive ? 'border-2 border-blue-500' : 'border border-transparent'} ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-white hover:bg-[#fff3c5] hover:shadow-md'}`}
-                    onClick={() => handleMarkerClick(marker)}
-                  >
-                    <div className="flex gap-2">
-                      <div className="relative flex-shrink-0 w-14 h-14 rounded-md overflow-hidden bg-muted">
-                        {(marker.featuredImageUrl || marker.images?.[0]) ? (
-                          <Image
-                            src={marker.featuredImageUrl || marker.images[0]}
-                            alt={marker.propertyName || '-'}
-                            width={56}
-                            height={56}
-                            className="rounded-md object-cover w-14 h-14"
-                            unoptimized
-                          />
-                        ) : (
-                          <div className="w-full h-full rounded-md bg-muted" aria-hidden />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-1 mb-0.5">
-                          <div className="flex items-center gap-1 min-w-0">
-                            <h3 className={`font-semibold text-xs leading-tight truncate ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                              {marker.propertyName || marker.name || '-'}
-                            </h3>
-                            {marker.isVerified && (
-                              <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none">
-                                <path d="M12 1L14.4 4.2L18.3 3.4L18.1 7.4L21.6 9.2L19.4 12.5L21.6 15.8L18.1 17.6L18.3 21.6L14.4 20.8L12 24L9.6 20.8L5.7 21.6L5.9 17.6L2.4 15.8L4.6 12.5L2.4 9.2L5.9 7.4L5.7 3.4L9.6 4.2L12 1Z" fill="#FBBF24" />
-                                <path d="M8.5 12.5L10.5 14.5L15.5 9.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-0.5 flex-shrink-0">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleFavouriteToggle(marker);
-                              }}
-                              className={`p-0.5 rounded-full transition-colors ${propertyFavorites[marker._id || marker.id]
-                                ? 'text-red-500'
-                                : isDark ? 'text-gray-500 hover:text-red-500' : 'text-gray-300 hover:text-red-500'
-                                }`}
-                            >
-                              <Heart
-                                className="w-3.5 h-3.5"
-                                fill={propertyFavorites[marker._id || marker.id] ? "currentColor" : "none"}
-                                strokeWidth={2}
-                              />
-                            </button>
-                            <a
-                              href={`https://wa.me/${(marker.agentDetails?.phone || marker.sellerPhoneNumber)?.replace(/[^0-9]/g, '') || defaultWhatsappForWa}?text=Hi,%20I%20am%20interested%20in%20${encodeURIComponent(marker.propertyName || 'this property')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className={`p-0.5 rounded-full transition-colors ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
-                            >
-                              <Image src="/whatsapp.svg" alt="WhatsApp" width={14} height={14} />
-                            </a>
-                          </div>
+                    <div
+                      key={`${marker.id}-${marker.propertyCategory || 'c'}-${index}`}
+                      className={`rounded-lg p-2 cursor-pointer transition-all shadow-sm ${isActive ? 'border-2 border-blue-500' : 'border border-transparent'} ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-white hover:bg-[#fff3c5] hover:shadow-md'}`}
+                      onClick={() => handleMarkerClick(marker)}
+                    >
+                      <div className="flex gap-2">
+                        <div className="relative flex-shrink-0 w-14 h-14 rounded-md overflow-hidden bg-muted">
+                          {(marker.featuredImageUrl || marker.images?.[0]) ? (
+                            <Image
+                              src={marker.featuredImageUrl || marker.images[0]}
+                              alt={marker.propertyName || '-'}
+                              width={56}
+                              height={56}
+                              className="rounded-md object-cover w-14 h-14"
+                              unoptimized
+                            />
+                          ) : (
+                            <div className="w-full h-full rounded-md bg-muted" aria-hidden />
+                          )}
                         </div>
-                        <p className={`text-[9px] mb-0.5 truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                          <span>in {marker.address?.locality || marker.address?.district || marker.address?.state}</span>
-                          {marker.address?.district && marker.address?.locality && marker.address.district !== marker.address.locality && (
-                            <span>, {marker.address.district}</span>
-                          )}
-                          {marker.address?.state && (
-                            <span>, {marker.address.state}</span>
-                          )}
-                        </p>
-                        {(() => {
-                          const markerPrices = calculatePrices(marker);
-                          if (markerPrices.discountedPrice && markerPrices.discountedPrice !== '₹XX') {
-                            return (
-                              <p className="text-xs">
-                                <span className="font-bold text-blue-500">{markerPrices.discountedPrice}</span>
-                                {markerPrices.originalPrice && markerPrices.originalPrice !== markerPrices.discountedPrice && (
-                                  <span className={`line-through ml-1 text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{markerPrices.originalPrice}</span>
-                                )}
-                              </p>
-                            );
-                          } else if (marker.pricePerAcre && marker.pricePerAcre !== 'N/A') {
-                            return (
-                              <p className="text-xs">
-                                <span className="font-bold text-orange-500">{marker.pricePerAcre}</span>
-                                <span className={`text-[9px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>/sq.ft</span>
-                              </p>
-                            );
-                          }
-                          return null;
-                        })()}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-1 mb-0.5">
+                            <div className="flex items-center gap-1 min-w-0">
+                              <h3 className={`font-semibold text-xs leading-tight truncate ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                {marker.propertyName || marker.name || '-'}
+                              </h3>
+                              {marker.isVerified && (
+                                <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none">
+                                  <path d="M12 1L14.4 4.2L18.3 3.4L18.1 7.4L21.6 9.2L19.4 12.5L21.6 15.8L18.1 17.6L18.3 21.6L14.4 20.8L12 24L9.6 20.8L5.7 21.6L5.9 17.6L2.4 15.8L4.6 12.5L2.4 9.2L5.9 7.4L5.7 3.4L9.6 4.2L12 1Z" fill="#FBBF24" />
+                                  <path d="M8.5 12.5L10.5 14.5L15.5 9.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-0.5 flex-shrink-0">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleFavouriteToggle(marker);
+                                }}
+                                className={`p-0.5 rounded-full transition-colors ${propertyFavorites[marker._id || marker.id]
+                                  ? 'text-red-500'
+                                  : isDark ? 'text-gray-500 hover:text-red-500' : 'text-gray-300 hover:text-red-500'
+                                  }`}
+                              >
+                                <Heart
+                                  className="w-3.5 h-3.5"
+                                  fill={propertyFavorites[marker._id || marker.id] ? "currentColor" : "none"}
+                                  strokeWidth={2}
+                                />
+                              </button>
+                              <a
+                                href={`https://wa.me/${(marker.agentDetails?.phone || marker.sellerPhoneNumber)?.replace(/[^0-9]/g, '') || defaultWhatsappForWa}?text=Hi,%20I%20am%20interested%20in%20${encodeURIComponent(marker.propertyName || 'this property')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className={`p-0.5 rounded-full transition-colors ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
+                              >
+                                <Image src="/whatsapp.svg" alt="WhatsApp" width={14} height={14} />
+                              </a>
+                            </div>
+                          </div>
+                          <p className={`text-[9px] mb-0.5 truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                            <span>in {marker.address?.locality || marker.address?.district || marker.address?.state}</span>
+                            {marker.address?.district && marker.address?.locality && marker.address.district !== marker.address.locality && (
+                              <span>, {marker.address.district}</span>
+                            )}
+                            {marker.address?.state && (
+                              <span>, {marker.address.state}</span>
+                            )}
+                          </p>
+                          {(() => {
+                            const markerPrices = calculatePrices(marker);
+                            if (markerPrices.discountedPrice && markerPrices.discountedPrice !== '₹XX') {
+                              return (
+                                <p className="text-xs">
+                                  <span className="font-bold text-blue-500">{markerPrices.discountedPrice}</span>
+                                  {markerPrices.originalPrice && markerPrices.originalPrice !== markerPrices.discountedPrice && (
+                                    <span className={`line-through ml-1 text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>{markerPrices.originalPrice}</span>
+                                  )}
+                                </p>
+                              );
+                            } else if (marker.pricePerAcre && marker.pricePerAcre !== 'N/A') {
+                              return (
+                                <p className="text-xs">
+                                  <span className="font-bold text-orange-500">{marker.pricePerAcre}</span>
+                                  <span className={`text-[9px] ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>/sq.ft</span>
+                                </p>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </div>
                       </div>
                     </div>
-                  </div>
                   );
                 })}
               </div>
@@ -3225,58 +3266,123 @@ export default function HomePage() {
 
         </div>
 
-        {/* Compact search bar when collapsed - same position as drawer search (top left) */}
+        {/* Floating Search Bar and Buttons - Desktop & Mobile */}
         {isDrawerCollapsed && (
-          <div className="hidden md:block absolute top-0 left-0 z-20 pointer-events-auto">
-            <CollapsedDrawerSearch
-              searchQuery={searchQuery}
-              onSearchChange={handleSearchInputChange}
-              onSearch={handleSearch}
-              onSuggestionSelect={(suggestion) => {
-                setSearchQuery(suggestion.text);
-                setShowSuggestions(false);
-                if (typeof window !== 'undefined' && window.innerWidth < 480) {
-                  setShowFiltersView(false);
-                  setShowCitySelector(false);
-                }
-                if (suggestion.marker?.position) {
-                  setMapCenter(suggestion.marker.position);
-                  setZoomLevel(ZOOM_LOCATION);
-                }
-              }}
-              suggestions={suggestions}
-              showSuggestions={showSuggestions}
-              onFocus={() => {
-                setIsSearchFocused(true);
-                setShowSuggestions(true);
-              }}
-              onBlur={() => {
-                setTimeout(() => {
-                  setIsSearchFocused(false);
+          <>
+            {/* Desktop View */}
+            <div className="hidden md:block absolute top-0 left-0 z-20 pointer-events-auto">
+              <CollapsedDrawerSearch
+                searchQuery={searchQuery}
+                onSearchChange={handleSearchInputChange}
+                onSearch={handleSearch}
+                onSuggestionSelect={(suggestion) => {
+                  setSearchQuery(suggestion.text);
                   setShowSuggestions(false);
-                }, 150);
-              }}
-              isSearchFocused={isSearchFocused}
-              onFilterClick={() => {
-                setShowCitySelector(false);
-                setShowFiltersView(true);
-                setIsDrawerCollapsed(false);
-              }}
-              onGlobeClick={() => {
-                setShowFiltersView(false);
-                setShowCitySelector(true);
-                setIsDrawerCollapsed(false);
-              }}
-              isDark={isDark}
-              isLoadingProperties={isLoadingProperties}
-            />
-          </div>
+                  if (typeof window !== 'undefined' && window.innerWidth < 480) {
+                    setShowFiltersView(false);
+                    setShowCitySelector(false);
+                  }
+                  if (suggestion.marker?.position) {
+                    setMapCenter(suggestion.marker.position);
+                    setZoomLevel(ZOOM_LOCATION);
+                  }
+                }}
+                suggestions={suggestions}
+                showSuggestions={showSuggestions}
+                onFocus={() => {
+                  setIsSearchFocused(true);
+                  setShowSuggestions(true);
+                }}
+                onBlur={() => {
+                  setTimeout(() => {
+                    setIsSearchFocused(false);
+                    setShowSuggestions(false);
+                  }, 150);
+                }}
+                isSearchFocused={isSearchFocused}
+                onFilterClick={() => {
+                  setShowCitySelector(false);
+                  setShowFiltersView(true);
+                  setIsDrawerCollapsed(false);
+                }}
+                onGlobeClick={() => {
+                  setShowFiltersView(false);
+                  setShowCitySelector(true);
+                  setIsDrawerCollapsed(false);
+                }}
+                isDark={isDark}
+                isLoadingProperties={isLoadingProperties}
+              />
+            </div>
+
+            {/* Mobile View - Separate Search, Filter, and Globe */}
+            <div className="md:hidden absolute top-3 left-0 right-0 z-20 px-4 pointer-events-none">
+              <div className="flex items-center gap-2 pointer-events-auto">
+                <div className="flex-1 relative search-container">
+                  <form onSubmit={handleSearch} className="relative">
+                    <div className={`flex items-center gap-3 w-full h-12 px-4 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.12)] border border-white/50 ${isDark ? "bg-[#282c34]" : "bg-white"}`}>
+                      <Search className={`w-5 h-5 flex-shrink-0 ${isDark ? "text-gray-400" : "text-gray-400"}`} strokeWidth={1.5} />
+                      <input 
+                        type="text"
+                        value={searchQuery}
+                        onChange={handleSearchInputChange}
+                        onFocus={() => { setIsSearchFocused(true); setShowSuggestions(true); }}
+                        onBlur={() => setTimeout(() => { setIsSearchFocused(false); setShowSuggestions(false); }, 150)}
+                        placeholder='Search "Indiranagar"'
+                        className={`flex-1 bg-transparent outline-none text-[13px] font-medium ${isDark ? "text-white" : "text-gray-800"}`}
+                        style={{ border: 'none', padding: 0 }}
+                      />
+                    </div>
+
+                    {/* Mobile Suggestions */}
+                    {showSuggestions && suggestions.length > 0 && (
+                      <div className={`absolute top-full left-0 right-0 mt-2 rounded-[18px] shadow-2xl overflow-hidden z-[100] border ${isDark ? "bg-[#1f2229] border-gray-700" : "bg-white border-gray-100"}`}>
+                        {suggestions.map((suggestion, idx) => (
+                          <div
+                            key={idx}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setSearchQuery(suggestion.text);
+                              if (suggestion.marker?.position) {
+                                setMapCenter(suggestion.marker.position);
+                                setZoomLevel(ZOOM_LOCATION);
+                              }
+                              setShowSuggestions(false);
+                            }}
+                            className={`px-5 py-3.5 cursor-pointer border-b last:border-0 ${isDark ? "hover:bg-gray-800 border-gray-800 text-gray-200" : "hover:bg-[#FFF9E5]/50 border-gray-50 text-gray-700 font-medium"}`}
+                          >
+                            <p className="text-[13px]">{suggestion.displayText}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </form>
+                </div>
+
+                {/* Filter Button */}
+                <button 
+                  onClick={() => { setShowFiltersView(true); setIsDrawerCollapsed(false); }}
+                  className="w-12 h-12 flex items-center justify-center rounded-xl bg-[#FFF9E5] shadow-[0_4px_12px_rgba(0,0,0,0.12)] border border-white/50 active:scale-95 transition-transform cursor-pointer"
+                >
+                  <SlidersHorizontal className="w-6 h-6 text-gray-800" strokeWidth={1.5} />
+                </button>
+
+                {/* Globe Button */}
+                <button 
+                  onClick={() => { setShowCitySelector(true); setIsDrawerCollapsed(false); }}
+                  className="w-12 h-12 flex items-center justify-center rounded-xl bg-[#FFF9E5] shadow-[0_4px_12px_rgba(0,0,0,0.12)] border border-white/50 active:scale-95 transition-transform cursor-pointer"
+                >
+                  <Globe className="w-6 h-6 text-blue-500" strokeWidth={1.5} />
+                </button>
+              </div>
+            </div>
+          </>
         )}
 
-        {/* Toggle Button - always visible, relative to 20% width */}
+        {/* Toggle Button - Desktop Only */}
         <button
           onClick={() => setIsDrawerCollapsed(!isDrawerCollapsed)}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-30 bg-blue-600 hover:bg-blue-700 text-white px-2 py-4 rounded-r-lg shadow-lg transition-all duration-300 ease-in-out cursor-pointer"
+          className="hidden md:block absolute left-0 top-1/2 -translate-y-1/2 z-30 bg-blue-600 hover:bg-blue-700 text-white px-2 py-4 rounded-r-lg shadow-lg transition-all duration-300 ease-in-out cursor-pointer"
           style={{ left: isDrawerCollapsed ? '0%' : '20%', transition: 'left 300ms ease-in-out' }}
           aria-label={isDrawerCollapsed ? "Expand drawer" : "Collapse drawer"}
         >
@@ -3287,7 +3393,18 @@ export default function HomePage() {
           )}
         </button>
 
-        <div className="flex-1 relative">
+        <div className="flex-1 relative flex flex-col min-w-0 h-full overflow-hidden">
+          {/* View List Floating Button (Mobile Only) - Bottom Left Corner */}
+          <div className={`md:hidden fixed bottom-[90px] left-5 z-40 transition-all duration-500 ease-out flex items-center gap-2 ${!isDrawerCollapsed ? 'opacity-0 translate-y-10 pointer-events-none' : 'opacity-100 translate-y-0'}`}>
+            {/* Menu Square Button */}
+            <button
+               onClick={() => setIsDrawerCollapsed(false)}
+               className="w-12 h-12 rounded-xl bg-[#FFF9E5] shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex items-center justify-center border border-white/50 active:scale-90 transition-transform"
+            >
+              <Menu className="w-6 h-6 text-gray-800" strokeWidth={1.5} />
+            </button>
+          </div>
+
           <MapView
             center={mapCenter}
             markers={getFilteredMarkers()}

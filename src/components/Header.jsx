@@ -87,17 +87,23 @@ export default function Header() {
         <>
             <header
                 className={`
-                    ${pathname === '/' ? 'hidden md:block' : 'block'} 
-                    sticky top-0 z-50 py-1.5 transition-colors duration-300 border-b
-                    ${isDark ? 'bg-[#1f2229] border-gray-800' : 'bg-white border-gray-100'}
+                    block sticky top-0 z-50 py-1.5 transition-colors duration-300 border-b w-full
+                    ${isDark ? 'bg-[#1f2229] border-gray-800' : 'bg-white border-gray-100 shadow-sm'}
                 `}
             >
-                <div className="px-4 md:px-8">
-                    <div className="flex items-center justify-between">
+                <div className="px-3 md:px-8 w-full">
+                    <div className="flex items-center justify-between w-full">
                         {/* Left: Logo + Location */}
                         <div className="flex items-center gap-2">
-                            <Link href="/" className="mr-3">
-                                <Image src="/logo.png" width={100} height={70} className='w-16' alt="Logo" />
+                            <Link href="/" className="mr-2">
+                                <Image 
+                                    src="https://i.ibb.co/gMsT7BMs/buildersinfologo3x.png" 
+                                    width={120} 
+                                    height={40} 
+                                    className='h-8 w-auto' 
+                                    alt="Logo"
+                                    unoptimized
+                                />
                             </Link>
                             <div className="hidden md:flex items-center gap-1">
                                 <Globe className={`w-3.5 h-3.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} strokeWidth={1.5} />
@@ -139,31 +145,31 @@ export default function Header() {
                             {/* Theme Toggle Button */}
                             <button
                                 onClick={toggleTheme}
-                                className={`hover:cursor-pointer p-1.5 rounded-full transition-colors ${isDark
+                                className={`hover:cursor-pointer p-2 rounded-full transition-colors ${isDark
                                         ? 'hover:bg-white/10 text-yellow-400'
                                         : 'hover:bg-gray-100 text-gray-700'
                                     }`}
                                 title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                             >
                                 {isDark ? (
-                                    <Sun className="w-4 h-4" strokeWidth={1.5} />
+                                    <Sun className="w-5 h-5" strokeWidth={1.5} />
                                 ) : (
-                                    <Moon className="w-4 h-4" strokeWidth={1.5} />
+                                    <Moon className="w-5 h-5" strokeWidth={1.5} />
                                 )}
                             </button>
 
-                            {/* Menu + Profile Pill Button - both open right drawer, hover on whole container */}
+                            {/* Menu + Profile Pill Button - both open right drawer */}
                             <button
                                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                                className={`flex items-center gap-2 px-2.5 py-1.5 border rounded-full transition-colors cursor-pointer ${isDark
-                                        ? 'border-gray-600 bg-[#282c34] hover:bg-white/10'
-                                        : 'border-gray-300 bg-white hover:bg-gray-100'
+                                className={`flex items-center gap-2.5 px-1.5 py-1.5 pl-3.5 border rounded-full transition-colors cursor-pointer ${isDark
+                                        ? 'border-gray-700 bg-[#282c34] hover:bg-gray-700'
+                                        : 'border-gray-200 bg-white hover:shadow-md'
                                     }`}
                             >
-                                <Menu className={`w-4 h-4 ${isDark ? 'text-white' : 'text-black'}`} strokeWidth={1.5} />
-                                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${isDark ? 'bg-gray-700' : 'bg-gray-200'
+                                <Menu className={`w-4.5 h-4.5 ${isDark ? 'text-white' : 'text-gray-600'}`} strokeWidth={1.5} />
+                                <div className={`w-8.5 h-8.5 rounded-full flex items-center justify-center ${isDark ? 'bg-gray-800' : 'bg-gray-100'
                                     }`}>
-                                    <User className="w-3.5 h-3.5 text-blue-600" strokeWidth={2} fill="none" />
+                                    <User className="w-4.5 h-4.5 text-blue-600" strokeWidth={2} fill="none" />
                                 </div>
                             </button>
                         </div>

@@ -24,7 +24,7 @@
         "totalPrice": "₹12,500",
         "discountPercent": 15,
         "isNegotiablePrice": true,
-        "pricePerSeat": "₹145",
+        "pricePerSeat": "₹10,588",
         "pricePerSqft": "₹92",
         "numberOfSeats": "6",
         "furnishingLevel": "Ready to move-in",
@@ -36,7 +36,7 @@
         "underManagement": "Yes",
         "availableFloors": "10th",
         "officeSpaceSolutions": "Private Cabins, Dedicated Desks",
-        "builderName": "Prestige Group",
+        "builderName": "BHIVE",
         "facilities": "2W parking, 4D parking",
         "agentDetails": {
             "name": "Rohit",
@@ -58,10 +58,10 @@
             "name": "BHIVE WORKSPACE",
             "logo": "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=96",
             "description": "BHIVE Workspace, established in 2014, specializes in providing Zero CapEx, Enterprise Grade, Customized managed office spaces. With 26+ locations in Bangalore and an expansion to Mumbai, BHIVE's flagship HSR campus is the largest in India, offering over 8,000 seats..",
-            "cities": 12,
-            "clients": 500,
-            "spaces": 15,
-            "seats": 400
+            "cities": 2,
+            "clients": 1000,
+            "spaces": 27,
+            "seats": 8000
         },
         "floorPlan": "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=800",
         "openingHours": {
@@ -72,45 +72,126 @@
         "visitorCount": 1432,
         "nearbyPlaces": {
             "schools": [
-                { "name": "Ryan International", "distance": "2.0 km" },
-                { "name": "Delhi Public School", "distance": "0.8 km" },
-                { "name": "Euro School", "distance": "1.2 km" },
-                { "name": "Inventure Academy", "distance": "1.5 km" }
+                {
+                    "name": "Ryan International",
+                    "distance": "2.0 km"
+                },
+                {
+                    "name": "Delhi Public School",
+                    "distance": "0.8 km"
+                },
+                {
+                    "name": "Euro School",
+                    "distance": "1.2 km"
+                },
+                {
+                    "name": "Inventure Academy",
+                    "distance": "1.5 km"
+                }
             ],
             "busStops": [
-                { "name": "Marathahalli Bridge", "distance": "0.5 km" },
-                { "name": "Kalamandir Bus Stop", "distance": "1.1 km" },
-                { "name": "ORR Bus Stop", "distance": "1.8 km" }
+                {
+                    "name": "Marathahalli Bridge",
+                    "distance": "0.5 km"
+                },
+                {
+                    "name": "Kalamandir Bus Stop",
+                    "distance": "1.1 km"
+                },
+                {
+                    "name": "ORR Bus Stop",
+                    "distance": "1.8 km"
+                }
             ],
             "hospitals": [
-                { "name": "Chinmaya Mission Hospital", "distance": "5.0 km" },
-                { "name": "AIMs Hospital", "distance": "5.0 km" },
-                { "name": "Apollo Hospital", "distance": "2.5 km" },
-                { "name": "Manipal Hospital", "distance": "3.2 km" }
+                {
+                    "name": "Chinmaya Mission Hospital",
+                    "distance": "5.0 km"
+                },
+                {
+                    "name": "AIMs Hospital",
+                    "distance": "5.0 km"
+                },
+                {
+                    "name": "Apollo Hospital",
+                    "distance": "2.5 km"
+                },
+                {
+                    "name": "Manipal Hospital",
+                    "distance": "3.2 km"
+                }
             ],
             "banks": [
-                { "name": "State Bank of India", "distance": "5.0 km" },
-                { "name": "HDFC Bank", "distance": "1.8 km" },
-                { "name": "ICICI Bank", "distance": "1.4 km" },
-                { "name": "Kotak Mahindra Bank", "distance": "1.2 km" }
+                {
+                    "name": "State Bank of India",
+                    "distance": "5.0 km"
+                },
+                {
+                    "name": "HDFC Bank",
+                    "distance": "1.8 km"
+                },
+                {
+                    "name": "ICICI Bank",
+                    "distance": "1.4 km"
+                },
+                {
+                    "name": "Kotak Mahindra Bank",
+                    "distance": "1.2 km"
+                }
             ],
             "temples": [
-                { "name": "ISKCON Temple", "distance": "3.0 km" },
-                { "name": "Maruthi Temple", "distance": "1.5 km" },
-                { "name": "Chamundeshwari Temple", "distance": "4.0 km" },
-                { "name": "Ganesha Temple", "distance": "2.0 km" }
+                {
+                    "name": "ISKCON Temple",
+                    "distance": "3.0 km"
+                },
+                {
+                    "name": "Maruthi Temple",
+                    "distance": "1.5 km"
+                },
+                {
+                    "name": "Chamundeshwari Temple",
+                    "distance": "4.0 km"
+                },
+                {
+                    "name": "Ganesha Temple",
+                    "distance": "2.0 km"
+                }
             ],
             "atms": [
-                { "name": "SBI ATM", "distance": "0.8 km" },
-                { "name": "HDFC ATM", "distance": "1.2 km" },
-                { "name": "ICICI ATM", "distance": "1.4 km" },
-                { "name": "Axis ATM", "distance": "1.6 km" }
+                {
+                    "name": "SBI ATM",
+                    "distance": "0.8 km"
+                },
+                {
+                    "name": "HDFC ATM",
+                    "distance": "1.2 km"
+                },
+                {
+                    "name": "ICICI ATM",
+                    "distance": "1.4 km"
+                },
+                {
+                    "name": "Axis ATM",
+                    "distance": "1.6 km"
+                }
             ],
             "malls": [
-                { "name": "Phoenix Mall", "distance": "2.0 km" },
-                { "name": "Orion Mall", "distance": "3.5 km" },
-                { "name": "Forum Mall", "distance": "4.0 km" },
-                { "name": "Garuda Mall", "distance": "5.0 km" }
+                {
+                    "name": "Phoenix Mall",
+                    "distance": "2.0 km"
+                },
+                {
+                    "name": "Orion Mall",
+                    "distance": "3.5 km"
+                },
+                {
+                    "name": "Forum Mall",
+                    "distance": "4.0 km"
+                },
+                {
+                    "name": "Garuda Mall",
+                    "distance": "5.0 km"
+                }
             ]
         },
         "ratings": {
@@ -183,35 +264,130 @@
                 "badThings": "Nothing to complain."
             }
         ],
-        "offerTag":"Best Price Guaranteed",
+        "offerTag": "Best Price Guaranteed",
         "customInfrastructure": [
-            { "id": 1, "name": "Meeting Rooms" },
-            { "id": 2, "name": "Private Cabins" },
-            { "id": 3, "name": "Reception Area" },
-            { "id": 4, "name": "Pantry" },
-            { "id": 5, "name": "Recreational Area" }
+            {
+                "id": 1,
+                "name": "Meeting Rooms"
+            },
+            {
+                "id": 2,
+                "name": "Private Cabins"
+            },
+            {
+                "id": 3,
+                "name": "Reception Area"
+            },
+            {
+                "id": 4,
+                "name": "Pantry"
+            },
+            {
+                "id": 5,
+                "name": "Recreational Area"
+            }
         ],
         "amenities": [
-            { "id": 1, "name": "Guest Check-in", "category": "guest-services" },
-            { "id": 2, "name": "Delivery Acceptance", "category": "guest-services" },
-            { "id": 3, "name": "Package Notification", "category": "guest-services" },
-            { "id": 4, "name": "Fire Safety", "category": "security" },
-            { "id": 5, "name": "Guest Management", "category": "guest-services" },
-            { "id": 6, "name": "Video Surveillance", "category": "security" },
-            { "id": 7, "name": "Keycard Access", "category": "security" },
-            { "id": 21, "name": "Parking", "category": "on-credit" },
-            { "id": 22, "name": "Power Backup", "category": "utilities" },
-            { "id": 20, "name": "Security", "category": "security" },
-            { "id": 6, "name": "CCTV", "category": "security" },
-            { "id": 23, "name": "Elevator", "category": "building" },
-            { "id": 8, "name": "Tea", "category": "pantry" },
-            { "id": 9, "name": "Coffee", "category": "pantry" },
-            { "id": 10, "name": "Water", "category": "pantry" },
-            { "id": 12, "name": "Cups & Mugs", "category": "pantry" },
-            { "id": 16, "name": "Daily Cleaning", "category": "cleaning" },
-            { "id": 13, "name": "24/7 Pantry", "category": "pantry" },
-            { "id": 20, "name": "Pest Control", "category": "cleaning" },
-            { "id": 24, "name": "WiFi", "category": "utilities" }
+            {
+                "id": 1,
+                "name": "Guest Check-in",
+                "category": "guest-services"
+            },
+            {
+                "id": 2,
+                "name": "Delivery Acceptance",
+                "category": "guest-services"
+            },
+            {
+                "id": 3,
+                "name": "Package Notification",
+                "category": "guest-services"
+            },
+            {
+                "id": 4,
+                "name": "Fire Safety",
+                "category": "security"
+            },
+            {
+                "id": 5,
+                "name": "Guest Management",
+                "category": "guest-services"
+            },
+            {
+                "id": 6,
+                "name": "Video Surveillance",
+                "category": "security"
+            },
+            {
+                "id": 7,
+                "name": "Keycard Access",
+                "category": "security"
+            },
+            {
+                "id": 21,
+                "name": "Parking",
+                "category": "on-credit"
+            },
+            {
+                "id": 22,
+                "name": "Power Backup",
+                "category": "utilities"
+            },
+            {
+                "id": 20,
+                "name": "Security",
+                "category": "security"
+            },
+            {
+                "id": 6,
+                "name": "CCTV",
+                "category": "security"
+            },
+            {
+                "id": 23,
+                "name": "Elevator",
+                "category": "building"
+            },
+            {
+                "id": 8,
+                "name": "Tea",
+                "category": "pantry"
+            },
+            {
+                "id": 9,
+                "name": "Coffee",
+                "category": "pantry"
+            },
+            {
+                "id": 10,
+                "name": "Water",
+                "category": "pantry"
+            },
+            {
+                "id": 12,
+                "name": "Cups & Mugs",
+                "category": "pantry"
+            },
+            {
+                "id": 16,
+                "name": "Daily Cleaning",
+                "category": "cleaning"
+            },
+            {
+                "id": 13,
+                "name": "24/7 Pantry",
+                "category": "pantry"
+            },
+            {
+                "id": 20,
+                "name": "Pest Control",
+                "category": "cleaning"
+            },
+            {
+                "id": 24,
+                "name": "WiFi",
+                "category": "utilities"
+            }
         ],
         "images": [
             "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800",
@@ -233,10 +409,16 @@
         "pdf": "https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf",
         "video": "https://www.w3schools.com/html/movie.mp4",
         "propertyVideos": [
-            { "url": "https://www.w3schools.com/html/movie.mp4", "thumbnail": "https://www.w3schools.com/w3images/house2.jpg" }
+            {
+                "url": "https://www.w3schools.com/html/movie.mp4",
+                "thumbnail": "https://www.w3schools.com/w3images/house2.jpg"
+            }
         ],
         "seatLayoutPDFs": [
-            { "url": "https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf", "originalName": "Property Brochure" }
+            {
+                "url": "https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf",
+                "originalName": "Property Brochure"
+            }
         ],
         "selectedFloors": [
             "7",
@@ -255,36 +437,224 @@
         "postedBy": "Builder",
         "uploadedDate": "2024-04-01",
         "createdAt": "2024-04-01T00:00:00.000Z",
-        "similarLocations": ["Koramangala", "MG Road", "HSR", "Indiranagar", "Hebbal"],
-        "allSimilarLocations": ["Koramangala", "MG Road", "HSR", "Indiranagar", "Hebbal", "Whitefield", "Bellandur", "Sanjay Nagar", "Electronic City", "JP Nagar", "Jayanagar", "Banashankari", "Rajajinagar", "Malleshwaram", "BTM Layout", "Marathahalli"],
+        "similarLocations": [
+            "Koramangala",
+            "MG Road",
+            "HSR",
+            "Indiranagar",
+            "Hebbal"
+        ],
+        "allSimilarLocations": [
+            "Koramangala",
+            "MG Road",
+            "HSR",
+            "Indiranagar",
+            "Hebbal",
+            "Whitefield",
+            "Bellandur",
+            "Sanjay Nagar",
+            "Electronic City",
+            "JP Nagar",
+            "Jayanagar",
+            "Banashankari",
+            "Rajajinagar",
+            "Malleshwaram",
+            "BTM Layout",
+            "Marathahalli"
+        ],
         "similarProperties": [
-            { "id": "workshaala", "name": "Workshaala", "locality": "Koramangala", "price": "₹7,999", "rating": 4.8, "ratingTag": "Excellent", "badge": "44% off", "image": "https://images.unsplash.com/photo-1600210492493-0946911123ea?w=600&q=80" },
-            { "id": "incubex", "name": "INCUBEX", "locality": "Koramangala", "price": "₹5,999", "rating": 4.2, "ratingTag": "Good", "badge": "Best Price Guarantee", "image": "https://images.unsplash.com/photo-1556761175-4b46a572b786?w=600&q=80" },
-            { "id": "smart-space", "name": "Smart Space", "locality": "Koramangala", "price": "₹4,999", "rating": 3.9, "ratingTag": "Good", "badge": "34% off", "image": "https://images.unsplash.com/photo-1579487785973-74d2ca7abdd5?w=600&q=80" },
-            { "id": "urban-vault", "name": "Urban Vault", "locality": "Koramangala", "price": "₹5,999", "rating": 4.2, "ratingTag": "Good", "badge": "Best Price Guarantee", "image": "https://images.unsplash.com/photo-1577412647305-991150c7d163?w=600&q=80" },
-            { "id": "indiqube", "name": "Indiqube", "locality": "Koramangala", "price": "₹5,999", "rating": 4.2, "ratingTag": "Good", "badge": "Best Price Guarantee", "image": "https://picsum.photos/seed/corporate-office-space/400/300" },
-            { "id": "the-hive", "name": "The Hive Koramangala", "locality": "Koramangala", "price": "₹6,499", "rating": 4.5, "ratingTag": "Very Good", "badge": "20% off", "image": "https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80" },
-            { "id": "co-labs-kor", "name": "Co.Labs", "locality": "Koramangala", "price": "₹7,200", "rating": 4.6, "ratingTag": "Very Good", "badge": "Best Price", "image": "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=600&q=80" },
-            { "id": "wework-mg", "name": "WeWork MG Road", "locality": "MG Road", "price": "₹12,000", "rating": 4.9, "ratingTag": "Excellent", "badge": "Premium", "image": "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=600&q=80" },
-            { "id": "regus-mg", "name": "Regus MG Road", "locality": "MG Road", "price": "₹9,500", "rating": 4.4, "ratingTag": "Very Good", "badge": "15% off", "image": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=80" },
-            { "id": "innov8-mg", "name": "Innov8", "locality": "MG Road", "price": "₹8,999", "rating": 4.7, "ratingTag": "Excellent", "badge": "Popular", "image": "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=600&q=80" },
-            { "id": "seatspace-hsr", "name": "SeatSpace HSR", "locality": "HSR", "price": "₹5,500", "rating": 4.3, "ratingTag": "Very Good", "badge": "25% off", "image": "https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?w=600&q=80" },
-            { "id": "collab-indira", "name": "Collab House", "locality": "Indiranagar", "price": "₹6,800", "rating": 4.5, "ratingTag": "Very Good", "badge": "Best Price", "image": "https://images.unsplash.com/photo-1531973576160-7125cd663d86?w=600&q=80" },
-            { "id": "spacehub-indira", "name": "SpaceHub", "locality": "Indiranagar", "price": "₹7,400", "rating": 4.1, "ratingTag": "Good", "badge": "New", "image": "https://images.unsplash.com/photo-1605797491749-0c6989a44356?w=600&q=80" },
-            { "id": "worknest-hebbal", "name": "WorkNest Hebbal", "locality": "Hebbal", "price": "₹6,200", "rating": 4.4, "ratingTag": "Very Good", "badge": "30% off", "image": "https://images.unsplash.com/photo-1601762429744-46fe92ccd903?w=600&q=80" },
-            { "id": "desklab-hebbal", "name": "DeskLab", "locality": "Hebbal", "price": "₹5,800", "rating": 4.0, "ratingTag": "Good", "badge": "Best Price", "image": "https://images.unsplash.com/photo-1614070776241-fb47cec38278?w=600&q=80" }
+            {
+                "id": "workshaala",
+                "name": "Workshaala",
+                "locality": "Koramangala",
+                "price": "₹7,999",
+                "rating": 4.8,
+                "ratingTag": "Excellent",
+                "badge": "44% off",
+                "image": "https://images.unsplash.com/photo-1600210492493-0946911123ea?w=600&q=80"
+            },
+            {
+                "id": "incubex",
+                "name": "INCUBEX",
+                "locality": "Koramangala",
+                "price": "₹5,999",
+                "rating": 4.2,
+                "ratingTag": "Good",
+                "badge": "Best Price Guarantee",
+                "image": "https://images.unsplash.com/photo-1556761175-4b46a572b786?w=600&q=80"
+            },
+            {
+                "id": "smart-space",
+                "name": "Smart Space",
+                "locality": "Koramangala",
+                "price": "₹4,999",
+                "rating": 3.9,
+                "ratingTag": "Good",
+                "badge": "34% off",
+                "image": "https://images.unsplash.com/photo-1579487785973-74d2ca7abdd5?w=600&q=80"
+            },
+            {
+                "id": "urban-vault",
+                "name": "Urban Vault",
+                "locality": "Koramangala",
+                "price": "₹5,999",
+                "rating": 4.2,
+                "ratingTag": "Good",
+                "badge": "Best Price Guarantee",
+                "image": "https://images.unsplash.com/photo-1577412647305-991150c7d163?w=600&q=80"
+            },
+            {
+                "id": "indiqube",
+                "name": "Indiqube",
+                "locality": "Koramangala",
+                "price": "₹5,999",
+                "rating": 4.2,
+                "ratingTag": "Good",
+                "badge": "Best Price Guarantee",
+                "image": "https://picsum.photos/seed/corporate-office-space/400/300"
+            },
+            {
+                "id": "the-hive",
+                "name": "The Hive Koramangala",
+                "locality": "Koramangala",
+                "price": "₹6,499",
+                "rating": 4.5,
+                "ratingTag": "Very Good",
+                "badge": "20% off",
+                "image": "https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80"
+            },
+            {
+                "id": "co-labs-kor",
+                "name": "Co.Labs",
+                "locality": "Koramangala",
+                "price": "₹7,200",
+                "rating": 4.6,
+                "ratingTag": "Very Good",
+                "badge": "Best Price",
+                "image": "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=600&q=80"
+            },
+            {
+                "id": "wework-mg",
+                "name": "WeWork MG Road",
+                "locality": "MG Road",
+                "price": "₹12,000",
+                "rating": 4.9,
+                "ratingTag": "Excellent",
+                "badge": "Premium",
+                "image": "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=600&q=80"
+            },
+            {
+                "id": "regus-mg",
+                "name": "Regus MG Road",
+                "locality": "MG Road",
+                "price": "₹9,500",
+                "rating": 4.4,
+                "ratingTag": "Very Good",
+                "badge": "15% off",
+                "image": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&q=80"
+            },
+            {
+                "id": "innov8-mg",
+                "name": "Innov8",
+                "locality": "MG Road",
+                "price": "₹8,999",
+                "rating": 4.7,
+                "ratingTag": "Excellent",
+                "badge": "Popular",
+                "image": "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=600&q=80"
+            },
+            {
+                "id": "seatspace-hsr",
+                "name": "SeatSpace HSR",
+                "locality": "HSR",
+                "price": "₹5,500",
+                "rating": 4.3,
+                "ratingTag": "Very Good",
+                "badge": "25% off",
+                "image": "https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?w=600&q=80"
+            },
+            {
+                "id": "collab-indira",
+                "name": "Collab House",
+                "locality": "Indiranagar",
+                "price": "₹6,800",
+                "rating": 4.5,
+                "ratingTag": "Very Good",
+                "badge": "Best Price",
+                "image": "https://images.unsplash.com/photo-1531973576160-7125cd663d86?w=600&q=80"
+            },
+            {
+                "id": "spacehub-indira",
+                "name": "SpaceHub",
+                "locality": "Indiranagar",
+                "price": "₹7,400",
+                "rating": 4.1,
+                "ratingTag": "Good",
+                "badge": "New",
+                "image": "https://images.unsplash.com/photo-1605797491749-0c6989a44356?w=600&q=80"
+            },
+            {
+                "id": "worknest-hebbal",
+                "name": "WorkNest Hebbal",
+                "locality": "Hebbal",
+                "price": "₹6,200",
+                "rating": 4.4,
+                "ratingTag": "Very Good",
+                "badge": "30% off",
+                "image": "https://images.unsplash.com/photo-1601762429744-46fe92ccd903?w=600&q=80"
+            },
+            {
+                "id": "desklab-hebbal",
+                "name": "DeskLab",
+                "locality": "Hebbal",
+                "price": "₹5,800",
+                "rating": 4.0,
+                "ratingTag": "Good",
+                "badge": "Best Price",
+                "image": "https://images.unsplash.com/photo-1614070776241-fb47cec38278?w=600&q=80"
+            }
         ],
         "exploreLocations": [
-            { "name": "Coworking Space in HSR Layout", "image": "https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?w=400&q=80" },
-            { "name": "Coworking Space in Koramangala", "image": "https://images.unsplash.com/photo-1531973576160-7125cd663d86?w=400&q=80" },
-            { "name": "Coworking Space in MG Road", "image": "https://images.unsplash.com/photo-1605797491749-0c6989a44356?w=400&q=80" },
-            { "name": "Coworking Space in Indiranagar", "image": "https://images.unsplash.com/photo-1601762429744-46fe92ccd903?w=400&q=80" },
-            { "name": "Coworking Space in Whitefield", "image": "https://images.unsplash.com/photo-1614070776241-fb47cec38278?w=400&q=80" },
-            { "name": "Coworking Space in Sanjay Nagar", "image": "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=400&q=80" },
-            { "name": "Coworking Space in Electronic City", "image": "https://images.unsplash.com/photo-1589834390005-5d4fb9bf3d32?w=400&q=80" },
-            { "name": "Coworking Space in JP Nagar", "image": "https://images.unsplash.com/photo-1559209537-dafe2fe2886b?w=400&q=80" },
-            { "name": "Coworking Space in Jayanagar", "image": "https://images.unsplash.com/photo-1541746972996-4e0b0f43e02a?w=400&q=80" },
-            { "name": "Coworking Space in Hebbal", "image": "https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=400&q=80" }
+            {
+                "name": "Coworking Space in HSR Layout",
+                "image": "https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?w=400&q=80"
+            },
+            {
+                "name": "Coworking Space in Koramangala",
+                "image": "https://images.unsplash.com/photo-1531973576160-7125cd663d86?w=400&q=80"
+            },
+            {
+                "name": "Coworking Space in MG Road",
+                "image": "https://images.unsplash.com/photo-1605797491749-0c6989a44356?w=400&q=80"
+            },
+            {
+                "name": "Coworking Space in Indiranagar",
+                "image": "https://images.unsplash.com/photo-1601762429744-46fe92ccd903?w=400&q=80"
+            },
+            {
+                "name": "Coworking Space in Whitefield",
+                "image": "https://images.unsplash.com/photo-1614070776241-fb47cec38278?w=400&q=80"
+            },
+            {
+                "name": "Coworking Space in Sanjay Nagar",
+                "image": "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=400&q=80"
+            },
+            {
+                "name": "Coworking Space in Electronic City",
+                "image": "https://images.unsplash.com/photo-1589834390005-5d4fb9bf3d32?w=400&q=80"
+            },
+            {
+                "name": "Coworking Space in JP Nagar",
+                "image": "https://images.unsplash.com/photo-1559209537-dafe2fe2886b?w=400&q=80"
+            },
+            {
+                "name": "Coworking Space in Jayanagar",
+                "image": "https://images.unsplash.com/photo-1541746972996-4e0b0f43e02a?w=400&q=80"
+            },
+            {
+                "name": "Coworking Space in Hebbal",
+                "image": "https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=400&q=80"
+            }
         ]
     }
 ]
