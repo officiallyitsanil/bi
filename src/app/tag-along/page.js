@@ -229,11 +229,11 @@ export default function Page() {
               ))}
             </Swiper>
 
-            <button className="sold-prev absolute -left-4 md:-left-12 top-1/2 -translate-y-1/2 z-10 border rounded-full p-2 bg-white shadow-md hover:bg-gray-100 transition-colors hidden md:block">
-              <ChevronLeft className="w-6 h-6 text-gray-700" />
+            <button className="sold-prev absolute -left-2 md:-left-12 top-1/2 -translate-y-1/2 z-10 border rounded-full p-1.5 md:p-2 bg-white shadow-md hover:bg-gray-100 transition-colors flex items-center justify-center">
+              <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-gray-700" />
             </button>
-            <button className="sold-next absolute -right-4 md:-right-12 top-1/2 -translate-y-1/2 z-10 border rounded-full p-2 bg-white shadow-md hover:bg-gray-100 transition-colors hidden md:block">
-              <ChevronRight className="w-6 h-6 text-gray-700" />
+            <button className="sold-next absolute -right-2 md:-right-12 top-1/2 -translate-y-1/2 z-10 border rounded-full p-1.5 md:p-2 bg-white shadow-md hover:bg-gray-100 transition-colors flex items-center justify-center">
+              <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-gray-700" />
             </button>
           </div>
         </section>
@@ -292,11 +292,11 @@ export default function Page() {
               </Swiper>
             </div>
 
-            <button className="testimonial-prev absolute -left-4 md:-left-12 top-1/2 -translate-y-1/2 z-10 border rounded-full p-2 bg-white shadow-md hover:bg-gray-100 transition-colors hidden md:block">
-              <ChevronLeft className="w-6 h-6 text-gray-700" />
+            <button className="testimonial-prev absolute -left-2 md:-left-12 top-1/2 -translate-y-1/2 z-10 border rounded-full p-1.5 md:p-2 bg-white shadow-md hover:bg-gray-100 transition-colors flex items-center justify-center">
+              <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-gray-700" />
             </button>
-            <button className="testimonial-next absolute -right-4 md:-right-12 top-1/2 -translate-y-1/2 z-10 border rounded-full p-2 bg-white shadow-md hover:bg-gray-100 transition-colors hidden md:block">
-              <ChevronRight className="w-6 h-6 text-gray-700" />
+            <button className="testimonial-next absolute -right-2 md:-right-12 top-1/2 -translate-y-1/2 z-10 border rounded-full p-1.5 md:p-2 bg-white shadow-md hover:bg-gray-100 transition-colors flex items-center justify-center">
+              <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-gray-700" />
             </button>
           </div>
         </section>
@@ -343,11 +343,11 @@ export default function Page() {
               ))}
             </Swiper>
 
-            <button className="available-prev absolute -left-4 top-1/2 -translate-y-1/2 z-10 p-2 bg-white border rounded-full shadow-md hover:bg-gray-100 transition-colors hidden md:block">
-              <ChevronLeft className="w-6 h-6 text-gray-700" />
+            <button className="available-prev absolute -left-2 md:-left-4 top-1/2 -translate-y-1/2 z-10 border rounded-full p-1.5 md:p-2 bg-white shadow-md hover:bg-gray-100 transition-colors flex items-center justify-center">
+              <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-gray-700" />
             </button>
-            <button className="available-next absolute -right-4 top-1/2 -translate-y-1/2 z-10 p-2 bg-white border rounded-full shadow-md hover:bg-gray-100 transition-colors hidden md:block">
-              <ChevronRight className="w-6 h-6 text-gray-700" />
+            <button className="available-next absolute -right-2 md:-right-4 top-1/2 -translate-y-1/2 z-10 border rounded-full p-1.5 md:p-2 bg-white shadow-md hover:bg-gray-100 transition-colors flex items-center justify-center">
+              <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-gray-700" />
             </button>
           </div>
         </section>

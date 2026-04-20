@@ -95,7 +95,7 @@ export default function MenuSideBar({ onClose }) {
                                 </div>
                                 <div className="min-w-0">
                                     <p className={`font-bold text-xs leading-tight ${isDark ? "text-white" : "text-[#212121]"}`}>Hello 👋</p>
-                                    <ul className={`mt-1 space-y-0.5 text-[11px] max-[435px]:hidden ${isDark ? "text-gray-400" : "text-[#616161]"}`}>
+                                    <ul className={`mt-1 space-y-0.5 text-[11px] ${isDark ? "text-gray-400" : "text-[#616161]"}`}>
                                         <li className="flex items-center gap-1">
                                             <Check className="w-3 h-3 flex-shrink-0 text-green-500" strokeWidth={2.5} />
                                             <span>Easy Contact with sellers</span>
@@ -169,7 +169,7 @@ export default function MenuSideBar({ onClose }) {
                         </div>
 
                         {/* Tag Along - inside scrollable */}
-                        <div className="px-3 pb-3 max-[435px]:hidden">
+                        <div className="px-3 pb-3">
                             <Link onClick={handleClose} href="/tag-along" className="block">
                                 <div
                                     className={`rounded-lg p-2 flex items-center gap-2 min-h-[64px] shadow-[0_1px_2px_rgba(0,0,0,0.06)] ${isDark ? "bg-[#282c34]" : ""}`}
@@ -194,7 +194,7 @@ export default function MenuSideBar({ onClose }) {
                         </div>
 
                         {/* Download Builderinfo App - inside scrollable */}
-                        <div className="px-3 pb-8 max-[525px]:pb-10 max-[435px]:hidden">
+                        <div className="px-3 pb-8 max-[525px]:pb-10">
                             <div className={`rounded-lg overflow-hidden w-full shadow-[0_1px_2px_rgba(0,0,0,0.06)] ${isDark ? "bg-[#282c34]" : "bg-white"}`}>
                                 <Image
                                     src="/drawer-banner.png"
@@ -209,7 +209,7 @@ export default function MenuSideBar({ onClose }) {
                     </div>
 
                     {/* 3. Bottom - FIXED, not scrollable: Legal + Follow on */}
-                    <div className={`flex-shrink-0 px-3 pb-3 pt-1 mt-auto ${isDark ? "bg-[#1f2229]" : "bg-white"}`}>
+                    <div className={`flex-shrink-0 px-3 pb-16 md:pb-3 pt-1 mt-auto ${isDark ? "bg-[#1f2229]" : "bg-white"}`}>
                         <div className="space-y-0">
                             <Link
                                 onClick={handleClose}

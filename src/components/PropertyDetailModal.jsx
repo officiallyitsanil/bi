@@ -587,7 +587,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                             unoptimized
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                        
+
                         {/* Top Left Close Button */}
                         <button onClick={onClose} className="absolute top-5 left-5 w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/20 text-white z-10 shadow-lg">
                             <X className="w-5 h-5" />
@@ -624,8 +624,8 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                     <div className="mt-4 px-4">
                         <div className="flex gap-2 overflow-x-auto scrollbar-hide py-1">
                             {images.map((img, i) => (
-                                <div 
-                                    key={i} 
+                                <div
+                                    key={i}
                                     onClick={() => setMobileSwiperIndex(i)}
                                     className={`shrink-0 w-16 h-16 rounded-2xl overflow-hidden border-2 transition-all ${i === mobileSwiperIndex ? 'border-blue-500 p-0.5 scale-105 shadow-md' : 'border-transparent opacity-60'}`}
                                 >
@@ -658,14 +658,14 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                             <div className="h-4 w-px bg-gray-200 dark:bg-gray-700"></div>
                             <div className="flex items-center gap-2">
                                 <div className={`p-1.5 rounded-lg ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-white text-gray-400'}`}>
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/></svg>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /></svg>
                                 </div>
                                 <span className={`text-[12px] font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{safeDisplay(property.bathroom, '2')} Bathroom</span>
                             </div>
                             <div className="h-4 w-px bg-gray-200 dark:bg-gray-700"></div>
                             <div className="flex items-center gap-2">
                                 <div className={`p-1.5 rounded-lg ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-white text-gray-400'}`}>
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 3v18" /></svg>
                                 </div>
                                 <span className={`text-[12px] font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{safeNumber(property.propertySize || property.carpetArea)}m2</span>
                             </div>
@@ -696,12 +696,12 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                         <div className="flex items-center gap-4">
                             <div className="relative">
                                 <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-green-500 p-0.5">
-                                    <Image 
-                                        src={property.agentDetails?.profileImage || property.agentDetails?.image || "https://i.pravatar.cc/150?u=alexa"} 
-                                        alt="agent" 
-                                        width={56} 
-                                        height={56} 
-                                        className="w-full h-full rounded-full object-cover" 
+                                    <Image
+                                        src={property.agentDetails?.profileImage || property.agentDetails?.image || "https://i.pravatar.cc/150?u=alexa"}
+                                        alt="agent"
+                                        width={56}
+                                        height={56}
+                                        className="w-full h-full rounded-full object-cover"
                                     />
                                 </div>
                                 <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
@@ -725,7 +725,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                     <div className="mx-4 mt-4 grid grid-cols-3 gap-3">
                         <div className={`p-5 rounded-[2rem] flex flex-col items-center text-center transition-colors ${isDark ? 'bg-[#1A1D23]' : 'bg-[#EBF7FF]'}`}>
                             <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-2">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
                             </div>
                             <span className={`text-[13px] font-bold ${isDark ? 'text-white' : 'text-[#2D3142]'}`}>7 Year</span>
                             <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>Experience</span>
