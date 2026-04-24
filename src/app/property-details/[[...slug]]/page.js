@@ -333,6 +333,7 @@ function PropertyDetailsContent() {
     const [travelLoading, setTravelLoading] = useState(false);
     const [travelError, setTravelError] = useState("");
     const [visibleCount, setVisibleCount] = useState(9);
+    const [showMobileActions, setShowMobileActions] = useState(false);
     const thumbStripRef = useRef(null);
 
     const handleSliderNavClick = (e, isPrev) => {
@@ -1044,6 +1045,7 @@ function PropertyDetailsContent() {
     };
 
     const handlePhoneClick = (e, phone) => {
+        console.log("Phone is : ",phone);
         if (e) e.preventDefault();
         if (!phone) return;
         const num = String(phone).replace(/[^0-9+]/g, '');
@@ -1053,7 +1055,7 @@ function PropertyDetailsContent() {
         if (isMobile) {
             window.location.href = telUrl;
         } else {
-            navigator.clipboard.writeText('+' + fullNum).then(() => {
+            navigator.clipboard.writeText(fullNum).then(() => {
                 alert('Phone number copied to clipboard! Paste in your phone or a calling app (Skype, Teams, etc.) to call.');
             }).catch(() => {
                 window.location.href = telUrl;
@@ -1453,37 +1455,56 @@ function PropertyDetailsContent() {
                 <div id="info" className="md:pt-0 mb-6 w-full min-w-0">
                     <div className="flex flex-col md:flex-row justify-between items-start gap-6 md:gap-4">
                         <div className="flex-1 min-w-0">
-                            <div className="flex flex-col gap-3 w-full md:w-fit">
-                                {/* Title and Rating Row */}
-                                <div className="flex flex-row items-center justify-between w-full gap-3 sm:gap-5">
-                                    <h1 className={`text-3xl sm:text-4xl md:text-5xl lg:text-[2.8rem] leading-[1.1] font-bold tracking-tight ${isDark ? 'text-white' : 'text-black'}`}>{safeDisplay(property.propertyName || property.name)}</h1>
-                                    <div className="inline-flex items-center rounded-full px-2 py-1 sm:px-3 sm:py-2 text-sm sm:text-lg font-bold bg-[#fff4e5] text-[#f97316] shrink-0">
-                                        <Star className="h-4 w-4 sm:h-6 sm:w-6 mr-1 sm:mr-1.5 fill-current" />
-                                        {safeDisplay(property.ratings?.overall)}
+                            <div className="flex gap-7 items-center">
+                                <div className="flex flex-col gap-3 w-full md:w-fit">
+                                    {/* Title and Rating Row */}
+                                    <div className="flex flex-row items-center justify-between w-full gap-3 sm:gap-5">
+                                        <h1 className={`text-3xl sm:text-4xl md:text-5xl lg:text-[2.8rem] leading-[1.1] font-bold tracking-tight ${isDark ? 'text-white' : 'text-black'}`}>{safeDisplay(property.propertyName || property.name)}</h1>
+                                        <div className="inline-flex items-center rounded-full px-2 py-1 sm:px-3 sm:py-2 text-sm sm:text-lg font-bold bg-[#fff4e5] text-[#f97316] shrink-0">
+                                            <Star className="h-4 w-4 sm:h-6 sm:w-6 mr-1 sm:mr-1.5 fill-current" />
+                                            {safeDisplay(property.ratings?.overall)}
+                                        </div>
                                     </div>
-                                </div>
 
-                                {/* Location and Verification Row */}
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-4 sm:gap-5">
-                                    <div className="flex items-center gap-3 sm:gap-4">
-                                        <div className={`flex items-center justify-center w-10 h-10 sm:w-13 sm:h-13 rounded-lg sm:rounded-xl border shrink-0 ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-[#e4e4e7] border-gray-100'}`}>
-                                            <MapPin className="h-6 w-6 sm:h-8 sm:w-8 text-[#f97316] fill-[#f97316]/20" />
+                                    {/* Location and Verification Row */}
+                                    <div className="flex sm:flex-row sm:items-center justify-between w-full gap-4 sm:gap-5">
+                                        <div className="flex items-center gap-3 sm:gap-4">
+                                            <div className={`flex items-center justify-center w-10 h-10 sm:w-13 sm:h-13 rounded-lg sm:rounded-xl border shrink-0 ${isDark ? 'bg-[#1f2229] border-gray-700' : 'bg-[#e4e4e7] border-gray-100'}`}>
+                                                <MapPin className="h-6 w-6 sm:h-8 sm:w-8 text-[#f97316] fill-[#f97316]/20" />
+                                            </div>
+                                            <div className="flex flex-col justify-center">
+                                                <p className={`text-sm sm:text-xl leading-tight ${isDark ? 'text-gray-400' : 'text-gray-700'}`}>in {safeDisplay(property.displayAddress || property.addressDisplay || property.location)}</p>
+                                                <button type="button" onClick={openGoogleMaps} className="text-[#f97316] text-sm sm:text-xl font-semibold hover:underline text-left mt-0.5">View on Map</button>
+                                            </div>
                                         </div>
-                                        <div className="flex flex-col justify-center">
-                                            <p className={`text-sm sm:text-xl leading-tight ${isDark ? 'text-gray-400' : 'text-gray-700'}`}>in {safeDisplay(property.displayAddress || property.addressDisplay || property.location)}</p>
-                                            <button type="button" onClick={openGoogleMaps} className="text-[#f97316] text-sm sm:text-xl font-semibold hover:underline text-left mt-0.5">View on Map</button>
+                                        {/* Verified tick */}
+                                        <div className="flex items-center justify-start sm:justify-center shrink-0">
+                                            <Image src="/property-details/verfication-badge.svg" alt="Verified" width={28} height={28} className="sm:w-[36px] sm:h-[36px] object-contain" unoptimized />
                                         </div>
-                                    </div>
-                                    {/* Verified tick */}
-                                    <div className="flex items-center justify-start sm:justify-center shrink-0">
-                                        <Image src="/property-details/verfication-badge.svg" alt="Verified" width={28} height={28} className="sm:w-[36px] sm:h-[36px] object-contain" unoptimized />
                                     </div>
                                 </div>
+                                <button
+                                    onClick={() => setShowMobileActions(!showMobileActions)}
+                                    className="md:hidden shrink-0"
+                                >
+                                    <Image
+                                        alt="Arrow_Down"
+                                        src="/property-details/arrow_down.png"
+                                        width={40}
+                                        height={40}
+                                        className={`transition-transform rounded-full ${showMobileActions ? "rotate-180" : ""
+                                            }`}
+                                    />
+                                </button>
                             </div>
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex shrink-0 items-center gap-4 md:gap-8 mt-2 md:mt-4">
+                        <div
+  className={`${
+    showMobileActions ? "flex" : "hidden"
+  } md:flex shrink-0 items-center gap-4 md:gap-8 mt-2 md:mt-4`}
+>
                             <button type="button" onClick={handleLike} className={`flex items-center justify-center h-13 w-13 rounded-full transition aria-label="Save" ${isDark ? 'bg-gray-800 text-white hover:bg-gray-700' : 'bg-[#f4f4f5] text-gray-700 hover:bg-[#e4e4e7]'}`}>
                                 <Heart className={`h-[1.2rem] w-[1.2rem] ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
                             </button>
@@ -1629,7 +1650,7 @@ function PropertyDetailsContent() {
                                                 /** Dynamic cells: based on measured width, if more than visibleCount images, visibleCount-1 thumbs + "Show all" */
                                                 const cellClass =
                                                     "relative m-0 h-20 flex-1 shrink-0 cursor-pointer overflow-hidden rounded-xl border border-gray-200 min-w-0";
-                                                
+
                                                 if (total <= visibleCount) {
                                                     return images.map((img, i) => (
                                                         <div key={i} className={cellClass} onClick={() => setCurrentImageIndex(i)}>
@@ -1674,7 +1695,7 @@ function PropertyDetailsContent() {
                                                 <span className={`text-xs sm:text-[13.5px] ${isDark ? 'text-gray-400' : 'text-gray-900'}`}>
                                                     Quoted price{isNegotiablePrice ? " (negotiable)" : ""}
                                                 </span>
- 
+
                                                 <span className={`text-xl sm:text-[24px] font-bold tracking-tight ${isDark ? 'text-emerald-400' : 'text-[#17592f]'}`}>
                                                     {safeDisplay(discountedPricePerSeat ?? discountedPrice)}
                                                 </span>
@@ -1826,16 +1847,29 @@ function PropertyDetailsContent() {
                                                     key={`${name}-${i}`}
                                                     className="flex w-full max-w-[9rem] flex-col items-center justify-start text-center md:max-w-none"
                                                 >
-                                                    <div className="flex h-12 w-12 items-center justify-center md:h-14 md:w-14">
+                                                    {/* Circle Background Like Below Section */}
+                                                    <div
+                                                        className={`flex items-center justify-center h-16 w-16 rounded-full transition-all ${isDark
+                                                                ? "bg-white shadow-none"
+                                                                : "bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
+                                                            }`}
+                                                    >
                                                         <img
                                                             src={iconSrc}
                                                             alt={name}
-                                                            className="h-10 w-10 object-contain opacity-95 dark:opacity-100"
-                                                            width={40}
-                                                            height={40}
+                                                            className={`object-contain ${isDark
+                                                                    ? "h-8 w-8"
+                                                                    : "h-8 w-8"
+                                                                }`}
+                                                            width={32}
+                                                            height={32}
                                                         />
                                                     </div>
-                                                    <p className={`mt-2.5 text-center text-sm font-bold leading-tight ${isDark ? 'text-gray-200' : 'text-gray-900'} md:text-base`}>
+
+                                                    <p
+                                                        className={`mt-3 text-center text-sm font-semibold leading-tight ${isDark ? "text-gray-200" : "text-gray-900"
+                                                            } md:text-base`}
+                                                    >
                                                         {name}
                                                     </p>
                                                 </div>
@@ -1858,7 +1892,7 @@ function PropertyDetailsContent() {
                                             const iconSrc = mapAmenityToObject(name)?.image || DEFAULT_AMENITY_ICON;
                                             return (
                                                 <div key={`${name}-${i}`} className="flex flex-col items-center text-center gap-2">
-                                                    <div className={`flex items-center justify-center h-16 w-16 rounded-full transition-shadow ${isDark ? 'bg-[#282c34] shadow-none' : 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'}`}>
+                                                    <div className={`flex items-center justify-center h-16 w-16 bg-white rounded-full transition-shadow ${isDark ? 'bg-[#282c34] shadow-none' : ' shadow-[0_4px_12px_rgba(0,0,0,0.08)]'}`}>
                                                         <img src={iconSrc} alt={name} className="h-8 w-8 text-primary object-contain" />
                                                     </div>
                                                     <p className={`text-xs font-medium truncate w-full ${isDark ? 'text-gray-400' : 'text-muted-foreground'}`}>{name}</p>
@@ -2171,7 +2205,7 @@ function PropertyDetailsContent() {
                                                 </h3>
 
                                                 <div className="mt-3 flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between">
-                                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                    <div className="flex items-center md:gap-2 gap-3 flex-1 min-w-0">
                                                         <div className="relative h-[44px] w-[36px] shrink-0 overflow-hidden bg-gray-100 dark:bg-gray-800 border-none rounded-[2px]">
                                                             {agentImage ? (
                                                                 <img src={agentImage} alt={agentName} className="h-full w-full object-cover object-top" />
@@ -2182,7 +2216,7 @@ function PropertyDetailsContent() {
                                                             )}
                                                         </div>
                                                         <div className="flex flex-col min-w-0 flex-1 h-[44px] justify-between py-0.5">
-                                                            <p className={`text-[11px] leading-none ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                                                            <p className={`text-[clamp(8px,0.8vw,11px)] leading-none ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                                                                 Say Hi To <span className="font-bold">{agentName}</span>
                                                             </p>
                                                             <div className="flex items-center gap-1.5 flex-wrap w-full leading-none">
@@ -2190,22 +2224,22 @@ function PropertyDetailsContent() {
                                                                     <a
                                                                         href={`tel:${agentPhone.replace(/[^0-9+]/g, "")}`}
                                                                         onClick={(e) => handlePhoneClick(e, agentPhone)}
-                                                                        className="text-[10px] text-gray-900 dark:text-gray-300 tracking-wide hover:underline"
+                                                                        className="text-[clamp(7px,0.7vw,10px)] text-gray-900 dark:text-gray-300 tracking-wide hover:underline"
                                                                     >
                                                                         {maskedPhone}
                                                                     </a>
                                                                 )}
                                                             </div>
                                                             <div>
-                                                                <span className="inline-flex items-center rounded-md border border-[#86cfa2] bg-[#f0f9f3] px-1 py-0 text-[8px] font-bold text-[#1f8c4c] dark:bg-[#1a8e48]/10 dark:border-[#1a8e48]/40 dark:text-[#4ade80]">
+                                                                <span className="inline-flex items-center rounded-md border border-[#86cfa2] bg-[#f0f9f3] px-1 py-0 text-[clamp(6px,0.6vw,8px)] font-bold text-[#1f8c4c] dark:bg-[#1a8e48]/10 dark:border-[#1a8e48]/40 dark:text-[#4ade80]">
                                                                     {agentTag}
                                                                 </span>
                                                             </div>
                                                         </div>
                                                     </div>
 
-                                                    <div className="shrink-0 w-full md:w-auto mt-3 md:mt-0 flex items-center gap-2">
-                                                        <div className="flex items-center gap-3 px-1">
+                                                    <div className="shrink-0 w-full md:w-auto mt-3 md:mt-0 flex items-center gap-[clamp(2px,0.4vw,8px)]">
+                                                        <div className="flex items-center gap-[clamp(2px,0.4vw,8px)] px-1">
                                                             {agentPhone && (
                                                                 <a
                                                                     href={`tel:${agentPhone.replace(/[^0-9+]/g, "")}`}
@@ -2213,7 +2247,7 @@ function PropertyDetailsContent() {
                                                                     className="inline-flex shrink-0 hover:opacity-80 transition-opacity"
                                                                     title="Call"
                                                                 >
-                                                                    <img src="/property-details/agent-social/call.png" alt="Call" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
+                                                                    <img src="/property-details/agent-social/call.png" alt="Call" className="w-[clamp(8px,1vw,22px)] h-[clamp(8px,1vw,22px)] object-contain drop-shadow-sm" />
                                                                 </a>
                                                             )}
                                                             {agentEmail && (
@@ -2223,7 +2257,7 @@ function PropertyDetailsContent() {
                                                                     className="inline-flex shrink-0 hover:opacity-80 transition-opacity"
                                                                     title="Message"
                                                                 >
-                                                                    <img src="/property-details/agent-social/message.png" alt="Message" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
+                                                                    <img src="/property-details/agent-social/message.png" alt="Message" className="w-[clamp(8px,1vw,22px)] h-[clamp(8px,1vw,22px)] object-contain drop-shadow-sm" />
                                                                 </a>
                                                             )}
                                                             {(property.agentDetails?.whatsapp || agentPhone) && (
@@ -2234,14 +2268,14 @@ function PropertyDetailsContent() {
                                                                     className="inline-flex shrink-0 hover:opacity-80 transition-opacity"
                                                                     title="WhatsApp"
                                                                 >
-                                                                    <img src="/property-details/agent-social/whatsapp.png" alt="WhatsApp" className="h-[20px] w-[20px] object-contain drop-shadow-sm" />
+                                                                    <img src="/property-details/agent-social/whatsapp.png" alt="WhatsApp" className="w-[clamp(8px,1vw,22px)] h-[clamp(8px,1vw,22px)] object-contain drop-shadow-sm" />
                                                                 </a>
                                                             )}
                                                         </div>
                                                         <button
                                                             type="button"
                                                             onClick={(e) => agentPhone && handlePhoneClick(e, agentPhone)}
-                                                            className="inline-flex h-9 items-center justify-center rounded-lg border border-[#a4ecbe] bg-[#f1fdf5] px-5 text-sm font-bold text-[#208346] hover:bg-[#e6fceb] dark:bg-[#1f5431] dark:border-[#2d7644] dark:text-white dark:hover:bg-[#1b482a] transition-colors shadow-sm"
+                                                            className="inline-flex h-[clamp(24px,2vw,36px)] px-[clamp(2px,0.4vw,10px)] text-[clamp(10px,0.8vw,14px)] items-center justify-center rounded-lg border border-[#a4ecbe] bg-[#f1fdf5] font-bold text-[#208346] hover:bg-[#e6fceb] dark:bg-[#1f5431] dark:border-[#2d7644] dark:text-white dark:hover:bg-[#1b482a] transition-colors shadow-sm"
                                                         >
                                                             Contact {(agentName && agentName.split(" ")[0]) || agentName || "Agent"}
                                                         </button>
@@ -2499,19 +2533,32 @@ function PropertyDetailsContent() {
                                     <div>
                                         <input
                                             name="name"
-                                            className={`tour-field transition-all ${tourFormErrors.name ? 'border-red-500' : (isDark ? '!bg-gray-800 !text-white !border-gray-700' : '')}`}
+                                            className={`tour-field placeholder:transition-all ${tourFormErrors.name
+                                                    ? "border-red-500"
+                                                    : isDark
+                                                        ? "!bg-gray-800 !text-white !border-gray-700 placeholder:!text-gray-300"
+                                                        : ""
+                                                }`}
                                             placeholder="Name"
                                             value={tourFormData.name}
-                                            onChange={(e) => { setTourFormData((p) => ({ ...p, name: e.target.value })); setTourFormErrors((p) => ({ ...p, name: '' })); }}
-                                            style={isDark ? { color: '#fff' } : {}}
+                                            onChange={(e) => {
+                                                setTourFormData((p) => ({ ...p, name: e.target.value }));
+                                                setTourFormErrors((p) => ({ ...p, name: "" }));
+                                            }}
+                                            style={isDark ? { color: "#fff" } : {}}
                                         />
-                                        {tourFormErrors.name && <p className="text-[10px] text-red-500 -mt-2 mb-2 w-[85%] mx-auto pl-1">{tourFormErrors.name}</p>}
+
+                                        {tourFormErrors.name && (
+                                            <p className="text-[10px] text-red-500 -mt-2 mb-2 w-[85%] mx-auto pl-1">
+                                                {tourFormErrors.name}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div>
                                         <input
                                             name="phone"
-                                            className={`tour-field transition-all ${tourFormErrors.phone ? 'border-red-500' : (isDark ? '!bg-gray-800 !text-white !border-gray-700' : '')}`}
+                                            className={`tour-field transition-all ${tourFormErrors.phone ? 'border-red-500' : (isDark ? '!bg-gray-800 !text-white !border-gray-700 placeholder:!text-gray-300' : '')}`}
                                             placeholder="Phone"
                                             value={tourFormData.phone}
                                             onChange={(e) => { setTourFormData((p) => ({ ...p, phone: e.target.value })); setTourFormErrors((p) => ({ ...p, phone: '' })); }}
@@ -2523,7 +2570,7 @@ function PropertyDetailsContent() {
                                     <div>
                                         <input
                                             name="email"
-                                            className={`tour-field transition-all ${tourFormErrors.email ? 'border-red-500' : (isDark ? '!bg-gray-800 !text-white !border-gray-700' : '')}`}
+                                            className={`tour-field transition-all ${tourFormErrors.email ? 'border-red-500' : (isDark ? '!bg-gray-800 !text-white !border-gray-700 placeholder:!text-gray-300' : '')}`}
                                             placeholder="Email"
                                             type="email"
                                             value={tourFormData.email}
@@ -2534,7 +2581,7 @@ function PropertyDetailsContent() {
                                     </div>
 
                                     <textarea
-                                        className={`tour-field min-h-[100px] resize-none transition-colors ${isDark ? '!bg-gray-800 !text-white !border-gray-700 placeholder:text-gray-500' : ''}`}
+                                        className={`tour-field min-h-[100px] resize-none transition-colors ${isDark ? '!bg-gray-800 !text-white !border-gray-700 placeholder:!text-gray-300' : ''}`}
                                         placeholder="Enter your Message"
                                         value={tourFormData.message}
                                         onChange={(e) => setTourFormData((p) => ({ ...p, message: e.target.value }))}
