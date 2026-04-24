@@ -65,29 +65,33 @@ export default function Footer() {
                         <span className="text-[0.6rem] font-medium">Map-View</span>
                     </Link>
 
-                    <Link href="/commercial" className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors duration-200 ${pathName === '/commercial'
-                            ? isDark ? 'text-blue-400 font-medium' : 'text-blue-600 font-medium'
-                            : isDark ? 'text-gray-500' : 'text-gray-400'
-                        }`}>
-                        <Building2 className={`w-5 h-5 mb-0.5 ${pathName === '/commercial' ? (isDark ? 'text-blue-400' : 'text-blue-600') : (isDark ? 'text-gray-500' : 'text-gray-400')}`} />
-                        <span className="text-[0.6rem] font-medium">Commercial</span>
-                    </Link>
+                    {globalConfig.isFullNavVisible && (
+                        <>
+                            <Link href="/commercial" className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors duration-200 ${pathName === '/commercial'
+                                    ? isDark ? 'text-blue-400 font-medium' : 'text-blue-600 font-medium'
+                                    : isDark ? 'text-gray-500' : 'text-gray-400'
+                                }`}>
+                                <Building2 className={`w-5 h-5 mb-0.5 ${pathName === '/commercial' ? (isDark ? 'text-blue-400' : 'text-blue-600') : (isDark ? 'text-gray-500' : 'text-gray-400')}`} />
+                                <span className="text-[0.6rem] font-medium">Commercial</span>
+                            </Link>
 
-                    <Link href="/residential" className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors duration-200 ${pathName === '/residential'
-                            ? isDark ? 'text-blue-400 font-medium' : 'text-blue-600 font-medium'
-                            : isDark ? 'text-gray-500' : 'text-gray-400'
-                        }`}>
-                        <Home className={`w-5 h-5 mb-0.5 ${pathName === '/residential' ? (isDark ? 'text-blue-400' : 'text-blue-600') : (isDark ? 'text-gray-500' : 'text-gray-400')}`} />
-                        <span className="text-[0.6rem] font-medium">Residential</span>
-                    </Link>
+                            <Link href="/residential" className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors duration-200 ${pathName === '/residential'
+                                    ? isDark ? 'text-blue-400 font-medium' : 'text-blue-600 font-medium'
+                                    : isDark ? 'text-gray-500' : 'text-gray-400'
+                                }`}>
+                                <Home className={`w-5 h-5 mb-0.5 ${pathName === '/residential' ? (isDark ? 'text-blue-400' : 'text-blue-600') : (isDark ? 'text-gray-500' : 'text-gray-400')}`} />
+                                <span className="text-[0.6rem] font-medium">Residential</span>
+                            </Link>
 
-                    <Link href="/builders" className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors duration-200 ${pathName === '/builders'
-                            ? isDark ? 'text-blue-400 font-medium' : 'text-blue-600 font-medium'
-                            : isDark ? 'text-gray-500' : 'text-gray-400'
-                        }`}>
-                        <Crown className={`w-5 h-5 mb-0.5 ${pathName === '/builders' ? (isDark ? 'text-blue-400' : 'text-blue-600') : (isDark ? 'text-gray-500' : 'text-gray-400')}`} />
-                        <span className="text-[0.6rem] font-medium">Builders</span>
-                    </Link>
+                            <Link href="/builders" className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors duration-200 ${pathName === '/builders'
+                                    ? isDark ? 'text-blue-400 font-medium' : 'text-blue-600 font-medium'
+                                    : isDark ? 'text-gray-500' : 'text-gray-400'
+                                }`}>
+                                <Crown className={`w-5 h-5 mb-0.5 ${pathName === '/builders' ? (isDark ? 'text-blue-400' : 'text-blue-600') : (isDark ? 'text-gray-500' : 'text-gray-400')}`} />
+                                <span className="text-[0.6rem] font-medium">Builders</span>
+                            </Link>
+                        </>
+                    )}
                 </div>
             </footer>
 
