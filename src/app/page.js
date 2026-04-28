@@ -100,7 +100,6 @@ export default function HomePage() {
   const [citySearchQuery, setCitySearchQuery] = useState('');
   const [showLayerMenu, setShowLayerMenu] = useState(false);
   const [showAddPropertyModal, setShowAddPropertyModal] = useState(false);
-  const [showLayersDeclarationModal, setShowLayersDeclarationModal] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [detectedUserLocation, setDetectedUserLocation] = useState(null); // { lat, lng } when user detects location
   const [zoomingCityName, setZoomingCityName] = useState(null); // Show "Zooming on {city}" overlay
@@ -3518,15 +3517,9 @@ export default function HomePage() {
                 )}
               </button>
 
-              {/* Layers Button - first declaration modal, then layer menu on Proceed; if menu open, close it */}
+              {/* Layers Button - toggle layer menu directly */}
               <button
-                onClick={() => {
-                  if (showLayerMenu) {
-                    setShowLayerMenu(false);
-                  } else {
-                    setShowLayersDeclarationModal(true);
-                  }
-                }}
+                onClick={() => setShowLayerMenu(!showLayerMenu)}
                 className={`p-2.5 md:p-3 transition-colors flex items-center justify-center cursor-pointer ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-gray-200 hover:bg-gray-300'}`}
                 title="Map Layers"
               >
@@ -3662,52 +3655,7 @@ export default function HomePage() {
         </Modal>
       )}
 
-      {/* Layers Declaration Modal - shown before opening layer menu */}
-      {showLayersDeclarationModal && (
-        <Modal
-          style={{
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '280px',
-            maxWidth: '280px'
-          }}
-          onClose={() => setShowLayersDeclarationModal(false)}
-          className={`rounded-lg shadow-2xl ${isDark ? 'bg-[#1f2937]' : 'bg-white'}`}
-          isDark={isDark}
-        >
-          <div className="p-3">
-            <h2 className={`text-xs font-bold mb-2 text-center ${isDark ? 'text-white' : 'text-black'}`}>
-              Layers Declaration
-            </h2>
 
-            <div className={`mb-3 text-[10px] leading-tight space-y-1.5 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-              <p>
-                Disclaimer: The map layers on buildersinfo.in are created using publicly available data and are intended for general informational purposes only.
-              </p>
-              <p>
-                While we&apos;ve made best efforts to ensure accuracy by referencing sources like HMDA.gov.in, Bhuvan-ISRO, and others, limitations such as outdated records, digitisation errors, satellite distortions, and missing cadastral data may affect the accuracy of the visual overlays.
-              </p>
-              <p>
-                These maps are not substitutes for official government surveys or legal verification. Users are advised to independently verify all details with the appropriate authorities before making any land or investment decisions.
-              </p>
-              <p>
-                By using these layers, you acknowledge and accept these limitations. Click on info icon (in layers section) to know more about individual layers.
-              </p>
-            </div>
-
-            <button
-              onClick={() => {
-                setShowLayersDeclarationModal(false);
-                setShowLayerMenu(true);
-              }}
-              className="w-full bg-[#FFA500] hover:bg-[#FF8C00] text-black font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center justify-center gap-1 text-[10px]"
-            >
-              Proceed
-            </button>
-          </div>
-        </Modal>
-      )}
     </div>
   );
 }
