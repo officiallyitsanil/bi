@@ -174,7 +174,7 @@ const CommercialPropertySchema = new mongoose.Schema({
     maxInventoryUnit: String,
     propertySize: Number,
     singleFloorCapacity: String,
-    underManagement: String,
+    isUnderManagement: Boolean,
     availableFloors: String,
     officeSpaceSolutions: String,
     builderName: String,

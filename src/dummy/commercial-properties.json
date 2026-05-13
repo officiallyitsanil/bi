@@ -33,9 +33,7 @@
         "maxInventoryUnit": "300 seats (1,5000 sq. ft)",
         "propertySize": 15000,
         "singleFloorCapacity": "200 seats (1,0000 sq. ft)",
-        "underManagement": "Yes",
-        "availableFloors": "10th",
-        "officeSpaceSolutions": "Private Cabins, Dedicated Desks",
+        "isUnderManagement": true,
         "builderName": "BHIVE",
         "facilities": "2W parking, 4D parking",
         "agentDetails": {
@@ -339,11 +337,6 @@
                 "category": "security"
             },
             {
-                "id": 6,
-                "name": "CCTV",
-                "category": "security"
-            },
-            {
                 "id": 23,
                 "name": "Elevator",
                 "category": "building"
@@ -379,7 +372,7 @@
                 "category": "pantry"
             },
             {
-                "id": 20,
+                "id": 25,
                 "name": "Pest Control",
                 "category": "cleaning"
             },
@@ -406,8 +399,6 @@
             "https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=800",
             "https://images.unsplash.com/photo-1577086664693-894d8405334a?w=800"
         ],
-        "pdf": "https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf",
-        "video": "https://www.w3schools.com/html/movie.mp4",
         "propertyVideos": [
             {
                 "url": "https://www.w3schools.com/html/movie.mp4",
@@ -427,16 +418,10 @@
             "custom"
         ],
         "propertyType": "Tech Park",
-        "propertyLabel": "for-rent",
-        "buildingType": "business-park",
         "furnishing": "semi",
         "availability": "Immediate",
         "parking": "reserved",
-        "showOnly": "with-photos",
-        "propertyAgeInYears": 3,
-        "postedBy": "Builder",
-        "uploadedDate": "2024-04-01",
-        "createdAt": "2024-04-01T00:00:00.000Z",
+        "propertyAge": 3,
         "similarLocations": [
             "Koramangala",
             "MG Road",

@@ -4040,9 +4040,9 @@ function PropertyDetailsContent() {
                                     )}
                                     {property.isUnderManagement && (
                                         <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
-                                            <span className="text-sm font-medium text-gray-500 block mb-1">Under Management</span>
-                                            <span className={`text-base font-semibold ${property.isUnderManagement === 'yes' ? 'text-green-600' : 'text-red-600'}`}>
-                                                {property.isUnderManagement === 'yes' ? 'Yes' : 'No'}
+                                            <span className="text-sm font-medium text-gray-500 block mb-1">Managed By Platform</span>
+                                            <span className={`text-base font-semibold ${property.isUnderManagement ? 'text-green-600' : 'text-red-600'}`}>
+                                                {property.isUnderManagement ? 'Yes' : 'No'}
                                             </span>
                                         </div>
                                     )}
