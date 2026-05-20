@@ -12,27 +12,11 @@ const nextConfig = {
         remotePatterns: [
             {
                 protocol: 'https',
-                hostname: 'admin.buildersinfo.in',
+                hostname: '**',
             },
             {
-                protocol: 'https',
-                hostname: 'images.unsplash.com',
-            },
-            {
-                protocol: 'https',
-                hostname: 'i.pravatar.cc',
-            },
-            {
-                protocol: 'https',
-                hostname: 'picsum.photos',
-            },
-            {
-                protocol: 'https',
-                hostname: 'img.freepik.com',
-            },
-            {
-                protocol: 'https',
-                hostname: 'upload.wikimedia.org',
+                protocol: 'http',
+                hostname: '**',
             },
         ],
     },

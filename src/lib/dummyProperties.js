@@ -2,7 +2,7 @@ import commercialRaw from '@/dummy/commercial-properties.json';
 import residentialRaw from '@/dummy/residential-properties.json';
 
 /** Toggle off to use MongoDB-backed routes again. */
-export const USE_DUMMY_PROPERTIES = true;
+export const USE_DUMMY_PROPERTIES = false;
 
 export function getCommercialDummy() {
   return Array.isArray(commercialRaw) ? commercialRaw : [];

@@ -771,6 +771,11 @@ function PropertyDetailsContent() {
                     const lat = coord?.latitude ?? coord?.lat;
                     const lng = coord?.longitude ?? coord?.lng;
                     const position = lat != null && lng != null ? { lat: parseFloat(lat), lng: parseFloat(lng) } : (coord ?? null);
+                    const rawImages = p.images || p.interiorImages || [];
+                    const normalizedImages = (Array.isArray(rawImages) ? rawImages : [])
+                        .map((img) => (img && typeof img === 'object' && img.url) ? img.url : (typeof img === 'string' ? img : ''))
+                        .filter(Boolean);
+
                     const formattedProperty = {
                         ...p,
                         id: String(p._id || p.id),
@@ -778,7 +783,7 @@ function PropertyDetailsContent() {
                         position,
                         coordinates: position ?? coord,
                         amenities: p.amenities || [],
-                        images: Array.isArray(p.images) ? p.images : (Array.isArray(p.interiorImages) ? p.interiorImages.map((i) => (i && typeof i === 'object' && i.url) ? i.url : (typeof i === 'string' ? i : '')).filter(Boolean) : [])
+                        images: normalizedImages
                     };
 
                     setProperty(formattedProperty);
@@ -905,10 +910,27 @@ function PropertyDetailsContent() {
         ...(isCommercial ? [{ id: 'layout', label: 'Property Layout' }] : [])
     ];
 
-    const images = property?.images ?? [];
-    const galleryVideoUrl = property?.propertyVideos?.[0]?.url || property?.video;
-    const galleryVideoContentType = property?.propertyVideos?.[0]?.contentType;
-    const galleryVideoThumb = property?.propertyVideos?.[0]?.thumbnail || images[2] || images[0];
+    const rawImages = property?.images ?? [];
+    const images = (Array.isArray(rawImages) ? rawImages : [])
+        .map((img) => (img && typeof img === 'object' && img.url) ? img.url : (typeof img === 'string' ? img : ''))
+        .filter(Boolean);
+
+    const getNormalizedVideoUrl = (v) => {
+        if (!v) return "";
+        if (typeof v === "string") return v;
+        if (typeof v === "object" && v.url) return v.url;
+        return "";
+    };
+    const getNormalizedVideoThumb = (v) => {
+        if (!v) return "";
+        if (typeof v === "object" && v.thumbnail) return v.thumbnail;
+        return "";
+    };
+
+    const firstVideoObj = property?.propertyVideos?.[0];
+    const galleryVideoUrl = getNormalizedVideoUrl(firstVideoObj) || getNormalizedVideoUrl(property?.video);
+    const galleryVideoContentType = firstVideoObj?.contentType || (typeof property?.video === 'object' ? property?.video?.contentType : '');
+    const galleryVideoThumb = getNormalizedVideoThumb(firstVideoObj) || getNormalizedVideoThumb(property?.video) || images[2] || images[0];
 
     useEffect(() => {
         setGalleryInlineVideoActive(false);
@@ -4293,7 +4315,20 @@ function PropertyDetailsContent() {
                                     <h3>Property Videos</h3>
                                 </AnimatedText>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
-                                    {(property.propertyVideos?.length ? property.propertyVideos : (property.video ? [{ url: property.video, thumbnail: images[0] || '' }] : [])).filter(v => v?.url).map((video, i) => {
+                                    {(property.propertyVideos?.length 
+                                        ? property.propertyVideos.map(v => ({
+                                            url: getNormalizedVideoUrl(v),
+                                            thumbnail: getNormalizedVideoThumb(v) || images[0] || '',
+                                            contentType: (typeof v === 'object' && v?.contentType) || ''
+                                          }))
+                                        : (property.video 
+                                            ? [{ 
+                                                url: getNormalizedVideoUrl(property.video), 
+                                                thumbnail: getNormalizedVideoThumb(property.video) || images[0] || '',
+                                                contentType: (typeof property.video === 'object' && property.video?.contentType) || ''
+                                              }] 
+                                            : [])
+                                    ).filter(v => v?.url).map((video, i) => {
                                         const mimeType = getVideoMimeType(video.url, video.contentType);
                                         return (
                                             <div key={i} className="relative rounded-lg overflow-hidden bg-black scroll-animate" data-animation="animate-fade-up" style={{ animationDelay: `${i * 100}ms` }}>
@@ -4753,7 +4788,7 @@ function PropertyDetailsContent() {
             )}
 
             {/* Video Modal - full screen video */}
-            {showVideoModal && (property.propertyVideos?.[0]?.url || property.video) && (
+            {showVideoModal && galleryVideoUrl && (
                 <div className="fixed inset-0 bg-black flex flex-col z-[10000]" onClick={() => setShowVideoModal(false)}>
                     {/* Absolute Close Button */}
                     <button
@@ -4766,14 +4801,14 @@ function PropertyDetailsContent() {
 
                     <div className="flex-1 w-full h-full overflow-hidden flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                         <video
-                            key={property.propertyVideos?.[0]?.url || property.video}
+                            key={galleryVideoUrl}
                             controls
                             autoPlay
                             muted
                             loop
                             preload="auto"
                             className="w-full h-full object-contain"
-                            src={property.propertyVideos?.[0]?.url || property.video}
+                            src={galleryVideoUrl}
                         >
                             Your browser does not support the video tag.
                         </video>

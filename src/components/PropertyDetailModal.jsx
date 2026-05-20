@@ -514,7 +514,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
     };
     const createdBy = property.agentDetails ? { name: property.agentDetails.name } : property.createdBy;
     const {
-        images = [],
+        images: rawImages = [],
         amenities = [],
         ratings = {},
         reviews = [],
@@ -522,6 +522,10 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
         propertyType,
         visitorCount = 0
     } = property;
+
+    const images = (Array.isArray(rawImages) ? rawImages : [])
+        .map((img) => (img && typeof img === 'object' && img.url) ? img.url : (typeof img === 'string' ? img : ''))
+        .filter(Boolean);
 
     const originalPrice = prices.originalPrice;
     const discountedPrice = prices.discountedPrice;
