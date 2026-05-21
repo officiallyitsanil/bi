@@ -1669,58 +1669,60 @@ export default function HomePage() {
               {!showFiltersView && !showCitySelector && (
                 <>
                   {/* Category Filters - Segmented Control */}
-                  <div className={`rounded-lg p-0.5 flex mb-2.5 max-sm:mb-2 ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
-                    <button
-                      onClick={() => {
-                        setPropertyTypeFilter('all');
-                        setFilters(prev => ({
-                          ...prev,
-                          type: { commercial: false, residential: false }
-                        }));
-                      }}
-                      disabled={isLoadingProperties}
-                      className={`flex-1 px-2 py-1 rounded-md text-[10px] sm:text-xs font-medium transition-all ${propertyTypeFilter === 'all'
-                        ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
-                        : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
-                        } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
-                    >
-                      All
-                    </button>
-                    <button
-                      onClick={() => {
-                        setPropertyTypeFilter('commercial');
-                        setFilters(prev => ({
-                          ...prev,
-                          type: { commercial: true, residential: false }
-                        }));
-                      }}
-                      disabled={isLoadingProperties}
-                      className={`flex-1 px-2 py-1 rounded-md text-[10px] sm:text-xs font-medium transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${propertyTypeFilter === 'commercial'
-                        ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
-                        : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
-                        } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
-                    >
-                      <Building2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                      Commercial
-                    </button>
-                    <button
-                      onClick={() => {
-                        setPropertyTypeFilter('residential');
-                        setFilters(prev => ({
-                          ...prev,
-                          type: { commercial: false, residential: true }
-                        }));
-                      }}
-                      disabled={isLoadingProperties}
-                      className={`flex-1 px-2 py-1 rounded-md text-[10px] sm:text-xs font-medium transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${propertyTypeFilter === 'residential'
-                        ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
-                        : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
-                        } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
-                    >
-                      <Home className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                      Residential
-                    </button>
-                  </div>
+                  {globalConfig.isFullNavVisible && (
+                    <div className={`rounded-lg p-0.5 flex mb-2.5 max-sm:mb-2 ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
+                      <button
+                        onClick={() => {
+                          setPropertyTypeFilter('all');
+                          setFilters(prev => ({
+                            ...prev,
+                            type: { commercial: false, residential: false }
+                          }));
+                        }}
+                        disabled={isLoadingProperties}
+                        className={`flex-1 px-2 py-1 rounded-md text-[10px] sm:text-xs font-medium transition-all ${propertyTypeFilter === 'all'
+                          ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
+                          : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
+                          } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                      >
+                        All
+                      </button>
+                      <button
+                        onClick={() => {
+                          setPropertyTypeFilter('commercial');
+                          setFilters(prev => ({
+                            ...prev,
+                            type: { commercial: true, residential: false }
+                          }));
+                        }}
+                        disabled={isLoadingProperties}
+                        className={`flex-1 px-2 py-1 rounded-md text-[10px] sm:text-xs font-medium transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${propertyTypeFilter === 'commercial'
+                          ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
+                          : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
+                          } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                      >
+                        <Building2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                        Commercial
+                      </button>
+                      <button
+                        onClick={() => {
+                          setPropertyTypeFilter('residential');
+                          setFilters(prev => ({
+                            ...prev,
+                            type: { commercial: false, residential: true }
+                          }));
+                        }}
+                        disabled={isLoadingProperties}
+                        className={`flex-1 px-2 py-1 rounded-md text-[10px] sm:text-xs font-medium transition-all flex items-center justify-center gap-1 sm:gap-1.5 ${propertyTypeFilter === 'residential'
+                          ? isDark ? 'bg-[#3a3f4b] text-white shadow-sm' : 'bg-white text-gray-800 shadow-sm'
+                          : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'
+                          } ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                      >
+                        <Home className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                        Residential
+                      </button>
+                    </div>
+                  )}
 
                   {/* Listing Type Filters */}
                   <div className="flex gap-1.5 mb-2.5 max-sm:mb-2 overflow-x-auto scrollbar-hide">

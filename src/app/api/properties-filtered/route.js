@@ -96,8 +96,8 @@ export async function GET(request) {
         if (USE_DUMMY_PROPERTIES) {
             allProperties = getAllDummyPropertiesRaw().map(enrichDummyForFilter);
         } else {
-            await dbConnect();
-            const db = mongoose.connection.db;
+            const conn = await dbConnect();
+            const db = conn.db;
 
             // Determine which collection(s) to query based on Category or type
             let queryCommercial = false;

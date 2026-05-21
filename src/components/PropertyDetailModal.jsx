@@ -706,6 +706,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                         width={56}
                                         height={56}
                                         className="w-full h-full rounded-full object-cover"
+                                        unoptimized
                                     />
                                 </div>
                                 <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>

@@ -99,15 +99,25 @@ function getCustomInfraIconSrc(name, fallbackId) {
     if (!name) return DEFAULT_CUSTOM_INFRA_ICON;
     const n = String(name).toLowerCase();
 
-    if (n.includes("meeting") && n.includes("room")) return "/custom-infra/Meeting%20Room.png";
-    if (n.includes("private") && n.includes("cabin")) return "/custom-infra/Private%20Cabin.png";
-    if (n.includes("reception") && n.includes("area")) return "/custom-infra/Reception%20Area.png";
-    // Filename casing in assets: `Recreational area.svg`
-    if (n.includes("recreational") && n.includes("area")) return "/custom-infra/Recreational%20area.png";
-    if (n.includes("pantry")) return "/custom-infra/Pantry.png";
+    if (n.includes("meeting") || n.includes("room") || n.includes("conference") || n.includes("discussion") || n.includes("boardroom")) return "/custom-infra/Meeting%20Room.png";
+    if (n.includes("cabin") || n.includes("private")) return "/custom-infra/Private%20Cabin.png";
+    if (n.includes("reception") || n.includes("desk") || n.includes("lobby")) return "/custom-infra/Reception%20Area.png";
+    if (n.includes("recreational") || n.includes("recreation") || n.includes("game") || n.includes("lounge")) return "/custom-infra/Recreational%20area.png";
+    if (n.includes("pantry") || n.includes("cafe") || n.includes("cafeteria") || n.includes("kitchen")) return "/custom-infra/Pantry.png";
 
-    // Last-resort (only if backend provides numeric ids matching filenames)
-    if (fallbackId != null) return `/custom-infra/${fallbackId}.png`;
+    if (fallbackId != null) {
+        const idNum = parseInt(fallbackId, 10);
+        if (!isNaN(idNum)) {
+            const icons = [
+                "/custom-infra/Meeting%20Room.png",
+                "/custom-infra/Private%20Cabin.png",
+                "/custom-infra/Reception%20Area.png",
+                "/custom-infra/Recreational%20area.png",
+                "/custom-infra/Pantry.png"
+            ];
+            return icons[idNum % icons.length];
+        }
+    }
 
     return DEFAULT_CUSTOM_INFRA_ICON;
 }
@@ -1574,6 +1584,27 @@ function PropertyDetailsContent() {
                                             ) : (
                                                 <div className="w-full h-full bg-muted" aria-hidden />
                                             )}
+                                            
+                                            {/* Mobile portrait PDF floating button */}
+                                            <div className="absolute top-3 right-3 z-[20] md:hidden pointer-events-none">
+                                                <img
+                                                    src="/property-details/pdf-download.png"
+                                                    alt="Download PDF Brochure"
+                                                    className="pointer-events-auto cursor-pointer drop-shadow-md hover:scale-105 transition-transform w-[40px] h-[40px] object-contain"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        const hasPdf = (property.seatLayoutPDFs?.[0]?.url || property.seatLayoutPDFs?.[0]) || property.pdf;
+                                                        if (!hasPdf) {
+                                                            alert("No PDF brochure exists for this property");
+                                                            return;
+                                                        }
+                                                        const pdfObj = property.seatLayoutPDFs?.[0]
+                                                            ? (typeof property.seatLayoutPDFs[0] === 'string' ? { url: property.seatLayoutPDFs[0], originalName: 'Property Brochure' } : property.seatLayoutPDFs[0])
+                                                            : { url: property.pdf, originalName: 'Property Brochure' };
+                                                        setSelectedPDF(pdfObj);
+                                                    }}
+                                                />
+                                            </div>
                                         </div>
                                         <div className="hidden md:block relative md:col-span-2 md:row-span-1 aspect-[4/3] md:aspect-auto z-[1] overflow-visible">
                                             <div
@@ -1587,22 +1618,25 @@ function PropertyDetailsContent() {
                                                     <div className="w-full h-full bg-muted" aria-hidden />
                                                 )}
                                             </div>
-                                            {((property.seatLayoutPDFs?.[0]?.url || property.seatLayoutPDFs?.[0]) || property.pdf) && (
-                                                <div className="gallery-pdf-cta-float pointer-events-none absolute z-[20]">
-                                                    <img
-                                                        src="/property-details/pdf-download.png"
-                                                        alt="Download PDF Brochure"
-                                                        className="pointer-events-auto cursor-pointer drop-shadow-md hover:scale-105 transition-transform w-[50px] h-[50px] object-contain"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            const pdfObj = property.seatLayoutPDFs?.[0]
-                                                                ? (typeof property.seatLayoutPDFs[0] === 'string' ? { url: property.seatLayoutPDFs[0], originalName: 'Property Brochure' } : property.seatLayoutPDFs[0])
-                                                                : { url: property.pdf, originalName: 'Property Brochure' };
-                                                            setSelectedPDF(pdfObj);
-                                                        }}
-                                                    />
-                                                </div>
-                                            )}
+                                            <div className="gallery-pdf-cta-float pointer-events-none absolute z-[20]">
+                                                <img
+                                                    src="/property-details/pdf-download.png"
+                                                    alt="Download PDF Brochure"
+                                                    className="pointer-events-auto cursor-pointer drop-shadow-md hover:scale-105 transition-transform w-[50px] h-[50px] object-contain"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        const hasPdf = (property.seatLayoutPDFs?.[0]?.url || property.seatLayoutPDFs?.[0]) || property.pdf;
+                                                        if (!hasPdf) {
+                                                            alert("No PDF brochure exists for this property");
+                                                            return;
+                                                        }
+                                                        const pdfObj = property.seatLayoutPDFs?.[0]
+                                                            ? (typeof property.seatLayoutPDFs[0] === 'string' ? { url: property.seatLayoutPDFs[0], originalName: 'Property Brochure' } : property.seatLayoutPDFs[0])
+                                                            : { url: property.pdf, originalName: 'Property Brochure' };
+                                                        setSelectedPDF(pdfObj);
+                                                    }}
+                                                />
+                                            </div>
                                         </div>
                                         <div className="hidden md:block relative md:col-span-2 md:row-span-1 aspect-[4/3] md:aspect-auto z-[1] overflow-visible">
                                             <div className="relative h-full w-full overflow-hidden rounded-2xl bg-muted shadow-sm border border-gray-200">
@@ -1857,7 +1891,7 @@ function PropertyDetailsContent() {
                                     id="custom-infra"
                                 >
                                     <h3 className={`mb-6 text-left text-lg font-bold leading-snug md:text-xl ${isDark ? 'text-white' : 'text-foreground'}`}>
-                                        Custom infrastructure possible in your Managed Office <span aria-hidden>âœ¨</span>
+                                        Custom infrastructure possible in your Managed Office <span aria-hidden>✨</span>
                                     </h3>
                                     <div className="grid grid-cols-2 justify-items-center md:justify-items-start gap-x-4 gap-y-8 md:grid-cols-3 md:grid-cols-5 md:gap-x-2 md:gap-y-0 md:gap-x-6">
                                         {property.customInfrastructure.map((item, i) => {
@@ -2226,7 +2260,7 @@ function PropertyDetailsContent() {
                                                     Interested in <span className="font-bold">{propTitle}</span> ?
                                                 </h3>
 
-                                                <div className="mt-3 flex flex-col md:flex-row md:items-center gap-3 md:gap-4 justify-between">
+                                                <div className="mt-3 flex flex-row items-center gap-2 md:gap-4 justify-between">
                                                     <div className="flex items-center md:gap-2 gap-3 flex-1 min-w-0">
                                                         <div className="relative h-[44px] w-[36px] shrink-0 overflow-hidden bg-gray-100 dark:bg-gray-800 border-none rounded-[2px]">
                                                             {agentImage ? (
@@ -2238,7 +2272,7 @@ function PropertyDetailsContent() {
                                                             )}
                                                         </div>
                                                         <div className="flex flex-col min-w-0 flex-1 h-[44px] justify-between py-0.5">
-                                                            <p className={`text-[clamp(8px,0.8vw,11px)] leading-none ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                                                            <p className={`text-[clamp(8px,0.8vw,11px)] leading-none truncate ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
                                                                 Say Hi To <span className="font-bold">{agentName}</span>
                                                             </p>
                                                             <div className="flex items-center gap-1.5 flex-wrap w-full leading-none">
@@ -2246,21 +2280,21 @@ function PropertyDetailsContent() {
                                                                     <a
                                                                         href={`tel:${agentPhone.replace(/[^0-9+]/g, "")}`}
                                                                         onClick={(e) => handlePhoneClick(e, agentPhone)}
-                                                                        className="text-[clamp(7px,0.7vw,10px)] text-gray-900 dark:text-gray-300 tracking-wide hover:underline"
+                                                                        className="text-[clamp(7px,0.7vw,10px)] text-gray-900 dark:text-gray-300 tracking-wide hover:underline truncate"
                                                                     >
                                                                         {maskedPhone}
                                                                     </a>
                                                                 )}
                                                             </div>
                                                             <div>
-                                                                <span className="inline-flex items-center rounded-md border border-[#86cfa2] bg-[#f0f9f3] px-1 py-0 text-[clamp(6px,0.6vw,8px)] font-bold text-[#1f8c4c] dark:bg-[#1a8e48]/10 dark:border-[#1a8e48]/40 dark:text-[#4ade80]">
+                                                                <span className="inline-flex items-center rounded-md border border-[#86cfa2] bg-[#f0f9f3] px-1 py-0 text-[clamp(6px,0.6vw,8px)] font-bold text-[#1f8c4c] dark:bg-[#1a8e48]/10 dark:border-[#1a8e48]/40 dark:text-[#4ade80] truncate max-w-full">
                                                                     {agentTag}
                                                                 </span>
                                                             </div>
                                                         </div>
                                                     </div>
 
-                                                    <div className="shrink-0 w-full md:w-auto mt-3 md:mt-0 flex items-center gap-[clamp(2px,0.4vw,8px)]">
+                                                    <div className="shrink-0 flex items-center gap-[clamp(2px,0.4vw,8px)]">
                                                         <div className="flex items-center gap-[clamp(2px,0.4vw,8px)] px-1">
                                                             {agentPhone && (
                                                                 <a
@@ -2316,37 +2350,48 @@ function PropertyDetailsContent() {
                                                             {agentName ? agentName.split(" ")[0] : "Agent"}&apos;s team assisted 500+ corporates in Bangalore to move into their new office.
                                                         </p>
                                                     )}
-                                                    <div className="mt-3.5 px-2 flex flex-wrap items-center justify-between w-[90%] gap-y-3 mx-auto">
-                                                        {(assistedLogos.length > 0 ? assistedLogos.slice(0, 5) : [
+                                                    {(() => {
+                                                        const defaultLogos = [
                                                             { name: "Pepsi", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Pepsi_logo_2014.svg/120px-Pepsi_logo_2014.svg.png" },
                                                             { name: "GE", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/General_Electric_logo.svg/120px-General_Electric_logo.svg.png" },
                                                             { name: "P&G", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Procter_%26_Gamble_logo.svg/120px-Procter_%26_Gamble_logo.svg.png" },
                                                             { name: "HP", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/HP_logo_2012.svg/120px-HP_logo_2012.svg.png" },
                                                             { name: "Dell", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Dell_logo_2016.svg/120px-Dell_logo_2016.svg.png" }
-                                                        ]).map((item, i) => {
+                                                        ];
+                                                        const renderedLogos = assistedLogos.length > 0 ? assistedLogos.slice(0, 5) : defaultLogos;
+                                                        const validLogos = renderedLogos.filter(item => {
                                                             const rawVal = typeof item === "string" ? item : (item?.name || item?.url || item?.logo || "");
-                                                            if (!rawVal) return null;
+                                                            return !!rawVal;
+                                                        });
+                                                        
+                                                        const alignClass = validLogos.length >= 5 ? "justify-between" : "justify-start gap-2 md:gap-3";
 
-                                                            const logoSrc = typeof item === "object" && item.logo ? item.logo : resolveCorporateLogoSrc(rawVal);
-                                                            const logoName = getCorporateLogoDisplayName(rawVal);
+                                                        return (
+                                                            <div className={`mt-3.5 flex flex-wrap items-center w-full gap-y-3 ${alignClass}`}>
+                                                                {validLogos.map((item, i) => {
+                                                                    const rawVal = typeof item === "string" ? item : (item?.name || item?.url || item?.logo || "");
+                                                                    const logoSrc = typeof item === "object" && item.logo ? item.logo : resolveCorporateLogoSrc(rawVal);
+                                                                    const logoName = getCorporateLogoDisplayName(rawVal);
 
-                                                            return logoSrc ? (
-                                                                <div
-                                                                    key={i}
-                                                                    className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full border border-gray-200 bg-white shadow-sm flex items-center justify-center p-0"
-                                                                >
-                                                                    <img alt={logoName || ""} src={logoSrc} className="h-full w-full object-contain" />
-                                                                </div>
-                                                            ) : (
-                                                                <span
-                                                                    key={i}
-                                                                    className="inline-flex rounded-full border border-gray-200 bg-white px-3 py-1 text-[11px] font-bold text-gray-600 shadow-sm"
-                                                                >
-                                                                    {safeDisplay(logoName || rawVal)}
-                                                                </span>
-                                                            );
-                                                        })}
-                                                    </div>
+                                                                    return logoSrc ? (
+                                                                        <div
+                                                                            key={i}
+                                                                            className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full border border-gray-200 bg-white shadow-sm flex items-center justify-center p-0"
+                                                                        >
+                                                                            <img alt={logoName || ""} src={logoSrc} className="h-full w-full object-contain" />
+                                                                        </div>
+                                                                    ) : (
+                                                                        <span
+                                                                            key={i}
+                                                                            className="inline-flex rounded-full border border-gray-200 bg-white px-3 py-1 text-[11px] font-bold text-gray-600 shadow-sm"
+                                                                        >
+                                                                            {safeDisplay(logoName || rawVal)}
+                                                                        </span>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        );
+                                                    })()}
                                                 </div>
                                             </div>
 
@@ -2835,43 +2880,46 @@ function PropertyDetailsContent() {
             {/* Similar Properties - Boxed design */}
             <div id="similar-properties" className="w-full px-4 md:px-10 mt-16 mb-12">
                 <section className={`py-12 px-6 md:py-16 md:px-10 rounded-2xl md:rounded-[24px] relative shadow-sm border transition-colors ${isDark ? 'bg-[#121418] border-gray-800' : 'bg-[#fdf8e7] border-[#f0e4c3]/10'}`}>
-                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+                    {/* Title row: title+subtitle on left, "View all" on right — always on same row */}
+                    <div className="flex items-start justify-between gap-2 mb-3">
                         <div>
                             <h2 className={`!text-[1.5rem] font-bold mb-1.5 tracking-tight leading-tight ${isDark ? 'text-white' : 'text-black'}`}>Similar Properties</h2>
                             <p className={`text-[13px] font-medium ${isDark ? 'text-gray-400' : 'text-gray-800'}`}>Handpicked properties for you.</p>
                         </div>
-                        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide flex-nowrap shrink-0">
-                            {(property.similarLocations && property.similarLocations.length > 0 ? property.similarLocations : ["Koramangala", "MG Road", "HSR", "Indiranagar", "Hebbal"]).map((loc) => (
-                                <button
-                                    key={loc}
-                                    onClick={() => setSimilarLocationFilter(loc)}
-                                    className={`px-4 py-[7px] text-[11px] font-bold whitespace-nowrap shrink-0 transition-colors ${similarLocationFilter === loc ? "bg-black text-white rounded-[6px]" : `${isDark ? 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700' : 'bg-white text-gray-600 border border-gray-200/80 hover:border-gray-300'} rounded-[6px] shadow-[0_1px_2px_rgba(0,0,0,0.02)] cursor-pointer`}`}
-                                >
-                                    {loc}
-                                </button>
-                            ))}
-                            <div className="relative shrink-0 flex items-center" ref={locationDropdownRef}>
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); setShowLocationDropdown(!showLocationDropdown); }}
-                                    className="text-[#f97316] text-[12px] font-bold hover:underline flex items-center gap-[2px] cursor-pointer ml-3 bg-transparent"
-                                >
-                                    View all <ChevronRight className="h-3.5 w-3.5" strokeWidth={3} />
-                                </button>
-                                {showLocationDropdown && (
-                                    <div className="absolute top-full right-0 mt-2 z-20 w-48 max-h-60 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-xl p-1 custom-scrollbar">
-                                        {(property.allSimilarLocations || property.similarLocations || []).map((loc) => (
-                                            <button
-                                                key={loc}
-                                                onClick={() => { setSimilarLocationFilter(loc); setShowLocationDropdown(false); }}
-                                                className={`w-full px-3 py-2 text-left text-sm font-medium rounded-md transition-colors cursor-pointer ${similarLocationFilter === loc ? "bg-amber-100 text-[#f97316]" : "hover:bg-gray-50 text-gray-700"}`}
-                                            >
-                                                {loc}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                        {/* View all — always visible top-right on mobile and desktop */}
+                        <div className="relative shrink-0 flex items-center mt-1.5" ref={locationDropdownRef}>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setShowLocationDropdown(!showLocationDropdown); }}
+                                className="text-[#f97316] text-[12px] font-bold hover:underline flex items-center gap-[2px] cursor-pointer bg-transparent whitespace-nowrap"
+                            >
+                                View all <ChevronRight className="h-3.5 w-3.5" strokeWidth={3} />
+                            </button>
+                            {showLocationDropdown && (
+                                <div className="absolute top-full right-0 mt-2 z-20 w-48 max-h-60 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-xl p-1 custom-scrollbar">
+                                    {(property.allSimilarLocations || property.similarLocations || []).map((loc) => (
+                                        <button
+                                            key={loc}
+                                            onClick={() => { setSimilarLocationFilter(loc); setShowLocationDropdown(false); }}
+                                            className={`w-full px-3 py-2 text-left text-sm font-medium rounded-md transition-colors cursor-pointer ${similarLocationFilter === loc ? "bg-amber-100 text-[#f97316]" : "hover:bg-gray-50 text-gray-700"}`}
+                                        >
+                                            {loc}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
+                    </div>
+                    {/* Location pill tabs — horizontally scrollable row, always below title */}
+                    <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide flex-nowrap mb-6">
+                        {(property.similarLocations && property.similarLocations.length > 0 ? property.similarLocations : ["Koramangala", "MG Road", "HSR", "Indiranagar", "Hebbal"]).map((loc) => (
+                            <button
+                                key={loc}
+                                onClick={() => setSimilarLocationFilter(loc)}
+                                className={`px-4 py-[7px] text-[11px] font-bold whitespace-nowrap shrink-0 transition-colors ${similarLocationFilter === loc ? "bg-black text-white rounded-[6px]" : `${isDark ? 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700' : 'bg-white text-gray-600 border border-gray-200/80 hover:border-gray-300'} rounded-[6px] shadow-[0_1px_2px_rgba(0,0,0,0.02)] cursor-pointer`}`}
+                            >
+                                {loc}
+                            </button>
+                        ))}
                     </div>
 
                     {(() => {
@@ -2997,6 +3045,7 @@ function PropertyDetailsContent() {
                             src="/property-details/agent-social/whatsapp.png"
                             alt="WhatsApp"
                             className="w-5 h-5 object-contain"
+                            style={{ filter: 'brightness(0) invert(1)' }}
                         />
                         Whatsapp
                     </button>
@@ -3008,6 +3057,7 @@ function PropertyDetailsContent() {
                             src="/property-details/agent-social/call.png"
                             alt="Call"
                             className="w-5 h-5 object-contain"
+                            style={{ filter: 'brightness(0) invert(1)' }}
                         />
                         Request for call
                     </button>

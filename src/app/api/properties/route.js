@@ -64,8 +64,8 @@ export async function GET(request) {
                 return NextResponse.json({ success: true, property: normalizeProperty(property) });
             }
 
-            await dbConnect();
-            const db = mongoose.connection.db;
+            const conn = await dbConnect();
+            const db = conn.db;
             const ObjectId = mongoose.Types.ObjectId;
             let property = null;
             if (type === 'commercial') {
@@ -102,8 +102,8 @@ export async function GET(request) {
                 return NextResponse.json({ success: true, property: normalizeProperty(property) });
             }
 
-            await dbConnect();
-            const db = mongoose.connection.db;
+            const conn = await dbConnect();
+            const db = conn.db;
             // Case-insensitive search
             const query = { propertyName: { $regex: new RegExp(`^${decodedName}$`, 'i') } };
             let property = await db.collection('commercialProperties').findOne(query);
@@ -132,8 +132,8 @@ export async function GET(request) {
             return NextResponse.json({ success: true, data });
         }
 
-        await dbConnect();
-        const db = mongoose.connection.db;
+        const conn = await dbConnect();
+        const db = conn.db;
         let allProperties = [];
         if (type === 'commercial') {
             allProperties = await db.collection('commercialProperties').find({}).toArray();

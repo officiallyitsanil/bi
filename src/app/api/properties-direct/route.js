@@ -10,8 +10,8 @@ export async function GET() {
         if (USE_DUMMY_PROPERTIES) {
             allProperties = getAllDummyPropertiesRaw();
         } else {
-            await dbConnect();
-            const db = mongoose.connection.db;
+            const conn = await dbConnect();
+            const db = conn.db;
             const commercial = await db.collection('commercialProperties').find({}).toArray();
             const residential = await db.collection('residentialproperties').find({}).toArray();
             allProperties = [...commercial, ...residential];

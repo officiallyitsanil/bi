@@ -12,6 +12,12 @@ import { Navigation } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 
+const getSafeImage = (src, fallback = 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800') => {
+  if (typeof src === 'string' && src.trim() !== '') return src;
+  if (src && typeof src === 'object' && typeof src.url === 'string' && src.url.trim() !== '') return src.url;
+  return fallback;
+};
+
 export default function BuilderDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -120,59 +126,81 @@ export default function BuilderDetailPage() {
   function transformApiToLocal(api) {
     if (!api) return null;
     const stats = api.stats || {};
-    const team = api.team?.length ? api.team : (api.keyPeople || []).map(p => ({
-      name: p.name,
-      role: p.designation,
-      image: p.photo?.url,
-      quote: null,
-      bio: p.shortBio,
+    const team = (api.team?.length ? api.team : (api.keyPeople || [])).map(p => ({
+      name: p.name || '-',
+      role: p.designation || p.role || '-',
+      image: p.photo?.url || p.image || '',
+      quote: p.quote || null,
+      bio: p.shortBio || p.bio || '-',
     }));
     return {
       id: api._id,
-      name: api.name || api.builderName,
-      tagline: api.tagline || '',
-      founded: api.founded || api.foundedYear,
-      headquarters: api.headquarters || '',
+      name: api.name || api.builderName || '-',
+      tagline: api.tagline || '-',
+      founded: api.founded || api.foundedYear || '-',
+      headquarters: api.headquarters || '-',
       stats: {
-        projects: stats.projects ?? api.projectsCompleted?.toString() ?? '0',
-        cities: stats.cities ?? api.citiesPresence ?? '0',
-        sqft: stats.sqft ?? '1.8+',
-        clients: stats.clients ?? '1000+',
-        experience: stats.experience ?? (api.yearsOfExperience ? `${api.yearsOfExperience}+` : 'N/A'),
+        projects: stats.projects ?? api.projectsCompleted?.toString() ?? '-',
+        cities: stats.cities ?? api.citiesPresence ?? '-',
+        sqft: stats.sqft ?? '-',
+        clients: stats.clients ?? '-',
+        experience: stats.experience ?? (api.yearsOfExperience ? `${api.yearsOfExperience}+` : '-'),
       },
-      logo: api.logo || api.builderLogo?.url,
+      logo: api.logo || api.builderLogo?.url || '',
       isBrigade: !!api.isBrigade,
-      description: api.description || '',
-      mission: api.mission || api.missionStatement,
-      vision: api.vision || api.visionStatement,
-      phone: api.phone || api.phoneNumber,
-      email: api.email || api.contactEmail,
-      licenseNumber: api.licenseNumber || 'RERA-KAR-2021-0012345',
-      certificate: api.certificate || 'ISO 9001:2015 Certified',
-      category: api.category || api.builderCategory || 'Premium Developer',
-      totalCenters: api.totalCenters || '250+',
+      description: api.description || '-',
+      mission: api.mission || api.missionStatement || '-',
+      vision: api.vision || api.visionStatement || '-',
+      phone: api.phone || api.phoneNumber || '-',
+      email: api.email || api.contactEmail || '-',
+      licenseNumber: api.licenseNumber || '-',
+      certificate: api.certificate || '-',
+      category: api.category || api.builderCategory || '-',
+      totalCenters: api.totalCenters || '-',
       specialties: api.specialties?.length ? api.specialties : ['Residential', 'Commercial', 'Hospitality', 'Retail'],
       operatingRegions: api.operatingRegions?.length ? api.operatingRegions : ['Bangalore', 'Chennai', 'Hyderabad', 'Mumbai', 'Pune'],
       moreDetails: api.moreDetails?.length ? api.moreDetails : [
-        { label: 'Largest Campus', value: 'HSR Layout, 8000+ seats' },
-        { label: 'Minimum Lock-in', value: '12 months' },
-        { label: 'Expansion/Contraction Flexibility', value: 'Yes' },
+        { label: 'Largest Campus', value: '-' },
+        { label: 'Minimum Lock-in', value: '-' },
+        { label: 'Expansion/Contraction Flexibility', value: '-' },
       ],
-      awards: api.awards?.map(a => ({ ...a, image: a.image || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=200' })) || [],
-      shortDescription: api.shortDescription || api.description?.slice(0, 150) + '...',
-      detailedDescription: api.detailedDescription || api.description || '',
-      keyDifferentiators: api.keyDifferentiators?.length ? api.keyDifferentiators : ['Quality focus', 'Customer-centric', 'Innovative designs'],
+      awards: api.awards?.map(a => ({
+        title: a.title || '-',
+        organisation: a.organisation || '-',
+        image: a.image || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=200'
+      })) || [],
+      shortDescription: api.shortDescription || api.description?.slice(0, 150) + '...' || '-',
+      detailedDescription: api.detailedDescription || api.description || '-',
+      keyDifferentiators: api.keyDifferentiators?.length ? api.keyDifferentiators : [],
       projects: api.projects || [],
-      ongoingCount: api.ongoingCount ?? api.ongoingProjects ?? 9,
-      upcomingCount: api.upcomingCount ?? api.upcomingProjects ?? 9,
-      relationshipManager: api.relationshipManager || { name: 'Ananya Rao', title: 'Senior Manager', tag: 'Buildersinfo Expert', avatar: 'https://i.pravatar.cc/150?img=5', assisted: '500+ corporates', companyLogos: [] },
+      ongoingCount: api.ongoingCount ?? api.ongoingProjects ?? 0,
+      upcomingCount: api.upcomingCount ?? api.upcomingProjects ?? 0,
+      relationshipManager: api.relationshipManager || { name: '-', title: '-', tag: '-', avatar: '', assisted: '-', companyLogos: [] },
       testimonials: api.testimonials || [],
       faqs: api.faqs || [],
       galleryImages: api.galleryImages?.map(g => ({ url: g.url || g, alt: g.alt || 'Gallery' })) || [],
-      featuredProject: api.featuredProject || null,
-      keyProjects: api.keyProjects || [],
+      featuredProject: api.featuredProject ? {
+        name: api.featuredProject.name || '-',
+        location: api.featuredProject.location || '-',
+        image: api.featuredProject.image || '',
+        units: api.featuredProject.units || '-',
+        size: api.featuredProject.size || '-',
+        launchDate: api.featuredProject.launchDate || '-',
+        possession: api.featuredProject.possession || '-',
+        plotSize: api.featuredProject.plotSize || '-',
+        configurations: api.featuredProject.configurations || [],
+        priceRange: api.featuredProject.priceRange || '-',
+        dealsClosed: api.featuredProject.dealsClosed || 0,
+        inProgress: api.featuredProject.inProgress || 0,
+      } : null,
+      keyProjects: api.keyProjects?.map(kp => ({
+        name: kp.name || '-',
+        location: kp.location || '-',
+        image: kp.image || '',
+        href: kp.href || '#'
+      })) || [],
       team,
-      operationalSegments: api.operationalSegments?.length ? api.operationalSegments : [{ name: 'Residential', cities: ['Bangalore', 'Mumbai', 'Chennai'] }],
+      operationalSegments: api.operationalSegments?.length ? api.operationalSegments : [],
       socialLinks: api.socialLinks || api.socialMedia || {},
     };
   }
@@ -215,8 +243,8 @@ export default function BuilderDetailPage() {
           <div className="w-full px-4 sm:px-6 lg:px-8 max-[425px]:px-3 py-3 flex justify-between items-center">
             <div className="flex items-center gap-4">
               <div className={`relative w-10 h-10 rounded-full overflow-hidden border shrink-0 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
-                {builder.logo ? (
-                  <Image src={builder.logo} alt={`${builder.name} logo`} fill className="object-contain p-0.5" sizes="40px" unoptimized />
+                {getSafeImage(builder.logo, '') ? (
+                  <Image src={getSafeImage(builder.logo)} alt={`${builder.name} logo`} fill className="object-contain p-0.5" sizes="40px" unoptimized />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <Building2 className={`w-5 h-5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
@@ -299,8 +327,8 @@ export default function BuilderDetailPage() {
                       </div>
                       <span className={`text-[10px] font-semibold uppercase mt-1.5 ${isDark ? 'text-white' : 'text-gray-900'}`}>BRIGADE</span>
                     </div>
-                  ) : builder.logo ? (
-                    <Image src={builder.logo} alt={`${builder.name} logo`} fill className="object-contain" sizes="144px" unoptimized />
+                  ) : getSafeImage(builder.logo, '') ? (
+                    <Image src={getSafeImage(builder.logo)} alt={`${builder.name} logo`} fill className="object-contain" sizes="144px" unoptimized />
                   ) : (
                     <div className={`w-full h-full flex items-center justify-center ${isDark ? 'bg-[#1f2229]' : 'bg-gray-200'}`}>
                       <Building2 className={`w-12 h-12 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
@@ -398,16 +426,20 @@ export default function BuilderDetailPage() {
                   <div className="p-3 max-[425px]:p-2">
                     <div className="grid grid-cols-1 md:grid-cols-3 md:grid-rows-2 gap-1.5 max-[425px]:gap-1 md:h-[220px]">
                       <div className="relative md:col-span-2 md:row-span-2 rounded-lg overflow-hidden aspect-[4/3] md:aspect-auto min-h-[120px] max-[425px]:min-h-[100px] md:min-h-0">
-                        <Image src={builder.galleryImages[0]?.url || builder.galleryImages[0]} alt="Featured" fill className="object-cover" sizes="(max-width:768px) 100vw, 33vw" />
+                        <Image src={getSafeImage(builder.galleryImages[0])} alt="Featured" fill className="object-cover" sizes="(max-width:768px) 100vw, 33vw" />
                       </div>
                       {builder.galleryImages[1] && (
                         <div className="relative md:col-span-1 md:row-span-1 rounded-lg overflow-hidden aspect-[4/3] md:aspect-auto min-h-[60px] md:min-h-0">
-                          <Image src={builder.galleryImages[1]?.url || builder.galleryImages[1]} alt="Gallery" fill className="object-cover" sizes="16vw" />
+                          <Image src={getSafeImage(builder.galleryImages[1])} alt="Gallery" fill className="object-cover" sizes="16vw" />
                           <div className="absolute top-1 right-1">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setPendingBrochureUrl(builder.brochureUrl || "#"); // Fallback to # or handle appropriately
+                                if (!builder.brochureUrl || builder.brochureUrl === '#') {
+                                  alert("No data exists");
+                                  return;
+                                }
+                                setPendingBrochureUrl(builder.brochureUrl);
                                 setShowDownloadBrochureModal(true);
                               }}
                               className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium rounded bg-black/50 text-white hover:bg-black/70"
@@ -420,7 +452,7 @@ export default function BuilderDetailPage() {
                       )}
                       {builder.galleryImages[2] && (
                         <div className="relative md:col-span-1 md:row-span-1 rounded-lg overflow-hidden aspect-[4/3] md:aspect-auto min-h-[60px] md:min-h-0 group cursor-pointer">
-                          <Image src={builder.galleryImages[2]?.url || builder.galleryImages[2]} alt="Video" fill className="object-cover" sizes="16vw" />
+                          <Image src={getSafeImage(builder.galleryImages[2])} alt="Video" fill className="object-cover" sizes="16vw" />
                           <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center">
                             <CirclePlay className="w-8 h-8 text-white/80" />
                             <span className="text-white text-[10px] font-medium mt-1 underline">WATCH VIDEO</span>
@@ -431,7 +463,7 @@ export default function BuilderDetailPage() {
                     <div className="flex gap-1.5 max-[425px]:gap-1 mt-2 overflow-x-auto pb-1 max-[425px]:-mx-2 max-[425px]:px-2">
                       {builder.galleryImages.slice(0, 5).map((img, i) => (
                         <div key={i} className="relative w-20 h-14 max-[425px]:w-16 max-[425px]:h-12 rounded overflow-hidden shrink-0 cursor-pointer">
-                          <Image src={img?.url || img} alt={img?.alt || 'Gallery'} fill className="object-cover" sizes="80px" />
+                          <Image src={getSafeImage(img)} alt={img?.alt || 'Gallery'} fill className="object-cover" sizes="80px" />
                         </div>
                       ))}
                       <div className="relative w-20 h-14 max-[425px]:w-16 max-[425px]:h-12 rounded overflow-hidden shrink-0 cursor-pointer flex items-center justify-center bg-black/60">
@@ -670,7 +702,7 @@ export default function BuilderDetailPage() {
                     {builder.awards.map((a, i) => (
                       <li key={i} className="flex items-center gap-4">
                         <div className={`w-16 h-16 rounded-full overflow-hidden shrink-0 ${isDark ? 'bg-[#1f2229]' : 'bg-gray-100'}`}>
-                          {a.image && <Image src={a.image} alt={a.title} width={64} height={64} className="w-full h-full object-cover" />}
+                          {getSafeImage(a.image, '') ? <Image src={getSafeImage(a.image)} alt={a.title} width={64} height={64} className="w-full h-full object-cover" /> : null}
                         </div>
                         <div>
                           <p className={`font-semibold ${isDark ? 'text-white' : ''}`}>{a.title}</p>
@@ -705,7 +737,7 @@ export default function BuilderDetailPage() {
                       <SwiperSlide key={idx}>
                         <div className="flex-1 flex flex-col items-center text-center gap-4 min-w-0 px-2 md:px-12">
                           <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-200 shrink-0">
-                            {t.avatar && <Image src={t.avatar} alt={t.author || 'Client'} width={80} height={80} className="w-full h-full object-cover" />}
+                            {getSafeImage(t.avatar, '') ? <Image src={getSafeImage(t.avatar)} alt={t.author || 'Client'} width={80} height={80} className="w-full h-full object-cover" /> : null}
                           </div>
                           <p className={`italic text-sm md:text-base ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>"{t.quote}"</p>
                           <p className={`font-semibold ${isDark ? 'text-white' : ''}`}>{t.author}</p>
@@ -742,7 +774,7 @@ export default function BuilderDetailPage() {
                   <div className="flex flex-col max-[425px]:flex-col sm:flex-row justify-between items-start sm:items-center gap-4 max-[425px]:gap-3">
                     <div className="flex items-center gap-4 max-[425px]:gap-3 min-w-0">
                       <div className="w-24 h-24 max-[425px]:w-16 max-[425px]:h-16 overflow-hidden rounded-lg bg-gray-200 shrink-0">
-                        {rm.avatar && <Image src={rm.avatar} alt={rm.name} width={96} height={96} className="w-full h-full object-cover" />}
+                        {getSafeImage(rm.avatar, '') ? <Image src={getSafeImage(rm.avatar)} alt={rm.name} width={96} height={96} className="w-full h-full object-cover" /> : null}
                       </div>
                       <div>
                         <h3 className="font-semibold">{rm.name}</h3>
@@ -780,7 +812,7 @@ export default function BuilderDetailPage() {
                         const logos = fromData.length >= 5 ? fromData : [...fromData, ...placeholders.slice(0, 5 - fromData.length)];
                         return logos.slice(0, 5).map((logo, i) => (
                           <div key={i} className={`relative w-12 h-12 rounded-lg overflow-hidden shrink-0 ${isDark ? 'bg-[#282c34]' : 'bg-white'}`}>
-                            <Image src={logo || placeholders[i]} alt="Company" fill className="object-cover" sizes="48px" />
+                            <Image src={getSafeImage(logo, placeholders[i])} alt="Company" fill className="object-cover" sizes="48px" />
                           </div>
                         ));
                       })()}
@@ -830,7 +862,7 @@ export default function BuilderDetailPage() {
                       <li key={i}>
                         <Link href={p.href || '#'} className={`flex items-center gap-3 p-1.5 rounded-lg ${isDark ? 'hover:bg-white/10' : 'hover:bg-gray-50'}`}>
                           <div className="w-12 h-12 rounded overflow-hidden shrink-0 bg-gray-200">
-                            {p.image && <Image src={p.image} alt={p.name} width={48} height={48} className="w-full h-full object-cover" />}
+                            {getSafeImage(p.image, '') ? <Image src={getSafeImage(p.image)} alt={p.name} width={48} height={48} className="w-full h-full object-cover" /> : null}
                           </div>
                           <div>
                             <p className="font-semibold text-xs">{p.name}</p>
@@ -893,7 +925,7 @@ export default function BuilderDetailPage() {
                       <SwiperSlide key={idx}>
                         <div className="flex flex-col md:flex-row items-center gap-6 w-full px-2 md:px-12 text-center md:text-left">
                           <div className="w-32 h-32 rounded-lg overflow-hidden shrink-0 bg-gray-200">
-                            {member.image && <Image src={member.image} alt={member.name || 'Team member'} width={128} height={128} className="w-full h-full object-cover" />}
+                            {getSafeImage(member.image, '') ? <Image src={getSafeImage(member.image)} alt={member.name || 'Team member'} width={128} height={128} className="w-full h-full object-cover" /> : null}
                           </div>
                           <div>
                             <h3 className={`text-lg font-bold ${isDark ? 'text-white' : ''}`}>{member.name}</h3>

@@ -4,9 +4,8 @@ import mongoose from 'mongoose';
 
 export async function GET() {
     try {
-        await dbConnect();
-        
-        const db = mongoose.connection.db;
+        const conn = await dbConnect();
+        const db = conn.db;
         const collections = await db.listCollections().toArray();
         
         const collectionNames = collections.map(c => c.name);
