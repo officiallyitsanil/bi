@@ -612,12 +612,17 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
 
                         {/* Top Right Floating Actions */}
                         <div className="absolute top-5 right-5 flex flex-col gap-2">
-                            <button className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 text-white">
+                            <button onClick={handleShare} className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 text-white cursor-pointer hover:bg-white/30 transition-colors">
                                 <Share2 className="w-4.5 h-4.5" />
                             </button>
-                            <button className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 text-white">
+                            <a 
+                                href={`https://maps.google.com/maps?q=${property.coordinates?.latitude ?? property.coordinates?.lat ?? property.position?.lat},${property.coordinates?.longitude ?? property.coordinates?.lng ?? property.position?.lng}&z=14&t=h`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 text-white cursor-pointer hover:bg-white/30 transition-colors"
+                            >
                                 <CornerUpRight className="w-4.5 h-4.5" />
-                            </button>
+                            </a>
                             <button onClick={handleFavouriteToggle} className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 text-white">
                                 <Heart className={`w-4.5 h-4.5 ${isFavourite ? 'fill-red-500 text-red-500 border-none' : ''}`} />
                             </button>
@@ -644,8 +649,15 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                         <div className="flex justify-between items-center mb-4">
                             <span className="px-3 py-1 bg-red-50 text-red-500 text-[10px] font-bold rounded-lg tracking-wider uppercase">RENT</span>
                             <div className="flex gap-4">
-                                <Heart onClick={handleFavouriteToggle} className={`w-5 h-5 ${isFavourite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
-                                <CornerUpRight className="w-5 h-5 text-gray-400" />
+                                <Heart onClick={handleFavouriteToggle} className={`w-5 h-5 cursor-pointer hover:scale-110 transition-transform ${isFavourite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
+                                <a 
+                                    href={`https://maps.google.com/maps?q=${property.coordinates?.latitude ?? property.coordinates?.lat ?? property.position?.lat},${property.coordinates?.longitude ?? property.coordinates?.lng ?? property.position?.lng}&z=14&t=h`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="cursor-pointer hover:scale-110 transition-transform flex items-center justify-center"
+                                >
+                                    <CornerUpRight className="w-5 h-5 text-gray-400" />
+                                </a>
                             </div>
                         </div>
 

@@ -92,9 +92,10 @@ export default function CollapsedDrawerSearch({
                     key={index}
                     onMouseDown={(e) => {
                       e.preventDefault();
+                      if (suggestion.isNoResult) return;
                       onSuggestionSelect?.(suggestion);
                     }}
-                    className={`px-4 py-2.5 cursor-pointer border-b last:border-b-0 transition-all duration-200 ${isDark ? "hover:bg-gray-700 border-gray-700" : "hover:bg-gray-100 border-gray-100"}`}
+                    className={`px-4 py-2.5 ${suggestion.isNoResult ? "cursor-default" : "cursor-pointer"} border-b last:border-b-0 transition-all duration-200 ${isDark ? "hover:bg-gray-700 border-gray-700" : "hover:bg-gray-100 border-gray-100"}`}
                   >
                     <div className={`text-sm ${isDark ? "text-gray-200" : "text-gray-800"}`}>{suggestion.displayText}</div>
                   </div>

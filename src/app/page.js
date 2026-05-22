@@ -596,6 +596,15 @@ export default function HomePage() {
     });
 
     const finalSuggestions = filteredSuggestions.slice(0, 5);
+
+    if (finalSuggestions.length === 0) {
+      finalSuggestions.push({
+        text: "No property exists with this name",
+        displayText: "No property exists with this name",
+        isNoResult: true
+      });
+    }
+
     setSuggestions(finalSuggestions);
     setShowSuggestions(finalSuggestions.length > 0);
   };
@@ -3329,7 +3338,7 @@ export default function HomePage() {
                         onChange={handleSearchInputChange}
                         onFocus={() => { setIsSearchFocused(true); setShowSuggestions(true); }}
                         onBlur={() => setTimeout(() => { setIsSearchFocused(false); setShowSuggestions(false); }, 150)}
-                        placeholder='Search "Indiranagar"'
+                        placeholder='Search WeWork'
                         className={`flex-1 bg-transparent outline-none text-[13px] font-medium ${isDark ? "text-white" : "text-gray-800"}`}
                         style={{ border: 'none', padding: 0 }}
                       />
@@ -3343,6 +3352,7 @@ export default function HomePage() {
                             key={idx}
                             onMouseDown={(e) => {
                               e.preventDefault();
+                              if (suggestion.isNoResult) return;
                               setSearchQuery(suggestion.text);
                               if (suggestion.marker?.position) {
                                 setMapCenter(suggestion.marker.position);
@@ -3350,7 +3360,7 @@ export default function HomePage() {
                               }
                               setShowSuggestions(false);
                             }}
-                            className={`px-5 py-3.5 cursor-pointer border-b last:border-0 ${isDark ? "hover:bg-gray-800 border-gray-800 text-gray-200" : "hover:bg-[#FFF9E5]/50 border-gray-50 text-gray-700 font-medium"}`}
+                            className={`px-5 py-3.5 ${suggestion.isNoResult ? "cursor-default" : "cursor-pointer"} border-b last:border-0 ${isDark ? "hover:bg-gray-800 border-gray-800 text-gray-200" : "hover:bg-[#FFF9E5]/50 border-gray-50 text-gray-700 font-medium"}`}
                           >
                             <p className="text-[13px]">{suggestion.displayText}</p>
                           </div>
