@@ -1405,6 +1405,7 @@ function PropertyDetailsContent() {
 
     // Schema: totalPrice, discountPercent, pricePerSeat, pricePerSqft, isNegotiablePrice
     const { originalPrice, discountedPrice, originalPricePerSeat, discountedPricePerSeat, isNegotiablePrice } = calculatePrices(property);
+    const hasPdf = !!((property.seatLayoutPDFs?.[0]?.url || property.seatLayoutPDFs?.[0]) || property.pdf);
     const isCommercialProperty = (property.propertyCategory || property.propertyType || "").toLowerCase() === "commercial";
     const specsCardTitle = (() => {
         const name = safeDisplay(property.propertyName || property.name, "");
@@ -1586,25 +1587,22 @@ function PropertyDetailsContent() {
                                             )}
                                             
                                             {/* Mobile portrait PDF floating button */}
-                                            <div className="absolute top-3 right-3 z-[20] md:hidden pointer-events-none">
-                                                <img
-                                                    src="/property-details/pdf-download.png"
-                                                    alt="Download PDF Brochure"
-                                                    className="pointer-events-auto cursor-pointer drop-shadow-md hover:scale-105 transition-transform w-[40px] h-[40px] object-contain"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        const hasPdf = (property.seatLayoutPDFs?.[0]?.url || property.seatLayoutPDFs?.[0]) || property.pdf;
-                                                        if (!hasPdf) {
-                                                            alert("No PDF brochure exists for this property");
-                                                            return;
-                                                        }
-                                                        const pdfObj = property.seatLayoutPDFs?.[0]
-                                                            ? (typeof property.seatLayoutPDFs[0] === 'string' ? { url: property.seatLayoutPDFs[0], originalName: 'Property Brochure' } : property.seatLayoutPDFs[0])
-                                                            : { url: property.pdf, originalName: 'Property Brochure' };
-                                                        setSelectedPDF(pdfObj);
-                                                    }}
-                                                />
-                                            </div>
+                                            {hasPdf && (
+                                                <div className="absolute top-3 right-3 z-[20] md:hidden pointer-events-none">
+                                                    <img
+                                                        src="/property-details/pdf-download.png"
+                                                        alt="Download PDF Brochure"
+                                                        className="pointer-events-auto cursor-pointer drop-shadow-md hover:scale-105 transition-transform w-[40px] h-[40px] object-contain"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const pdfObj = property.seatLayoutPDFs?.[0]
+                                                                ? (typeof property.seatLayoutPDFs[0] === 'string' ? { url: property.seatLayoutPDFs[0], originalName: 'Property Brochure' } : property.seatLayoutPDFs[0])
+                                                                : { url: property.pdf, originalName: 'Property Brochure' };
+                                                            setSelectedPDF(pdfObj);
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="hidden md:block relative md:col-span-2 md:row-span-1 aspect-[4/3] md:aspect-auto z-[1] overflow-visible">
                                             <div
@@ -1618,126 +1616,138 @@ function PropertyDetailsContent() {
                                                     <div className="w-full h-full bg-muted" aria-hidden />
                                                 )}
                                             </div>
-                                            <div className="gallery-pdf-cta-float pointer-events-none absolute z-[20]">
-                                                <img
-                                                    src="/property-details/pdf-download.png"
-                                                    alt="Download PDF Brochure"
-                                                    className="pointer-events-auto cursor-pointer drop-shadow-md hover:scale-105 transition-transform w-[50px] h-[50px] object-contain"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        const hasPdf = (property.seatLayoutPDFs?.[0]?.url || property.seatLayoutPDFs?.[0]) || property.pdf;
-                                                        if (!hasPdf) {
-                                                            alert("No PDF brochure exists for this property");
-                                                            return;
-                                                        }
-                                                        const pdfObj = property.seatLayoutPDFs?.[0]
-                                                            ? (typeof property.seatLayoutPDFs[0] === 'string' ? { url: property.seatLayoutPDFs[0], originalName: 'Property Brochure' } : property.seatLayoutPDFs[0])
-                                                            : { url: property.pdf, originalName: 'Property Brochure' };
-                                                        setSelectedPDF(pdfObj);
-                                                    }}
-                                                />
-                                            </div>
+                                            {hasPdf && (
+                                                <div className="gallery-pdf-cta-float pointer-events-none absolute z-[20]">
+                                                    <img
+                                                        src="/property-details/pdf-download.png"
+                                                        alt="Download PDF Brochure"
+                                                        className="pointer-events-auto cursor-pointer drop-shadow-md hover:scale-105 transition-transform w-[50px] h-[50px] object-contain"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const pdfObj = property.seatLayoutPDFs?.[0]
+                                                                ? (typeof property.seatLayoutPDFs[0] === 'string' ? { url: property.seatLayoutPDFs[0], originalName: 'Property Brochure' } : property.seatLayoutPDFs[0])
+                                                                : { url: property.pdf, originalName: 'Property Brochure' };
+                                                            setSelectedPDF(pdfObj);
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="hidden md:block relative md:col-span-2 md:row-span-1 aspect-[4/3] md:aspect-auto z-[1] overflow-visible">
-                                            <div className="relative h-full w-full overflow-hidden rounded-2xl bg-muted shadow-sm border border-gray-200">
-                                                {galleryInlineVideoActive && galleryVideoUrl ? (
-                                                    <video
-                                                        key={galleryVideoUrl}
-                                                        ref={galleryInlineVideoRef}
-                                                        src={galleryVideoUrl}
-                                                        className="h-full w-full object-cover bg-black"
-                                                        controls
-                                                        playsInline
-                                                        autoPlay
-                                                        muted
-                                                        loop
-                                                        preload="auto"
-                                                        poster={galleryVideoThumb || undefined}
-                                                    >
-                                                        Your browser does not support the video tag.
-                                                    </video>
-                                                ) : (
-                                                    <>
-                                                        {galleryVideoThumb ? (
-                                                            <img src={galleryVideoThumb} alt="" className="h-full w-full object-cover" />
+                                            {galleryVideoUrl ? (
+                                                <>
+                                                    <div className="relative h-full w-full overflow-hidden rounded-2xl bg-muted shadow-sm border border-gray-200">
+                                                        {galleryInlineVideoActive ? (
+                                                            <video
+                                                                key={galleryVideoUrl}
+                                                                ref={galleryInlineVideoRef}
+                                                                src={galleryVideoUrl}
+                                                                className="h-full w-full object-cover bg-black"
+                                                                controls
+                                                                playsInline
+                                                                autoPlay
+                                                                muted
+                                                                loop
+                                                                preload="auto"
+                                                                poster={galleryVideoThumb || undefined}
+                                                            >
+                                                                Your browser does not support the video tag.
+                                                            </video>
                                                         ) : (
-                                                            <div className="h-full w-full bg-muted" aria-hidden />
+                                                            <>
+                                                                {galleryVideoThumb ? (
+                                                                    <img src={galleryVideoThumb} alt="" className="h-full w-full object-cover" />
+                                                                ) : (
+                                                                    <div className="h-full w-full bg-muted" aria-hidden />
+                                                                )}
+                                                                <div className="pointer-events-none absolute inset-0 bg-black/25" aria-hidden />
+                                                                <button
+                                                                    type="button"
+                                                                    className="absolute left-1/2 top-1/2 z-[5] flex -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setGalleryInlineVideoActive(true);
+                                                                    }}
+                                                                    aria-label="Play video in gallery"
+                                                                >
+                                                                    <span className="flex h-16 w-16 items-center justify-center rounded-full bg-neutral-800/80 text-white shadow-lg ring-2 ring-white/25 md:h-[4.25rem] md:w-[4.25rem]">
+                                                                        <CirclePlay className="h-10 w-10 text-white drop-shadow-md md:h-11 md:w-11" strokeWidth={1.25} />
+                                                                    </span>
+                                                                </button>
+                                                            </>
                                                         )}
-                                                        <div className="pointer-events-none absolute inset-0 bg-black/25" aria-hidden />
+                                                    </div>
+                                                    <div className="gallery-watch-video-float pointer-events-none absolute z-[20]">
                                                         <button
                                                             type="button"
-                                                            disabled={!galleryVideoUrl}
-                                                            className="absolute left-1/2 top-1/2 z-[5] flex -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0 disabled:cursor-not-allowed disabled:opacity-50"
+                                                            className="gallery-watch-video-pill pointer-events-auto"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                if (galleryVideoUrl) setGalleryInlineVideoActive(true);
+                                                                galleryInlineVideoRef.current?.pause?.();
+                                                                setGalleryInlineVideoActive(false);
+                                                                setShowVideoModal(true);
                                                             }}
-                                                            aria-label="Play video in gallery"
                                                         >
-                                                            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-neutral-800/80 text-white shadow-lg ring-2 ring-white/25 md:h-[4.25rem] md:w-[4.25rem]">
-                                                                <CirclePlay className="h-10 w-10 text-white drop-shadow-md md:h-11 md:w-11" strokeWidth={1.25} />
-                                                            </span>
+                                                            WATCH VIDEO
                                                         </button>
-                                                    </>
-                                                )}
-                                            </div>
-                                            <div className="gallery-watch-video-float pointer-events-none absolute z-[20]">
-                                                <button
-                                                    type="button"
-                                                    className="gallery-watch-video-pill pointer-events-auto"
-                                                    disabled={!galleryVideoUrl}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        if (!galleryVideoUrl) return;
-                                                        galleryInlineVideoRef.current?.pause?.();
-                                                        setGalleryInlineVideoActive(false);
-                                                        setShowVideoModal(true);
-                                                    }}
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div
+                                                    className="relative h-full w-full rounded-2xl overflow-hidden cursor-pointer bg-muted border border-gray-200"
+                                                    onClick={() => setFullScreenImage(images[2] || images[0])}
+                                                    role="presentation"
                                                 >
-                                                    WATCH VIDEO
-                                                </button>
+                                                    {(images[2] || images[0]) ? (
+                                                        <img src={images[2] || images[0]} alt="" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full bg-muted" aria-hidden />
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    {images.length > 3 && (
+                                        <div className="w-full min-w-0 self-stretch pb-2 relative col-span-1">
+                                            <div ref={thumbStripRef} className="gallery-thumb-strip flex w-full min-w-0 flex-nowrap items-center gap-3 overflow-x-auto scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                                {images.length === 0 ? null : (() => {
+                                                    const total = images.length;
+                                                    /** Dynamic cells: based on measured width, if more than visibleCount images, visibleCount-1 thumbs + "Show all" */
+                                                    const cellClass =
+                                                        "relative m-0 h-20 w-[82px] shrink-0 cursor-pointer overflow-hidden rounded-xl border border-gray-200 min-w-0";
+
+                                                    if (total <= visibleCount) {
+                                                        return images.map((img, i) => (
+                                                            <div key={i} className={cellClass} onClick={() => setCurrentImageIndex(i)}>
+                                                                <img src={img} alt="" className="h-full w-full object-cover" />
+                                                            </div>
+                                                        ));
+                                                    }
+                                                    const plainCount = visibleCount - 1;
+                                                    return [
+                                                        ...images.slice(0, plainCount).map((img, i) => (
+                                                            <div key={`t-${i}`} className={cellClass} onClick={() => setCurrentImageIndex(i)}>
+                                                                <img src={img} alt="" className="h-full w-full object-cover" />
+                                                            </div>
+                                                        )),
+                                                        <button
+                                                            key="show-all-thumb"
+                                                            type="button"
+                                                            className={`${cellClass} gallery-see-all-thumb border-0 p-0 text-left`}
+                                                            onClick={() => setShowAllPhotosModal(true)}
+                                                            aria-label={`See all ${total} photos`}
+                                                        >
+                                                            <img src={images[plainCount]} alt="" className="gallery-see-all-thumb__img h-full w-full object-cover" />
+                                                            <div className="gallery-see-all-thumb__wash" aria-hidden />
+                                                            <div className="absolute inset-0 flex items-center justify-center p-2">
+                                                                <span className="gallery-see-all-pill">See all</span>
+                                                            </div>
+                                                        </button>,
+                                                    ];
+                                                })()}
                                             </div>
                                         </div>
-                                    </div>
-                                    <div className="w-full min-w-0 self-stretch pb-2 relative col-span-1">
-                                        <div ref={thumbStripRef} className="gallery-thumb-strip flex w-full min-w-0 flex-nowrap items-center gap-3 overflow-x-auto scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                                            {images.length === 0 ? null : (() => {
-                                                const total = images.length;
-                                                /** Dynamic cells: based on measured width, if more than visibleCount images, visibleCount-1 thumbs + "Show all" */
-                                                const cellClass =
-                                                    "relative m-0 h-20 flex-1 shrink-0 cursor-pointer overflow-hidden rounded-xl border border-gray-200 min-w-0";
-
-                                                if (total <= visibleCount) {
-                                                    return images.map((img, i) => (
-                                                        <div key={i} className={cellClass} onClick={() => setCurrentImageIndex(i)}>
-                                                            <img src={img} alt="" className="h-full w-full object-cover" />
-                                                        </div>
-                                                    ));
-                                                }
-                                                const plainCount = visibleCount - 1;
-                                                return [
-                                                    ...images.slice(0, plainCount).map((img, i) => (
-                                                        <div key={`t-${i}`} className={cellClass} onClick={() => setCurrentImageIndex(i)}>
-                                                            <img src={img} alt="" className="h-full w-full object-cover" />
-                                                        </div>
-                                                    )),
-                                                    <button
-                                                        key="show-all-thumb"
-                                                        type="button"
-                                                        className={`${cellClass} gallery-see-all-thumb border-0 p-0 text-left`}
-                                                        onClick={() => setShowAllPhotosModal(true)}
-                                                        aria-label={`See all ${total} photos`}
-                                                    >
-                                                        <img src={images[plainCount]} alt="" className="gallery-see-all-thumb__img h-full w-full object-cover" />
-                                                        <div className="gallery-see-all-thumb__wash" aria-hidden />
-                                                        <div className="absolute inset-0 flex items-center justify-center p-2">
-                                                            <span className="gallery-see-all-pill">See all</span>
-                                                        </div>
-                                                    </button>,
-                                                ];
-                                            })()}
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -2253,6 +2263,38 @@ function PropertyDetailsContent() {
                                             return agentPhone;
                                         })()
                                         : "";
+
+                                    const handleAgentPhoneCopy = (e) => {
+                                        if (e) e.preventDefault();
+                                        if (!agentPhone) return;
+                                        navigator.clipboard.writeText(agentPhone).then(() => {
+                                            alert(`Agent Phone number copied to clipboard: ${agentPhone}`);
+                                        }).catch(() => {
+                                            alert('Failed to copy phone number.');
+                                        });
+                                    };
+
+                                    const handleAgentEmailCopy = (e) => {
+                                        if (e) e.preventDefault();
+                                        if (!agentEmail) return;
+                                        navigator.clipboard.writeText(agentEmail).then(() => {
+                                            alert(`Agent Email address copied to clipboard: ${agentEmail}`);
+                                        }).catch(() => {
+                                            alert('Failed to copy email address.');
+                                        });
+                                    };
+
+                                    const handleAgentWhatsAppCopy = (e) => {
+                                        if (e) e.preventDefault();
+                                        const waNumber = property.agentDetails?.whatsapp || agentPhone;
+                                        if (!waNumber) return;
+                                        navigator.clipboard.writeText(waNumber).then(() => {
+                                            alert(`Agent WhatsApp number copied to clipboard: ${waNumber}`);
+                                        }).catch(() => {
+                                            alert('Failed to copy WhatsApp number.');
+                                        });
+                                    };
+
                                     return (
                                         <>
                                             <div className="px-4 pt-4 pb-3">
@@ -2278,8 +2320,8 @@ function PropertyDetailsContent() {
                                                             <div className="flex items-center gap-1.5 flex-wrap w-full leading-none">
                                                                 {agentPhone && (
                                                                     <a
-                                                                        href={`tel:${agentPhone.replace(/[^0-9+]/g, "")}`}
-                                                                        onClick={(e) => handlePhoneClick(e, agentPhone)}
+                                                                        href="#"
+                                                                        onClick={handleAgentPhoneCopy}
                                                                         className="text-[clamp(7px,0.7vw,10px)] text-gray-900 dark:text-gray-300 tracking-wide hover:underline truncate"
                                                                     >
                                                                         {maskedPhone}
@@ -2298,8 +2340,8 @@ function PropertyDetailsContent() {
                                                         <div className="flex items-center gap-[clamp(2px,0.4vw,8px)] px-1">
                                                             {agentPhone && (
                                                                 <a
-                                                                    href={`tel:${agentPhone.replace(/[^0-9+]/g, "")}`}
-                                                                    onClick={(e) => handlePhoneClick(e, agentPhone)}
+                                                                    href="#"
+                                                                    onClick={handleAgentPhoneCopy}
                                                                     className="inline-flex shrink-0 hover:opacity-80 transition-opacity"
                                                                     title="Call"
                                                                 >
@@ -2308,8 +2350,8 @@ function PropertyDetailsContent() {
                                                             )}
                                                             {agentEmail && (
                                                                 <a
-                                                                    href={`mailto:${agentEmail}`}
-                                                                    onClick={(e) => handleEmailClick(e, agentEmail, `Inquiry: ${propTitle || ""}`)}
+                                                                    href="#"
+                                                                    onClick={handleAgentEmailCopy}
                                                                     className="inline-flex shrink-0 hover:opacity-80 transition-opacity"
                                                                     title="Message"
                                                                 >
@@ -2318,9 +2360,8 @@ function PropertyDetailsContent() {
                                                             )}
                                                             {(property.agentDetails?.whatsapp || agentPhone) && (
                                                                 <a
-                                                                    href={`https://wa.me/${(property.agentDetails?.whatsapp || agentPhone).replace(/[^0-9]/g, "")}?text=Hi, I'm interested in ${encodeURIComponent(propTitle)}`}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
+                                                                    href="#"
+                                                                    onClick={handleAgentWhatsAppCopy}
                                                                     className="inline-flex shrink-0 hover:opacity-80 transition-opacity"
                                                                     title="WhatsApp"
                                                                 >
@@ -2330,7 +2371,7 @@ function PropertyDetailsContent() {
                                                         </div>
                                                         <button
                                                             type="button"
-                                                            onClick={(e) => agentPhone && handlePhoneClick(e, agentPhone)}
+                                                            onClick={handleAgentPhoneCopy}
                                                             className="inline-flex h-[clamp(24px,2vw,36px)] px-[clamp(2px,0.4vw,10px)] text-[clamp(10px,0.8vw,14px)] items-center justify-center rounded-lg border border-[#a4ecbe] bg-[#f1fdf5] font-bold text-[#208346] hover:bg-[#e6fceb] dark:bg-[#1f5431] dark:border-[#2d7644] dark:text-white dark:hover:bg-[#1b482a] transition-colors shadow-sm"
                                                         >
                                                             Contact {(agentName && agentName.split(" ")[0]) || agentName || "Agent"}
@@ -2526,7 +2567,10 @@ function PropertyDetailsContent() {
 
                             {/* Schedule a Tour Sidebar Section */}
                             <div className={`tour-card border mb-6 transition-all ${isDark ? '!bg-[#1f2229] !border-gray-800 shadow-none' : 'bg-white border-gray-100'}`}>
-                                <div className={`tour-header-box transition-colors ${isDark ? '!bg-gray-800 !border-gray-700' : ''}`}>
+                                <div 
+                                    onClick={() => setTourType("in-person")}
+                                    className={`tour-header-box cursor-pointer hover:opacity-90 active:scale-[0.98] transition-colors ${isDark ? '!bg-gray-800 !border-gray-700' : ''}`}
+                                >
                                     <h3 className={`${isDark ? '!text-white' : ''}`}>SCHEDULE A TOUR</h3>
                                 </div>
 
@@ -2669,7 +2713,8 @@ function PropertyDetailsContent() {
                                 </form>
 
                                 <div
-                                    className={`tour-footer-box transition-all ${isDark ? '!bg-gray-800 !text-white !border-gray-700' : ''}`}
+                                    onClick={() => setTourType("video-chat")}
+                                    className={`tour-footer-box cursor-pointer hover:opacity-90 active:scale-[0.98] transition-all ${isDark ? '!bg-gray-800 !text-white !border-gray-700' : ''}`}
                                     style={isDark ? { background: '#1f2229', color: '#fff' } : {}}
                                 >
                                     BOOK YOUR VIDEO TOUR NOW
@@ -2678,7 +2723,9 @@ function PropertyDetailsContent() {
 
                             {/* Floor Plan */}
                             <div className={`rounded-lg border shadow-none mb-6 transition-colors ${isDark ? 'border-gray-800 bg-[#1f2229]' : 'border-gray-200 bg-card'}`}>
-                                <div className="px-3 py-1.5"><h3 className={`text-[11px] font-bold ${isDark ? 'text-white' : ''}`}>Floor Plan</h3></div>
+                                <div className="px-3 py-1.5">
+                                    <h3 className={`text-[11px] font-bold ${isDark ? 'text-white' : ''}`}>Floor Plan</h3>
+                                </div>
                                 <div className={`border-t ${isDark ? 'border-gray-800' : 'border-gray-200'}`} />
                                 <div className="p-2.5">
                                     <div className={`relative w-full rounded-lg overflow-hidden border transition-colors ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'}`} style={{ aspectRatio: '16/9', minHeight: 110 }}>

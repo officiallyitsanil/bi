@@ -34,6 +34,7 @@ export default function PlacesAutocompleteInput({
   value,
   onChange,
   onSelect,
+  onSelectStart,
   placeholder = "Search",
   mapCenter = { lat: 20.5937, lng: 78.9629 },
   type = "locality",
@@ -159,12 +160,13 @@ export default function PlacesAutocompleteInput({
   const handleSelect = useCallback(
     (prediction) => {
       const desc = prediction.description || prediction.structured_formatting?.main_text || "";
+      onSelectStart?.(desc);
       onChange?.(desc);
       setShowDropdown(false);
       setPredictions([]);
       getPlaceDetails(prediction.place_id, desc);
     },
-    [onChange, getPlaceDetails]
+    [onChange, getPlaceDetails, onSelectStart]
   );
 
   const handleKeyDown = useCallback(

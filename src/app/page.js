@@ -68,6 +68,7 @@ export default function HomePage() {
   const [markers, setMarkers] = useState([]);
   const [selectedCity, setSelectedCity] = useState(null);
   const [selectedMarker, setSelectedMarker] = useState(null);
+  const [activeCityFilter, setActiveCityFilter] = useState(null);
 
   const [zoomLevel, setZoomLevel] = useState(ZOOM_INDIA);
   const [, setLocationError] = useState(null);
@@ -688,11 +689,16 @@ export default function HomePage() {
         const { lat, lng } = data.results[0].geometry.location;
         setMapCenter({ lat, lng });
         setZoomLevel(options.zoomLevel ?? ZOOM_CITY);
-        if (options.clearSearch) setCitySearchQuery('');
-        const isMobile = typeof window !== 'undefined' && window.innerWidth < 480;
-        if (options.closeSelector || isMobile) {
+        setCitySearchQuery(cityName);
+        
+        setActiveCityFilter(cityName);
+
+        const isMobileOrTablet = typeof window !== 'undefined' && window.innerWidth < 768;
+        if (isMobileOrTablet) {
           setShowCitySelector(false);
-          if (isMobile) { setSelectedMarker(null); setSelectedCity(null); }
+          setIsDrawerCollapsed(true);
+          setSelectedMarker(null);
+          setSelectedCity(null);
         }
       }
       await new Promise(r => setTimeout(r, 1000)); // 1s delay so overlay is visible
@@ -846,6 +852,15 @@ export default function HomePage() {
 
   const getFilteredMarkers = () => {
     let filtered = markers.filter(marker => !marker.isSearchResult); // Exclude search result markers
+
+    // Filter by selected city
+    if (activeCityFilter) {
+      filtered = filtered.filter(marker => {
+        const markerCity = (marker.address?.city || marker.city || '').toLowerCase().trim();
+        const selectedCityName = activeCityFilter.toLowerCase().trim();
+        return markerCity.includes(selectedCityName) || selectedCityName.includes(markerCity);
+      });
+    }
 
     // Use applied filters only when user has clicked "Apply Filters"; otherwise no panel filters apply
     const baseFilters = appliedFilters !== null ? appliedFilters : getDefaultFilterSnapshot();
@@ -1909,14 +1924,29 @@ export default function HomePage() {
                   <PlacesAutocompleteInput
                     value={citySearchQuery}
                     onChange={setCitySearchQuery}
-                    onSelect={({ description, lat, lng }) => {
+                    onSelectStart={(description) => {
+                      const cityName = description.split(',')[0].trim();
+                      setZoomingCityName(cityName);
+                    }}
+                    onSelect={async ({ description, lat, lng }) => {
+                      const cityName = description.split(',')[0].trim();
+                      setZoomingCityName(cityName);
                       setMapCenter({ lat, lng });
                       setZoomLevel(ZOOM_LOCATION);
-                      setCitySearchQuery(description.split(',')[0].trim());
-                      if (typeof window !== 'undefined' && window.innerWidth < 480) {
+                      setCitySearchQuery(cityName);
+                      setActiveCityFilter(cityName);
+                      
+                      const isMobileOrTablet = typeof window !== 'undefined' && window.innerWidth < 768;
+                      if (isMobileOrTablet) {
                         setShowFiltersView(false);
                         setShowCitySelector(false);
+                        setIsDrawerCollapsed(true);
+                        setSelectedMarker(null);
+                        setSelectedCity(null);
                       }
+                      
+                      await new Promise(r => setTimeout(r, 1000));
+                      setZoomingCityName(null);
                     }}
                     placeholder="Select or type your city"
                     mapCenter={mapCenter}
@@ -1989,6 +2019,7 @@ export default function HomePage() {
                       setZoomLevel(ZOOM_INDIA);
                       setCitySearchQuery('');
                       setDetectedUserLocation(null);
+                      setActiveCityFilter(null);
                     }}
                     disabled={isLoadingProperties}
                     className={`text-sm transition-colors ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
