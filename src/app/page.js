@@ -908,15 +908,15 @@ export default function HomePage() {
     // Apply listing type filter (For Sale, For Rent, Ready to Move, New Projects, Verified, Video) - DB: listingType
     if (listingTypeFilter && listingTypeFilter !== 'all') {
       filtered = filtered.filter(marker => {
-        const markerListingType = (marker.listingType || '').toString().toLowerCase();
+        const markerListingType = (marker.listingType || marker.propertyLabel || marker.saleType || marker.type || '').toString().toLowerCase();
         if (listingTypeFilter === 'verified') return marker.isVerified || marker.verificationStatus === 'verified' || marker.verificationStatus === 'confirmed';
         if (listingTypeFilter === 'video') return !!(marker.video || (marker.propertyVideos && marker.propertyVideos.length > 0));
         // DB values: "for-rent", "Standard", etc.; also accept display form "For Rent"
         const match = {
           forSale: () => markerListingType.includes('sale') || markerListingType === 'for-sale',
           forRent: () => markerListingType.includes('rent') || markerListingType === 'for-rent',
-          readyToMove: () => markerListingType.includes('ready') || markerListingType.includes('move'),
-          newProjects: () => markerListingType.includes('new') || markerListingType.includes('project'),
+          readyToMove: () => markerListingType.includes('ready') || markerListingType.includes('move') || marker.readyToMove === true || marker.readyToMove === 'true' || String(marker.constructionStatus || '').toLowerCase().includes('ready') || String(marker.possessionStatus || '').toLowerCase().includes('ready'),
+          newProjects: () => markerListingType.includes('new') || markerListingType.includes('project') || marker.isNew === true || marker.isNew === 'true' || String(marker.saleType || '').toLowerCase().includes('new') || String(marker.saleType || '').toLowerCase().includes('primary'),
         };
         return match[listingTypeFilter] ? match[listingTypeFilter]() : markerListingType === listingTypeFilter.toLowerCase();
       });
@@ -1848,7 +1848,7 @@ export default function HomePage() {
                                 }}
                                 className={`w-full text-left px-2 py-1 transition-colors ${sortBy === 'priceLow' ? (isDark ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-800') : (isDark ? 'text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-700 hover:bg-yellow-100 hover:text-yellow-900')}`}
                               >
-                                Price (low to high)
+                                Discount Price (low to high)
                               </button>
                               <button
                                 onClick={() => {
@@ -1857,25 +1857,7 @@ export default function HomePage() {
                                 }}
                                 className={`w-full text-left px-2 py-1 transition-colors ${sortBy === 'priceHigh' ? (isDark ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-800') : (isDark ? 'text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-700 hover:bg-yellow-100 hover:text-yellow-900')}`}
                               >
-                                Price (high to low)
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setSortBy('sizeLow');
-                                  setShowSortDropdown(false);
-                                }}
-                                className={`w-full text-left px-2 py-1 transition-colors ${sortBy === 'sizeLow' ? (isDark ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-800') : (isDark ? 'text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-700 hover:bg-yellow-100 hover:text-yellow-900')}`}
-                              >
-                                Size (low to high)
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setSortBy('sizeHigh');
-                                  setShowSortDropdown(false);
-                                }}
-                                className={`w-full text-left px-2 py-1 transition-colors ${sortBy === 'sizeHigh' ? (isDark ? 'bg-slate-600 text-white' : 'bg-slate-200 text-slate-800') : (isDark ? 'text-gray-300 hover:bg-yellow-500/20 hover:text-yellow-400' : 'text-gray-700 hover:bg-yellow-100 hover:text-yellow-900')}`}
-                              >
-                                Size (high to low)
+                                Discount Price (high to low)
                               </button>
                               <button
                                 onClick={() => {

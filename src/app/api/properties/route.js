@@ -87,11 +87,18 @@ export async function GET(request) {
 
         const name = url.searchParams.get('name');
         if (name) {
-            const decodedName = decodeURIComponent(name).replace(/-/g, ' ');
+            const decodedName = decodeURIComponent(name);
+            const cleanTokens = decodedName.split(/[-_\s]+/).filter(Boolean);
+            
+            // Build a flexible regex matching space/hyphen/underscore variations in between words
+            const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regexPattern = '^' + cleanTokens.map(escapeRegExp).join('[-_\\s]+') + '$';
+            const robustRegex = new RegExp(regexPattern, 'i');
+
             if (USE_DUMMY_PROPERTIES) {
                 const allProps = getAllDummyPropertiesRaw();
                 const property = allProps.find(p => 
-                    (p.propertyName || p.name).toLowerCase() === decodedName.toLowerCase()
+                    robustRegex.test(p.propertyName || p.name)
                 );
                 if (!property) {
                     return NextResponse.json(
@@ -104,8 +111,9 @@ export async function GET(request) {
 
             const conn = await dbConnect();
             const db = conn.db;
-            // Case-insensitive search
-            const query = { propertyName: { $regex: new RegExp(`^${decodedName}$`, 'i') } };
+            
+            // Robust case-insensitive search matching hyphens/spaces/underscores flexibly
+            const query = { propertyName: { $regex: robustRegex } };
             let property = await db.collection('commercialProperties').findOne(query);
             if (!property) {
                 property = await db.collection('residentialproperties').findOne(query);

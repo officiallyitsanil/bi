@@ -329,6 +329,7 @@ function PropertyDetailsContent() {
     const [selectedTourTime, setSelectedTourTime] = useState("");
     const [showTimeDropdown, setShowTimeDropdown] = useState(false);
     const [similarLocationFilter, setSimilarLocationFilter] = useState("Koramangala");
+    const [allProperties, setAllProperties] = useState([]);
     const [showLocationDropdown, setShowLocationDropdown] = useState(false);
     const [showStickyHeader, setShowStickyHeader] = useState(false);
     const [showTourModal, setShowTourModal] = useState(false);
@@ -813,6 +814,21 @@ function PropertyDetailsContent() {
 
         fetchPropertyFromAPI();
     }, [searchParams, router]);
+
+    useEffect(() => {
+        const fetchAllProperties = async () => {
+            try {
+                const response = await fetch('/api/properties');
+                const result = await response.json();
+                if (result.success && result.data) {
+                    setAllProperties(result.data);
+                }
+            } catch (error) {
+                console.error('Error fetching all properties:', error);
+            }
+        };
+        fetchAllProperties();
+    }, []);
 
     // Map configuration - normalized coords use lat/lng (DB: coordinates.latitude/longitude)
     const coord = property?.coordinates || property?.position;
@@ -2925,60 +2941,112 @@ function PropertyDetailsContent() {
             </div>
 
             {/* Similar Properties - Boxed design */}
-            <div id="similar-properties" className="w-full px-4 md:px-10 mt-16 mb-12">
-                <section className={`py-12 px-6 md:py-16 md:px-10 rounded-2xl md:rounded-[24px] relative shadow-sm border transition-colors ${isDark ? 'bg-[#121418] border-gray-800' : 'bg-[#fdf8e7] border-[#f0e4c3]/10'}`}>
-                    {/* Title row: title+subtitle on left, "View all" on right — always on same row */}
-                    <div className="flex items-start justify-between gap-2 mb-3">
-                        <div>
-                            <h2 className={`!text-[1.5rem] font-bold mb-1.5 tracking-tight leading-tight ${isDark ? 'text-white' : 'text-black'}`}>Similar Properties</h2>
-                            <p className={`text-[13px] font-medium ${isDark ? 'text-gray-400' : 'text-gray-800'}`}>Handpicked properties for you.</p>
-                        </div>
-                        {/* View all — always visible top-right on mobile and desktop */}
-                        <div className="relative shrink-0 flex items-center mt-1.5" ref={locationDropdownRef}>
-                            <button
-                                onClick={(e) => { e.stopPropagation(); setShowLocationDropdown(!showLocationDropdown); }}
-                                className="text-[#f97316] text-[12px] font-bold hover:underline flex items-center gap-[2px] cursor-pointer bg-transparent whitespace-nowrap"
-                            >
-                                View all <ChevronRight className="h-3.5 w-3.5" strokeWidth={3} />
-                            </button>
-                            {showLocationDropdown && (
-                                <div className="absolute top-full right-0 mt-2 z-20 w-48 max-h-60 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-xl p-1 custom-scrollbar">
-                                    {(property.allSimilarLocations || property.similarLocations || []).map((loc) => (
+            {(() => {
+                const getNumericPrice = (prop) => {
+                    if (!prop) return 0;
+                    const p = prop.totalPrice || prop.originalPrice || prop.discountedPrice || prop.expectedRent || prop.price;
+                    if (!p || p === '₹XX' || p === 'N/A') return 0;
+                    const priceStr = String(p).replace(/[₹,]/g, '');
+                    return parseFloat(priceStr) || 0;
+                };
+
+                const currentPrice = getNumericPrice(property);
+                const lowerBound = currentPrice * 0.9;
+                const upperBound = currentPrice * 1.1;
+
+                // Filter all live properties within +/- 10% of currentPrice
+                let similarProps = allProperties.filter((p) => {
+                    if (!p) return false;
+                    const id = p._id || p.id;
+                    const currentId = property?._id || property?.id;
+                    if (id === currentId) return false; // Exclude current property
+
+                    const pPrice = getNumericPrice(p);
+                    return pPrice >= lowerBound && pPrice <= upperBound;
+                });
+
+                // Fallback: if no live similar properties are found, fallback to property.similarProperties from DB/mock
+                if (similarProps.length === 0) {
+                    similarProps = (property.similarProperties || []).filter(p => p && (p.id || p.name));
+                }
+
+                // HIDE the entire section if no similar properties exist!
+                if (similarProps.length === 0) return null;
+
+                const getPropertyCity = (p) => {
+                    const city = p?.address?.city || p?.city || '';
+                    if (!city) return '';
+                    return city.trim().split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+                };
+
+                // Extract unique cities from similar properties that are actually in range
+                const uniqueCities = Array.from(new Set(
+                    similarProps
+                        .map(p => getPropertyCity(p))
+                        .filter(Boolean)
+                ));
+
+                // Determine active city filter (falls back to first unique city if filter is not selected or not valid)
+                const activeCity = (uniqueCities.includes(similarLocationFilter) ? similarLocationFilter : uniqueCities[0]) || '';
+
+                // Filter the properties by selected city
+                const filteredProps = activeCity
+                    ? similarProps.filter(p => getPropertyCity(p) === activeCity)
+                    : similarProps;
+
+                return (
+                    <div id="similar-properties" className="w-full px-4 md:px-10 mt-16 mb-12">
+                        <section className={`py-12 px-6 md:py-16 md:px-10 rounded-2xl md:rounded-[24px] relative shadow-sm border transition-colors ${isDark ? 'bg-[#121418] border-gray-800' : 'bg-[#fdf8e7] border-[#f0e4c3]/10'}`}>
+                            {/* Title row: title+subtitle on left, "View all" on right — always on same row */}
+                            <div className="flex items-start justify-between gap-2 mb-3">
+                                <div>
+                                    <h2 className={`!text-[1.5rem] font-bold mb-1.5 tracking-tight leading-tight ${isDark ? 'text-white' : 'text-black'}`}>Similar Properties</h2>
+                                    <p className={`text-[13px] font-medium ${isDark ? 'text-gray-400' : 'text-gray-800'}`}>Handpicked properties for you.</p>
+                                </div>
+                                {/* View all — always visible top-right on mobile and desktop */}
+                                {uniqueCities.length > 0 && (
+                                    <div className="relative shrink-0 flex items-center mt-1.5" ref={locationDropdownRef}>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setShowLocationDropdown(!showLocationDropdown); }}
+                                            className="text-[#f97316] text-[12px] font-bold hover:underline flex items-center gap-[2px] cursor-pointer bg-transparent whitespace-nowrap"
+                                        >
+                                            View all <ChevronRight className="h-3.5 w-3.5" strokeWidth={3} />
+                                        </button>
+                                        {showLocationDropdown && (
+                                            <div className="absolute top-full right-0 mt-2 z-20 w-48 max-h-60 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-xl p-1 custom-scrollbar">
+                                                {uniqueCities.map((loc) => (
+                                                    <button
+                                                        key={loc}
+                                                        onClick={() => { setSimilarLocationFilter(loc); setShowLocationDropdown(false); }}
+                                                        className={`w-full px-3 py-2 text-left text-sm font-medium rounded-md transition-colors cursor-pointer ${activeCity === loc ? "bg-amber-100 text-[#f97316]" : "hover:bg-gray-50 text-gray-700"}`}
+                                                    >
+                                                        {loc}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Location pill tabs — horizontally scrollable row, always below title */}
+                            {uniqueCities.length > 0 && (
+                                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide flex-nowrap mb-6">
+                                    {uniqueCities.map((loc) => (
                                         <button
                                             key={loc}
-                                            onClick={() => { setSimilarLocationFilter(loc); setShowLocationDropdown(false); }}
-                                            className={`w-full px-3 py-2 text-left text-sm font-medium rounded-md transition-colors cursor-pointer ${similarLocationFilter === loc ? "bg-amber-100 text-[#f97316]" : "hover:bg-gray-50 text-gray-700"}`}
+                                            onClick={() => setSimilarLocationFilter(loc)}
+                                            className={`px-4 py-[7px] text-[11px] font-bold whitespace-nowrap shrink-0 transition-colors ${activeCity === loc ? "bg-black text-white rounded-[6px]" : `${isDark ? 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700' : 'bg-white text-gray-600 border border-gray-200/80 hover:border-gray-300'} rounded-[6px] shadow-[0_1px_2px_rgba(0,0,0,0.02)] cursor-pointer`}`}
                                         >
                                             {loc}
                                         </button>
                                     ))}
                                 </div>
                             )}
-                        </div>
-                    </div>
-                    {/* Location pill tabs — horizontally scrollable row, always below title */}
-                    <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide flex-nowrap mb-6">
-                        {(property.similarLocations && property.similarLocations.length > 0 ? property.similarLocations : ["Koramangala", "MG Road", "HSR", "Indiranagar", "Hebbal"]).map((loc) => (
-                            <button
-                                key={loc}
-                                onClick={() => setSimilarLocationFilter(loc)}
-                                className={`px-4 py-[7px] text-[11px] font-bold whitespace-nowrap shrink-0 transition-colors ${similarLocationFilter === loc ? "bg-black text-white rounded-[6px]" : `${isDark ? 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700' : 'bg-white text-gray-600 border border-gray-200/80 hover:border-gray-300'} rounded-[6px] shadow-[0_1px_2px_rgba(0,0,0,0.02)] cursor-pointer`}`}
-                            >
-                                {loc}
-                            </button>
-                        ))}
-                    </div>
 
-                    {(() => {
-                        const similarProps = (property.similarProperties || []).filter(p => p && (p.id || p.name));
-                        const filteredProps = (!similarLocationFilter || similarProps.filter((p) => p?.locality === similarLocationFilter).length === 0)
-                            ? similarProps
-                            : similarProps.filter((p) => p?.locality === similarLocationFilter);
-
-                        return (
                             <div className="relative mx-[-10px] md:mx-0 px-[10px] md:px-0">
                                 <Swiper
-                                    key={similarLocationFilter}
+                                    key={activeCity}
                                     modules={[Navigation]}
                                     navigation={{ prevEl: ".similar-prev", nextEl: ".similar-next" }}
                                     spaceBetween={20}
@@ -2988,11 +3056,11 @@ function PropertyDetailsContent() {
                                     className="w-full !pb-2"
                                 >
                                     {filteredProps.map((p, idx) => (
-                                        <SwiperSlide key={p?.id || p?.name || idx} className="h-auto">
-                                            <Link href={`/property-details?id=${p?.id || '#'}`} className="block h-full">
+                                        <SwiperSlide key={p?.id || p?._id || p?.name || idx} className="h-auto">
+                                            <Link href={`/property-details?id=${p?.id || p?._id || '#'}&type=${p?.propertyCategory || p?.propertyType || ''}`} className="block h-full">
                                                 <div className={`rounded-[12px] overflow-hidden group h-full flex flex-col transition-all ${isDark ? 'bg-[#1f2229] border-gray-800 shadow-none' : 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-gray-100 hover:shadow-md'}`}>
                                                     <div className={`relative h-[200px] md:h-[180px] w-full shrink-0 overflow-hidden ${isDark ? 'bg-gray-800' : 'bg-gray-100'}`}>
-                                                        <img src={p?.image || p?.images?.[0] || 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800'} alt={p?.name || ''} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 will-change-transform" />
+                                                        <img src={p?.featuredImageUrl || p?.image || p?.images?.[0] || 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800'} alt={p?.propertyName || p?.name || ''} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 will-change-transform" />
                                                         {p?.badge ? (
                                                             <div className="absolute top-3 left-3 bg-[#1e8b4e] text-white text-[9px] font-bold px-2 py-0.5 rounded-[3px] shadow-sm uppercase tracking-wide">
                                                                 {p.badge}
@@ -3006,26 +3074,26 @@ function PropertyDetailsContent() {
                                                     <div className="p-4 flex flex-col flex-1 justify-between z-10">
                                                         <div>
                                                             <div className="flex justify-between items-start mb-0.5">
-                                                                <h3 className={`font-bold text-[15px] md:text-[16px] leading-tight truncate pr-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(p?.name)}</h3>
-                                                                {(p?.ratingCount || idx === 0) && (
+                                                                <h3 className={`font-bold text-[15px] md:text-[16px] leading-tight truncate pr-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(p?.propertyName || p?.name)}</h3>
+                                                                {(p?.ratingCount || p?.ratings?.totalRatings || idx === 0) && (
                                                                     <div className="flex items-center gap-[2px] shrink-0 pt-0.5">
                                                                         {[1, 2, 3, 4].map(star => <Star key={star} className="w-[10px] h-[10px] text-[#ffb800] fill-[#ffb800]" />)}
                                                                         <Star className="w-[10px] h-[10px] text-[#ffb800] fill-transparent" />
                                                                     </div>
                                                                 )}
                                                             </div>
-                                                            <p className="text-[11px] text-gray-500 capitalize leading-snug">{safeDisplay(p?.locality)}</p>
+                                                            <p className="text-[11px] text-gray-500 capitalize leading-snug">{safeDisplay(p?.address?.locality || p?.locality || p?.address?.city || p?.city)}</p>
                                                         </div>
                                                         <div className="flex justify-between items-end mt-5">
                                                             <div className="flex items-center gap-2">
                                                                 <div className="bg-black text-white flex items-center justify-center rounded-[4px] px-1.5 py-0.5 text-[10px] font-bold">
-                                                                    {p?.rating || (4.0 + (idx % 10) / 10).toFixed(1)}
+                                                                    {p?.ratings?.overall || p?.rating || (4.0 + (idx % 10) / 10).toFixed(1)}
                                                                 </div>
-                                                                <span className="text-[11px] font-extrabold text-black">{p?.ratingTag || "Excellent"}</span>
+                                                                <span className="text-[11px] font-extrabold text-black">{p?.ratings?.tag || p?.ratingTag || "Excellent"}</span>
                                                             </div>
                                                             <div className="flex flex-col items-end">
                                                                 <p className={`font-bold text-[1.15rem] leading-none tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                                                                    {typeof p?.price === 'string' && p.price.includes('₹') ? p.price : `₹ ${safeDisplay(p?.price) || "5,999"}`}
+                                                                    {p?.totalPrice || (typeof p?.price === 'string' && p.price.includes('₹') ? p.price : `₹ ${safeDisplay(p?.price) || "5,999"}`)}
                                                                 </p>
                                                             </div>
                                                         </div>
@@ -3042,42 +3110,84 @@ function PropertyDetailsContent() {
                                     </>
                                 )}
                             </div>
-                        );
-                    })()}
-                </section>
-            </div>
+                        </section>
+                    </div>
+                );
+            })()}
 
             {/* Explore Top Coworking Locations */}
-            <div className="w-full px-4 md:px-10 mt-16 mb-20">
-                <section className={`py-12 px-6 md:py-16 md:px-10 rounded-2xl md:rounded-[24px] relative shadow-sm border transition-colors ${isDark ? 'bg-[#121418] border-gray-800' : 'bg-[#fdf8e7] border-[#f0e4c3]/10'}`}>
-                    <h2 className={`text-[1.2rem] md:text-xl font-bold mb-6 tracking-tight ${isDark ? 'text-white' : 'text-black'}`}>Explore Top Coworking Locations in Bangalore</h2>
-                    <div className="grid grid-cols-2 md:grid-cols-3 md:grid-cols-5 gap-4 md:gap-5">
-                        {((property.exploreLocations && property.exploreLocations.length > 0) ? property.exploreLocations : [
-                            { name: "HSR Layout", image: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800" },
-                            { name: "Koramangala", image: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&q=80&w=800" },
-                            { name: "MG Road", image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=800" },
-                            { name: "Indiranagar", image: "https://images.unsplash.com/photo-1577412647305-991150c7d163?auto=format&fit=crop&q=80&w=800" },
-                            { name: "Whitefield", image: "https://images.unsplash.com/photo-1604328698692-f76ea9498e76?auto=format&fit=crop&q=80&w=800" },
-                            { name: "Sanjay Nagar", image: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&q=80&w=800" },
-                            { name: "Electronic city", image: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800" },
-                            { name: "JP Nagar", image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=800" },
-                            { name: "Jayanagar", image: "https://images.unsplash.com/photo-1604328698692-f76ea9498e76?auto=format&fit=crop&q=80&w=800" },
-                            { name: "Hebbal", image: "https://images.unsplash.com/photo-1577412647305-991150c7d163?auto=format&fit=crop&q=80&w=800" }
-                        ]).map((loc, i) => (
-                            <Link key={i} href="#" className={`rounded-[8px] border shadow-[0_1px_3px_rgba(0,0,0,0.02)] overflow-hidden group flex flex-col hover:shadow-md transition-all ${isDark ? 'bg-[#1f2229] border-gray-800' : 'bg-white border-gray-200/80'}`}>
-                                <div className={`relative aspect-[16/10] w-full overflow-hidden border-b ${isDark ? 'bg-gray-800 border-gray-800' : 'bg-gray-100 border-gray-100'}`}>
-                                    <img src={loc?.image || 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800'} alt={loc?.name || 'Explore'} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 will-change-transform" />
-                                </div>
-                                <div className="p-3">
-                                    <p className={`text-[11px] font-medium leading-none mb-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Coworking Space in</p>
-                                    <h3 className={`font-semibold text-[13px] truncate mb-1.5 leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>{safeDisplay(loc?.name)}</h3>
-                                    <p className="text-[11.5px] font-bold text-[#0070f3] hover:underline cursor-pointer leading-none">Explore Spaces</p>
-                                </div>
-                            </Link>
-                        ))}
+            {(() => {
+                const currentCity = (property.address?.city || property.city || '').toLowerCase();
+                const currentCategory = (property.propertyCategory || property.propertyType || '').toLowerCase();
+
+                let exploreProps = allProperties.filter((p) => {
+                    if (!p) return false;
+                    const id = p._id || p.id;
+                    const currentId = property?._id || property?.id;
+                    if (id === currentId) return false;
+
+                    const pCity = (p.address?.city || p.city || '').toLowerCase();
+                    const pCategory = (p.propertyCategory || p.propertyType || '').toLowerCase();
+
+                    return pCity === currentCity && pCategory === currentCategory;
+                });
+
+                // HIDE the entire section if no other properties exist in the same city!
+                if (exploreProps.length === 0) return null;
+
+                const hasLiveExploreData = exploreProps.length > 0;
+
+                const displayItems = hasLiveExploreData 
+                    ? exploreProps.slice(0, 5) // Display top 5 matches
+                    : [
+                        { name: "HSR Layout", image: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800" },
+                        { name: "Koramangala", image: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&q=80&w=800" },
+                        { name: "MG Road", image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=800" },
+                        { name: "Indiranagar", image: "https://images.unsplash.com/photo-1577412647305-991150c7d163?auto=format&fit=crop&q=80&w=800" },
+                        { name: "Whitefield", image: "https://images.unsplash.com/photo-1604328698692-f76ea9498e76?auto=format&fit=crop&q=80&w=800" }
+                      ];
+
+                const categoryLabel = currentCategory === 'residential' ? 'Residential' : 'Commercial';
+                const cityLabel = property.address?.city || property.city || 'Bangalore';
+
+                return (
+                    <div className="w-full px-4 md:px-10 mt-16 mb-20">
+                        <section className={`py-12 px-6 md:py-16 md:px-10 rounded-2xl md:rounded-[24px] relative shadow-sm border transition-colors ${isDark ? 'bg-[#121418] border-gray-800' : 'bg-[#fdf8e7] border-[#f0e4c3]/10'}`}>
+                            <h2 className={`text-[1.2rem] md:text-xl font-bold mb-6 tracking-tight ${isDark ? 'text-white' : 'text-black'}`}>
+                                Explore Top Coworking Locations in {cityLabel}
+                            </h2>
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-5">
+                                {displayItems.map((item, i) => {
+                                    const itemHref = hasLiveExploreData 
+                                        ? `/property-details?id=${item._id || item.id || '#'}&type=${item.propertyCategory || item.propertyType || ''}`
+                                        : '#';
+                                    const itemName = hasLiveExploreData 
+                                        ? (item.address?.locality || item.locality || item.propertyName || item.name) 
+                                        : item.name;
+                                    const itemImg = hasLiveExploreData 
+                                        ? (item.featuredImageUrl || item.image || item.images?.[0]) 
+                                        : item.image;
+
+                                    return (
+                                        <Link key={i} href={itemHref} className={`rounded-[8px] border shadow-[0_1px_3px_rgba(0,0,0,0.02)] overflow-hidden group flex flex-col hover:shadow-md transition-all ${isDark ? 'bg-[#1f2229] border-gray-800' : 'bg-white border-gray-200/80'}`}>
+                                            <div className={`relative aspect-[16/10] w-full overflow-hidden border-b ${isDark ? 'bg-gray-800 border-gray-800' : 'bg-gray-100 border-gray-100'}`}>
+                                                <img src={itemImg || 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800'} alt={itemName || 'Explore'} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 will-change-transform" />
+                                            </div>
+                                            <div className="p-3 flex-1 flex flex-col justify-between">
+                                                <div>
+                                                    <p className={`text-[11px] font-medium leading-none mb-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{categoryLabel} Space in</p>
+                                                    <h3 className={`font-semibold text-[13px] truncate mb-1.5 leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>{safeDisplay(itemName)}</h3>
+                                                </div>
+                                                <p className="text-[11.5px] font-bold text-[#0070f3] hover:underline cursor-pointer leading-none">Explore Spaces</p>
+                                            </div>
+                                        </Link>
+                                    );
+                                })}
+                            </div>
+                        </section>
                     </div>
-                </section>
-            </div>
+                );
+            })()}
 
             {/* Download App - Full width at bottom */}
 
