@@ -611,7 +611,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                         </div>
 
                         {/* Top Right Floating Actions */}
-                        <div className="absolute top-5 right-5 flex flex-col gap-2">
+                        <div className="absolute top-5 right-5 flex flex-col gap-2 z-[20]">
                             <button onClick={handleShare} className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 text-white cursor-pointer hover:bg-white/30 transition-colors">
                                 <Share2 className="w-4.5 h-4.5" />
                             </button>
@@ -623,7 +623,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                             >
                                 <CornerUpRight className="w-4.5 h-4.5" />
                             </a>
-                            <button onClick={handleFavouriteToggle} className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 text-white">
+                            <button onClick={handleFavouriteToggle} className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 text-white cursor-pointer hover:bg-white/30 transition-colors">
                                 <Heart className={`w-4.5 h-4.5 ${isFavourite ? 'fill-red-500 text-red-500 border-none' : ''}`} />
                             </button>
                         </div>
@@ -649,12 +649,19 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                         <div className="flex justify-between items-center mb-4">
                             <span className="px-3 py-1 bg-red-50 text-red-500 text-[10px] font-bold rounded-lg tracking-wider uppercase">RENT</span>
                             <div className="flex gap-4">
-                                <Heart onClick={handleFavouriteToggle} className={`w-5 h-5 cursor-pointer hover:scale-110 transition-transform ${isFavourite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
+                                <button 
+                                    onClick={handleFavouriteToggle} 
+                                    className="cursor-pointer hover:scale-110 transition-transform flex items-center justify-center p-1"
+                                    aria-label="Toggle Favourite"
+                                >
+                                    <Heart className={`w-5 h-5 ${isFavourite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
+                                </button>
                                 <a 
                                     href={`https://maps.google.com/maps?q=${property.coordinates?.latitude ?? property.coordinates?.lat ?? property.position?.lat},${property.coordinates?.longitude ?? property.coordinates?.lng ?? property.position?.lng}&z=14&t=h`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="cursor-pointer hover:scale-110 transition-transform flex items-center justify-center"
+                                    className="cursor-pointer hover:scale-110 transition-transform flex items-center justify-center p-1"
+                                    aria-label="Get Directions"
                                 >
                                     <CornerUpRight className="w-5 h-5 text-gray-400" />
                                 </a>
@@ -729,12 +736,22 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                             </div>
                         </div>
                         <div className="flex gap-2">
-                            <button className="w-11 h-11 rounded-full bg-blue-50 flex items-center justify-center text-blue-400">
+                            <button 
+                                onClick={(e) => sellerPhoneNumber && handlePhoneClick(e, sellerPhoneNumber)}
+                                className="w-11 h-11 rounded-full bg-blue-50 flex items-center justify-center text-blue-400 hover:bg-blue-100 transition-colors cursor-pointer"
+                                aria-label="Call Agent"
+                            >
                                 <Phone className="w-5 h-5" />
                             </button>
-                            <button className="w-11 h-11 rounded-full bg-green-50 flex items-center justify-center text-green-500">
+                            <a 
+                                href={`https://wa.me/${safeDisplay(sellerPhoneNumber)?.replace(/[^0-9]/g, '') || '918151915199'}?text=Hi, I am interested in ${encodeURIComponent(name || 'this property')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-11 h-11 rounded-full bg-green-50 flex items-center justify-center text-green-500 hover:bg-green-100 transition-colors cursor-pointer"
+                                aria-label="Message Agent on WhatsApp"
+                            >
                                 <Image src="/whatsapp.svg" alt="wa" width={24} height={24} />
-                            </button>
+                            </a>
                         </div>
                     </div>
 

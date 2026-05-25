@@ -80,7 +80,7 @@ const ReviewSchema = new mongoose.Schema({
   date: String,
   goodThings: String,
   badThings: String
-}, { _id: false });
+});
 
 const CustomInfrastructureSchema = new mongoose.Schema({
   id: { type: mongoose.Schema.Types.Mixed },

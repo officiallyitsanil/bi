@@ -378,6 +378,15 @@ function PropertyDetailsContent() {
 
     const handleTourSubmit = async (e) => {
         if (e) e.preventDefault();
+        if (!currentUser) {
+            setIsLoginOpen(true);
+            return;
+        }
+        if (!currentUser.name || !currentUser.email) {
+            alert("Please complete your profile details (Name and Email) to proceed.");
+            router.push('/dashboard');
+            return;
+        }
         if (!validateTourForm()) return;
         try {
             setIsSubmittingTour(true);
@@ -1015,10 +1024,15 @@ function PropertyDetailsContent() {
             setIsLoginOpen(true);
             return;
         }
+        if (!currentUser.name || !currentUser.email) {
+            alert("Please complete your profile details (Name and Email) to proceed.");
+            router.push('/dashboard');
+            return;
+        }
         if (!property || !property._id) return;
 
         const propertyId = property._id || property.id;
-        const propertyType = property.propertyType || 'commercial';
+        const propertyType = property.propertyCategory || (property.propertyType === 'residential' ? 'residential' : 'commercial');
         const newFavoriteState = !isLiked;
 
         // Optimistically update UI
@@ -1081,14 +1095,40 @@ function PropertyDetailsContent() {
     const agentContactEmail = property?.agentDetails?.email;
 
     const handleMessage = () => {
+        if (!currentUser) {
+            setIsLoginOpen(true);
+            return;
+        }
+        if (!currentUser.name || !currentUser.email) {
+            alert("Please complete your profile details (Name and Email) to proceed.");
+            router.push('/dashboard');
+            return;
+        }
         if (agentContactWhatsApp) {
-            window.open(`https://wa.me/${String(agentContactWhatsApp).replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${encodeURIComponent(property?.propertyName || property?.name || '')}`, '_blank');
+            navigator.clipboard.writeText(agentContactWhatsApp).then(() => {
+                alert(`Agent WhatsApp number copied to clipboard: ${agentContactWhatsApp}`);
+            }).catch(() => {
+                alert('Failed to copy WhatsApp number.');
+            });
         }
     };
 
     const handleWhatsApp = () => {
+        if (!currentUser) {
+            setIsLoginOpen(true);
+            return;
+        }
+        if (!currentUser.name || !currentUser.email) {
+            alert("Please complete your profile details (Name and Email) to proceed.");
+            router.push('/dashboard');
+            return;
+        }
         if (agentContactWhatsApp) {
-            window.open(`https://wa.me/${String(agentContactWhatsApp).replace(/[^0-9]/g, '')}?text=Hi, I'm interested in ${encodeURIComponent(property?.propertyName || property?.name || '')}`, '_blank');
+            navigator.clipboard.writeText(agentContactWhatsApp).then(() => {
+                alert(`Agent WhatsApp number copied to clipboard: ${agentContactWhatsApp}`);
+            }).catch(() => {
+                alert('Failed to copy WhatsApp number.');
+            });
         }
     };
 
@@ -1112,6 +1152,15 @@ function PropertyDetailsContent() {
     };
 
     const handleCall = () => {
+        if (!currentUser) {
+            setIsLoginOpen(true);
+            return;
+        }
+        if (!currentUser.name || !currentUser.email) {
+            alert("Please complete your profile details (Name and Email) to proceed.");
+            router.push('/dashboard');
+            return;
+        }
         if (agentContactPhone) {
             handlePhoneClick(null, agentContactPhone);
         }
@@ -1136,6 +1185,15 @@ function PropertyDetailsContent() {
     };
 
     const handleEmail = () => {
+        if (!currentUser) {
+            setIsLoginOpen(true);
+            return;
+        }
+        if (!currentUser.name || !currentUser.email) {
+            alert("Please complete your profile details (Name and Email) to proceed.");
+            router.push('/dashboard');
+            return;
+        }
         if (agentContactEmail) {
             handleEmailClick(null, agentContactEmail, `Inquiry: ${property?.propertyName || property?.name || ''}`);
         }
@@ -1212,6 +1270,11 @@ function PropertyDetailsContent() {
             setIsLoginOpen(true);
             return;
         }
+        if (!currentUser.name || !currentUser.email) {
+            alert("Please complete your profile details (Name and Email) to submit a review.");
+            router.push('/dashboard');
+            return;
+        }
         setIsEditingReview(false);
         setSelectedRating(0);
         setReviewText('');
@@ -1222,6 +1285,15 @@ function PropertyDetailsContent() {
     };
 
     const handleEditReview = (reviewToEdit = null) => {
+        if (!currentUser) {
+            setIsLoginOpen(true);
+            return;
+        }
+        if (!currentUser.name || !currentUser.email) {
+            alert("Please complete your profile details (Name and Email) to proceed.");
+            router.push('/dashboard');
+            return;
+        }
         const review = reviewToEdit || userReview;
         if (!review) return;
         setUserReview(review);
@@ -1317,8 +1389,8 @@ function PropertyDetailsContent() {
         try {
             const propertyId = property._id || property.id;
             const typeParam = searchParams.get('type');
-            const apiUrl = `/api/properties?id=${propertyId}&type=${typeParam || ''}`;
-            const response = await fetch(apiUrl);
+            const apiUrl = `/api/properties?id=${propertyId}&type=${typeParam || ''}&t=${Date.now()}`;
+            const response = await fetch(apiUrl, { cache: 'no-store' });
             const data = await response.json();
 
             if (data.success && data.property) {
@@ -1351,6 +1423,11 @@ function PropertyDetailsContent() {
 
         loginUser(userWithPhone);
         setIsLoginOpen(false);
+
+        if (!userWithPhone.name || !userWithPhone.email) {
+            alert("Please complete your profile details (Name and Email) to proceed.");
+            router.push('/dashboard');
+        }
     };
 
     const scrollToSection = (sectionId) => {
@@ -2282,6 +2359,15 @@ function PropertyDetailsContent() {
 
                                     const handleAgentPhoneCopy = (e) => {
                                         if (e) e.preventDefault();
+                                        if (!currentUser) {
+                                            setIsLoginOpen(true);
+                                            return;
+                                        }
+                                        if (!currentUser.name || !currentUser.email) {
+                                            alert("Please complete your profile details (Name and Email) to proceed.");
+                                            router.push('/dashboard');
+                                            return;
+                                        }
                                         if (!agentPhone) return;
                                         navigator.clipboard.writeText(agentPhone).then(() => {
                                             alert(`Agent Phone number copied to clipboard: ${agentPhone}`);
@@ -2292,6 +2378,15 @@ function PropertyDetailsContent() {
 
                                     const handleAgentEmailCopy = (e) => {
                                         if (e) e.preventDefault();
+                                        if (!currentUser) {
+                                            setIsLoginOpen(true);
+                                            return;
+                                        }
+                                        if (!currentUser.name || !currentUser.email) {
+                                            alert("Please complete your profile details (Name and Email) to proceed.");
+                                            router.push('/dashboard');
+                                            return;
+                                        }
                                         if (!agentEmail) return;
                                         navigator.clipboard.writeText(agentEmail).then(() => {
                                             alert(`Agent Email address copied to clipboard: ${agentEmail}`);
@@ -2302,6 +2397,15 @@ function PropertyDetailsContent() {
 
                                     const handleAgentWhatsAppCopy = (e) => {
                                         if (e) e.preventDefault();
+                                        if (!currentUser) {
+                                            setIsLoginOpen(true);
+                                            return;
+                                        }
+                                        if (!currentUser.name || !currentUser.email) {
+                                            alert("Please complete your profile details (Name and Email) to proceed.");
+                                            router.push('/dashboard');
+                                            return;
+                                        }
                                         const waNumber = property.agentDetails?.whatsapp || agentPhone;
                                         if (!waNumber) return;
                                         navigator.clipboard.writeText(waNumber).then(() => {

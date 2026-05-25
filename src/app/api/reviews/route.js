@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import mongoose from 'mongoose';
 import dbConnect from '@/utils/dbConnect';
 import ResidentialProperty from '@/models/ResidentialProperty';
 import CommercialProperty from '@/models/CommercialProperty';
@@ -105,6 +106,7 @@ export async function POST(request) {
 
     // Create new review - always save phone number if provided
     const newReview = {
+      _id: new mongoose.Types.ObjectId(),
       user,
       rating,
       comment: (comment || '').trim() || (goodThings || '').trim(),
@@ -181,11 +183,11 @@ export async function POST(request) {
         userPhoneNumber: savedReview.userPhoneNumber || null
       },
       ratings: {
-        overall: updatedProperty.ratings.overall,
-        totalRatings: updatedProperty.ratings.totalRatings,
-        breakdown: { ...updatedProperty.ratings.breakdown },
-        whatsGood: [...updatedProperty.ratings.whatsGood],
-        whatsBad: [...updatedProperty.ratings.whatsBad]
+        overall: updatedProperty.ratings?.overall || 0,
+        totalRatings: updatedProperty.ratings?.totalRatings || 0,
+        breakdown: updatedProperty.ratings?.breakdown ? { ...updatedProperty.ratings.breakdown } : { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+        whatsGood: Array.isArray(updatedProperty.ratings?.whatsGood) ? [...updatedProperty.ratings.whatsGood] : [],
+        whatsBad: Array.isArray(updatedProperty.ratings?.whatsBad) ? [...updatedProperty.ratings.whatsBad] : []
       }
     });
 
@@ -327,11 +329,11 @@ export async function PUT(request) {
         userPhoneNumber: updatedReview.userPhoneNumber || null
       },
       ratings: {
-        overall: updatedProperty.ratings.overall,
-        totalRatings: updatedProperty.ratings.totalRatings,
-        breakdown: { ...updatedProperty.ratings.breakdown },
-        whatsGood: [...updatedProperty.ratings.whatsGood],
-        whatsBad: [...updatedProperty.ratings.whatsBad]
+        overall: updatedProperty.ratings?.overall || 0,
+        totalRatings: updatedProperty.ratings?.totalRatings || 0,
+        breakdown: updatedProperty.ratings?.breakdown ? { ...updatedProperty.ratings.breakdown } : { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+        whatsGood: Array.isArray(updatedProperty.ratings?.whatsGood) ? [...updatedProperty.ratings.whatsGood] : [],
+        whatsBad: Array.isArray(updatedProperty.ratings?.whatsBad) ? [...updatedProperty.ratings.whatsBad] : []
       }
     });
   } catch (error) {
@@ -446,11 +448,11 @@ export async function DELETE(request) {
       success: true,
       message: 'Review deleted successfully',
       ratings: {
-        overall: updatedProperty.ratings.overall,
-        totalRatings: updatedProperty.ratings.totalRatings,
-        breakdown: { ...updatedProperty.ratings.breakdown },
-        whatsGood: [...updatedProperty.ratings.whatsGood],
-        whatsBad: [...updatedProperty.ratings.whatsBad]
+        overall: updatedProperty.ratings?.overall || 0,
+        totalRatings: updatedProperty.ratings?.totalRatings || 0,
+        breakdown: updatedProperty.ratings?.breakdown ? { ...updatedProperty.ratings.breakdown } : { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+        whatsGood: Array.isArray(updatedProperty.ratings?.whatsGood) ? [...updatedProperty.ratings.whatsGood] : [],
+        whatsBad: Array.isArray(updatedProperty.ratings?.whatsBad) ? [...updatedProperty.ratings.whatsBad] : []
       }
     });
   } catch (error) {

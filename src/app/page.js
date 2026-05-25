@@ -740,7 +740,7 @@ export default function HomePage() {
     }
 
     const propertyId = marker._id || marker.id;
-    const propertyType = marker.propertyType || 'commercial';
+    const propertyType = marker.propertyCategory || (marker.propertyType === 'residential' ? 'residential' : 'commercial');
     const newFavoriteState = !propertyFavorites[propertyId];
 
     // Optimistically update UI

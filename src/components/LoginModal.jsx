@@ -230,7 +230,7 @@ export default function LoginModal({ onClose, onProceed }) {
 
       const backendData = await response.json();
 
-      onProceed(userCredential.user);
+      onProceed(backendData.user || userCredential.user);
 
     } catch (error) {
       console.error("Error during login process:", error);

@@ -101,7 +101,7 @@ export default function DashboardPage() {
         if (user && activeTab === 'profile') {
             fetchProfile();
         }
-    }, [user, activeTab]);
+    }, [user?.phoneNumber, activeTab]);
 
     // Fetch favorite properties
     useEffect(() => {
