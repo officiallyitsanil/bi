@@ -12,6 +12,9 @@ import "swiper/css/navigation";
 import Image from 'next/image';
 import Link from 'next/link';
 import { PremiumFeaturesBanner } from '@/components/PremiumFeaturesBanner';
+import { useTheme } from "@/context/ThemeContext";
+import LoginModal from '@/components/LoginModal';
+import { loginUser } from '@/utils/auth';
 
 const teamMembers = [
   {
@@ -148,21 +151,29 @@ const features = [
 ];
 
 const subscribers = [
-  { src: "/builders/buildersrs/buildersr-1.png", alt: "Subscriber 1" },
-  { src: "/builders/buildersrs/buildersr-2.png", alt: "Subscriber 2" },
-  { src: "/builders/buildersrs/buildersr-3.png", alt: "Subscriber 3" },
-  { src: "/builders/buildersrs/buildersr-4.png", alt: "Subscriber 4" },
-  { src: "/builders/buildersrs/buildersr-5.png", alt: "Subscriber 5" },
-  { src: "/builders/buildersrs/buildersr-6.png", alt: "Subscriber 6" },
-  { src: "/builders/buildersrs/buildersr-7.png", alt: "Subscriber 7" },
-  { src: "/builders/buildersrs/buildersr-8.png", alt: "Subscriber 8" },
+  { src: "/builders/subscribers/subscriber-1.png", alt: "Subscriber 1" },
+  { src: "/builders/subscribers/subscriber-2.png", alt: "Subscriber 2" },
+  { src: "/builders/subscribers/subscriber-3.png", alt: "Subscriber 3" },
+  { src: "/builders/subscribers/subscriber-4.png", alt: "Subscriber 4" },
+  { src: "/builders/subscribers/subscriber-5.png", alt: "Subscriber 5" },
+  { src: "/builders/subscribers/subscriber-6.png", alt: "Subscriber 6" },
+  { src: "/builders/subscribers/subscriber-7.png", alt: "Subscriber 7" },
+  { src: "/builders/subscribers/subscriber-8.png", alt: "Subscriber 8" },
 ];
 
 export default function Page() {
+  const { isDark } = useTheme();
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+
+  const handleLoginSuccess = (userData) => {
+    loginUser(userData);
+    setIsLoginOpen(false);
+  };
+
   return (
     <>
       <div className="max-w-3xl mx-auto px-4 pt-8 md:py-12">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 md:mb-8">Tag along</h1>
+        <h1 className={`text-2xl md:text-3xl font-bold mb-6 md:mb-8 transition-colors ${isDark ? 'text-white' : 'text-gray-900'}`}>Tag along</h1>
 
         <Image
           src="/tag-along/hero.png"
@@ -172,15 +183,15 @@ export default function Page() {
           height={500}
         />
 
-        <p className="text-base md:text-lg text-gray-700">
+        <p className={`text-base md:text-lg transition-colors ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
           We invest ourselves, in agricultural Lands in regions that we believe have the maximum potential for returns. While at it, we can help you acquire lands around us, in the same areas.
         </p>
 
         <section className="my-12 md:my-16">
-          <h2 className="text-xl md:text-2xl font-semibold text-gray-800 mb-2">
+          <h2 className={`text-xl md:text-2xl font-semibold mb-2 transition-colors ${isDark ? 'text-white' : 'text-gray-800'}`}>
             Already Bought:
           </h2>
-          <p className="text-sm md:text-base text-gray-600 mb-6">
+          <p className={`text-sm md:text-base mb-6 transition-colors ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
             Below are the properties we helped our subscribers to acquire:
           </p>
 
@@ -201,7 +212,7 @@ export default function Page() {
             >
               {soldProperties.map((property, i) => (
                 <SwiperSlide key={i}>
-                  <div className="flex flex-col rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                  <div className={`flex flex-col rounded-xl border overflow-hidden shadow-sm transition-colors ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
                     <div className="relative">
                       <Image
                         src={property.imageUrl}
@@ -211,7 +222,7 @@ export default function Page() {
                         height={270}
                       />
                       <div className="absolute top-3 left-0 right-0 px-3 flex items-center justify-between">
-                        <div className="flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs text-gray-700 shadow">
+                        <div className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs shadow transition-colors ${isDark ? 'bg-gray-800 text-gray-300' : 'bg-white text-gray-700'}`}>
                           <span>Registration:</span>
                           <span className="font-medium">{property.status}</span>
                         </div>
@@ -220,28 +231,28 @@ export default function Page() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between gap-2 bg-white p-3 md:p-4">
-                      <div className="text-sm text-gray-800 font-medium">{property.size}</div>
-                      <div className="text-sm text-gray-800 font-semibold">{property.price}</div>
+                    <div className={`flex items-center justify-between gap-2 p-3 md:p-4 transition-colors ${isDark ? 'bg-gray-800/40' : 'bg-white'}`}>
+                      <div className={`text-sm font-medium transition-colors ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{property.size}</div>
+                      <div className={`text-sm font-semibold transition-colors ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{property.price}</div>
                     </div>
                   </div>
                 </SwiperSlide>
               ))}
             </Swiper>
 
-            <button className="sold-prev absolute -left-2 md:-left-12 top-1/2 -translate-y-1/2 z-10 border rounded-full p-1.5 md:p-2 bg-white shadow-md hover:bg-gray-100 transition-colors flex items-center justify-center">
-              <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-gray-700" />
+            <button className={`sold-prev absolute -left-2 md:-left-12 top-1/2 -translate-y-1/2 z-10 border rounded-full p-1.5 md:p-2 shadow-md transition-colors flex items-center justify-center ${isDark ? 'bg-gray-800 hover:bg-gray-700 border-gray-700' : 'bg-white hover:bg-gray-100 border-gray-200'}`}>
+              <ChevronLeft className={`w-5 h-5 md:w-6 md:h-6 transition-colors ${isDark ? 'text-white' : 'text-gray-700'}`} />
             </button>
-            <button className="sold-next absolute -right-2 md:-right-12 top-1/2 -translate-y-1/2 z-10 border rounded-full p-1.5 md:p-2 bg-white shadow-md hover:bg-gray-100 transition-colors flex items-center justify-center">
-              <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-gray-700" />
+            <button className={`sold-next absolute -right-2 md:-right-12 top-1/2 -translate-y-1/2 z-10 border rounded-full p-1.5 md:p-2 shadow-md transition-colors flex items-center justify-center ${isDark ? 'bg-gray-800 hover:bg-gray-700 border-gray-700' : 'bg-white hover:bg-gray-100 border-gray-200'}`}>
+              <ChevronRight className={`w-5 h-5 md:w-6 md:h-6 transition-colors ${isDark ? 'text-white' : 'text-gray-700'}`} />
             </button>
           </div>
         </section>
 
         <section className="my-10">
           <div className="relative mx-auto max-w-4xl">
-            <div className="rounded-2xl bg-gray-50 p-4 md:p-6 lg:p-8">
-              <h2 className="text-left text-lg md:text-xl font-semibold text-gray-800 lg:text-2xl mb-6">
+            <div className={`rounded-2xl p-4 md:p-6 lg:p-8 transition-colors ${isDark ? 'bg-gray-800/20 border border-gray-700' : 'bg-gray-50'}`}>
+              <h2 className={`text-left text-lg md:text-xl font-semibold lg:text-2xl mb-6 transition-colors ${isDark ? 'text-white' : 'text-gray-800'}`}>
                 What Customers Say:
               </h2>
 
@@ -262,13 +273,13 @@ export default function Page() {
               >
                 {testimonials.map((testimonial, i) => (
                   <SwiperSlide key={i}>
-                    <div className="bg-white text-gray-800 h-[280px] md:h-[320px] rounded-xl shadow-md flex flex-col">
+                    <div className={`h-[280px] md:h-[320px] rounded-xl border shadow-md flex flex-col transition-colors ${isDark ? 'bg-gray-800 text-gray-200 border-gray-700' : 'bg-white text-gray-800 border-gray-100'}`}>
                       <div className="flex items-start justify-between gap-4 p-4 md:p-5">
                         <div className="flex-1">
-                          <h3 className="text-base md:text-lg font-bold text-gray-900 truncate mb-1">
+                          <h3 className={`text-base md:text-lg font-bold truncate mb-1 transition-colors ${isDark ? 'text-white' : 'text-gray-900'}`}>
                             {testimonial.name}
                           </h3>
-                          <p className="text-sm font-normal text-gray-600">
+                          <p className={`text-sm font-normal transition-colors ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                             {testimonial.title}
                           </p>
                         </div>
@@ -283,7 +294,7 @@ export default function Page() {
                         </div>
                       </div>
 
-                      <div className="p-4 md:p-5 pt-0 text-sm font-normal text-gray-700 overflow-y-auto">
+                      <div className={`p-4 md:p-5 pt-0 text-sm font-normal overflow-y-auto transition-colors ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                         <p>{testimonial.text}</p>
                       </div>
                     </div>
@@ -292,17 +303,17 @@ export default function Page() {
               </Swiper>
             </div>
 
-            <button className="testimonial-prev absolute -left-2 md:-left-12 top-1/2 -translate-y-1/2 z-10 border rounded-full p-1.5 md:p-2 bg-white shadow-md hover:bg-gray-100 transition-colors flex items-center justify-center">
-              <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-gray-700" />
+            <button className={`testimonial-prev absolute -left-2 md:-left-12 top-1/2 -translate-y-1/2 z-10 border rounded-full p-1.5 md:p-2 shadow-md transition-colors flex items-center justify-center ${isDark ? 'bg-gray-800 hover:bg-gray-700 border-gray-700' : 'bg-white hover:bg-gray-100 border-gray-200'}`}>
+              <ChevronLeft className={`w-5 h-5 md:w-6 md:h-6 transition-colors ${isDark ? 'text-white' : 'text-gray-700'}`} />
             </button>
-            <button className="testimonial-next absolute -right-2 md:-right-12 top-1/2 -translate-y-1/2 z-10 border rounded-full p-1.5 md:p-2 bg-white shadow-md hover:bg-gray-100 transition-colors flex items-center justify-center">
-              <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-gray-700" />
+            <button className={`testimonial-next absolute -right-2 md:-right-12 top-1/2 -translate-y-1/2 z-10 border rounded-full p-1.5 md:p-2 shadow-md transition-colors flex items-center justify-center ${isDark ? 'bg-gray-800 hover:bg-gray-700 border-gray-700' : 'bg-white hover:bg-gray-100 border-gray-200'}`}>
+              <ChevronRight className={`w-5 h-5 md:w-6 md:h-6 transition-colors ${isDark ? 'text-white' : 'text-gray-700'}`} />
             </button>
           </div>
         </section>
 
-        <section className="mb-10 max-w-6xl mx-auto px-0 md:px-4">
-          <h2 className="mb-5 text-xl md:text-2xl font-semibold text-gray-800 lg:mb-6">
+        <section className="my-10 max-w-6xl mx-auto px-0 md:px-4">
+          <h2 className={`mb-5 text-xl md:text-2xl font-semibold lg:mb-6 transition-colors ${isDark ? 'text-white' : 'text-gray-800'}`}>
             Currently Available:
           </h2>
           <div className="relative">
@@ -321,7 +332,7 @@ export default function Page() {
             >
               {availableProperties.map((property, i) => (
                 <SwiperSlide key={i}>
-                  <div className="flex flex-col rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                  <div className={`flex flex-col rounded-xl border overflow-hidden shadow-sm transition-colors ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'}`}>
                     <div className="relative">
                       <Image
                         src={property.imageUrl}
@@ -334,28 +345,28 @@ export default function Page() {
                         <Lock className="h-8 w-8 md:h-10 md:w-10 text-gray-500" />
                       </div>
                     </div>
-                    <div className="flex items-center justify-between gap-2 bg-white p-3 md:p-4">
-                      <div className="text-sm text-gray-800 font-medium">{property.size}</div>
-                      <div className="text-sm text-gray-800 font-semibold">{property.price}</div>
+                    <div className={`flex items-center justify-between gap-2 p-3 md:p-4 transition-colors ${isDark ? 'bg-gray-800/40' : 'bg-white'}`}>
+                      <div className={`text-sm font-medium transition-colors ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{property.size}</div>
+                      <div className={`text-sm font-semibold transition-colors ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{property.price}</div>
                     </div>
                   </div>
                 </SwiperSlide>
               ))}
             </Swiper>
 
-            <button className="available-prev absolute -left-2 md:-left-4 top-1/2 -translate-y-1/2 z-10 border rounded-full p-1.5 md:p-2 bg-white shadow-md hover:bg-gray-100 transition-colors flex items-center justify-center">
-              <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-gray-700" />
+            <button className={`available-prev absolute -left-2 md:-left-4 top-1/2 -translate-y-1/2 z-10 border rounded-full p-1.5 md:p-2 shadow-md transition-colors flex items-center justify-center ${isDark ? 'bg-gray-800 hover:bg-gray-700 border-gray-700' : 'bg-white hover:bg-gray-100 border-gray-200'}`}>
+              <ChevronLeft className={`w-5 h-5 md:w-6 md:h-6 transition-colors ${isDark ? 'text-white' : 'text-gray-700'}`} />
             </button>
-            <button className="available-next absolute -right-2 md:-right-4 top-1/2 -translate-y-1/2 z-10 border rounded-full p-1.5 md:p-2 bg-white shadow-md hover:bg-gray-100 transition-colors flex items-center justify-center">
-              <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-gray-700" />
+            <button className={`available-next absolute -right-2 md:-right-4 top-1/2 -translate-y-1/2 z-10 border rounded-full p-1.5 md:p-2 shadow-md transition-colors flex items-center justify-center ${isDark ? 'bg-gray-800 hover:bg-gray-700 border-gray-700' : 'bg-white hover:bg-gray-100 border-gray-200'}`}>
+              <ChevronRight className={`w-5 h-5 md:w-6 md:h-6 transition-colors ${isDark ? 'text-white' : 'text-gray-700'}`} />
             </button>
           </div>
         </section>
 
 
-        <p className="mb-4 text-center font-normal text-gray-700 md:mb-10 md:text-lg md:font-medium">
+        <p className={`mb-4 text-center font-normal md:mb-10 md:text-lg md:font-medium transition-colors ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
           <span>Tag-along opportunities are only </span>
-          <span className="font-bold text-gray-900">accessible by our Premium Subscribers.</span>
+          <span className={`font-bold transition-colors ${isDark ? 'text-white' : 'text-gray-900'}`}>accessible by our Premium Subscribers.</span>
         </p>
 
 
@@ -364,33 +375,37 @@ export default function Page() {
         </div>
 
         <div className="my-8 md:mb-10 text-center">
-          <p className="text-sm md:text-base font-medium text-gray-600 lg:text-lg leading-relaxed">
-            <span className="font-bold text-gray-900">Once you subscribe</span>, we will schedule a call
+          <p className={`text-sm md:text-base font-medium lg:text-lg leading-relaxed transition-colors ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+            <span className={`font-bold transition-colors ${isDark ? 'text-white' : 'text-gray-900'}`}>Once you subscribe</span>, we will schedule a call
             <br className="lg:hidden" /> with you to get you started. 📞
           </p>
         </div>
 
         <div className="mx-auto mb-10 mt-6 flex items-center justify-center gap-3">
-          <span className="text-sm md:text-base font-normal text-gray-800">Already A Premium Subscriber?</span>
-          <Link href="/login" className="flex cursor-pointer items-center gap-1 group">
-            <span className="text-sm md:text-base font-semibold text-gray-900 underline">Login</span>
-            <ArrowUpRight className="w-4 h-4 text-gray-900 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-          </Link>
+          <span className={`text-sm md:text-base font-normal transition-colors ${isDark ? 'text-gray-300' : 'text-gray-800'}`}>Already A Premium Subscriber?</span>
+          <button 
+            type="button"
+            onClick={() => setIsLoginOpen(true)}
+            className="flex cursor-pointer items-center gap-1 group bg-transparent border-none p-0 outline-none"
+          >
+            <span className={`text-sm md:text-base font-semibold underline transition-colors ${isDark ? 'text-white' : 'text-gray-900'}`}>Login</span>
+            <ArrowUpRight className={`w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform ${isDark ? 'text-white' : 'text-gray-900'}`} />
+          </button>
         </div>
 
 
-        <div className="bg-gray-100 py-8 md:py-10 px-4 md:px-6 rounded-2xl flex flex-col space-y-6 my-8">
-          <div className="border-b border-gray-200 pb-6">
-            <h3 className="text-xl md:text-2xl font-bold text-gray-800">Meet the Team</h3>
+        <div className={`py-8 md:py-10 px-4 md:px-6 rounded-2xl flex flex-col space-y-6 my-8 transition-colors ${isDark ? 'bg-gray-800/40 border border-gray-700' : 'bg-gray-100'}`}>
+          <div className={`border-b pb-6 transition-colors ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+            <h3 className={`text-xl md:text-2xl font-bold transition-colors ${isDark ? 'text-white' : 'text-gray-800'}`}>Meet the Team</h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
             {teamMembers.map((member, index) => (
               <div key={index} className="flex items-start justify-between gap-4">
                 <div className="flex-1">
-                  <h4 className="text-base md:text-lg font-bold text-gray-900">{member.name}</h4>
-                  <p className="text-sm text-gray-700 mb-1">{member.title}</p>
-                  <p className="text-sm text-gray-500">{member.description}</p>
+                  <h4 className={`text-base md:text-lg font-bold transition-colors ${isDark ? 'text-white' : 'text-gray-900'}`}>{member.name}</h4>
+                  <p className={`text-sm mb-1 transition-colors ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{member.title}</p>
+                  <p className={`text-sm transition-colors ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{member.description}</p>
                 </div>
                 <div className="flex-shrink-0">
                   <Image
@@ -428,18 +443,24 @@ export default function Page() {
           </button>
 
           <div className="flex w-fit items-center gap-3">
-            <span className="text-xs md:text-sm font-semibold text-gray-800">Secured by</span>
+            <span className={`text-xs md:text-sm font-semibold transition-colors ${isDark ? 'text-gray-300' : 'text-gray-800'}`}>Secured by</span>
             <Image
               src="/builders/razorpay.png"
               alt="Razorpay logo"
               width={94}
               height={24}
-              className="h-5 md:h-6 w-auto"
+              className={`h-5 md:h-6 w-auto ${isDark ? 'brightness-0 invert' : ''}`}
             />
           </div>
 
         </div>
       </div>
+      {isLoginOpen && (
+        <LoginModal
+          onClose={() => setIsLoginOpen(false)}
+          onProceed={handleLoginSuccess}
+        />
+      )}
     </>
   );
 }

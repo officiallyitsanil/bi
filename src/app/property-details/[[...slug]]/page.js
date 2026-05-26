@@ -2063,15 +2063,15 @@ function PropertyDetailsContent() {
                                 </div>
                             </div>
 
-                            {/* Why choose Buildersinfo â€” horizontal banner (reference layout) */}
-                            <div className={`rounded-md border px-6 py-6 md:px-10 md:py-4 md:mx-0 -mx-4 transition-colors ${isDark ? 'border-gray-800 bg-[#282c34]' : 'border-gray-200 bg-[#f4f4fb]'}`}>
-                                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 md:gap-12">
+                            {/* Why choose Buildersinfo — horizontal banner (reference layout) */}
+                            <div className={`why-choose-banner rounded-md border px-6 py-6 md:px-10 md:py-4 md:mx-0 -mx-4 transition-colors ${isDark ? 'border-gray-800 bg-[#282c34]' : 'border-gray-200 bg-[#f4f4fb]'}`}>
+                                <div className="why-choose-inner flex flex-col md:flex-row items-start md:items-center justify-between gap-6 md:gap-12">
                                     <div className="shrink-0 max-w-[20rem]">
                                         <h3 className={`text-left text-[22px] font-bold leading-snug ${isDark ? 'text-white' : 'text-black'}`}>
                                             Why choose Buildersinfo ?
                                         </h3>
                                     </div>
-                                    <ul className="flex min-w-0 flex-1 flex-col md:flex-row gap-3 md:gap-8 md:pl-8">
+                                    <ul className="why-choose-list flex min-w-0 flex-1 flex-col md:flex-row gap-3 md:gap-8 md:pl-8">
                                         {[
                                             "Zero brokerage fee",
                                             "Design & layout support",
@@ -2087,7 +2087,7 @@ function PropertyDetailsContent() {
                                             </li>
                                         ))}
                                     </ul>
-                                    <div className="flex w-full md:w-auto shrink-0 justify-center md:justify-end">
+                                    <div className="why-choose-btn-wrapper flex w-full md:w-auto shrink-0 justify-center md:justify-end">
                                         <button
                                             type="button"
                                             onClick={() => handleShowInterestModal("consultation")}
@@ -2137,6 +2137,9 @@ function PropertyDetailsContent() {
                                         {NEARBY_CATEGORIES.map((cat) => {
                                             const schemaKey = categoryToSchemaKey[cat.id] || cat.id;
                                             const isActive = activeCategory === schemaKey;
+                                            const iconColorClass = isActive
+                                                ? (isDark ? "text-black" : "text-white")
+                                                : (isDark ? "text-gray-300" : "text-neutral-900");
                                             return (
                                                 <button
                                                     key={cat.id}
@@ -2151,29 +2154,29 @@ function PropertyDetailsContent() {
                                                         }`}
                                                 >
                                                     {cat.localIcon ? (
-                                                        <img src={cat.localIcon} alt={cat.label} className="h-[22px] w-[22px] shrink-0 object-contain transition-all" style={isActive ? { filter: 'brightness(0) invert(1)' } : {}} />
+                                                        <img src={cat.localIcon} alt={cat.label} className="h-[22px] w-[22px] shrink-0 object-contain transition-all" style={isDark !== isActive ? { filter: 'brightness(0) invert(1)' } : {}} />
                                                     ) : (
                                                         <>
                                                             {cat.id === "school" && (
-                                                                <School className={`h-4 w-4 shrink-0 ${isActive ? "text-white dark:text-black" : "text-neutral-900 dark:text-foreground"}`} />
+                                                                <School className={`h-4 w-4 shrink-0 ${iconColorClass}`} />
                                                             )}
                                                             {cat.id === "bus" && (
-                                                                <Building className={`h-4 w-4 shrink-0 ${isActive ? "text-white dark:text-black" : "text-neutral-900 dark:text-foreground"}`} />
+                                                                <Building className={`h-4 w-4 shrink-0 ${iconColorClass}`} />
                                                             )}
                                                             {cat.id === "hospital" && (
-                                                                <Hospital className={`h-4 w-4 shrink-0 ${isActive ? "text-white dark:text-black" : "text-neutral-900 dark:text-foreground"}`} />
+                                                                <Hospital className={`h-4 w-4 shrink-0 ${iconColorClass}`} />
                                                             )}
                                                             {cat.id === "bank" && (
-                                                                <Banknote className={`h-4 w-4 shrink-0 ${isActive ? "text-white dark:text-black" : "text-neutral-900 dark:text-foreground"}`} />
+                                                                <Banknote className={`h-4 w-4 shrink-0 ${iconColorClass}`} />
                                                             )}
                                                             {cat.id === "temple" && (
-                                                                <Building2 className={`h-4 w-4 shrink-0 ${isActive ? "text-white dark:text-black" : "text-neutral-900 dark:text-foreground"}`} />
+                                                                <Building2 className={`h-4 w-4 shrink-0 ${iconColorClass}`} />
                                                             )}
                                                             {cat.id === "atm" && (
-                                                                <Briefcase className={`h-4 w-4 shrink-0 ${isActive ? "text-white dark:text-black" : "text-neutral-900 dark:text-foreground"}`} />
+                                                                <Briefcase className={`h-4 w-4 shrink-0 ${iconColorClass}`} />
                                                             )}
                                                             {cat.id === "mall" && (
-                                                                <Hotel className={`h-4 w-4 shrink-0 ${isActive ? "text-white dark:text-black" : "text-neutral-900 dark:text-foreground"}`} />
+                                                                <Hotel className={`h-4 w-4 shrink-0 ${iconColorClass}`} />
                                                             )}
                                                         </>
                                                     )}
@@ -2236,7 +2239,7 @@ function PropertyDetailsContent() {
                                 </div>
                                 <div data-orientation="horizontal" role="none" className={`shrink-0 mt-1 h-[1.5px] w-[98%] mx-auto ${isDark ? 'bg-gray-800' : 'bg-gray-200'}`} />
                                 <div className="p-6 space-y-4 pt-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-4 pt-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-4 pt-4 travel-time-grid">
                                         <div className="relative min-h-[56px] flex flex-col justify-center">
                                             <PlacesAutocompleteInput
                                                 value={travelOriginInput}
@@ -2252,7 +2255,7 @@ function PropertyDetailsContent() {
                                             )}
                                         </div>
                                         <div className="flex items-center justify-center my-2 md:my-0 shrink-0">
-                                            <div className="hidden md:flex items-center justify-center gap-0 min-w-[120px]">
+                                            <div className="hidden md:flex items-center justify-center gap-0 min-w-[120px] travel-path-horizontal">
                                                 <div className={`w-5 h-5 rounded-full border-2 shrink-0 ${isDark ? 'border-gray-700 bg-[#1f2229]' : 'border-gray-800 bg-white'}`} aria-hidden />
                                                 <div className={`flex-1 h-0 border-t border-dashed min-w-[20px] ${isDark ? 'border-gray-700' : 'border-gray-400'}`} />
                                                 <div className={`w-16 h-16 rounded-full border-2 flex items-center justify-center shrink-0 shadow-sm ${isDark ? 'border-gray-700 bg-[#1f2229]' : 'border-gray-300 bg-white'}`}>
@@ -2261,7 +2264,7 @@ function PropertyDetailsContent() {
                                                 <div className={`flex-1 h-0 border-t border-dashed min-w-[20px] ${isDark ? 'border-gray-700' : 'border-gray-400'}`} />
                                                 <div className={`w-5 h-5 rounded-full border-2 shrink-0 ${isDark ? 'border-gray-700 bg-[#1f2229]' : 'border-gray-800 bg-white'}`} aria-hidden />
                                             </div>
-                                            <div className="md:hidden flex items-center justify-center gap-1">
+                                            <div className="md:hidden flex items-center justify-center gap-1 travel-path-vertical">
                                                 <div className="w-5 h-5 rounded-full border-2 border-gray-800 bg-white" />
                                                 <ArrowDown className="h-7 w-7 text-violet-600" />
                                                 <div className="w-5 h-5 rounded-full border-2 border-gray-800 bg-white" />
@@ -2442,7 +2445,7 @@ function PropertyDetailsContent() {
                                                                     <a
                                                                         href="#"
                                                                         onClick={handleAgentPhoneCopy}
-                                                                        className="text-[clamp(7px,0.7vw,10px)] text-gray-900 dark:text-gray-300 tracking-wide hover:underline truncate"
+                                                                        className={`text-[clamp(7px,0.7vw,10px)] tracking-wide hover:underline truncate ${isDark ? 'text-gray-300' : 'text-gray-900'}`}
                                                                     >
                                                                         {maskedPhone}
                                                                     </a>
@@ -2633,26 +2636,34 @@ function PropertyDetailsContent() {
                                 </div>
 
                                 <div className="mt-3.5 grid grid-cols-2 gap-x-2 gap-y-2.5 text-[8.5px] sm:text-[9.5px]">
-                                    <div className="flex min-w-0 items-center gap-1">
-                                        <img src="/property-details/builder-details/cities.png" alt="Cities" className="h-[12px] w-[12px] sm:h-[14px] sm:w-[14px] shrink-0 object-contain" />
+                                    <div className="flex min-w-0 items-center gap-2">
+                                        <div className="flex h-[18px] w-[18px] sm:h-[22px] sm:w-[22px] shrink-0 items-center justify-center rounded-full bg-white shadow-sm">
+                                            <img src="/property-details/builder-details/cities.png" alt="Cities" className="h-[10px] w-[10px] sm:h-[12px] sm:w-[12px] shrink-0 object-contain" />
+                                        </div>
                                         <span className={`font-normal ${isDark ? 'text-white' : 'text-gray-900'}`}>
                                             {brandStats.cities}+ Cities
                                         </span>
                                     </div>
-                                    <div className="flex min-w-0 items-center gap-1">
-                                        <img src="/property-details/builder-details/coworking.png" alt="Coworking Spaces" className="h-[12px] w-[12px] sm:h-[14px] sm:w-[14px] shrink-0 object-contain" />
+                                    <div className="flex min-w-0 items-center gap-2">
+                                        <div className="flex h-[18px] w-[18px] sm:h-[22px] sm:w-[22px] shrink-0 items-center justify-center rounded-full bg-white shadow-sm">
+                                            <img src="/property-details/builder-details/coworking.png" alt="Coworking Spaces" className="h-[10px] w-[10px] sm:h-[12px] sm:w-[12px] shrink-0 object-contain" />
+                                        </div>
                                         <span className={`font-normal ${isDark ? 'text-white' : 'text-gray-900'}`}>
                                             {brandStats.spaces}+ Spaces
                                         </span>
                                     </div>
-                                    <div className="flex min-w-0 items-center gap-1">
-                                        <img src="/property-details/builder-details/clients.png" alt="Clients" className="h-[12px] w-[12px] sm:h-[14px] sm:w-[14px] shrink-0 object-contain" />
+                                    <div className="flex min-w-0 items-center gap-2">
+                                        <div className="flex h-[18px] w-[18px] sm:h-[22px] sm:w-[22px] shrink-0 items-center justify-center rounded-full bg-white shadow-sm">
+                                            <img src="/property-details/builder-details/clients.png" alt="Clients" className="h-[10px] w-[10px] sm:h-[12px] sm:w-[12px] shrink-0 object-contain" />
+                                        </div>
                                         <span className={`font-normal ${isDark ? 'text-white' : 'text-gray-900'}`}>
                                             {brandStats.clients}+ Clients
                                         </span>
                                     </div>
-                                    <div className="flex min-w-0 items-center gap-1">
-                                        <img src="/property-details/builder-details/seats.png" alt="Seats" className="h-[12px] w-[12px] sm:h-[14px] sm:w-[14px] shrink-0 object-contain" />
+                                    <div className="flex min-w-0 items-center gap-2">
+                                        <div className="flex h-[18px] w-[18px] sm:h-[22px] sm:w-[22px] shrink-0 items-center justify-center rounded-full bg-white shadow-sm">
+                                            <img src="/property-details/builder-details/seats.png" alt="Seats" className="h-[10px] w-[10px] sm:h-[12px] sm:w-[12px] shrink-0 object-contain" />
+                                        </div>
                                         <span className={`font-normal ${isDark ? 'text-white' : 'text-gray-900'}`}>
                                             {brandStats.seats}+ Seats
                                         </span>
@@ -2972,7 +2983,7 @@ function PropertyDetailsContent() {
                                             )}
                                         </div>
                                         {property?.reviews && property.reviews.length > 0 ? (
-                                            <div className="relative w-full px-8">
+                                            <div className="relative w-full px-8 reviews-swiper-wrapper">
                                                 <Swiper
                                                     modules={[Navigation]}
                                                     navigation={{ prevEl: ".reviews-prev", nextEl: ".reviews-next" }}
@@ -2982,20 +2993,20 @@ function PropertyDetailsContent() {
                                                 >
                                                     {property.reviews.slice(0, 5).map((review, idx) => (
                                                         <SwiperSlide key={review._id || idx}>
-                                                            <div className="p-1">
-                                                                <div className="rounded-lg bg-card text-card-foreground shadow-sm border border-gray-200">
-                                                                    <div className="p-4 space-y-3">
-                                                                        <div className="flex justify-between items-start">
-                                                                            <div className="flex items-center gap-3">
-                                                                                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                                                                                    <UserCheck className="w-6 h-6 text-primary" />
+                                                            <div className="p-1 review-card-wrapper">
+                                                                <div className="rounded-lg bg-card text-card-foreground shadow-sm border border-gray-200 review-card-body">
+                                                                    <div className="p-4 space-y-3 review-card-content">
+                                                                        <div className="flex justify-between items-start review-card-header">
+                                                                            <div className="flex items-center gap-3 review-user-info-block">
+                                                                                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center review-avatar-box">
+                                                                                    <UserCheck className="w-6 h-6 text-primary review-avatar-icon" />
                                                                                 </div>
                                                                                 <div>
-                                                                                    <p className="font-semibold text-sm truncate max-w-[120px]">{safeDisplay(review.user)}</p>
-                                                                                    <p className="text-[10px] text-muted-foreground">{safeDisplay(review.date)}</p>
+                                                                                    <p className="font-semibold text-sm truncate max-w-[120px] review-user-name">{safeDisplay(review.user)}</p>
+                                                                                    <p className="text-[10px] text-muted-foreground review-user-date">{safeDisplay(review.date)}</p>
                                                                                 </div>
                                                                             </div>
-                                                                            <span className="inline-flex items-center rounded-lg border px-2 py-0.5 text-xs font-semibold bg-green-100 text-green-800 border-green-200">{review.rating} <Star className="h-3 w-3 ml-1 fill-current" /></span>
+                                                                            <span className="inline-flex items-center rounded-lg border px-2 py-0.5 text-xs font-semibold bg-green-100 text-green-800 border-green-200 review-rating-badge">{review.rating} <Star className="h-3 w-3 ml-1 fill-current" /></span>
                                                                         </div>
                                                                         <div className="space-y-2">
                                                                             {review.goodThings && (

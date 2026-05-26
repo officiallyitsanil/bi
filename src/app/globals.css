@@ -257,3 +257,121 @@ body {
 .scrollbar-ultra-thin {
   scrollbar-width: thin;
 }
+
+/* Responsive PropertyDetailModal sizing to prevent overflow / overlap next to sidebar */
+@media (min-width: 768px) and (max-width: 1440px) {
+  .responsive-detail-modal {
+    width: 780px !important;
+    max-width: calc(75vw - 32px) !important;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1440px) {
+  .responsive-detail-modal {
+    width: 780px !important;
+    max-width: calc(80vw - 32px) !important;
+  }
+}
+
+/* Stacking Travel Time layout vertically between 768px and 864px */
+@media (min-width: 768px) and (max-width: 864px) {
+  .travel-time-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  
+  .travel-path-horizontal {
+    display: none !important;
+  }
+  
+  .travel-path-vertical {
+    display: flex !important;
+  }
+}
+
+/* Responsive User Reviews section overrides between 768px and 930px */
+@media (min-width: 768px) and (max-width: 930px) {
+  /* Remove lateral padding on the outer container to give the Swiper card maximum possible width */
+  .reviews-swiper-wrapper {
+    padding-left: 0px !important;
+    padding-right: 0px !important;
+  }
+
+  /* Hide swiper nav buttons to prevent them from overlapping and covering the rating badge */
+  .reviews-swiper-wrapper .swiper-nav-btn {
+    display: none !important;
+  }
+
+  /* Stack the rating badge on top of the user details visually to prevent any collision */
+  .review-card-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.35rem !important;
+  }
+  .review-rating-badge {
+    order: 1 !important;
+    align-self: flex-end !important;
+  }
+  .review-user-info-block {
+    order: 2 !important;
+    width: 100% !important;
+  }
+
+  /* Make review card paddings and gap spacing compact so they don't wrap awkwardly */
+  .review-card-content {
+    padding: 0.65rem !important;
+  }
+  .review-card-content .space-y-2 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0.35rem !important;
+  }
+  
+  /* Shrink user avatar box and avatar icon */
+  .review-avatar-box {
+    width: 1.75rem !important;
+    height: 1.75rem !important;
+  }
+  .review-avatar-icon {
+    width: 0.9rem !important;
+    height: 0.9rem !important;
+  }
+  
+  /* Shrink user name & date spacing */
+  .review-user-name {
+    font-size: 0.7rem !important;
+    max-width: 75px !important;
+  }
+  .review-user-date {
+    font-size: 0.55rem !important;
+  }
+  
+  /* Shrink rating badge */
+  .review-rating-badge {
+    font-size: 0.6rem !important;
+    padding: 0.1rem 0.3rem !important;
+    border-radius: 0.375rem !important;
+  }
+  .review-rating-badge svg {
+    width: 0.6rem !important;
+    height: 0.6rem !important;
+    margin-left: 0.1rem !important;
+  }
+
+  /* Shrink good/bad sections */
+  .review-card-content h4 {
+    font-size: 0.6rem !important;
+    gap: 0.25rem !important;
+  }
+  .review-card-content h4 svg {
+    width: 0.6rem !important;
+    height: 0.6rem !important;
+  }
+  .review-card-content p {
+    font-size: 0.65rem !important;
+    line-height: 1.25 !important;
+    margin-top: 0.1rem !important;
+  }
+  .review-card-content button {
+    font-size: 0.625rem !important;
+    margin-top: 0.1rem !important;
+  }
+}

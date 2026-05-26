@@ -854,3 +854,32 @@
   background-size: 18px;
   padding-right: 48px;
 }
+
+/* Responsive Why Choose Buildersinfo banner between 768px and 1300px */
+@media (min-width: 768px) and (max-width: 1300px) {
+  .why-choose-inner {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1.5rem !important;
+    display: flex !important;
+  }
+  
+  .why-choose-list {
+    flex-direction: row !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 1.25rem !important;
+    padding-left: 0 !important;
+    width: 100% !important;
+  }
+  
+  .why-choose-btn-wrapper {
+    width: 100% !important;
+    justify-content: center !important;
+    display: flex !important;
+  }
+  
+  .why-choose-btn-wrapper button {
+    width: auto !important;
+  }
+}

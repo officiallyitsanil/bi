@@ -800,8 +800,12 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
     const desktopModal = (
         <div
             role="dialog"
-            className={`hidden md:block z-50 shadow-2xl rounded-2xl transition-colors ${centerInMapArea ? 'absolute left-1/2 bottom-4 -translate-x-1/2' : 'fixed bottom-4 left-1/2 -translate-x-1/2'} ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}
-            style={{ width: '780px', maxWidth: '95vw', height: '240px' }}
+            className={`hidden md:block z-50 shadow-2xl rounded-2xl transition-colors responsive-detail-modal ${centerInMapArea ? 'absolute left-1/2 bottom-4 -translate-x-1/2' : 'fixed bottom-4 left-1/2 -translate-x-1/2'} ${isDark ? 'bg-[#1f2229]' : 'bg-white'}`}
+            style={{ 
+                width: '780px', 
+                maxWidth: 'calc(80vw - 32px)', 
+                height: '240px' 
+            }}
             tabIndex="-1"
         >
             <div className="flex h-full relative">
@@ -923,7 +927,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                         {/* Property Header - Title/rating on left, Price on right */}
                         <section className="mb-1.5">
                             <div className="flex items-start justify-between mb-1">
-                                <div className="flex-1">
+                                <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between w-full mb-0.5">
                                         <h1 className={`text-[14px] font-semibold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(name)}</h1>
                                         <div className="flex items-center gap-1.5">
@@ -976,8 +980,8 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                     </div>
                                 </div>
                                 {/* Price on Right Side - Stacked vertically */}
-                                <div className="flex-1 ml-4 mt-1.5 flex flex-col items-end">
-                                    <div className={`flex items-center gap-2.5 px-5 py-2 w-full justify-center ${isDark ? 'bg-[#282c34]' : 'bg-white'}`}>
+                                <div className="ml-2 mt-1.5 flex flex-col items-end flex-shrink-0">
+                                    <div className={`flex items-center gap-1.5 px-3 py-1.5 justify-center rounded-xl border ${isDark ? 'bg-[#282c34] border-gray-700' : 'bg-white border-gray-100 shadow-sm'}`}>
                                         {originalPrice && originalPrice !== discountedPrice ? (
                                             <>
                                                 <div className="relative px-1">
@@ -1021,7 +1025,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                             { name: "Tea", icon: "☕" }
                                         ]).map((amenity, index) => (
                                             <div key={index} className="flex flex-col items-center gap-0.5 pb-1.5">
-                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]'}`}>
+                                                <div className="w-5 h-5 rounded-full flex items-center justify-center bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]">
                                                     {amenity.image ? (
                                                         <Image
                                                             src={amenity.image}
@@ -1068,13 +1072,17 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
 
                                 <div className="grid grid-cols-2 gap-x-2 gap-y-1 mb-1.5">
                                     <div className="flex items-center gap-1.5">
-                                        <Image src="/property-details/builder-details/cities.png" alt="Cities" width={7} height={7} />
+                                        <div className="w-4 h-4 rounded-full flex-shrink-0 bg-white shadow-sm flex items-center justify-center p-0.5">
+                                            <Image src="/property-details/builder-details/cities.png" alt="Cities" width={7} height={7} className="object-contain" />
+                                        </div>
                                         <span className={`text-[7.5px] font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                                             {typeof brandStats.cities === 'number' ? `${brandStats.cities}+ Cities` : (String(brandStats.cities || '').toLowerCase().includes('cities') ? brandStats.cities : `${safeDisplay(brandStats.cities)} Cities`)}
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-1.5">
-                                        <Image src="/property-details/builder-details/coworking.png" alt="Coworking" width={7} height={7} />
+                                        <div className="w-4 h-4 rounded-full flex-shrink-0 bg-white shadow-sm flex items-center justify-center p-0.5">
+                                            <Image src="/property-details/builder-details/coworking.png" alt="Coworking" width={7} height={7} className="object-contain" />
+                                        </div>
                                         <span className={`text-[7.5px] font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                                             {(() => {
                                                 const v = typeof brandStats.spaces === 'number' ? `${brandStats.spaces}+` : String(safeDisplay(brandStats.spaces)).replace(/Coworking\s*/gi, '').trim();
@@ -1084,13 +1092,17 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-1.5">
-                                        <Image src="/property-details/builder-details/clients.png" alt="Clients" width={7} height={7} />
+                                        <div className="w-4 h-4 rounded-full flex-shrink-0 bg-white shadow-sm flex items-center justify-center p-0.5">
+                                            <Image src="/property-details/builder-details/clients.png" alt="Clients" width={7} height={7} className="object-contain" />
+                                        </div>
                                         <span className={`text-[7.5px] font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                                             {typeof brandStats.clients === 'number' ? `${brandStats.clients}+ Clients` : (String(brandStats.clients || '').toLowerCase().includes('clients') ? brandStats.clients : `${safeDisplay(brandStats.clients)} Clients`)}
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-1.5">
-                                        <Image src="/property-details/builder-details/seats.png" alt="Seats" width={7} height={7} />
+                                        <div className="w-4 h-4 rounded-full flex-shrink-0 bg-white shadow-sm flex items-center justify-center p-0.5">
+                                            <Image src="/property-details/builder-details/seats.png" alt="Seats" width={7} height={7} className="object-contain" />
+                                        </div>
                                         <span className={`text-[7.5px] font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                                             {typeof brandStats.seats === 'number' ? `${brandStats.seats}+ Seats` : (String(brandStats.seats || '').toLowerCase().includes('seats') ? brandStats.seats : `${safeDisplay(brandStats.seats)} Seats`)}
                                         </span>
