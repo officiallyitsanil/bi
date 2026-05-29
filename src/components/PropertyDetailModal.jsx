@@ -27,6 +27,20 @@ const safeNumber = (value) => {
     return Number.isFinite(n) ? n : 0;
 };
 
+const resolveAgentImageSrc = (src) => {
+    if (!src) return "";
+    if (typeof src === "string" && src.includes("google.com/imgres")) {
+        try {
+            const urlObj = new URL(src);
+            const imgUrl = urlObj.searchParams.get("imgurl");
+            if (imgUrl) return decodeURIComponent(imgUrl);
+        } catch (e) {
+            // Fall back to original
+        }
+    }
+    return src;
+};
+
 import {
     X,
     Heart,
@@ -83,7 +97,6 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
     const [reviewText, setReviewText] = useState('');
     const [userName, setUserName] = useState('');
     const [isSubmittingReview, setIsSubmittingReview] = useState(false);
-    const [reviewSubmitSuccess, setReviewSubmitSuccess] = useState(false);
     const [hasUserSubmittedReview, setHasUserSubmittedReview] = useState(false);
     const [userReview, setUserReview] = useState(null);
     const [isEditingReview, setIsEditingReview] = useState(false);
@@ -540,15 +553,54 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
     const whatsBad = ratings?.whatsBad || [];
     const floorPlanCategories = Object.keys(floorPlans);
 
-    // Schema: brandDetails
-    const brandName = safeDisplay(property.brandDetails?.name || property.brandName);
-    const brandStats = property.brandDetails ? {
-        cities: property.brandDetails.cities ?? property.brandStats?.cities ?? 0,
-        clients: property.brandDetails.clients ?? property.brandStats?.clients ?? 0,
-        spaces: property.brandDetails.spaces ?? property.brandStats?.spaces ?? 0,
-        seats: property.brandDetails.seats ?? property.brandStats?.seats ?? 0
-    } : (property.brandStats || { cities: 0, clients: 0, spaces: 0, seats: 0 });
-    const brandDescription = safeDisplay(property.brandDetails?.description || property.brandDescription);
+    // Schema: brandDetails & builderDetails
+    const bld = property.builderDetails || {};
+    const bd = property.brandDetails || {};
+
+    const brandName = safeDisplay(
+        bld.builderName || 
+        property.builderName || 
+        bd.name || 
+        property.builder || 
+        property.propertyName || 
+        property.name,
+        "-"
+    );
+
+    const brandStats = {
+        cities: (() => {
+            const val = bld.cities || bd.cities || property.brandStats?.cities;
+            if (val === null || val === undefined || val === "") return "-";
+            if (typeof val === 'number') return `${val}+`;
+            if (typeof val === 'string') {
+                if (!isNaN(val.trim())) return `${val.trim()}+`;
+                const count = val.split(',').map(c => c.trim()).filter(Boolean).length;
+                return count > 0 ? `${count}+` : val;
+            }
+            return "-";
+        })(),
+        projects: (() => {
+            const val = bld.projects ?? bd.spaces ?? bd.projects ?? bld.projectsCount ?? property.brandStats?.spaces;
+            if (val === null || val === undefined || val === "") return "-";
+            return `${val}+`;
+        })(),
+        clients: (() => {
+            const val = bld.clients ?? bd.clients ?? bld.clientsCount ?? property.brandStats?.clients;
+            if (val === null || val === undefined || val === "") return "-";
+            return `${val}+`;
+        })(),
+        spaces: (() => {
+            const val = bld.projects ?? bd.spaces ?? bd.projects ?? bld.projectsCount ?? property.brandStats?.spaces;
+            if (val === null || val === undefined || val === "") return "-";
+            return `${val}+`;
+        })(),
+        experience: (() => {
+            const val = bld.experience ?? bd.experience ?? bld.yearsOfExperience ?? bd.seats ?? property.brandDetails?.seats;
+            if (val === null || val === undefined || val === "") return "-";
+            return typeof val === 'number' || !isNaN(Number(val)) ? `${val} Year` : val;
+        })()
+    };
+    const brandDescription = safeDisplay(bld.readMoreDescription || bld.description || bd.description || property.brandDescription);
     const rating = safeNumber(property.ratings?.overall);
     const isTopRated = property.isTopRated !== undefined ? property.isTopRated : true;
 
@@ -558,6 +610,24 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
     const discountPct = (originalPriceNum && discountedPriceNum && originalPriceNum > discountedPriceNum)
         ? Math.round(((originalPriceNum - discountedPriceNum) / originalPriceNum) * 100)
         : 0;
+
+    // Dynamic Stats calculations
+    const expValue = property.agentDetails?.experience || property.brandDetails?.experience || property.builderDetails?.experience || property.builderDetails?.yearsOfExperience || brandStats.experience;
+    const displayExperience = expValue != null && expValue !== "" ? (typeof expValue === 'number' || !isNaN(Number(expValue)) ? `${expValue} Year` : expValue) : "-";
+
+    const clientValue = property.brandDetails?.clients || property.agentDetails?.clients || property.builderDetails?.clients || property.brandStats?.clients || brandStats.clients;
+    const displayClients = clientValue != null && clientValue !== "" ? (typeof clientValue === 'number' || !isNaN(Number(clientValue)) ? `${clientValue}+` : clientValue) : "-";
+
+    const reviewsCount = (property.reviews || []).length || property.ratings?.totalRatings || property.ratings?.totalReviews;
+    const displayReviews = reviewsCount != null && reviewsCount !== "" && reviewsCount !== 0 ? reviewsCount : "-";
+
+    // Dynamic Details from screenshot
+    const displayPropertyType = property.displayPropertyType || property.propertySubtype || property.propertyTypeDisplay || (String(property.propertyType || "").toLowerCase() === "commercial" ? "" : property.propertyType);
+    const displayFurnishing = property.furnishingLevel || property.furnishingStatus || property.furnishing;
+    const displayLease = property.buildingLease;
+    const displayMinInventory = property.minInventoryUnit;
+    const displayMaxInventory = property.maxInventoryUnit;
+    const displayCapacity = property.singleFloorCapacity || property.capacity;
 
     // Mobile view (< md breakpoint) - Exact design for screens < 480px
     const availabilityStatus = safeDisplay(property.availability, 'Available');
@@ -672,25 +742,45 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
 
                         {/* Specs Row - Single horizontal row with icons */}
                         <div className="flex items-center justify-between border-b pb-5 mb-5 border-gray-100 dark:border-gray-800">
-                            <div className="flex items-center gap-2">
-                                <div className={`p-1.5 rounded-lg ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-white text-gray-400'}`}>
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 20v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8M5 10V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4M3 18h18" /></svg>
-                                </div>
-                                <span className={`text-[12px] font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{safeDisplay(property.bedroom, '3')} Bedroom</span>
-                            </div>
-                            <div className="h-4 w-px bg-gray-200 dark:bg-gray-700"></div>
-                            <div className="flex items-center gap-2">
-                                <div className={`p-1.5 rounded-lg ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-white text-gray-400'}`}>
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /></svg>
-                                </div>
-                                <span className={`text-[12px] font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{safeDisplay(property.bathroom, '2')} Bathroom</span>
-                            </div>
+                            {propertyCategory === 'commercial' ? (
+                                <>
+                                    <div className="flex items-center gap-2">
+                                        <div className={`p-1.5 rounded-lg ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-white text-gray-400'}`}>
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                        </div>
+                                        <span className={`text-[12px] font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{safeDisplay(property.numberOfSeats || property.singleFloorCapacity || property.capacity, '-')} Seats</span>
+                                    </div>
+                                    <div className="h-4 w-px bg-gray-200 dark:bg-gray-700"></div>
+                                    <div className="flex items-center gap-2">
+                                        <div className={`p-1.5 rounded-lg ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-white text-gray-400'}`}>
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><rect x="7" y="2" width="10" height="13" rx="2"/></svg>
+                                        </div>
+                                        <span className={`text-[12px] font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{safeDisplay(property.furnishingLevel || property.furnishing || 'Furnished')}</span>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="flex items-center gap-2">
+                                        <div className={`p-1.5 rounded-lg ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-white text-gray-400'}`}>
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 20v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8M5 10V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4M3 18h18" /></svg>
+                                        </div>
+                                        <span className={`text-[12px] font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{safeDisplay(property.bedroom, '-')} Bedroom</span>
+                                    </div>
+                                    <div className="h-4 w-px bg-gray-200 dark:bg-gray-700"></div>
+                                    <div className="flex items-center gap-2">
+                                        <div className={`p-1.5 rounded-lg ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-white text-gray-400'}`}>
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /></svg>
+                                        </div>
+                                        <span className={`text-[12px] font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{safeDisplay(property.bathroom, '-')} Bathroom</span>
+                                    </div>
+                                </>
+                            )}
                             <div className="h-4 w-px bg-gray-200 dark:bg-gray-700"></div>
                             <div className="flex items-center gap-2">
                                 <div className={`p-1.5 rounded-lg ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-white text-gray-400'}`}>
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 3v18" /></svg>
                                 </div>
-                                <span className={`text-[12px] font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{safeNumber(property.propertySize || property.carpetArea)}m2</span>
+                                <span className={`text-[12px] font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{safeNumber(property.propertySize || property.carpetArea)} m²</span>
                             </div>
                         </div>
 
@@ -702,15 +792,130 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                             </div>
                             <div className="flex items-center gap-1">
                                 <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                                <span className={`text-[12px] font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{rating.toFixed(1)} <span className="text-gray-400 font-normal">/ {reviews.length || '270'} Review</span></span>
+                                <span className={`text-[12px] font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{rating.toFixed(1)} <span className="text-gray-400 font-normal">/ {reviews.length || '0'} Review</span></span>
                             </div>
                         </div>
 
                         {/* Price Display */}
                         <div>
                             <p className="text-2xl font-bold text-blue-600">
-                                {safeDisplay(discountedPrice)} <span className={`text-sm font-normal ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>/ Hourly</span>
+                                {safeDisplay(discountedPrice)}
+                                {propertyCategory === 'commercial' ? (
+                                    <span className={`text-sm font-normal ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                                        {property.pricePerSeat ? ' / seat' : ''}
+                                    </span>
+                                ) : (
+                                    <span className={`text-sm font-normal ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                                        {discountedPrice && !discountedPrice.toLowerCase().includes('hourly') ? ' / Month' : ''}
+                                    </span>
+                                )}
                             </p>
+                        </div>
+                    </div>
+
+                    {/* Key Details Card */}
+                    <div className={`mx-4 mt-4 p-5 rounded-[2.5rem] transition-colors shadow-sm ${isDark ? 'bg-[#1A1D23] border border-gray-800' : 'bg-white border border-blue-50/10'}`}>
+                        <div className="mb-4">
+                            <h3 className={`text-[10px] font-extrabold uppercase tracking-wider ${isDark ? 'text-gray-200' : 'text-[#2e2e2e]'}`}>PROPERTY DETAILS</h3>
+                            <div className="w-8 h-0.5 bg-blue-600 mt-1"></div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-x-3 gap-y-4">
+                            {/* Property Type */}
+                            <div className="flex items-start gap-2.5 min-w-0">
+                                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                    <img src="/property-details/other-details/property.png" alt="Property Type" className="h-[18px] w-[18px] object-contain" />
+                                </div>
+                                <div className="min-w-0 pt-0.5">
+                                    <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                        Property Type
+                                        <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                    </p>
+                                    <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                        {safeDisplay(displayPropertyType)}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Furnishing Level */}
+                            <div className="flex items-start gap-2.5 min-w-0">
+                                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                    <img src="/property-details/other-details/furnshing.png" alt="Furnishing" className="h-[18px] w-[18px] object-contain" />
+                                </div>
+                                <div className="min-w-0 pt-0.5">
+                                    <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                        Furnishing level
+                                        <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                    </p>
+                                    <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                        {safeDisplay(displayFurnishing)}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Building Lease */}
+                            <div className="flex items-start gap-2.5 min-w-0">
+                                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                    <img src="/property-details/other-details/building.png" alt="Building Lease" className="h-[18px] w-[18px] object-contain" />
+                                </div>
+                                <div className="min-w-0 pt-0.5">
+                                    <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                        Building Lease
+                                        <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                    </p>
+                                    <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                        {safeDisplay(displayLease)}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Min Inventory */}
+                            <div className="flex items-start gap-2.5 min-w-0">
+                                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                    <img src="/property-details/other-details/property.png" alt="Min Inventory" className="h-[18px] w-[18px] object-contain" />
+                                </div>
+                                <div className="min-w-0 pt-0.5">
+                                    <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                        Min. inventory unit
+                                        <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                    </p>
+                                    <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                        {safeDisplay(displayMinInventory)}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Max Inventory */}
+                            <div className="flex items-start gap-2.5 min-w-0">
+                                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                    <img src="/property-details/other-details/property.png" alt="Max Inventory" className="h-[18px] w-[18px] object-contain" />
+                                </div>
+                                <div className="min-w-0 pt-0.5">
+                                    <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                        Max. inventory unit
+                                        <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                    </p>
+                                    <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                        {safeDisplay(displayMaxInventory)}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Capacity */}
+                            <div className="flex items-start gap-2.5 min-w-0">
+                                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                    <img src="/property-details/other-details/property.png" alt="Capacity" className="h-[18px] w-[18px] object-contain" />
+                                </div>
+                                <div className="min-w-0 pt-0.5">
+                                    <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                        Single floor Capacity
+                                        <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                    </p>
+                                    <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                        {safeDisplay(displayCapacity)}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -720,7 +925,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                             <div className="relative">
                                 <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-green-500 p-0.5">
                                     <Image
-                                        src={property.agentDetails?.profileImage || property.agentDetails?.image || "https://i.pravatar.cc/150?u=alexa"}
+                                        src={resolveAgentImageSrc(property.agentDetails?.profileImage || property.agentDetails?.image) || "https://i.pravatar.cc/150?u=alexa"}
                                         alt="agent"
                                         width={56}
                                         height={56}
@@ -755,28 +960,66 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                         </div>
                     </div>
 
-                    {/* Stats Section - Three cards in a row */}
+                    {/* Stats Section - Three cards in a row, now six cards total */}
                     <div className="mx-4 mt-4 grid grid-cols-3 gap-3">
+                        {/* Experience Card */}
                         <div className={`p-5 rounded-[2rem] flex flex-col items-center text-center transition-colors ${isDark ? 'bg-[#1A1D23]' : 'bg-[#EBF7FF]'}`}>
                             <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-2">
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
                             </div>
-                            <span className={`text-[13px] font-bold ${isDark ? 'text-white' : 'text-[#2D3142]'}`}>7 Year</span>
+                            <span className={`text-[13px] font-bold ${isDark ? 'text-white' : 'text-[#2D3142]'}`}>{displayExperience}</span>
                             <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>Experience</span>
                         </div>
+
+                        {/* Client Card */}
                         <div className={`p-5 rounded-[2rem] flex flex-col items-center text-center transition-colors ${isDark ? 'bg-[#1A1D23]' : 'bg-[#FFF6F0]'}`}>
                             <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-2">
                                 <Users className="w-6 h-6 text-orange-400" strokeWidth={2.5} />
                             </div>
-                            <span className={`text-[13px] font-bold ${isDark ? 'text-white' : 'text-[#2D3142]'}`}>500+</span>
+                            <span className={`text-[13px] font-bold ${isDark ? 'text-white' : 'text-[#2D3142]'}`}>{displayClients}</span>
                             <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>Client</span>
                         </div>
+
+                        {/* Review Card */}
                         <div className={`p-5 rounded-[2rem] flex flex-col items-center text-center transition-colors ${isDark ? 'bg-[#1A1D23]' : 'bg-[#FFF0F0]'}`}>
                             <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-2">
                                 <Bell className="w-6 h-6 text-red-500" strokeWidth={2.5} />
                             </div>
-                            <span className={`text-[13px] font-bold ${isDark ? 'text-white' : 'text-[#2D3142]'}`}>340</span>
+                            <span className={`text-[13px] font-bold ${isDark ? 'text-white' : 'text-[#2D3142]'}`}>{displayReviews}</span>
                             <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>Review</span>
+                        </div>
+
+                        {/* Cities Card */}
+                        <div className={`p-5 rounded-[2rem] flex flex-col items-center text-center transition-colors ${isDark ? 'bg-[#1A1D23]' : 'bg-[#F5F3FF]'}`}>
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-2">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                            </div>
+                            <span className={`text-[13px] font-bold truncate max-w-full ${isDark ? 'text-white' : 'text-[#2D3142]'}`}>
+                                {brandStats.cities ?? "-"}
+                            </span>
+                            <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>Cities</span>
+                        </div>
+
+                        {/* Projects Card */}
+                        <div className={`p-5 rounded-[2rem] flex flex-col items-center text-center transition-colors ${isDark ? 'bg-[#1A1D23]' : 'bg-[#E6FFFA]'}`}>
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-2">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="9" y1="22" x2="9" y2="16"/><line x1="15" y1="22" x2="15" y2="16"/><line x1="9" y1="16" x2="15" y2="16"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M16 10h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/></svg>
+                            </div>
+                            <span className={`text-[13px] font-bold truncate max-w-full ${isDark ? 'text-white' : 'text-[#2D3142]'}`}>
+                                {brandStats.projects ?? brandStats.spaces ?? "-"}
+                            </span>
+                            <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>Projects</span>
+                        </div>
+
+                        {/* Per Seat Price Card */}
+                        <div className={`p-5 rounded-[2rem] flex flex-col items-center text-center transition-colors ${isDark ? 'bg-[#1A1D23]' : 'bg-[#EFF6FF]'}`}>
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-2">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 18v3h16v-3"/><path d="M6 18V8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v10"/><path d="M2 10h20"/><circle cx="12" cy="14" r="2"/></svg>
+                            </div>
+                            <span className={`text-[12.5px] font-bold truncate max-w-full ${isDark ? 'text-white' : 'text-blue-600'}`}>
+                                {prices.discountedPricePerSeat || prices.pricePerSeat || property.pricePerSeat || "-"}
+                            </span>
+                            <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>Per Seat</span>
                         </div>
                     </div>
                 </div>
@@ -1181,7 +1424,6 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                         setSelectedRating(0);
                         setReviewText('');
                         setUserName('');
-                        setReviewSubmitSuccess(false);
                     }}
                     className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[70]"
                 >
@@ -1193,12 +1435,6 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                             <h3 className={`text-lg font-bold mb-1.5 ${isDark ? 'text-white' : 'text-gray-800'}`}>{isEditingReview ? 'Edit Your Review' : 'Rate Your Experience'}</h3>
                             <div className="w-24 h-0.5 bg-yellow-400 mx-auto"></div>
                         </div>
-
-                        {reviewSubmitSuccess && (
-                            <div className={`mb-3 border px-3 py-2 rounded-lg text-center text-sm ${isDark ? 'bg-green-900/30 border-green-600 text-green-400' : 'bg-green-100 border-green-400 text-green-700'}`}>
-                                {isEditingReview ? 'Review updated successfully!' : 'Review submitted successfully!'}
-                            </div>
-                        )}
 
                         <div className="mb-4">
                             <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Your Name *</label>
@@ -1250,7 +1486,6 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                     setSelectedRating(0);
                                     setReviewText('');
                                     setUserName('');
-                                    setReviewSubmitSuccess(false);
                                 }}
                                 className={`flex-1 bg-transparent border-2 border-[#f8c02f] py-3 rounded-lg font-semibold text-base hover:bg-[#f8c02f]/10 transition-colors cursor-pointer ${isDark ? 'text-white' : 'text-gray-800'}`}
                                 disabled={isSubmittingReview}
@@ -1273,7 +1508,6 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                     }
 
                                     setIsSubmittingReview(true);
-                                    setReviewSubmitSuccess(false);
 
                                     try {
                                         const propertyId = property._id || property.id;
@@ -1350,8 +1584,6 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                         const data = await response.json();
 
                                         if (data.success) {
-                                            setReviewSubmitSuccess(true);
-
                                             // Refresh property data to get updated reviews
                                             try {
                                                 const propResponse = await fetch(`/api/properties?id=${propertyId}&type=${propertyType}`);
@@ -1384,14 +1616,12 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                                 console.error('Error refreshing property data:', error);
                                             }
 
-                                            setTimeout(() => {
-                                                setShowRatingModal(false);
-                                                setIsEditingReview(false);
-                                                setSelectedRating(0);
-                                                setReviewText('');
-                                                setUserName('');
-                                                setReviewSubmitSuccess(false);
-                                            }, 1500);
+                                            // Close modal and reset state immediately on success
+                                            setShowRatingModal(false);
+                                            setIsEditingReview(false);
+                                            setSelectedRating(0);
+                                            setReviewText('');
+                                            setUserName('');
                                         } else {
                                             alert(data.message || 'Failed to submit review. Please try again.');
                                         }

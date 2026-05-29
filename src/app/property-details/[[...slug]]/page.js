@@ -95,14 +95,34 @@ const NEARBY_CATEGORIES = [
 const DEFAULT_AMENITY_ICON = "/amenities/security.png";
 const DEFAULT_CUSTOM_INFRA_ICON = "/custom-infra/Meeting%20Room.png";
 
+function getNormalizedCustomInfraName(name) {
+    if (!name) return null;
+    const n = String(name).toLowerCase().trim();
+    if (n.includes("game") || n.includes("gaming") || n.includes("recreational") || n.includes("recreation") || n.includes("lounge")) return "Gaming Room";
+    if (n.includes("meeting") || n.includes("conference") || n.includes("discussion") || n.includes("boardroom") || n.includes("room")) return "Meeting Rooms";
+    if (n.includes("cabin") || n.includes("private")) return "Private Cabins";
+    if (n.includes("reception") || n.includes("desk") || n.includes("lobby")) return "Reception Area";
+    if (n.includes("pantry") || n.includes("cafe") || n.includes("cafeteria") || n.includes("kitchen")) return "Pantry";
+    return null;
+}
+
 function getCustomInfraIconSrc(name, fallbackId) {
     if (!name) return DEFAULT_CUSTOM_INFRA_ICON;
-    const n = String(name).toLowerCase();
+    const trimName = String(name).trim();
 
-    if (n.includes("meeting") || n.includes("room") || n.includes("conference") || n.includes("discussion") || n.includes("boardroom")) return "/custom-infra/Meeting%20Room.png";
+    // Direct match for normalized names first
+    if (trimName === "Gaming Room") return "/custom-infra/Recreational%20area.png";
+    if (trimName === "Meeting Rooms") return "/custom-infra/Meeting%20Room.png";
+    if (trimName === "Private Cabins") return "/custom-infra/Private%20Cabin.png";
+    if (trimName === "Reception Area") return "/custom-infra/Reception%20Area.png";
+    if (trimName === "Pantry") return "/custom-infra/Pantry.png";
+
+    // Substring fallback
+    const n = trimName.toLowerCase();
+    if (n.includes("game") || n.includes("gaming") || n.includes("recreational") || n.includes("recreation") || n.includes("lounge")) return "/custom-infra/Recreational%20area.png";
+    if (n.includes("meeting") || n.includes("conference") || n.includes("discussion") || n.includes("boardroom") || n.includes("room")) return "/custom-infra/Meeting%20Room.png";
     if (n.includes("cabin") || n.includes("private")) return "/custom-infra/Private%20Cabin.png";
     if (n.includes("reception") || n.includes("desk") || n.includes("lobby")) return "/custom-infra/Reception%20Area.png";
-    if (n.includes("recreational") || n.includes("recreation") || n.includes("game") || n.includes("lounge")) return "/custom-infra/Recreational%20area.png";
     if (n.includes("pantry") || n.includes("cafe") || n.includes("cafeteria") || n.includes("kitchen")) return "/custom-infra/Pantry.png";
 
     if (fallbackId != null) {
@@ -208,6 +228,20 @@ const safeNumber = (value) => {
     return Number.isFinite(n) ? n : 0;
 };
 
+function resolveAgentImageSrc(src) {
+    if (!src) return "";
+    if (typeof src === "string" && src.includes("google.com/imgres")) {
+        try {
+            const urlObj = new URL(src);
+            const imgUrl = urlObj.searchParams.get("imgurl");
+            if (imgUrl) return decodeURIComponent(imgUrl);
+        } catch (e) {
+            // Fall back to original
+        }
+    }
+    return src;
+}
+
 // Helper function to get video MIME type from URL or contentType
 const getVideoMimeType = (url, contentType) => {
     if (contentType) return contentType;
@@ -303,7 +337,6 @@ function PropertyDetailsContent() {
     const [isSubmittingInterest, setIsSubmittingInterest] = useState(false);
     const [showSuccessTooltip, setShowSuccessTooltip] = useState(false);
     const [isSubmittingReview, setIsSubmittingReview] = useState(false);
-    const [reviewSubmitSuccess, setReviewSubmitSuccess] = useState(false);
     const [userName, setUserName] = useState('');
     const [fullScreenImage, setFullScreenImage] = useState(null);
     const [showAllPhotosModal, setShowAllPhotosModal] = useState(false);
@@ -1514,21 +1547,64 @@ function PropertyDetailsContent() {
         discountedPricePerSeat &&
         String(originalPricePerSeat).replace(/[₹,\s]/g, "") !== String(discountedPricePerSeat).replace(/[₹,\s]/g, "");
 
+    const bld = property.builderDetails || {};
     const bd = property.brandDetails || {};
-    const brandDisplayName = safeDisplay(property.builderName || bd.name || property.builder || property.propertyName);
+    const brandDisplayName = safeDisplay(
+        bld.builderName || 
+        property.builderName || 
+        bd.name || 
+        property.builder || 
+        property.propertyName || 
+        property.name,
+        "-"
+    );
+    const brandLogoSrc = bld.builderLogo?.url || bld.logo || bd.logo || "";
     const brandStats = {
-        cities: bd.cities ?? 2,
-        spaces: bd.spaces ?? 27,
-        clients: bd.clients ?? 1000,
-        seats: bd.seats ?? 8000,
+        cities: (() => {
+            const val = bld.cities || bd.cities;
+            if (val === null || val === undefined || val === "") return null;
+            if (typeof val === 'number') return `${val}+`;
+            if (typeof val === 'string') {
+                if (!isNaN(val.trim())) return `${val.trim()}+`;
+                const count = val.split(',').map(c => c.trim()).filter(Boolean).length;
+                return count > 0 ? `${count}+` : null;
+            }
+            return null;
+        })(),
+        projects: (() => {
+            const val = bld.projects ?? bd.spaces;
+            if (val === null || val === undefined || val === "") return null;
+            return `${val}+`;
+        })(),
+        clients: (() => {
+            const val = bld.clients ?? bd.clients;
+            if (val === null || val === undefined || val === "") return null;
+            return `${val}+`;
+        })(),
+        experience: (() => {
+            const val = bld.experience ?? bd.experience ?? bld.yearsOfExperience;
+            if (val === null || val === undefined || val === "") return null;
+            return `${val}+`;
+        })()
     };
-    const hasBrandDesc = typeof bd.description === "string" && bd.description.trim();
+    const rawDesc = bld.readMoreDescription || bld.description || bd.description;
+    const hasBrandDesc = typeof rawDesc === "string" && rawDesc.trim();
     const brandShortDesc = hasBrandDesc
-        ? bd.description.trim()
-        : `${brandDisplayName} Workspace, established in 2014, specializes in providing Zero CapEx, Enterprise Grade, Customized managed office spaces.`;
-    const brandLongDesc = hasBrandDesc
-        ? `${brandShortDesc} With ${brandStats.spaces}+ coworking spaces and ${brandStats.seats}+ seats across ${brandStats.cities}+ cities, ${brandDisplayName} continues to expand across India.`
-        : `${brandDisplayName} Workspace, established in 2014, specializes in providing Zero CapEx, Enterprise Grade, Customized managed office spaces. With 26+ locations in Bangalore and an expansion to Mumbai, ${brandDisplayName}'s flagship HSR campus is the largest in India, offering over 8,000 seats...`;
+        ? (rawDesc.trim().length > 150 ? rawDesc.trim().slice(0, 150) + "..." : rawDesc.trim())
+        : "-";
+    const brandLongDesc = hasBrandDesc ? rawDesc.trim() : "-";
+    const normalizedInfra = (property.customInfrastructure || [])
+        .map((item, i) => {
+            const rawName = typeof item === "object" ? item?.name : item;
+            const name = getNormalizedCustomInfraName(rawName);
+            if (!name) return null;
+            return {
+                name,
+                id: typeof item === "object" && item?.id != null ? item.id : i + 1,
+                iconSrc: getCustomInfraIconSrc(name, typeof item === "object" && item?.id != null ? item.id : i + 1)
+            };
+        })
+        .filter(Boolean);
 
     return (
         <main className={`property-details-compact min-h-screen pb-44 md:pb-0 pt-6 transition-colors duration-300 ${isDark ? 'bg-[#121418]' : 'bg-secondary'}`}>
@@ -1988,7 +2064,7 @@ function PropertyDetailsContent() {
                             </div>
 
                             {/* Custom Infrastructure - DB: customInfrastructure */}
-                            {property.customInfrastructure && property.customInfrastructure.length > 0 && (
+                            {normalizedInfra.length > 0 && (
                                 <div
                                     className={`rounded-xl px-5 py-6 transition-colors ${isDark ? 'bg-[#282c34]' : 'bg-[#f4f4fb]'}`}
                                     id="custom-infra"
@@ -1997,43 +2073,35 @@ function PropertyDetailsContent() {
                                         Custom infrastructure possible in your Managed Office <span aria-hidden>✨</span>
                                     </h3>
                                     <div className="grid grid-cols-2 justify-items-center md:justify-items-start gap-x-4 gap-y-8 md:grid-cols-3 md:grid-cols-5 md:gap-x-2 md:gap-y-0 md:gap-x-6">
-                                        {property.customInfrastructure.map((item, i) => {
-                                            const name = typeof item === "object" ? item?.name : item;
-                                            const id = typeof item === "object" && item?.id != null ? item.id : i + 1;
-                                            const iconSrc = getCustomInfraIconSrc(name, id);
-                                            return (
+                                        {normalizedInfra.map((item, i) => (
+                                            <div
+                                                key={`${item.name}-${i}`}
+                                                className="flex w-full max-w-[9rem] flex-col items-center justify-start text-center md:max-w-none"
+                                            >
+                                                {/* Circle Background Like Below Section */}
                                                 <div
-                                                    key={`${name}-${i}`}
-                                                    className="flex w-full max-w-[9rem] flex-col items-center justify-start text-center md:max-w-none"
+                                                    className={`flex items-center justify-center h-16 w-16 rounded-full transition-all ${isDark
+                                                            ? "bg-white shadow-none"
+                                                            : "bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
+                                                        }`}
                                                 >
-                                                    {/* Circle Background Like Below Section */}
-                                                    <div
-                                                        className={`flex items-center justify-center h-16 w-16 rounded-full transition-all ${isDark
-                                                                ? "bg-white shadow-none"
-                                                                : "bg-white shadow-[0_4px_12px_rgba(0,0,0,0.08)]"
-                                                            }`}
-                                                    >
-                                                        <img
-                                                            src={iconSrc}
-                                                            alt={name}
-                                                            className={`object-contain ${isDark
-                                                                    ? "h-8 w-8"
-                                                                    : "h-8 w-8"
-                                                                }`}
-                                                            width={32}
-                                                            height={32}
-                                                        />
-                                                    </div>
-
-                                                    <p
-                                                        className={`mt-3 text-center text-sm font-semibold leading-tight ${isDark ? "text-gray-200" : "text-gray-900"
-                                                            } md:text-base`}
-                                                    >
-                                                        {name}
-                                                    </p>
+                                                    <img
+                                                        src={item.iconSrc}
+                                                        alt={item.name}
+                                                        className="h-8 w-8 object-contain"
+                                                        width={32}
+                                                        height={32}
+                                                    />
                                                 </div>
-                                            );
-                                        })}
+
+                                                <p
+                                                    className={`mt-3 text-center text-sm font-semibold leading-tight ${isDark ? "text-gray-200" : "text-gray-900"
+                                                        } md:text-base`}
+                                                >
+                                                    {item.name}
+                                                </p>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             )}
@@ -2346,7 +2414,7 @@ function PropertyDetailsContent() {
                                     const agentName = safeDisplay(property.agentDetails?.name || property.agentName);
                                     const agentPhone = property.agentDetails?.phone || property.agentPhone || "";
                                     const agentEmail = property.agentDetails?.email || property.agentEmail || "";
-                                    const agentImage = property.agentImage || property.agentDetails?.image || "";
+                                    const agentImage = property.agentImage || resolveAgentImageSrc(property.agentDetails?.image) || "";
                                     const agentTag = safeDisplay(property.agentDetails?.tag) || "Buildersinfo Expert";
                                     const agentTagline = safeDisplay(property.agentDetails?.tagline);
                                     const assistedLogos = property.agentDetails?.assistedCorporates || [];
@@ -2515,27 +2583,29 @@ function PropertyDetailsContent() {
                                                         </p>
                                                     )}
                                                     {(() => {
-                                                        const defaultLogos = [
-                                                            { name: "Pepsi", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Pepsi_logo_2014.svg/120px-Pepsi_logo_2014.svg.png" },
-                                                            { name: "GE", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/General_Electric_logo.svg/120px-General_Electric_logo.svg.png" },
-                                                            { name: "P&G", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Procter_%26_Gamble_logo.svg/120px-Procter_%26_Gamble_logo.svg.png" },
-                                                            { name: "HP", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/HP_logo_2012.svg/120px-HP_logo_2012.svg.png" },
-                                                            { name: "Dell", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Dell_logo_2016.svg/120px-Dell_logo_2016.svg.png" }
-                                                        ];
-                                                        const renderedLogos = assistedLogos.length > 0 ? assistedLogos.slice(0, 5) : defaultLogos;
-                                                        const validLogos = renderedLogos.filter(item => {
-                                                            const rawVal = typeof item === "string" ? item : (item?.name || item?.url || item?.logo || "");
+                                                        const validLogos = assistedLogos.filter(item => {
+                                                            const rawVal = typeof item === "string" ? item : (item?.companyLogo || item?.logo || item?.url || item?.company || item?.name || "");
                                                             return !!rawVal;
                                                         });
+
+                                                        if (validLogos.length === 0) {
+                                                            return (
+                                                                <div className="mt-3.5 flex items-center justify-start w-full">
+                                                                    <span className={`text-[11.5px] font-semibold italic ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                                                                        No trusted source provided
+                                                                    </span>
+                                                                </div>
+                                                            );
+                                                        }
                                                         
                                                         const alignClass = validLogos.length >= 5 ? "justify-between" : "justify-start gap-2 md:gap-3";
 
                                                         return (
                                                             <div className={`mt-3.5 flex flex-wrap items-center w-full gap-y-3 ${alignClass}`}>
                                                                 {validLogos.map((item, i) => {
-                                                                    const rawVal = typeof item === "string" ? item : (item?.name || item?.url || item?.logo || "");
-                                                                    const logoSrc = typeof item === "object" && item.logo ? item.logo : resolveCorporateLogoSrc(rawVal);
-                                                                    const logoName = getCorporateLogoDisplayName(rawVal);
+                                                                    const isObj = typeof item === "object" && item !== null;
+                                                                    const logoSrc = isObj ? (item.companyLogo || item.logo || item.url) : resolveCorporateLogoSrc(item);
+                                                                    const logoName = isObj ? (item.company || item.name) : getCorporateLogoDisplayName(item);
 
                                                                     return logoSrc ? (
                                                                         <div
@@ -2549,7 +2619,7 @@ function PropertyDetailsContent() {
                                                                             key={i}
                                                                             className="inline-flex rounded-full border border-gray-200 bg-white px-3 py-1 text-[11px] font-bold text-gray-600 shadow-sm"
                                                                         >
-                                                                            {safeDisplay(logoName || rawVal)}
+                                                                            {safeDisplay(logoName || item)}
                                                                         </span>
                                                                     );
                                                                 })}
@@ -2622,11 +2692,17 @@ function PropertyDetailsContent() {
                                 </div>
 
                                 <div className="mt-4 flex items-center gap-4">
-                                    <img
-                                        alt={`${brandDisplayName} logo`}
-                                        src="/property-details/builder-details/builder-logo.png"
-                                        className="h-8 w-8 sm:h-10 sm:w-10 shrink-0 object-contain"
-                                    />
+                                    {brandLogoSrc ? (
+                                        <img
+                                            alt={`${brandDisplayName} logo`}
+                                            src={brandLogoSrc}
+                                            className="h-8 w-8 sm:h-10 sm:w-10 shrink-0 object-contain rounded-lg"
+                                        />
+                                    ) : (
+                                        <div className="h-8 w-8 sm:h-10 sm:w-10 shrink-0 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 font-bold border border-gray-200 text-sm">
+                                            -
+                                        </div>
+                                    )}
                                     <div className="min-w-0">
                                         <h4 className={`text-xs sm:text-[13px] font-bold leading-tight ${isDark ? 'text-white' : 'text-black'}`}>{brandDisplayName}</h4>
                                         <p className={`mt-0.5 text-[8px] font-bold uppercase tracking-[0.2em] ${isDark ? 'text-white' : 'text-black'}`}>
@@ -2641,15 +2717,15 @@ function PropertyDetailsContent() {
                                             <img src="/property-details/builder-details/cities.png" alt="Cities" className="h-[10px] w-[10px] sm:h-[12px] sm:w-[12px] shrink-0 object-contain" />
                                         </div>
                                         <span className={`font-normal ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                                            {brandStats.cities}+ Cities
+                                            {brandStats.cities ? `${brandStats.cities} Cities` : "-"}
                                         </span>
                                     </div>
                                     <div className="flex min-w-0 items-center gap-2">
                                         <div className="flex h-[18px] w-[18px] sm:h-[22px] sm:w-[22px] shrink-0 items-center justify-center rounded-full bg-white shadow-sm">
-                                            <img src="/property-details/builder-details/coworking.png" alt="Coworking Spaces" className="h-[10px] w-[10px] sm:h-[12px] sm:w-[12px] shrink-0 object-contain" />
+                                            <img src="/property-details/builder-details/coworking.png" alt="Projects" className="h-[10px] w-[10px] sm:h-[12px] sm:w-[12px] shrink-0 object-contain" />
                                         </div>
                                         <span className={`font-normal ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                                            {brandStats.spaces}+ Spaces
+                                            {brandStats.projects ? `${brandStats.projects} Projects` : "-"}
                                         </span>
                                     </div>
                                     <div className="flex min-w-0 items-center gap-2">
@@ -2657,33 +2733,35 @@ function PropertyDetailsContent() {
                                             <img src="/property-details/builder-details/clients.png" alt="Clients" className="h-[10px] w-[10px] sm:h-[12px] sm:w-[12px] shrink-0 object-contain" />
                                         </div>
                                         <span className={`font-normal ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                                            {brandStats.clients}+ Clients
+                                            {brandStats.clients ? `${brandStats.clients} Clients` : "-"}
                                         </span>
                                     </div>
                                     <div className="flex min-w-0 items-center gap-2">
                                         <div className="flex h-[18px] w-[18px] sm:h-[22px] sm:w-[22px] shrink-0 items-center justify-center rounded-full bg-white shadow-sm">
-                                            <img src="/property-details/builder-details/seats.png" alt="Seats" className="h-[10px] w-[10px] sm:h-[12px] sm:w-[12px] shrink-0 object-contain" />
+                                            <img src="/property-details/builder-details/seats.png" alt="Experience" className="h-[10px] w-[10px] sm:h-[12px] sm:w-[12px] shrink-0 object-contain" />
                                         </div>
                                         <span className={`font-normal ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                                            {brandStats.seats}+ Seats
+                                            {brandStats.experience ? `${brandStats.experience} Experience` : "-"}
                                         </span>
                                     </div>
                                 </div>
 
                                 <div className={`mt-3 text-[10px] leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                                     {showBrandDescription ? brandLongDesc : brandShortDesc}{" "}
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowBrandDescription(!showBrandDescription)}
-                                        className="inline-flex items-center gap-0.5 p-0 align-baseline text-[10px] font-medium text-blue-600 hover:underline dark:text-blue-400"
-                                    >
-                                        {showBrandDescription ? "Read less" : "Read more"}
-                                        {showBrandDescription ? (
-                                            <ChevronUp className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                                        ) : (
-                                            <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                                        )}
-                                    </button>
+                                    {hasBrandDesc && rawDesc.trim().length > 150 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowBrandDescription(!showBrandDescription)}
+                                            className="inline-flex items-center gap-0.5 p-0 align-baseline text-[10px] font-medium text-blue-600 hover:underline dark:text-blue-400"
+                                        >
+                                            {showBrandDescription ? "Read less" : "Read more"}
+                                            {showBrandDescription ? (
+                                                <ChevronUp className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                                            ) : (
+                                                <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                                            )}
+                                        </button>
+                                    )}
                                 </div>
 
                                 <button
@@ -3065,16 +3143,38 @@ function PropertyDetailsContent() {
                     return parseFloat(priceStr) || 0;
                 };
 
+                const isNewProperty = (prop) => {
+                    if (!prop?.createdAt) return false;
+                    const createdDate = new Date(prop.createdAt);
+                    if (isNaN(createdDate.getTime())) return false;
+                    const thirtyDaysAgo = new Date();
+                    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                    return createdDate >= thirtyDaysAgo;
+                };
+
+                const getRatingTag = (ratingVal) => {
+                    const val = parseFloat(ratingVal);
+                    if (isNaN(val)) return "Good";
+                    if (val >= 4.5) return "Excellent";
+                    if (val >= 4.0) return "Moderate";
+                    return "Good";
+                };
+
                 const currentPrice = getNumericPrice(property);
                 const lowerBound = currentPrice * 0.9;
                 const upperBound = currentPrice * 1.1;
 
-                // Filter all live properties within +/- 10% of currentPrice
+                // Filter all live properties within +/- 10% of currentPrice and matching category
                 let similarProps = allProperties.filter((p) => {
                     if (!p) return false;
                     const id = p._id || p.id;
                     const currentId = property?._id || property?.id;
                     if (id === currentId) return false; // Exclude current property
+
+                    // Match property category (commercial vs residential)
+                    const currentCategory = (property.propertyCategory || property.propertyType || '').toLowerCase();
+                    const pCategory = (p.propertyCategory || p.propertyType || '').toLowerCase();
+                    if (pCategory !== currentCategory) return false;
 
                     const pPrice = getNumericPrice(p);
                     return pPrice >= lowerBound && pPrice <= upperBound;
@@ -3108,6 +3208,10 @@ function PropertyDetailsContent() {
                 const filteredProps = activeCity
                     ? similarProps.filter(p => getPropertyCity(p) === activeCity)
                     : similarProps;
+
+                // Find minimum price among filtered properties for Best Priced badge
+                const prices = filteredProps.map(p => getNumericPrice(p)).filter(price => price > 0);
+                const minPrice = prices.length > 0 ? Math.min(...prices) : Infinity;
 
                 return (
                     <div id="similar-properties" className="w-full px-4 md:px-10 mt-16 mb-12">
@@ -3170,53 +3274,89 @@ function PropertyDetailsContent() {
                                     slidesPerGroup={1}
                                     className="w-full !pb-2"
                                 >
-                                    {filteredProps.map((p, idx) => (
-                                        <SwiperSlide key={p?.id || p?._id || p?.name || idx} className="h-auto">
-                                            <Link href={`/property-details?id=${p?.id || p?._id || '#'}&type=${p?.propertyCategory || p?.propertyType || ''}`} className="block h-full">
-                                                <div className={`rounded-[12px] overflow-hidden group h-full flex flex-col transition-all ${isDark ? 'bg-[#1f2229] border-gray-800 shadow-none' : 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-gray-100 hover:shadow-md'}`}>
-                                                    <div className={`relative h-[200px] md:h-[180px] w-full shrink-0 overflow-hidden ${isDark ? 'bg-gray-800' : 'bg-gray-100'}`}>
-                                                        <img src={p?.featuredImageUrl || p?.image || p?.images?.[0] || 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800'} alt={p?.propertyName || p?.name || ''} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 will-change-transform" />
-                                                        {p?.badge ? (
-                                                            <div className="absolute top-3 left-3 bg-[#1e8b4e] text-white text-[9px] font-bold px-2 py-0.5 rounded-[3px] shadow-sm uppercase tracking-wide">
-                                                                {p.badge}
-                                                            </div>
-                                                        ) : (
-                                                            <div className="absolute top-3 left-3 bg-[#1e8b4e] text-white text-[9px] font-bold px-2 py-0.5 rounded-[3px] shadow-sm flex items-center gap-1 uppercase tracking-wide">
-                                                                <span className="bg-white/20 rounded-full w-3 h-3 inline-flex items-center justify-center font-serif leading-none">₹</span> BEST PRICE GUARANTEE
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div className="p-4 flex flex-col flex-1 justify-between z-10">
-                                                        <div>
-                                                            <div className="flex justify-between items-start mb-0.5">
-                                                                <h3 className={`font-bold text-[15px] md:text-[16px] leading-tight truncate pr-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(p?.propertyName || p?.name)}</h3>
-                                                                {(p?.ratingCount || p?.ratings?.totalRatings || idx === 0) && (
-                                                                    <div className="flex items-center gap-[2px] shrink-0 pt-0.5">
-                                                                        {[1, 2, 3, 4].map(star => <Star key={star} className="w-[10px] h-[10px] text-[#ffb800] fill-[#ffb800]" />)}
-                                                                        <Star className="w-[10px] h-[10px] text-[#ffb800] fill-transparent" />
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                            <p className="text-[11px] text-gray-500 capitalize leading-snug">{safeDisplay(p?.address?.locality || p?.locality || p?.address?.city || p?.city)}</p>
-                                                        </div>
-                                                        <div className="flex justify-between items-end mt-5">
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="bg-black text-white flex items-center justify-center rounded-[4px] px-1.5 py-0.5 text-[10px] font-bold">
-                                                                    {p?.ratings?.overall || p?.rating || (4.0 + (idx % 10) / 10).toFixed(1)}
+                                    {filteredProps.map((p, idx) => {
+                                        const isNew = isNewProperty(p);
+                                        const pPrice = getNumericPrice(p);
+                                        const isBestPriced = pPrice > 0 && pPrice === minPrice;
+
+                                        let badgeText = "";
+                                        let isBestPriceBadge = false;
+
+                                        if (isBestPriced) {
+                                            badgeText = "BEST PRICE GUARANTEED";
+                                            isBestPriceBadge = true;
+                                        } else if (isNew) {
+                                            badgeText = "NEW";
+                                        }
+
+                                        const ratingVal = p?.ratings?.overall || p?.rating || (4.0 + (idx % 10) / 10).toFixed(1);
+                                        const ratingTag = getRatingTag(ratingVal);
+
+                                        // Calculate original/discounted prices for card display consistency
+                                        const cardPrices = calculatePrices(p);
+                                        const cardDisplayPrice = cardPrices.discountedPrice !== '₹XX' 
+                                            ? cardPrices.discountedPrice 
+                                            : (p?.totalPrice || (typeof p?.price === 'string' && p.price.includes('₹') ? p.price : `₹ ${safeDisplay(p?.price) || "5,999"}`));
+
+                                        // Dynamic Stars array
+                                        const numericRating = parseFloat(ratingVal);
+                                        const ratingStars = [];
+                                        for (let i = 1; i <= 5; i++) {
+                                            if (i <= Math.floor(numericRating)) {
+                                                ratingStars.push(<Star key={i} className="w-[10px] h-[10px] text-[#ffb800] fill-[#ffb800]" />);
+                                            } else if (i - 0.5 <= numericRating) {
+                                                ratingStars.push(<Star key={i} className="w-[10px] h-[10px] text-[#ffb800] fill-[#ffb800] opacity-50" />);
+                                            } else {
+                                                ratingStars.push(<Star key={i} className="w-[10px] h-[10px] text-[#ffb800] fill-transparent" />);
+                                            }
+                                        }
+
+                                        return (
+                                            <SwiperSlide key={p?.id || p?._id || p?.name || idx} className="h-auto">
+                                                <Link href={`/property-details?id=${p?.id || p?._id || '#'}&type=${p?.propertyCategory || p?.propertyType || ''}`} className="block h-full">
+                                                    <div className={`rounded-[12px] overflow-hidden group h-full flex flex-col transition-all ${isDark ? 'bg-[#1f2229] border-gray-800 shadow-none' : 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-gray-100 hover:shadow-md'}`}>
+                                                        <div className={`relative h-[200px] md:h-[180px] w-full shrink-0 overflow-hidden ${isDark ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                                                            <img src={p?.featuredImageUrl || p?.image || p?.images?.[0] || 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800'} alt={p?.propertyName || p?.name || ''} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 will-change-transform" />
+                                                            {badgeText ? (
+                                                                <div className={`absolute top-3 left-3 text-white text-[9px] font-bold px-2 py-0.5 rounded-[3px] shadow-sm flex items-center gap-1 uppercase tracking-wide ${isBestPriceBadge ? 'bg-amber-600' : 'bg-blue-600'}`}>
+                                                                    {isBestPriceBadge && <span className="bg-white/20 rounded-full w-3 h-3 inline-flex items-center justify-center font-serif leading-none">₹</span>}
+                                                                    {badgeText}
                                                                 </div>
-                                                                <span className="text-[11px] font-extrabold text-black">{p?.ratings?.tag || p?.ratingTag || "Excellent"}</span>
+                                                            ) : p?.badge ? (
+                                                                <div className="absolute top-3 left-3 bg-[#1e8b4e] text-white text-[9px] font-bold px-2 py-0.5 rounded-[3px] shadow-sm uppercase tracking-wide">
+                                                                    {p.badge}
+                                                                </div>
+                                                            ) : null}
+                                                        </div>
+                                                        <div className="p-4 flex flex-col flex-1 justify-between z-10">
+                                                            <div>
+                                                                <div className="flex justify-between items-start mb-0.5">
+                                                                    <h3 className={`font-bold text-[15px] md:text-[16px] leading-tight truncate pr-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>{safeDisplay(p?.propertyName || p?.name)}</h3>
+                                                                    <div className="flex items-center gap-[2px] shrink-0 pt-0.5">
+                                                                        {ratingStars}
+                                                                    </div>
+                                                                </div>
+                                                                <p className="text-[11px] text-gray-500 capitalize leading-snug">{safeDisplay(p?.address?.locality || p?.locality || p?.address?.city || p?.city)}</p>
                                                             </div>
-                                                            <div className="flex flex-col items-end">
-                                                                <p className={`font-bold text-[1.15rem] leading-none tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                                                                    {p?.totalPrice || (typeof p?.price === 'string' && p.price.includes('₹') ? p.price : `₹ ${safeDisplay(p?.price) || "5,999"}`)}
-                                                                </p>
+                                                            <div className="flex justify-between items-end mt-5">
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="bg-black text-white flex items-center justify-center rounded-[4px] px-1.5 py-0.5 text-[10px] font-bold">
+                                                                        {numericRating.toFixed(1)}
+                                                                    </div>
+                                                                    <span className={`text-[11px] font-extrabold ${isDark ? 'text-gray-300' : 'text-black'}`}>{ratingTag}</span>
+                                                                </div>
+                                                                <div className="flex flex-col items-end">
+                                                                    <p className={`font-bold text-[1.15rem] leading-none tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                                                                        {cardDisplayPrice}
+                                                                    </p>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </Link>
-                                        </SwiperSlide>
-                                    ))}
+                                                </Link>
+                                            </SwiperSlide>
+                                        );
+                                    })}
                                 </Swiper>
                                 {filteredProps.length > 1 && (
                                     <>
@@ -3241,19 +3381,32 @@ function PropertyDetailsContent() {
                     const currentId = property?._id || property?.id;
                     if (id === currentId) return false;
 
-                    const pCity = (p.address?.city || p.city || '').toLowerCase();
+                    // Match property category (commercial vs residential)
                     const pCategory = (p.propertyCategory || p.propertyType || '').toLowerCase();
+                    if (pCategory !== currentCategory) return false;
 
-                    return pCity === currentCity && pCategory === currentCategory;
+                    const pCity = (p.address?.city || p.city || '').toLowerCase();
+                    return pCity === currentCity;
                 });
 
                 // HIDE the entire section if no other properties exist in the same city!
                 if (exploreProps.length === 0) return null;
 
-                const hasLiveExploreData = exploreProps.length > 0;
+                // Consolidate properties by unique locality to prevent duplicate cards for the same area
+                const uniqueLocalities = [];
+                const explorePropsUnique = [];
+                for (const p of exploreProps) {
+                    const loc = (p.address?.locality || p.locality || '').trim().toLowerCase();
+                    if (loc && !uniqueLocalities.includes(loc)) {
+                        uniqueLocalities.push(loc);
+                        explorePropsUnique.push(p);
+                    }
+                }
+
+                const hasLiveExploreData = explorePropsUnique.length > 0;
 
                 const displayItems = hasLiveExploreData 
-                    ? exploreProps.slice(0, 5) // Display top 5 matches
+                    ? explorePropsUnique.slice(0, 5) // Display top 5 unique matches
                     : [
                         { name: "HSR Layout", image: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=800" },
                         { name: "Koramangala", image: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&q=80&w=800" },
@@ -3644,7 +3797,6 @@ function PropertyDetailsContent() {
                             }
 
                             setIsSubmittingReview(true);
-                            setReviewSubmitSuccess(false);
 
                             try {
                                 const propertyId = property._id || property.id;
@@ -3711,7 +3863,6 @@ function PropertyDetailsContent() {
                                 const data = await response.json();
 
                                 if (data.success) {
-                                    setReviewSubmitSuccess(true);
                                     const updatedProperty = await refreshPropertyData();
                                     if (updatedProperty) {
                                         setProperty(prev => ({
@@ -3721,10 +3872,7 @@ function PropertyDetailsContent() {
                                         }));
                                         checkUserReview(updatedProperty);
                                     }
-                                    setTimeout(() => {
-                                        setShowRatingModal(false);
-                                        setReviewSubmitSuccess(false);
-                                    }, 1500);
+                                    setShowRatingModal(false);
                                 } else {
                                     alert('Failed to submit review: ' + (data.message || 'Unknown error'));
                                 }
@@ -3756,12 +3904,6 @@ function PropertyDetailsContent() {
                                     ))}
                                 </div>
                             </div>
-
-                            {reviewSubmitSuccess && (
-                                <div className="bg-green-100 border border-green-400 text-green-700 px-3 py-2 rounded-lg text-center text-sm animate-in fade-in slide-in-from-top-1">
-                                    {isEditingReview ? 'Review updated successfully!' : 'Review submitted successfully!'}
-                                </div>
-                            )}
 
                             <div className="space-y-2">
                                 <label className={`text-sm leading-none flex items-center gap-2 font-semibold ${isDark ? 'text-white' : ''}`}>
@@ -4878,12 +5020,7 @@ function PropertyDetailsContent() {
                                 <div className="w-24 h-0.5 bg-yellow-400 mx-auto"></div>
                             </div>
 
-                            {/* Success Message */}
-                            {reviewSubmitSuccess && (
-                                <div className="mb-3 bg-green-100 border border-green-400 text-green-700 px-3 py-2 rounded-lg text-center text-sm">
-                                    {isEditingReview ? 'Review updated successfully!' : 'Review submitted successfully!'}
-                                </div>
-                            )}
+
 
                             {/* User Name Input */}
                             <div className="mb-4">
@@ -4939,7 +5076,6 @@ function PropertyDetailsContent() {
                                         setSelectedRating(0);
                                         setReviewText('');
                                         setUserName('');
-                                        setReviewSubmitSuccess(false);
                                     }}
                                     className="flex-1 bg-transparent border-2 border-[#f8c02f] text-gray-800 py-2 rounded-lg font-medium text-sm hover:bg-[#f8c02f]/10 transition-colors cursor-pointer"
                                     disabled={isSubmittingReview}
@@ -4962,7 +5098,6 @@ function PropertyDetailsContent() {
                                         }
 
                                         setIsSubmittingReview(true);
-                                        setReviewSubmitSuccess(false);
 
                                         try {
                                             const propertyId = property._id || property.id;
@@ -5036,8 +5171,6 @@ function PropertyDetailsContent() {
                                             const data = await response.json();
 
                                             if (data.success) {
-                                                setReviewSubmitSuccess(true);
-
                                                 // Refresh property data to get updated reviews
                                                 const updatedProperty = await refreshPropertyData();
 
@@ -5059,15 +5192,12 @@ function PropertyDetailsContent() {
                                                     }, 100);
                                                 }
 
-                                                // Close modal after showing success
-                                                setTimeout(() => {
-                                                    setShowRatingModal(false);
-                                                    setIsEditingReview(false);
-                                                    setSelectedRating(0);
-                                                    setReviewText('');
-                                                    setUserName('');
-                                                    setReviewSubmitSuccess(false);
-                                                }, 1500);
+                                                // Close modal and reset state immediately on success
+                                                setShowRatingModal(false);
+                                                setIsEditingReview(false);
+                                                setSelectedRating(0);
+                                                setReviewText('');
+                                                setUserName('');
                                             } else {
                                                 alert(data.message || 'Failed to submit review. Please try again.');
                                             }
