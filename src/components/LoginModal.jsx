@@ -295,8 +295,9 @@ export default function LoginModal({ onClose, onProceed }) {
                 country={"in"}
                 value={phoneNumber}
                 onChange={(phone) => setPhoneNumber(phone)}
-                inputClass="!w-full !h-12 !text-base !px-12 !border-gray-300 focus:!border-black focus:!ring-0"
+                inputClass="!w-full !h-12 !text-base !px-12 !border-gray-300 focus:!border-black focus:!ring-0 !text-black"
                 containerClass="!w-full !mb-4"
+                inputStyle={{ color: '#000000' }}
               />
               <p className="text-sm text-gray-500 text-center mb-6">
                 We'll send you a 6-digit code to verify your number.
@@ -346,10 +347,11 @@ export default function LoginModal({ onClose, onProceed }) {
                     value={val}
                     onChange={(e) => handleOTPChange(i, e.target.value)}
                     onKeyDown={handleOtpKeyDown}
-                    className={`w-12 h-12 text-center text-xl border-2 rounded-lg outline-none transition-colors ${otpError
+                    className={`w-12 h-12 text-center text-xl border-2 rounded-lg outline-none transition-colors text-black ${otpError
                         ? "border-red-500"
                         : "border-gray-300 focus:border-black"
                       }`}
+                    style={{ color: '#000000' }}
                     maxLength="1"
                   />
                 ))}

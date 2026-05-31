@@ -305,6 +305,32 @@ const AnimatedText = ({ children, className = "", delay = 0, lineColor = "#f8c02
 
 function PropertyDetailsContent() {
     const { isDark } = useTheme();
+    const renderGridField = (icon, label, value, tooltip = true, colSpan = 1) => {
+        const isValEmpty = !value || value === "-" || String(value).trim() === "" || value === "null" || value === "undefined";
+        if (isValEmpty) {
+            return (
+                <div className={`flex min-w-0 items-center justify-start text-sm font-bold ${isDark ? 'text-gray-500' : 'text-muted-foreground'} ${colSpan > 1 ? 'md:col-span-2' : ''}`} style={{ minHeight: '44px' }}>
+                    -
+                </div>
+            );
+        }
+        return (
+            <div className={`flex min-w-0 items-start gap-3 ${colSpan > 1 ? 'md:col-span-2' : ''}`}>
+                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
+                    {icon}
+                </div>
+                <div className="min-w-0 pt-0.5">
+                    <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>
+                        {label}
+                        {tooltip && <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden />}
+                    </p>
+                    <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
+                        {value}
+                    </p>
+                </div>
+            </div>
+        );
+    };
     const [activeTab, setActiveTab] = useState('amenities');
     const [selectedCapacity, setSelectedCapacity] = useState('6-15 Seats');
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -1962,56 +1988,26 @@ function PropertyDetailsContent() {
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-6 p-5 md:grid-cols-3 md:px-6 md:py-5">
-                                    <div className="flex min-w-0 items-start gap-3">
-                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
-                                            <img src="/property-details/other-details/property.png" alt="Property Type" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
-                                        </div>
-                                        <div className="min-w-0 pt-0.5">
-                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>
-                                                Property Type
-                                                <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden />
-                                            </p>
-                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                                                {safeDisplay(
-                                                    property.displayPropertyType ||
-                                                    property.propertySubtype ||
-                                                    property.propertyTypeDisplay ||
-                                                    (String(property.propertyType || "").toLowerCase() === "commercial"
-                                                        ? ""
-                                                        : property.propertyType),
-                                                    "Tech Park"
-                                                )}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex min-w-0 items-start gap-3">
-                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
-                                            <img src="/property-details/other-details/furnshing.png" alt="Furnishing" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
-                                        </div>
-                                        <div className="min-w-0 pt-0.5">
-                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>
-                                                Furnishing level
-                                                <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden />
-                                            </p>
-                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                                                {safeDisplay(property.furnishingLevel || property.furnishingStatus || property.furnishing)}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex min-w-0 items-start gap-3">
-                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
-                                            <img src="/property-details/other-details/building.png" alt="Building Lease" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
-                                        </div>
-                                        <div className="min-w-0 pt-0.5">
-                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>
-                                                Building Lease
-                                                <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden />
-                                            </p>
-                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                                                {safeDisplay(property.buildingLease)}
-                                            </p>
-                                        </div>
-                                    </div>
+                                    {renderGridField(
+                                        <img src="/property-details/other-details/property.png" alt="Property Type" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />,
+                                        "Property Type",
+                                        property.displayPropertyType ||
+                                        property.propertySubtype ||
+                                        property.propertyTypeDisplay ||
+                                        (String(property.propertyType || "").toLowerCase() === "commercial"
+                                            ? ""
+                                            : property.propertyType) || "Tech Park"
+                                    )}
+                                    {renderGridField(
+                                        <img src="/property-details/other-details/furnshing.png" alt="Furnishing" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />,
+                                        "Furnishing level",
+                                        property.furnishingLevel || property.furnishingStatus || property.furnishing
+                                    )}
+                                    {renderGridField(
+                                        <img src="/property-details/other-details/building.png" alt="Building Lease" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />,
+                                        "Building Lease",
+                                        property.buildingLease
+                                    )}
                                 </div>
 
                                 <div className="px-5 md:px-6">
@@ -2019,168 +2015,84 @@ function PropertyDetailsContent() {
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-6 p-5 md:grid-cols-3 md:px-6 md:py-5">
-                                    <div className="flex min-w-0 items-start gap-3">
-                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
-                                            <img src="/property-details/other-details/property.png" alt="Min Inventory" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
-                                        </div>
-                                        <div className="min-w-0 pt-0.5">
-                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>
-                                                Min. inventory unit
-                                                <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden />
-                                            </p>
-                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                                                {safeDisplay(property.minInventoryUnit)}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex min-w-0 items-start gap-3">
-                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
-                                            <img src="/property-details/other-details/property.png" alt="Max Inventory" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
-                                        </div>
-                                        <div className="min-w-0 pt-0.5">
-                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>
-                                                Max. inventory unit
-                                                <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden />
-                                            </p>
-                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                                                {safeDisplay(property.maxInventoryUnit)}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex min-w-0 items-start gap-3">
-                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
-                                            <img src="/property-details/other-details/property.png" alt="Capacity" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
-                                        </div>
-                                        <div className="min-w-0 pt-0.5">
-                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>
-                                                Single floor Capacity
-                                                <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden />
-                                            </p>
-                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                                                {safeDisplay(property.singleFloorCapacity)}
-                                            </p>
-                                        </div>
-                                    </div>
+                                    {renderGridField(
+                                        <img src="/property-details/other-details/property.png" alt="Min Inventory" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />,
+                                        "Min. inventory unit",
+                                        property.minInventoryUnit
+                                    )}
+                                    {renderGridField(
+                                        <img src="/property-details/other-details/property.png" alt="Max Inventory" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />,
+                                        "Max. inventory unit",
+                                        property.maxInventoryUnit
+                                    )}
+                                    {renderGridField(
+                                        <img src="/property-details/other-details/property.png" alt="Capacity" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />,
+                                        "Single floor Capacity",
+                                        property.singleFloorCapacity
+                                    )}
                                 </div>
 
-                                {/* Row 3 — Admin Sub-Row 1: Total Price, Discount %, Price/Seat */}
+                                {/* Row 3 — Price Per Seat, Price Per Sq.ft, Under Management */}
                                 <div className="px-5 md:px-6">
                                     <div className="h-px w-full bg-gray-200 dark:bg-border" />
                                 </div>
                                 <div className="grid grid-cols-1 gap-6 p-5 md:grid-cols-3 md:px-6 md:py-5">
-                                    <div className="flex min-w-0 items-start gap-3">
-                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                                        </div>
-                                        <div className="min-w-0 pt-0.5">
-                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>Total Price <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden /></p>
-                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                                                {property.totalPrice ? `₹${Number(property.totalPrice).toLocaleString('en-IN')}` : "-"}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex min-w-0 items-start gap-3">
-                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M9 15 15 9"/><circle cx="9" cy="9" r="1"/><circle cx="15" cy="15" r="1"/><circle cx="12" cy="12" r="10"/></svg>
-                                        </div>
-                                        <div className="min-w-0 pt-0.5">
-                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>Discount <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden /></p>
-                                            <p className={`mt-1 break-words text-sm font-bold ${property.discountPercent ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-white' : 'text-foreground')}`}>
-                                                {property.discountPercent ? `${property.discountPercent}% off` : "-"}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex min-w-0 items-start gap-3">
-                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M20 7H4a2 2 0 0 0-2 2v6c0 1.1.9 2 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M12 12v.01"/></svg>
-                                        </div>
-                                        <div className="min-w-0 pt-0.5">
-                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>Price Per Seat <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden /></p>
-                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                                                {property.pricePerSeat ? `₹${property.pricePerSeat}/seat` : "-"}
-                                            </p>
-                                        </div>
-                                    </div>
+                                    {renderGridField(
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M20 7H4a2 2 0 0 0-2 2v6c0 1.1.9 2 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M12 12v.01"/></svg>,
+                                        "Price Per Seat",
+                                        property.pricePerSeat ? `₹${property.pricePerSeat}/seat` : ""
+                                    )}
+                                    {renderGridField(
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+                                        "Price Per Sq.ft",
+                                        property.pricePerSqft ? `₹${property.pricePerSqft}/sqft` : ""
+                                    )}
+                                    {renderGridField(
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>,
+                                        "Under Management",
+                                        property.underManagement || property.isManagement
+                                    )}
                                 </div>
 
-                                {/* Row 3 — Admin Sub-Row 2: Price Per Sq.ft, Under Management, Available Floors */}
+                                {/* Row 4 — Available Floors, Total Seats, Price Negotiable */}
                                 <div className="px-5 md:px-6">
                                     <div className="h-px w-full bg-gray-200 dark:bg-border" />
                                 </div>
                                 <div className="grid grid-cols-1 gap-6 p-5 md:grid-cols-3 md:px-6 md:py-5">
-                                    <div className="flex min-w-0 items-start gap-3">
-                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                                        </div>
-                                        <div className="min-w-0 pt-0.5">
-                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>Price Per Sq.ft <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden /></p>
-                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                                                {property.pricePerSqft ? `₹${property.pricePerSqft}/sqft` : "-"}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex min-w-0 items-start gap-3">
-                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
-                                        </div>
-                                        <div className="min-w-0 pt-0.5">
-                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>Under Management <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden /></p>
-                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                                                {safeDisplay(property.underManagement || property.isManagement, "-")}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex min-w-0 items-start gap-3">
-                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M8 18H3v-5"/><path d="m3 18 7-7"/><path d="M16 6h5v5"/><path d="m21 6-7 7"/></svg>
-                                        </div>
-                                        <div className="min-w-0 pt-0.5">
-                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>Available Floors <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden /></p>
-                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                                                {safeDisplay(property.availableFloors, "-")}
-                                            </p>
-                                        </div>
-                                    </div>
+                                    {renderGridField(
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M8 18H3v-5"/><path d="m3 18 7-7"/><path d="M16 6h5v5"/><path d="m21 6-7 7"/></svg>,
+                                        "Available Floors",
+                                        property.availableFloors
+                                    )}
+                                    {renderGridField(
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+                                        "Total Seats",
+                                        property.numberOfSeats ? `${property.numberOfSeats} Seats` : ""
+                                    )}
+                                    {renderGridField(
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>,
+                                        "Price Negotiable",
+                                        property.isNegotiablePrice !== undefined ? (property.isNegotiablePrice ? "Yes" : "No") : ""
+                                    )}
                                 </div>
 
-                                {/* Row 3 — Admin Sub-Row 3: Total Seats, Price Negotiable, Listing Type */}
+                                {/* Row 5 — Listing Type, Techpark Under Management */}
                                 <div className="px-5 md:px-6">
                                     <div className="h-px w-full bg-gray-200 dark:bg-border" />
                                 </div>
                                 <div className="grid grid-cols-1 gap-6 p-5 md:grid-cols-3 md:px-6 md:py-5">
-                                    <div className="flex min-w-0 items-start gap-3">
-                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                                        </div>
-                                        <div className="min-w-0 pt-0.5">
-                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>Total Seats <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden /></p>
-                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                                                {property.numberOfSeats ? `${property.numberOfSeats} Seats` : "-"}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex min-w-0 items-start gap-3">
-                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
-                                        </div>
-                                        <div className="min-w-0 pt-0.5">
-                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>Price Negotiable <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden /></p>
-                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
-                                                {property.isNegotiablePrice !== undefined ? (property.isNegotiablePrice ? "Yes" : "No") : "-"}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex min-w-0 items-start gap-3">
-                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                                        </div>
-                                        <div className="min-w-0 pt-0.5">
-                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>Listing Type <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden /></p>
-                                            <p className={`mt-1 break-words text-sm font-bold capitalize ${isDark ? 'text-white' : 'text-foreground'}`}>
-                                                {property.listingType ? safeDisplay(property.listingType.replace("-", " ")) : "-"}
-                                            </p>
-                                        </div>
-                                    </div>
+                                    {renderGridField(
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
+                                        "Listing Type",
+                                        property.listingType ? property.listingType.replace("-", " ") : ""
+                                    )}
+                                    {renderGridField(
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>,
+                                        "The Whole Techpark is Under Your Management For Office Space Provision?",
+                                        property.isUnderManagement !== undefined ? (property.isUnderManagement ? "Yes" : "No") : (property.underManagement ? (String(property.underManagement).toLowerCase().includes("managed") || String(property.underManagement).toLowerCase().includes("yes") || property.underManagement === true ? "Yes" : "No") : ""),
+                                        true,
+                                        2
+                                    )}
                                 </div>
                             </div>
 
@@ -3712,8 +3624,33 @@ function PropertyDetailsContent() {
 
             {/* Explore Top Coworking Locations */}
             {(() => {
-                const currentCity = (property.address?.city || property.city || '').toLowerCase();
                 const currentCategory = (property.propertyCategory || property.propertyType || '').toLowerCase();
+
+                const getSpaceTypes = (p) => {
+                    if (!p) return [];
+                    let types = [];
+                    if (p.listingType) {
+                        if (Array.isArray(p.listingType)) types.push(...p.listingType);
+                        else if (typeof p.listingType === 'string') types.push(...p.listingType.split(/[\s,/;]+/));
+                    }
+                    if (p.listingTypes) {
+                        if (Array.isArray(p.listingTypes)) types.push(...p.listingTypes);
+                        else if (typeof p.listingTypes === 'string') types.push(...p.listingTypes.split(/[\s,/;]+/));
+                    }
+                    if (p.spaceType) {
+                        if (Array.isArray(p.spaceType)) types.push(...p.spaceType);
+                        else if (typeof p.spaceType === 'string') types.push(...p.spaceType.split(/[\s,/;]+/));
+                    }
+                    if (p.spaceTypes) {
+                        if (Array.isArray(p.spaceTypes)) types.push(...p.spaceTypes);
+                        else if (typeof p.spaceTypes === 'string') types.push(...p.spaceTypes.split(/[\s,/;]+/));
+                    }
+                    return types
+                        .map(t => String(t).trim().toLowerCase())
+                        .filter(t => t && t !== 'null' && t !== 'undefined' && t !== 'commercial' && t !== 'residential');
+                };
+
+                const currentTypes = getSpaceTypes(property);
 
                 let exploreProps = allProperties.filter((p) => {
                     if (!p) return false;
@@ -3725,20 +3662,24 @@ function PropertyDetailsContent() {
                     const pCategory = (p.propertyCategory || p.propertyType || '').toLowerCase();
                     if (pCategory !== currentCategory) return false;
 
-                    const pCity = (p.address?.city || p.city || '').toLowerCase();
-                    return pCity === currentCity;
+                    // Match any of the space types/listing types
+                    if (currentTypes.length > 0) {
+                        const pTypes = getSpaceTypes(p);
+                        return pTypes.some(t => currentTypes.includes(t));
+                    }
+                    return true;
                 });
 
-                // HIDE the entire section if no other properties exist in the same city!
+                // HIDE the entire section if no other properties exist in the same category!
                 if (exploreProps.length === 0) return null;
 
-                // Consolidate properties by unique locality to prevent duplicate cards for the same area
-                const uniqueLocalities = [];
+                // Consolidate properties by unique locality or name to prevent duplicate cards
+                const uniqueIdentifiers = [];
                 const explorePropsUnique = [];
                 for (const p of exploreProps) {
-                    const loc = (p.address?.locality || p.locality || '').trim().toLowerCase();
-                    if (loc && !uniqueLocalities.includes(loc)) {
-                        uniqueLocalities.push(loc);
+                    const loc = (p.address?.locality || p.locality || p.propertyName || p.name || '').trim().toLowerCase();
+                    if (loc && !uniqueIdentifiers.includes(loc)) {
+                        uniqueIdentifiers.push(loc);
                         explorePropsUnique.push(p);
                     }
                 }
@@ -3756,13 +3697,25 @@ function PropertyDetailsContent() {
                       ];
 
                 const categoryLabel = currentCategory === 'residential' ? 'Residential' : 'Commercial';
-                const cityLabel = property.address?.city || property.city || 'Bangalore';
+
+                const getCategoryHeading = () => {
+                    if (currentTypes.length > 0) {
+                        const formatted = currentTypes.map(t => {
+                            if (t === 'managed-space' || t === 'managed') return 'Managed Spaces';
+                            if (t === 'coworking' || t === 'coworking-space') return 'Coworking Spaces';
+                            return t.charAt(0).toUpperCase() + t.slice(1);
+                        });
+                        const uniqueFormatted = [...new Set(formatted)];
+                        return `Explore Top ${uniqueFormatted.join(' & ')}`;
+                    }
+                    return `Explore Top ${categoryLabel} Locations`;
+                };
 
                 return (
                     <div className="w-full px-4 md:px-10 mt-16 mb-20">
                         <section className={`py-12 px-6 md:py-16 md:px-10 rounded-2xl md:rounded-[24px] relative shadow-sm border transition-colors ${isDark ? 'bg-[#121418] border-gray-800' : 'bg-[#fdf8e7] border-[#f0e4c3]/10'}`}>
                             <h2 className={`text-[1.2rem] md:text-xl font-bold mb-6 tracking-tight ${isDark ? 'text-white' : 'text-black'}`}>
-                                Explore Top Coworking Locations in {cityLabel}
+                                {getCategoryHeading()}
                             </h2>
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-5">
                                 {displayItems.map((item, i) => {
@@ -4920,7 +4873,7 @@ function PropertyDetailsContent() {
                                         </div>
                                     )}
                                     {((typeof property.facilities === 'string' && property.facilities.trim()) || (Array.isArray(property.facilities) && property.facilities.length > 0)) && (
-                                        <div className="bg-gray-50 p-4 rounded-lg scroll-animate col-span-3" data-animation="animate-fade-up">
+                                        <div className="bg-gray-50 p-4 rounded-lg scroll-animate col-span-3 md:block hidden" data-animation="animate-fade-up">
                                             <span className="text-sm font-medium text-gray-500 block mb-1">Facilities</span>
                                             <span className="text-base font-semibold text-gray-800">{typeof property.facilities === 'string' ? property.facilities.trim() : property.facilities.map(f => f?.name || f).filter(Boolean).join(', ')}</span>
                                         </div>
@@ -4929,6 +4882,167 @@ function PropertyDetailsContent() {
                                         <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
                                             <span className="text-sm font-medium text-gray-500 block mb-1">Builder Name</span>
                                             <span className="text-base font-semibold text-gray-800">{safeDisplay(property.builderName || property.brandDetails?.name || property.builder)}</span>
+                                        </div>
+                                    )}
+                                    
+                                    {/* Mobile-only fields below 768px (formatted dynamically) */}
+                                    {(() => {
+                                        const renderMobileOnlyField = (label, value, isCapitalize = false, colSpan = 1) => {
+                                            const isValEmpty = !value || value === "-" || String(value).trim() === "" || value === "null" || value === "undefined";
+                                            if (isValEmpty) {
+                                                return (
+                                                    <div className={`flex items-center justify-center text-sm font-bold text-gray-500 md:hidden ${colSpan > 1 ? 'col-span-3' : ''}`} style={{ minHeight: '80px' }}>
+                                                        -
+                                                    </div>
+                                                );
+                                            }
+                                            return (
+                                                <div className={`bg-gray-50 p-4 rounded-lg scroll-animate md:hidden ${colSpan > 1 ? 'col-span-3' : ''}`} data-animation="animate-fade-up">
+                                                    <span className="text-sm font-medium text-gray-500 block mb-1">{label}</span>
+                                                    <span className={`text-base font-semibold text-gray-800 ${isCapitalize ? 'capitalize' : ''}`}>{value}</span>
+                                                </div>
+                                            );
+                                        };
+
+                                        return (
+                                            <>
+                                                {renderMobileOnlyField(
+                                                    "Furnishing level",
+                                                    property.furnishingLevel || property.furnishingStatus || property.furnishing
+                                                )}
+                                                {renderMobileOnlyField(
+                                                    "Building Lease",
+                                                    property.buildingLease
+                                                )}
+                                                {renderMobileOnlyField(
+                                                    "Min. inventory unit",
+                                                    property.minInventoryUnit
+                                                )}
+                                                {renderMobileOnlyField(
+                                                    "Max. inventory unit",
+                                                    property.maxInventoryUnit
+                                                )}
+                                                {renderMobileOnlyField(
+                                                    "Single floor Capacity",
+                                                    property.singleFloorCapacity
+                                                )}
+                                                {renderMobileOnlyField(
+                                                    "Price Per Seat",
+                                                    property.pricePerSeat ? `₹${property.pricePerSeat}/seat` : ""
+                                                )}
+                                                {renderMobileOnlyField(
+                                                    "Price Per Sq.ft",
+                                                    property.pricePerSqft ? `₹${property.pricePerSqft}/sqft` : ""
+                                                )}
+                                                {renderMobileOnlyField(
+                                                    "Under Management",
+                                                    property.underManagement || property.isManagement
+                                                )}
+                                                {renderMobileOnlyField(
+                                                    "Total Seats",
+                                                    property.numberOfSeats ? `${property.numberOfSeats} Seats` : ""
+                                                )}
+                                                {renderMobileOnlyField(
+                                                    "Price Negotiable",
+                                                    property.isNegotiablePrice !== undefined ? (property.isNegotiablePrice ? "Yes" : "No") : ""
+                                                )}
+                                                {renderMobileOnlyField(
+                                                    "Listing Type",
+                                                    property.listingType ? property.listingType.replace("-", " ") : "",
+                                                    true
+                                                )}
+                                                {renderMobileOnlyField(
+                                                    "The Whole Techpark is Under Your Management For Office Space Provision?",
+                                                    property.isUnderManagement !== undefined ? (property.isUnderManagement ? "Yes" : "No") : (property.underManagement ? (String(property.underManagement).toLowerCase().includes("managed") || String(property.underManagement).toLowerCase().includes("yes") || property.underManagement === true ? "Yes" : "No") : ""),
+                                                    false,
+                                                    3
+                                                )}
+                                            </>
+                                        );
+                                    })()}
+
+                                    {/* Rich Base Building Facilities section on Mobile only */}
+                                    {property.facilities && Array.isArray(property.facilities) && property.facilities.length > 0 && (
+                                        <div className="md:hidden col-span-3 mt-6">
+                                            <h4 className="text-base font-bold mb-3 text-gray-800">Base Building Facilities</h4>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                {property.facilities.map((facility, i) => {
+                                                    const facilityName = typeof facility === 'object' ? (facility?.name || facility?.label || String(facility)) : String(facility);
+                                                    const key = facilityName.toUpperCase().trim();
+                                                    
+                                                    const FACILITY_ICON_MAP = {
+                                                        "POWER SUPPLY 24 7": { icon: "zap", label: "Power Supply 24/7" },
+                                                        "POWER SUPPLY 24/7": { icon: "zap", label: "Power Supply 24/7" },
+                                                        "ELECTRICITY": { icon: "zap", label: "Electricity" },
+                                                        "HVAC": { icon: "wind", label: "HVAC" },
+                                                        "DG BACKUP": { icon: "battery-charging", label: "DG Backup" },
+                                                        "EV CHARGING SPACE": { icon: "plug-zap", label: "EV Charging Space" },
+                                                        "VISITORS PARKING": { icon: "parking-circle", label: "Visitors Parking" },
+                                                        "4W PARKING": { icon: "car", label: "4W Parking" },
+                                                        "2W PARKING": { icon: "bike", label: "2W Parking" },
+                                                        "SMOKE DETECTOR": { icon: "cloud-fog", label: "Smoke Detector" },
+                                                        "FIRE ALARM": { icon: "bell-ring", label: "Fire Alarm" },
+                                                        "FIRE NOC": { icon: "flame-kindling", label: "Fire NOC" },
+                                                        "FIRE EXTINGUISHER": { icon: "fire-extinguisher", label: "Fire Extinguisher" },
+                                                        "BUILDING SECURITY": { icon: "shield-check", label: "Building Security" },
+                                                        "FIRST AIDKIT": { icon: "kit", label: "First Aid Kit" },
+                                                        "FIRST AID KIT": { icon: "kit", label: "First Aid Kit" },
+                                                        "ELEVATORS": { icon: "move-vertical", label: "Elevators" },
+                                                        "SEWAGE SYSTEMS": { icon: "waves", label: "Sewage Systems" },
+                                                        "WATER": { icon: "droplets", label: "Water" },
+                                                        "PROPERTY INSURANCE": { icon: "shield", label: "Property Insurance" },
+                                                        "BUILDING APPROVAL & PERMITS": { icon: "file-check", label: "Building Approval & Permits" },
+                                                        "ACCESSIBLE TO PERSONS WITH DISABILITIES": { icon: "accessibility", label: "Accessible To Persons with Disabilities" },
+                                                        "OC": { icon: "file-badge", label: "OC" },
+                                                        "SEZ": { icon: "landmark", label: "SEZ" },
+                                                    };
+                                                    
+                                                    const { icon: iconName, label } = FACILITY_ICON_MAP[key] || { icon: "building-2", label: facilityName };
+                                                    
+                                                    const cls = "h-6 w-6 text-gray-600";
+                                                    const renderIcon = (name) => {
+                                                        switch (name) {
+                                                            case "zap": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>;
+                                                            case "wind": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg>;
+                                                            case "battery-charging": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M15 7h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2"/><path d="M6 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h1"/><path d="m11 7-3 5h4l-3 5"/><line x1="22" x2="22" y1="11" y2="13"/></svg>;
+                                                            case "plug-zap": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M6.3 20.3a2.4 2.4 0 0 0 3.4 0L12 18l-6-6-2.3 2.3a2.4 2.4 0 0 0 0 3.4Z"/><path d="m2 22 3-3"/><path d="M7.5 13.5 10 11"/><path d="M10.5 16.5 13 14"/><path d="m18 3-4 4h6l-4 4"/></svg>;
+                                                            case "parking-circle": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><circle cx="12" cy="12" r="10"/><path d="M9 17V7h4a3 3 0 0 1 0 6H9"/></svg>;
+                                                            case "car": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M19 17H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h3.5l2-3h3l2 3H19a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2Z"/><circle cx="7.5" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/></svg>;
+                                                            case "bike": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>;
+                                                            case "cloud-fog": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M16 17H7"/><path d="M17 21H9"/></svg>;
+                                                            case "bell-ring": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="M4 2C2.8 3.7 2 5.7 2 8"/><path d="M20 2c1.2 1.7 2 3.7 2 6"/></svg>;
+                                                            case "flame-kindling": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M12 2c0 0-4 4-4 8a4 4 0 0 0 8 0c0-4-4-8-4-8Z"/><path d="M9.5 14.5S8 16 8 17.5c0 2.5 2 3.5 4 3.5s4-1 4-3.5c0-1.5-1.5-3-1.5-3"/><path d="M4 21c0 0 2-1 4-1s4 2 8 2 4-1 4-1"/></svg>;
+                                                            case "fire-extinguisher": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M15 6.5V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v3.5"/><path d="M9 18V8h8v10a2 2 0 0 1-2 2H11a2 2 0 0 1-2-2Z"/><path d="M6 5.5C6 4.1 7.1 3 8.5 3S11 4.1 11 5.5"/><line x1="18" x2="22" y1="8" y2="8"/><path d="M19 6v4"/></svg>;
+                                                            case "shield-check": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>;
+                                                            case "kit": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M10 10h4"/><path d="M12 8v4"/><path d="M18 6H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2Z"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>;
+                                                            case "move-vertical": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M8 18H3v-5"/><path d="m3 18 7-7"/><path d="M16 6h5v5"/><path d="m21 6-7 7"/></svg>;
+                                                            case "waves": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></svg>;
+                                                            case "droplets": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"/><path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97"/></svg>;
+                                                            case "shield": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
+                                                            case "file-check": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="m9 15 2 2 4-4"/></svg>;
+                                                            case "accessibility": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><circle cx="16" cy="4" r="1"/><path d="m18 19 1-7-6 1"/><path d="m5 8 3-3 5.5 3-2.36 3.5"/><path d="M4.24 14.5a5 5 0 0 0 6.88 6"/><path d="M13.76 17.5a5 5 0 0 0-6.88-6"/></svg>;
+                                                            case "file-badge": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><circle cx="12" cy="14" r="3"/><path d="m15 17-.88 2.12a.5.5 0 0 1-.92 0L12 17l-1.2 2.12a.5.5 0 0 1-.92 0L9 17"/></svg>;
+                                                            case "landmark": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>;
+                                                            default: return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>;
+                                                        }
+                                                    };
+                                                    
+                                                    return (
+                                                        <div
+                                                            key={`m-facility-${i}`}
+                                                            className="flex flex-col items-center justify-start text-center gap-2.5 p-3 rounded-xl border border-gray-200 bg-white"
+                                                            style={{ minHeight: '90px' }}
+                                                        >
+                                                            <div className="flex items-center justify-center h-11 w-11 rounded-full mt-1 bg-gray-50">
+                                                                {renderIcon(iconName)}
+                                                            </div>
+                                                            <p className="text-[10px] font-semibold leading-tight uppercase tracking-wide text-gray-700" style={{ wordBreak: 'break-word' }}>
+                                                                {label}
+                                                            </p>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
                                     )}
                                 </div>
