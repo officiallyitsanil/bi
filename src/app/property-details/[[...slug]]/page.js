@@ -378,6 +378,7 @@ function PropertyDetailsContent() {
     const [travelError, setTravelError] = useState("");
     const [visibleCount, setVisibleCount] = useState(9);
     const [showMobileActions, setShowMobileActions] = useState(false);
+    const [selectedFloorConfigIdx, setSelectedFloorConfigIdx] = useState(0);
     const thumbStripRef = useRef(null);
 
     const handleSliderNavClick = (e, isPrev) => {
@@ -2014,7 +2015,7 @@ function PropertyDetailsContent() {
                                 </div>
 
                                 <div className="px-5 md:px-6">
-                                    <div className={`h-px w-full ${isDark ? 'bg-gray-800' : 'bg-gray-200'}`} />
+                                    <div className="h-px w-full bg-gray-200 dark:bg-border" />
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-6 p-5 md:grid-cols-3 md:px-6 md:py-5">
@@ -2061,9 +2062,131 @@ function PropertyDetailsContent() {
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Row 3 — Admin Sub-Row 1: Total Price, Discount %, Price/Seat */}
+                                <div className="px-5 md:px-6">
+                                    <div className="h-px w-full bg-gray-200 dark:bg-border" />
+                                </div>
+                                <div className="grid grid-cols-1 gap-6 p-5 md:grid-cols-3 md:px-6 md:py-5">
+                                    <div className="flex min-w-0 items-start gap-3">
+                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                        </div>
+                                        <div className="min-w-0 pt-0.5">
+                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>Total Price <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden /></p>
+                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
+                                                {property.totalPrice ? `₹${Number(property.totalPrice).toLocaleString('en-IN')}` : "-"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex min-w-0 items-start gap-3">
+                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M9 15 15 9"/><circle cx="9" cy="9" r="1"/><circle cx="15" cy="15" r="1"/><circle cx="12" cy="12" r="10"/></svg>
+                                        </div>
+                                        <div className="min-w-0 pt-0.5">
+                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>Discount <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden /></p>
+                                            <p className={`mt-1 break-words text-sm font-bold ${property.discountPercent ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-white' : 'text-foreground')}`}>
+                                                {property.discountPercent ? `${property.discountPercent}% off` : "-"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex min-w-0 items-start gap-3">
+                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M20 7H4a2 2 0 0 0-2 2v6c0 1.1.9 2 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M12 12v.01"/></svg>
+                                        </div>
+                                        <div className="min-w-0 pt-0.5">
+                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>Price Per Seat <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden /></p>
+                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
+                                                {property.pricePerSeat ? `₹${property.pricePerSeat}/seat` : "-"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Row 3 — Admin Sub-Row 2: Price Per Sq.ft, Under Management, Available Floors */}
+                                <div className="px-5 md:px-6">
+                                    <div className="h-px w-full bg-gray-200 dark:bg-border" />
+                                </div>
+                                <div className="grid grid-cols-1 gap-6 p-5 md:grid-cols-3 md:px-6 md:py-5">
+                                    <div className="flex min-w-0 items-start gap-3">
+                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                                        </div>
+                                        <div className="min-w-0 pt-0.5">
+                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>Price Per Sq.ft <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden /></p>
+                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
+                                                {property.pricePerSqft ? `₹${property.pricePerSqft}/sqft` : "-"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex min-w-0 items-start gap-3">
+                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+                                        </div>
+                                        <div className="min-w-0 pt-0.5">
+                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>Under Management <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden /></p>
+                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
+                                                {safeDisplay(property.underManagement || property.isManagement, "-")}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex min-w-0 items-start gap-3">
+                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M8 18H3v-5"/><path d="m3 18 7-7"/><path d="M16 6h5v5"/><path d="m21 6-7 7"/></svg>
+                                        </div>
+                                        <div className="min-w-0 pt-0.5">
+                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>Available Floors <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden /></p>
+                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
+                                                {safeDisplay(property.availableFloors, "-")}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Row 3 — Admin Sub-Row 3: Total Seats, Price Negotiable, Listing Type */}
+                                <div className="px-5 md:px-6">
+                                    <div className="h-px w-full bg-gray-200 dark:bg-border" />
+                                </div>
+                                <div className="grid grid-cols-1 gap-6 p-5 md:grid-cols-3 md:px-6 md:py-5">
+                                    <div className="flex min-w-0 items-start gap-3">
+                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                        </div>
+                                        <div className="min-w-0 pt-0.5">
+                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>Total Seats <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden /></p>
+                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
+                                                {property.numberOfSeats ? `${property.numberOfSeats} Seats` : "-"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex min-w-0 items-start gap-3">
+                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+                                        </div>
+                                        <div className="min-w-0 pt-0.5">
+                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>Price Negotiable <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden /></p>
+                                            <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
+                                                {property.isNegotiablePrice !== undefined ? (property.isNegotiablePrice ? "Yes" : "No") : "-"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex min-w-0 items-start gap-3">
+                                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                        </div>
+                                        <div className="min-w-0 pt-0.5">
+                                            <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>Listing Type <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden /></p>
+                                            <p className={`mt-1 break-words text-sm font-bold capitalize ${isDark ? 'text-white' : 'text-foreground'}`}>
+                                                {property.listingType ? safeDisplay(property.listingType.replace("-", " ")) : "-"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Custom Infrastructure - DB: customInfrastructure */}
+
+
                             {normalizedInfra.length > 0 && (
                                 <div
                                     className={`rounded-xl px-5 py-6 transition-colors ${isDark ? 'bg-[#282c34]' : 'bg-[#f4f4fb]'}`}
@@ -2130,6 +2253,223 @@ function PropertyDetailsContent() {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Base Building Facilities - DB: facilities */}
+                            {property.facilities && Array.isArray(property.facilities) && property.facilities.length > 0 && (() => {
+                                const FACILITY_ICON_MAP = {
+                                    // Power & Utilities
+                                    "POWER SUPPLY 24 7": { icon: "zap", label: "Power Supply 24/7" },
+                                    "POWER SUPPLY 24/7": { icon: "zap", label: "Power Supply 24/7" },
+                                    "ELECTRICITY": { icon: "zap", label: "Electricity" },
+                                    "HVAC": { icon: "wind", label: "HVAC" },
+                                    "DG BACKUP": { icon: "battery-charging", label: "DG Backup" },
+                                    "EV CHARGING SPACE": { icon: "plug-zap", label: "EV Charging Space" },
+                                    // Parking
+                                    "VISITORS PARKING": { icon: "parking-circle", label: "Visitors Parking" },
+                                    "4W PARKING": { icon: "car", label: "4W Parking" },
+                                    "2W PARKING": { icon: "bike", label: "2W Parking" },
+                                    // Safety & Security
+                                    "SMOKE DETECTOR": { icon: "cloud-fog", label: "Smoke Detector" },
+                                    "FIRE ALARM": { icon: "bell-ring", label: "Fire Alarm" },
+                                    "FIRE NOC": { icon: "flame-kindling", label: "Fire NOC" },
+                                    "FIRE EXTINGUISHER": { icon: "fire-extinguisher", label: "Fire Extinguisher" },
+                                    "BUILDING SECURITY": { icon: "shield-check", label: "Building Security" },
+                                    "FIRST AIDKIT": { icon: "kit", label: "First Aid Kit" },
+                                    "FIRST AID KIT": { icon: "kit", label: "First Aid Kit" },
+                                    // Building Services
+                                    "ELEVATORS": { icon: "move-vertical", label: "Elevators" },
+                                    "SEWAGE SYSTEMS": { icon: "waves", label: "Sewage Systems" },
+                                    "WATER": { icon: "droplets", label: "Water" },
+                                    "PROPERTY INSURANCE": { icon: "shield", label: "Property Insurance" },
+                                    "BUILDING APPROVAL & PERMITS": { icon: "file-check", label: "Building Approval & Permits" },
+                                    "ACCESSIBLE TO PERSONS WITH DISABILITIES": { icon: "accessibility", label: "Accessible To Persons with Disabilities" },
+                                    "OC": { icon: "file-badge", label: "OC" },
+                                    "SEZ": { icon: "landmark", label: "SEZ" },
+                                };
+
+                                const getFacilityIcon = (facilityName) => {
+                                    const key = facilityName.toUpperCase().trim();
+                                    return FACILITY_ICON_MAP[key] || { icon: "building-2", label: facilityName };
+                                };
+
+                                const renderFacilityIcon = (iconName, isDark) => {
+                                    const cls = `h-7 w-7 ${isDark ? 'text-gray-300' : 'text-gray-600'}`;
+                                    switch (iconName) {
+                                        case "zap": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>;
+                                        case "wind": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg>;
+                                        case "battery-charging": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M15 7h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2"/><path d="M6 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h1"/><path d="m11 7-3 5h4l-3 5"/><line x1="22" x2="22" y1="11" y2="13"/></svg>;
+                                        case "plug-zap": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M6.3 20.3a2.4 2.4 0 0 0 3.4 0L12 18l-6-6-2.3 2.3a2.4 2.4 0 0 0 0 3.4Z"/><path d="m2 22 3-3"/><path d="M7.5 13.5 10 11"/><path d="M10.5 16.5 13 14"/><path d="m18 3-4 4h6l-4 4"/></svg>;
+                                        case "parking-circle": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><circle cx="12" cy="12" r="10"/><path d="M9 17V7h4a3 3 0 0 1 0 6H9"/></svg>;
+                                        case "car": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M19 17H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h3.5l2-3h3l2 3H19a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2Z"/><circle cx="7.5" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/></svg>;
+                                        case "bike": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>;
+                                        case "cloud-fog": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M16 17H7"/><path d="M17 21H9"/></svg>;
+                                        case "bell-ring": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="M4 2C2.8 3.7 2 5.7 2 8"/><path d="M20 2c1.2 1.7 2 3.7 2 6"/></svg>;
+                                        case "flame-kindling": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M12 2c0 0-4 4-4 8a4 4 0 0 0 8 0c0-4-4-8-4-8Z"/><path d="M9.5 14.5S8 16 8 17.5c0 2.5 2 3.5 4 3.5s4-1 4-3.5c0-1.5-1.5-3-1.5-3"/><path d="M4 21c0 0 2-1 4-1s4 2 8 2 4-1 4-1"/></svg>;
+                                        case "fire-extinguisher": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M15 6.5V3a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v3.5"/><path d="M9 18V8h8v10a2 2 0 0 1-2 2H11a2 2 0 0 1-2-2Z"/><path d="M6 5.5C6 4.1 7.1 3 8.5 3S11 4.1 11 5.5"/><line x1="18" x2="22" y1="8" y2="8"/><path d="M19 6v4"/></svg>;
+                                        case "shield-check": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>;
+                                        case "kit": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M10 10h4"/><path d="M12 8v4"/><path d="M18 6H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2Z"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>;
+                                        case "move-vertical": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M8 18H3v-5"/><path d="m3 18 7-7"/><path d="M16 6h5v5"/><path d="m21 6-7 7"/></svg>;
+                                        case "waves": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></svg>;
+                                        case "droplets": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"/><path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97"/></svg>;
+                                        case "shield": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
+                                        case "file-check": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="m9 15 2 2 4-4"/></svg>;
+                                        case "accessibility": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><circle cx="16" cy="4" r="1"/><path d="m18 19 1-7-6 1"/><path d="m5 8 3-3 5.5 3-2.36 3.5"/><path d="M4.24 14.5a5 5 0 0 0 6.88 6"/><path d="M13.76 17.5a5 5 0 0 0-6.88-6"/></svg>;
+                                        case "file-badge": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><circle cx="12" cy="14" r="3"/><path d="m15 17-.88 2.12a.5.5 0 0 1-.92 0L12 17l-1.2 2.12a.5.5 0 0 1-.92 0L9 17"/></svg>;
+                                        case "landmark": return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>;
+                                        default: return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={cls}><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>;
+                                    }
+                                };
+
+                                return (
+                                    <div
+                                        className={`rounded-lg border transition-colors ${isDark ? 'border-gray-800 bg-[#1f2229]' : 'border-gray-200 theme-bg-card theme-shadow-sm'}`}
+                                        id="base-building-facilities"
+                                    >
+                                        <div className="flex flex-col space-y-1.5 p-6">
+                                            <h3 className={`text-lg font-bold leading-none tracking-tight ${isDark ? 'text-white' : ''}`}>
+                                                Base Building Facilities
+                                            </h3>
+                                        </div>
+                                        <div data-orientation="horizontal" role="none" className={`shrink-0 h-[1px] w-full ${isDark ? 'bg-gray-800' : 'bg-gray-200'}`} />
+                                        <div className="p-6 pt-6">
+                                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+                                                {property.facilities.map((facility, i) => {
+                                                    const facilityName = typeof facility === 'object' ? (facility?.name || facility?.label || String(facility)) : String(facility);
+                                                    const { icon: iconName, label } = getFacilityIcon(facilityName);
+                                                    return (
+                                                        <div
+                                                            key={`facility-${i}`}
+                                                            className={`flex flex-col items-center justify-start text-center gap-2.5 p-3 rounded-xl border transition-all cursor-default ${isDark
+                                                                ? 'border-gray-700 bg-[#282c34] hover:border-gray-500 hover:bg-[#32363f]'
+                                                                : 'border-gray-200 bg-white hover:border-blue-200 hover:shadow-md'
+                                                            }`}
+                                                            style={{ minHeight: '90px' }}
+                                                        >
+                                                            <div className={`flex items-center justify-center h-11 w-11 rounded-full mt-1 ${isDark ? 'bg-[#1f2229]' : 'bg-gray-50'}`}>
+                                                                {renderFacilityIcon(iconName, isDark)}
+                                                            </div>
+                                                            <p className={`text-[10px] font-semibold leading-tight uppercase tracking-wide ${isDark ? 'text-gray-300' : 'text-gray-700'}`} style={{ wordBreak: 'break-word' }}>
+                                                                {label}
+                                                            </p>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+
+
+
+                            {/* Office Space Solutions - DB: floorConfigurations */}
+                            {property.floorConfigurations && Array.isArray(property.floorConfigurations) && property.floorConfigurations.length > 0 && (() => {
+                                const configs = property.floorConfigurations;
+
+                                // Check if there is actual configured data in at least one floor configuration
+                                const hasFloorData = configs.some(cfg => {
+                                    const dc = cfg.dedicatedCabin;
+                                    const df = cfg.dedicatedFloor;
+                                    const dcHasData = dc && (dc.enabled || dc.seats || dc.pricePerSeat || dc.pricePerSqft || dc.billableUnits || dc.readyToMove || dc.readyForFitOut);
+                                    const dfHasData = df && (df.enabled || df.seats || df.pricePerSeat || df.pricePerSqft || df.billableUnits || df.readyToMove || df.readyForFitOut);
+                                    return dcHasData || dfHasData;
+                                });
+
+                                if (!hasFloorData) return null;
+
+                                const activeIdx = Math.min(selectedFloorConfigIdx, configs.length - 1);
+                                const activeConfig = configs[activeIdx];
+
+                                const InfoRow = ({ label, value }) => {
+                                    if (!value && value !== 0) return null;
+                                    return (
+                                        <div className={`flex items-center justify-between py-2 border-b last:border-b-0 ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
+                                            <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{label}</span>
+                                            <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>{value}</span>
+                                        </div>
+                                    );
+                                };
+
+                                const SolutionCard = ({ title, data }) => {
+                                    if (!data) return null;
+                                    const hasData = data.enabled || data.seats || data.pricePerSeat || data.pricePerSqft || data.billableUnits || data.readyToMove || data.readyForFitOut;
+                                    return (
+                                        <div className={`flex-1 min-w-0 rounded-xl border p-5 transition-colors ${isDark ? 'border-gray-700 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
+                                            <h4 className={`text-base font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>{title}</h4>
+                                            {/* Status pills */}
+                                            <div className="flex gap-2 mb-4">
+                                                <span className={`flex-1 text-center py-2 rounded-lg text-xs font-semibold border transition-colors ${
+                                                    data.readyToMove
+                                                        ? (isDark ? 'bg-blue-900/40 border-blue-600 text-blue-300' : 'bg-blue-50 border-blue-400 text-blue-700')
+                                                        : (isDark ? 'border-gray-700 text-gray-500' : 'border-gray-200 text-gray-400')
+                                                }`}>Ready to Move In</span>
+                                                <span className={`flex-1 text-center py-2 rounded-lg text-xs font-semibold border transition-colors ${
+                                                    data.readyForFitOut
+                                                        ? (isDark ? 'bg-blue-900/40 border-blue-600 text-blue-300' : 'bg-blue-50 border-blue-400 text-blue-700')
+                                                        : (isDark ? 'border-gray-700 text-gray-500' : 'border-gray-200 text-gray-400')
+                                                }`}>Ready for Fit Out</span>
+                                            </div>
+                                            {/* Details */}
+                                            <div className="space-y-0.5">
+                                                <InfoRow label="No. of Seats" value={data.seats} />
+                                                <InfoRow label="Price Per Seat" value={data.pricePerSeat ? `₹${data.pricePerSeat}` : null} />
+                                                <InfoRow label="Price Per Sq.ft" value={data.pricePerSqft ? `₹${data.pricePerSqft}` : null} />
+                                                <InfoRow label="Billable Units" value={data.billableUnits} />
+                                                <InfoRow label="Available From" value={data.availableFrom} />
+                                                <InfoRow label="Timeline" value={data.timeline} />
+                                            </div>
+                                            {!hasData && (
+                                                <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>No details configured</p>
+                                            )}
+                                        </div>
+                                    );
+                                };
+
+                                return (
+                                    <div
+                                        className={`rounded-xl border transition-colors ${isDark ? 'border-gray-800 bg-[#1f2229]' : 'border-gray-200 bg-card'}`}
+                                        id="office-solutions"
+                                    >
+                                        {/* Header */}
+                                        <div className="p-6 pb-4 text-center">
+                                            <h3 className={`text-lg font-bold leading-snug tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                                                What Office Space Solutions Are Offered to Clients?
+                                            </h3>
+                                            <p className={`mt-1.5 text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                View each floor separately by selecting the floor below
+                                            </p>
+                                        </div>
+
+                                        {/* Floor Tabs */}
+                                        <div className="flex justify-center gap-2 px-6 pb-5">
+                                            {configs.map((cfg, i) => (
+                                                <button
+                                                    key={`floor-tab-${i}`}
+                                                    type="button"
+                                                    onClick={() => setSelectedFloorConfigIdx(i)}
+                                                    className={`min-w-[60px] px-5 py-2 rounded-full border text-sm font-semibold transition-all ${
+                                                        activeIdx === i
+                                                            ? (isDark ? 'border-gray-500 bg-[#282c34] text-white shadow-sm' : 'border-gray-400 bg-white text-gray-900 shadow-sm')
+                                                            : (isDark ? 'border-gray-700 bg-transparent text-gray-400 hover:border-gray-500' : 'border-gray-200 bg-transparent text-gray-500 hover:border-gray-300')
+                                                    }`}
+                                                >
+                                                    {cfg.floor || `Floor ${i + 1}`}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        <div className={`h-px w-full ${isDark ? 'bg-gray-800' : 'bg-gray-200'}`} />
+
+                                        {/* Two cards side by side */}
+                                        <div className="p-5 md:p-6">
+                                            <div className="flex flex-col sm:flex-row gap-4">
+                                                <SolutionCard title="Dedicated Cabin" data={activeConfig?.dedicatedCabin} />
+                                                <SolutionCard title="Dedicated Floor" data={activeConfig?.dedicatedFloor} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
 
                             {/* Why choose Buildersinfo — horizontal banner (reference layout) */}
                             <div className={`why-choose-banner rounded-md border px-6 py-6 md:px-10 md:py-4 md:mx-0 -mx-4 transition-colors ${isDark ? 'border-gray-800 bg-[#282c34]' : 'border-gray-200 bg-[#f4f4fb]'}`}>
@@ -4532,12 +4872,35 @@ function PropertyDetailsContent() {
                                             </span>
                                         </div>
                                     )}
-                                    {property.selectedFloors && property.selectedFloors.length > 0 && (
-                                        <div className="bg-gray-50 p-4 rounded-lg scroll-animate col-span-3" data-animation="animate-fade-up">
-                                            <span className="text-sm font-medium text-gray-500 block mb-1">Available Floors</span>
-                                            <span className="text-base font-semibold text-gray-800">{property.selectedFloors.join(', ')}</span>
-                                        </div>
-                                    )}
+                                    {property.selectedFloors && property.selectedFloors.length > 0 && (() => {
+                                        const toOrdinalSpec = (val) => {
+                                            const s = String(val).trim();
+                                            if (/^\d+(?:st|nd|rd|th)$/i.test(s)) return s;
+                                            if (/^\d+$/.test(s)) {
+                                                const n = parseInt(s, 10);
+                                                const mod100 = n % 100;
+                                                const mod10 = n % 10;
+                                                if (mod100 >= 11 && mod100 <= 13) return `${n}th`;
+                                                if (mod10 === 1) return `${n}st`;
+                                                if (mod10 === 2) return `${n}nd`;
+                                                if (mod10 === 3) return `${n}rd`;
+                                                return `${n}th`;
+                                            }
+                                            return s;
+                                        };
+                                        return (
+                                            <div className="bg-gray-50 p-4 rounded-lg scroll-animate col-span-3" data-animation="animate-fade-up">
+                                                <span className="text-sm font-medium text-gray-500 block mb-2">Available Floors</span>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {property.selectedFloors.map((floor, i) => (
+                                                        <span key={`spec-floor-${i}`} className="inline-flex items-center justify-center min-w-[72px] px-5 py-2 rounded-full border border-gray-300 bg-white text-sm font-semibold text-gray-700">
+                                                            {toOrdinalSpec(floor)}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
                                     {property.floorConfigurations && property.floorConfigurations.length > 0 && (
                                         <div className="bg-gray-50 p-4 rounded-lg scroll-animate col-span-3" data-animation="animate-fade-up">
                                             <span className="text-sm font-medium text-gray-500 block mb-2">Office Space Solutions</span>
