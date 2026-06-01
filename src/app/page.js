@@ -14,9 +14,10 @@ import PlacesAutocompleteInput from '@/components/PlacesAutocompleteInput';
 import { getUserLocation } from '@/utils/geolocation';
 import { loginUser } from '@/utils/auth';
 import { indianCities } from '@/utils/indianCities';
-import { sortCitiesByDistance } from '@/utils/cityCoordinates';
+import { sortCitiesByDistance, cityCoordinates } from '@/utils/cityCoordinates';
 import { useTheme } from '@/context/ThemeContext';
 import { calculatePrices } from '@/utils/priceUtils';
+import { useCity } from '@/context/CityContext';
 
 const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 
@@ -49,6 +50,7 @@ function Modal({ children, style, onClose, hideClose = false, className = "", is
 export default function HomePage() {
   const pathname = usePathname();
   const { theme, toggleTheme, isDark } = useTheme();
+  const { activeCityFilter, setActiveCityFilter, citySearchQuery, setCitySearchQuery } = useCity();
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
@@ -68,7 +70,6 @@ export default function HomePage() {
   const [markers, setMarkers] = useState([]);
   const [selectedCity, setSelectedCity] = useState(null);
   const [selectedMarker, setSelectedMarker] = useState(null);
-  const [activeCityFilter, setActiveCityFilter] = useState(null);
 
   const [zoomLevel, setZoomLevel] = useState(ZOOM_INDIA);
   const [, setLocationError] = useState(null);
@@ -98,7 +99,6 @@ export default function HomePage() {
   const [sizeUnit, setSizeUnit] = useState('Square Yards');
   const [showFiltersView, setShowFiltersView] = useState(false);
   const [showCitySelector, setShowCitySelector] = useState(false);
-  const [citySearchQuery, setCitySearchQuery] = useState('');
   const [showLayerMenu, setShowLayerMenu] = useState(false);
   const [showAddPropertyModal, setShowAddPropertyModal] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
@@ -447,6 +447,17 @@ export default function HomePage() {
     }
   }, [markers, currentUser]);
 
+  useEffect(() => {
+    setCommercialLocalities({});
+    setCommercialSocieties({});
+    setResidentialLocalities({});
+    setResidentialSocieties({});
+    setCommercialLocalitySearch('');
+    setCommercialSocietySearch('');
+    setResidentialLocalitySearch('');
+    setResidentialSocietySearch('');
+  }, [activeCityFilter]);
+
   // Hide suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -514,6 +525,41 @@ export default function HomePage() {
 
   // Location tracking is handled by VisitorTracker component
 
+  const matchesSearchQuery = (targetText, queryText) => {
+    const target = (targetText || '').toLowerCase().trim();
+    const query = (queryText || '').toLowerCase().trim();
+    if (!target || !query) return false;
+    
+    // Check if direct match
+    if (target.includes(query)) return true;
+    
+    // Check for alias matching
+    const normalizedTarget = normalizeCityForMatch(target);
+    const normalizedQuery = normalizeCityForMatch(query);
+    
+    if (normalizedTarget && normalizedQuery && normalizedTarget === normalizedQuery) return true;
+    
+    // Substring fallback
+    if (normalizedTarget && normalizedQuery && (normalizedTarget.includes(normalizedQuery) || normalizedQuery.includes(normalizedTarget))) return true;
+
+    // Direct check for common partial searches (e.g. "bang" -> "bengaluru")
+    const specialShortcuts = [
+      { q: 'bang', t: 'beng' },
+      { q: 'beng', t: 'bang' },
+      { q: 'gurg', t: 'gurugram' },
+      { q: 'viz', t: 'visakhapatnam' },
+      { q: 'bomb', t: 'mumbai' },
+      { q: 'calc', t: 'kolkata' },
+      { q: 'madr', t: 'chennai' },
+    ];
+
+    for (const shortcut of specialShortcuts) {
+      if (query.includes(shortcut.q) && target.includes(shortcut.t)) return true;
+    }
+    
+    return false;
+  };
+
   // Generate suggestions based on search query - show property names and addresses/locations only
   const generateSuggestions = (query) => {
     // Only show suggestions if query has at least 1 character
@@ -531,13 +577,17 @@ export default function HomePage() {
     markers.forEach(marker => {
       if (marker.isSearchResult) return;
 
-      // Check property name
       const name = marker.propertyName || marker.name || '';
-      if (name && name.toLowerCase().includes(queryLower)) {
+      const city = marker.address?.city || marker.city || '';
+      const locality = marker.address?.locality || marker.layerLocation || '';
+      const district = marker.address?.district || marker.locationDistrict || '';
+      const address = marker.displayAddress || marker.addressDisplay || marker.location || '';
+
+      if (name && matchesSearchQuery(name, queryLower)) {
         const key = `name-${name.toLowerCase()}`;
         if (!uniqueSuggestions.has(key)) {
           uniqueSuggestions.set(key, true);
-          const location = marker.address?.locality || marker.address?.district || '';
+          const location = locality || district || '';
           filteredSuggestions.push({
             text: name,
             displayText: location ? `${name}, ${location}` : name,
@@ -547,45 +597,53 @@ export default function HomePage() {
         }
       }
 
-      // Check property location (schema: address.locality)
-      const layerLocation = marker.address?.locality || marker.layerLocation || '';
-      if (layerLocation && layerLocation.toLowerCase().includes(queryLower)) {
-        const key = `location-${layerLocation.toLowerCase()}`;
+      if (locality && matchesSearchQuery(locality, queryLower)) {
+        const key = `locality-${locality.toLowerCase()}`;
         if (!uniqueSuggestions.has(key)) {
           uniqueSuggestions.set(key, true);
-          const propertyName = marker.propertyName || marker.name || 'Property';
+          const propertyName = name || 'Property';
           filteredSuggestions.push({
-            text: layerLocation,
-            displayText: `${propertyName}, ${layerLocation}`,
+            text: locality,
+            displayText: `${propertyName}, ${locality}`,
             marker: marker,
             isProperty: true
           });
         }
       }
 
-      // Check locationDistrict (schema: address.district)
-      const locationDistrict = marker.address?.district || marker.locationDistrict || '';
-      if (locationDistrict && locationDistrict.toLowerCase().includes(queryLower)) {
-        const key = `district-${locationDistrict.toLowerCase()}`;
+      if (district && matchesSearchQuery(district, queryLower)) {
+        const key = `district-${district.toLowerCase()}`;
         if (!uniqueSuggestions.has(key)) {
           uniqueSuggestions.set(key, true);
-          const propertyName = marker.propertyName || marker.name || 'Property';
+          const propertyName = name || 'Property';
           filteredSuggestions.push({
-            text: locationDistrict,
-            displayText: `${propertyName}, ${locationDistrict}`,
+            text: district,
+            displayText: `${propertyName}, ${district}`,
             marker: marker,
             isProperty: true
           });
         }
       }
 
-      // Check address (schema: displayAddress)
-      const address = marker.displayAddress || marker.addressDisplay || marker.location || '';
-      if (address && address.toLowerCase().includes(queryLower)) {
+      if (city && matchesSearchQuery(city, queryLower)) {
+        const key = `city-${city.toLowerCase()}`;
+        if (!uniqueSuggestions.has(key)) {
+          uniqueSuggestions.set(key, true);
+          const propertyName = name || 'Property';
+          filteredSuggestions.push({
+            text: city,
+            displayText: `${propertyName}, ${city}`,
+            marker: marker,
+            isProperty: true
+          });
+        }
+      }
+
+      if (address && matchesSearchQuery(address, queryLower)) {
         const key = `address-${address.toLowerCase()}`;
         if (!uniqueSuggestions.has(key)) {
           uniqueSuggestions.set(key, true);
-          const propertyName = marker.propertyName || marker.name || 'Property';
+          const propertyName = name || 'Property';
           filteredSuggestions.push({
             text: address,
             displayText: `${propertyName}, ${address}`,
@@ -640,16 +698,18 @@ export default function HomePage() {
       if (marker.isSearchResult) return false;
       const query = searchQuery.toLowerCase().trim();
       const name = (marker.propertyName || marker.name || '').toLowerCase();
+      const city = (marker.address?.city || marker.city || '').toLowerCase();
       const layerLocation = (marker.address?.locality || marker.layerLocation || '').toLowerCase();
       const locationDistrict = (marker.address?.district || marker.locationDistrict || '').toLowerCase();
       const stateName = (marker.address?.state || marker.stateName || '').toLowerCase();
       const address = (marker.displayAddress || marker.addressDisplay || marker.location || '').toLowerCase();
 
-      return name.includes(query) ||
-        layerLocation.includes(query) ||
-        locationDistrict.includes(query) ||
-        stateName.includes(query) ||
-        address.includes(query);
+      return matchesSearchQuery(name, query) ||
+        matchesSearchQuery(city, query) ||
+        matchesSearchQuery(layerLocation, query) ||
+        matchesSearchQuery(locationDistrict, query) ||
+        matchesSearchQuery(stateName, query) ||
+        matchesSearchQuery(address, query);
     });
 
     if (matchingProperties.length > 0 && matchingProperties[0].position) {
@@ -850,14 +910,219 @@ export default function HomePage() {
     return 0;
   };
 
+  const CITY_ALIASES = {
+    // Bangalore
+    'bangalore': 'bengaluru',
+    'bengaluru': 'bengaluru',
+    'bengaluru urban': 'bengaluru',
+    'bengaluru rural': 'bengaluru',
+    // Gurgaon
+    'gurgaon': 'gurugram',
+    'gurugram': 'gurugram',
+    // Mumbai
+    'mumbai': 'mumbai',
+    'bombay': 'mumbai',
+    'navi mumbai': 'mumbai',
+    // Kolkata
+    'kolkata': 'kolkata',
+    'calcutta': 'kolkata',
+    // Chennai
+    'chennai': 'chennai',
+    'madras': 'chennai',
+    // Kochi
+    'kochi': 'kochi',
+    'cochin': 'kochi',
+    // Vadodara
+    'vadodara': 'vadodara',
+    'baroda': 'vadodara',
+    // Visakhapatnam
+    'visakhapatnam': 'visakhapatnam',
+    'vizag': 'visakhapatnam',
+    // Pondicherry
+    'pondicherry': 'puducherry',
+    'puducherry': 'puducherry',
+    // Thiruvananthapuram
+    'thiruvananthapuram': 'trivandrum',
+    'trivandrum': 'trivandrum',
+  };
+
+  const normalizeCityForMatch = (cityName) => {
+    const name = (cityName || '').toLowerCase().trim().replace(/-/g, ' ');
+    // Check exact map
+    if (CITY_ALIASES[name]) return CITY_ALIASES[name];
+    // Substring fallback (e.g. "bengaluru urban" -> "bengaluru")
+    for (const [alias, canonical] of Object.entries(CITY_ALIASES)) {
+      if (name.includes(alias)) return canonical;
+    }
+    return name;
+  };
+
+  const getDynamicLocalities = (type) => {
+    const defaultLocs = [
+      { key: 'mysoreRoad', label: 'Mysore Road' },
+      { key: 'sampangiRamaNagar', label: 'Sampangi Rama Nagar' },
+      { key: 'hebbal', label: 'Hebbal' },
+      { key: 'banashankari', label: 'Banashankari' },
+    ];
+
+    if (activeCityFilter) {
+      const selectedCityName = normalizeCityForMatch(activeCityFilter);
+      
+      // 1. Try predefined dictionary of actual popular localities for major Indian cities
+      const CITY_DATA = {
+        bengaluru: ['Mysore Road', 'Sampangi Rama Nagar', 'Hebbal', 'Banashankari'],
+        delhi: ['Dwarka', 'Saket', 'Vasant Kunj', 'Rohini'],
+        gurugram: ['Sector 57', 'Sector 82', 'Golf Course Road', 'Sohna Road'],
+        noida: ['Sector 62', 'Sector 150', 'Sector 137', 'Sector 78'],
+        mumbai: ['Andheri West', 'Bandra West', 'Worli', 'Borivali West'],
+        navimumbai: ['Vashi', 'Kharghar', 'Panvel', 'Nerul'],
+        thane: ['Ghodbunder Road', 'Majiwada', 'Vartak Nagar', 'Pokhran Road'],
+        pune: ['Hinjewadi', 'Kharadi', 'Baner', 'Wakad'],
+        hyderabad: ['Gachibowli', 'Madhapur', 'Kondapur', 'Kukatpally'],
+        chennai: ['OMR', 'Velachery', 'Adyar', 'Anna Nagar'],
+        kolkata: ['Newtown', 'Salt Lake', 'Rajarhat', 'Ballygunge'],
+        lucknow: ['Gomti Nagar', 'Hazratganj', 'Aliganj', 'Indira Nagar']
+      };
+
+      if (CITY_DATA[selectedCityName]) {
+        return CITY_DATA[selectedCityName].map(loc => ({
+          key: loc.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          label: loc
+        }));
+      }
+
+      // 2. Fallback: extract unique ones from markers in this city
+      const cityMarkers = markers.filter(marker => {
+        const markerCity = normalizeCityForMatch(marker.address?.city || marker.city || '');
+        return markerCity.includes(selectedCityName) || selectedCityName.includes(markerCity);
+      });
+      
+      const uniqueLocs = new Set();
+      cityMarkers.forEach(m => {
+        const loc = m.address?.locality || m.layerLocation;
+        if (loc && loc.trim()) uniqueLocs.add(loc.trim());
+      });
+      
+      if (uniqueLocs.size > 0) {
+        const list = Array.from(uniqueLocs).slice(0, 4).map(loc => ({
+          key: loc.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          label: loc
+        }));
+        // Pad to exactly 4 if needed
+        while (list.length < 4) {
+          const fallback = defaultLocs[list.length];
+          list.push(fallback);
+        }
+        return list;
+      }
+    }
+    
+    return defaultLocs;
+  };
+
+  const getDynamicSocieties = (type) => {
+    const defaultSocs = [
+      { key: 'godrejTiara', label: 'Godrej Tiara' },
+      { key: 'sobhaInfinia', label: 'Sobha Infinia' },
+      { key: 'snnClermont', label: 'SNN Clermont' },
+      { key: 'lntRaintreeBoulevard', label: 'LnT Raintree Boulevard' },
+    ];
+
+    if (activeCityFilter) {
+      const selectedCityName = normalizeCityForMatch(activeCityFilter);
+      
+      // 1. Try predefined dictionary of actual popular societies for major Indian cities
+      const CITY_DATA = {
+        bengaluru: ['Godrej Tiara', 'Sobha Infinia', 'SNN Clermont', 'LnT Raintree Boulevard'],
+        delhi: ['DLF Capital Greens', 'Unity Amaryllis', 'Godrej Prima', 'DLF One Midtown'],
+        gurugram: ['M3M Golfestate', 'DLF The Crest', 'Emaar Gurgaon Greens', 'Vatika City'],
+        noida: ['ATS Pristine', 'Supertech Eco Citi', 'Cleo County', 'Mahagun Moderne'],
+        mumbai: ['Lodha World One', 'Oberoi Esquire', 'Hiranandani Gardens', 'Raheja Vivarea'],
+        navimumbai: ['Hiranandani Fortune City', 'Marathon Nexzone', 'Indiabulls Greens', 'Sai Proviso County'],
+        thane: ['Lodha Amara', 'Kalpataru Colorama', 'Rustomjee Urbania', 'Piramal Vaikunth'],
+        pune: ['Amanora Park Town', 'Blue Ridge', 'Kolte Patil Life Republic', 'Godrej 24'],
+        hyderabad: ['My Home Avatar', 'Aparna Sarovar Zenith', 'Jayabheri Orange County', 'Lanco Hills'],
+        chennai: ['DLF Gardencity', 'Hiranandani Parks', 'Purva Swanlake', 'Casagrand Crescendo'],
+        kolkata: ['Urbana Kolkata', 'Elita Garden Vista', 'Ruchi Active Acres', 'South City'],
+        lucknow: ['Shalimar One World', 'Omaxe Residency', 'Eldeco Elegante', 'DLF My Pad']
+      };
+
+      if (CITY_DATA[selectedCityName]) {
+        return CITY_DATA[selectedCityName].map(soc => ({
+          key: soc.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          label: soc
+        }));
+      }
+
+      // 2. Fallback: extract unique ones from markers in this city
+      const cityMarkers = markers.filter(marker => {
+        const markerCity = normalizeCityForMatch(marker.address?.city || marker.city || '');
+        return markerCity.includes(selectedCityName) || selectedCityName.includes(markerCity);
+      });
+      
+      const uniqueSocs = new Set();
+      cityMarkers.forEach(m => {
+        const soc = m.society || m.propertyName;
+        if (soc && soc.trim()) uniqueSocs.add(soc.trim());
+      });
+      
+      if (uniqueSocs.size > 0) {
+        const list = Array.from(uniqueSocs).slice(0, 4).map(soc => ({
+          key: soc.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          label: soc
+        }));
+        // Pad to exactly 4 if needed
+        while (list.length < 4) {
+          const fallback = defaultSocs[list.length];
+          list.push(fallback);
+        }
+        return list;
+      }
+    }
+    
+    return defaultSocs;
+  };
+
+  const getTopCities = () => {
+    const baseTopCities = [
+      'Bangalore', 'Chennai', 'Delhi', 'Gurgaon', 'Hyderabad', 'Kolkata',
+      'Lucknow', 'Mumbai', 'Navi Mumbai', 'Noida', 'Pune', 'Thane'
+    ];
+    
+    // Find reference coordinates
+    let refCoords = null;
+    if (activeCityFilter && cityCoordinates[activeCityFilter]) {
+      refCoords = cityCoordinates[activeCityFilter];
+    } else if (detectedUserLocation) {
+      refCoords = detectedUserLocation;
+    }
+    
+    if (!refCoords) {
+      return baseTopCities.map(city => ({ name: city, isNear: false }));
+    }
+    
+    const nearThree = sortCitiesByDistance(
+      [...new Set(indianCities)],
+      refCoords.lat,
+      refCoords.lng,
+      3
+    );
+    const filteredBase = baseTopCities.filter(c => !nearThree.some(n => n.toLowerCase() === c.toLowerCase()));
+    
+    return [
+      ...nearThree.map(city => ({ name: city, isNear: true })),
+      ...filteredBase.map(city => ({ name: city, isNear: false }))
+    ];
+  };
+
   const getFilteredMarkers = () => {
     let filtered = markers.filter(marker => !marker.isSearchResult); // Exclude search result markers
 
     // Filter by selected city
     if (activeCityFilter) {
       filtered = filtered.filter(marker => {
-        const markerCity = (marker.address?.city || marker.city || '').toLowerCase().trim();
-        const selectedCityName = activeCityFilter.toLowerCase().trim();
+        const markerCity = normalizeCityForMatch(marker.address?.city || marker.city || '');
+        const selectedCityName = normalizeCityForMatch(activeCityFilter);
         return markerCity.includes(selectedCityName) || selectedCityName.includes(markerCity);
       });
     }
@@ -872,16 +1137,18 @@ export default function HomePage() {
       const query = searchQuery.toLowerCase().trim();
       filtered = filtered.filter(marker => {
         const name = (marker.propertyName || marker.name || '').toLowerCase();
+        const city = (marker.address?.city || marker.city || '').toLowerCase();
         const layerLocation = (marker.address?.locality || marker.layerLocation || '').toLowerCase();
         const locationDistrict = (marker.address?.district || marker.locationDistrict || '').toLowerCase();
         const stateName = (marker.address?.state || marker.stateName || '').toLowerCase();
         const address = (marker.displayAddress || marker.addressDisplay || marker.location || '').toLowerCase();
 
-        return name.includes(query) ||
-          layerLocation.includes(query) ||
-          locationDistrict.includes(query) ||
-          stateName.includes(query) ||
-          address.includes(query);
+        return matchesSearchQuery(name, query) ||
+          matchesSearchQuery(city, query) ||
+          matchesSearchQuery(layerLocation, query) ||
+          matchesSearchQuery(locationDistrict, query) ||
+          matchesSearchQuery(stateName, query) ||
+          matchesSearchQuery(address, query);
       });
     }
     // Apply filter panel locality search (additional AND filter)
@@ -956,12 +1223,10 @@ export default function HomePage() {
       }
       const hasResidentialLocality = Object.values(f.residentialLocalities).some(v => v === true) || (f.residentialLocalitySearch && f.residentialLocalitySearch.trim());
       if (hasResidentialLocality) {
-        const localityLabels = {
-          mysoreRoad: 'Mysore Road',
-          sampangiRamaNagar: 'Sampangi Rama Nagar',
-          hebbal: 'Hebbal',
-          banashankari: 'Banashankari',
-        };
+        const localityLabels = {};
+        getDynamicLocalities('residential').forEach(item => {
+          localityLabels[item.key] = item.label;
+        });
         const selectedLocalities = Object.entries(f.residentialLocalities)
           .filter(([, sel]) => sel)
           .map(([key]) => (localityLabels[key] || '').toLowerCase());
@@ -976,12 +1241,10 @@ export default function HomePage() {
       // Apply residential Societies filter
       const hasResidentialSociety = Object.values(f.residentialSocieties || {}).some(v => v === true) || (f.residentialSocietySearch && f.residentialSocietySearch.trim());
       if (hasResidentialSociety && f.residentialSocieties) {
-        const societyLabels = {
-          godrejTiara: 'Godrej Tiara',
-          sobhaInfinia: 'Sobha Infinia',
-          snnClermont: 'SNN Clermont',
-          lntRaintreeBoulevard: 'LnT Raintree Boulevard',
-        };
+        const societyLabels = {};
+        getDynamicSocieties('residential').forEach(item => {
+          societyLabels[item.key] = item.label;
+        });
         const selectedSocieties = Object.entries(f.residentialSocieties)
           .filter(([, sel]) => sel)
           .map(([key]) => (societyLabels[key] || '').toLowerCase());
@@ -1172,12 +1435,10 @@ export default function HomePage() {
 
       // Apply commercial locality filter
       if (hasCommercialLocality && f.propertyTypeFilter === 'commercial') {
-        const localityLabels = {
-          mysoreRoad: 'Mysore Road',
-          sampangiRamaNagar: 'Sampangi Rama Nagar',
-          hebbal: 'Hebbal',
-          banashankari: 'Banashankari',
-        };
+        const localityLabels = {};
+        getDynamicLocalities('commercial').forEach(item => {
+          localityLabels[item.key] = item.label;
+        });
         const selectedLocalities = Object.entries(f.commercialLocalities || {})
           .filter(([, sel]) => sel)
           .map(([key]) => (localityLabels[key] || '').toLowerCase());
@@ -1192,12 +1453,10 @@ export default function HomePage() {
 
       // Apply commercial society filter
       if (hasCommercialSociety && f.propertyTypeFilter === 'commercial' && f.commercialSocieties) {
-        const societyLabels = {
-          godrejTiara: 'Godrej Tiara',
-          sobhaInfinia: 'Sobha Infinia',
-          snnClermont: 'SNN Clermont',
-          lntRaintreeBoulevard: 'LnT Raintree Boulevard',
-        };
+        const societyLabels = {};
+        getDynamicSocieties('commercial').forEach(item => {
+          societyLabels[item.key] = item.label;
+        });
         const selectedSocieties = Object.entries(f.commercialSocieties)
           .filter(([, sel]) => sel)
           .map(([key]) => (societyLabels[key] || '').toLowerCase());
@@ -2010,49 +2269,24 @@ export default function HomePage() {
                   </button>
                 </div>
 
-                {/* Closer Cities - shown when user has detected their location */}
-                {detectedUserLocation && (
-                  <div className={`px-4 py-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-                    <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Closer Cities</h3>
-                    <div className="grid grid-cols-3 gap-4">
-                      {sortCitiesByDistance(
-                        [...new Set(indianCities)],
-                        detectedUserLocation.lat,
-                        detectedUserLocation.lng,
-                        6
-                      ).map(city => (
-                        <button
-                          key={city}
-                          onClick={() => zoomToCity(city, { clearSearch: true })}
-                          className={`flex flex-col items-center gap-1.5 p-2 rounded-lg transition-colors cursor-pointer ${isDark ? 'hover:bg-[#282c34]' : 'hover:bg-gray-50'}`}
-                        >
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
-                            <MapPin className="w-5 h-5 text-blue-500" />
-                          </div>
-                          <span className={`text-[10px] text-center font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{city}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 {/* Top Cities Section - always visible for quick selection */}
                 <div className={`px-4 py-4 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
                   <h3 className={`text-sm font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Top Cities</h3>
                   <div className="grid grid-cols-3 gap-4">
-                    {[
-                      'Bangalore', 'Chennai', 'Delhi', 'Gurgaon', 'Hyderabad', 'Kolkata',
-                      'Lucknow', 'Mumbai', 'Navi Mumbai', 'Noida', 'Pune', 'Thane'
-                    ].map(city => (
+                    {getTopCities().map(cityObj => (
                       <button
-                        key={city}
-                        onClick={() => zoomToCity(city, { clearSearch: true })}
+                        key={cityObj.name}
+                        onClick={() => zoomToCity(cityObj.name, { clearSearch: true })}
                         className={`flex flex-col items-center gap-1.5 p-2 rounded-lg transition-colors cursor-pointer ${isDark ? 'hover:bg-[#282c34]' : 'hover:bg-gray-50'}`}
                       >
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDark ? 'bg-[#282c34]' : 'bg-gray-100'}`}>
-                          <Building2 className="w-5 h-5 text-blue-500" />
+                          {cityObj.isNear ? (
+                            <MapPin className="w-5 h-5 text-blue-500" />
+                          ) : (
+                            <Building2 className="w-5 h-5 text-blue-500" />
+                          )}
                         </div>
-                        <span className={`text-[10px] text-center font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{city}</span>
+                        <span className={`text-[10px] text-center font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{cityObj.name}</span>
                       </button>
                     ))}
                   </div>
@@ -2668,12 +2902,7 @@ export default function HomePage() {
                           />
                         </div>
                         <div className={`rounded-lg border p-3 space-y-2 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
-                          {[
-                            { key: 'mysoreRoad', label: 'Mysore Road' },
-                            { key: 'sampangiRamaNagar', label: 'Sampangi Rama Nagar' },
-                            { key: 'hebbal', label: 'Hebbal' },
-                            { key: 'banashankari', label: 'Banashankari' },
-                          ].map(item => (
+                          {getDynamicLocalities('commercial').map(item => (
                             <label key={item.key} className="flex items-center gap-2 cursor-pointer">
                               <div
                                 onClick={() => setCommercialLocalities(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
@@ -2713,12 +2942,7 @@ export default function HomePage() {
                           />
                         </div>
                         <div className={`rounded-lg border p-3 space-y-2 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
-                          {[
-                            { key: 'godrejTiara', label: 'Godrej Tiara' },
-                            { key: 'sobhaInfinia', label: 'Sobha Infinia' },
-                            { key: 'snnClermont', label: 'SNN Clermont' },
-                            { key: 'lntRaintreeBoulevard', label: 'LnT Raintree Boulevard' },
-                          ].map(item => (
+                          {getDynamicSocieties('commercial').map(item => (
                             <label key={item.key} className="flex items-center gap-2 cursor-pointer">
                               <div
                                 onClick={() => setCommercialSocieties(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
@@ -2793,12 +3017,7 @@ export default function HomePage() {
                           />
                         </div>
                         <div className={`rounded-lg border p-3 space-y-2 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
-                          {[
-                            { key: 'mysoreRoad', label: 'Mysore Road' },
-                            { key: 'sampangiRamaNagar', label: 'Sampangi Rama Nagar' },
-                            { key: 'hebbal', label: 'Hebbal' },
-                            { key: 'banashankari', label: 'Banashankari' },
-                          ].map(item => (
+                          {getDynamicLocalities('residential').map(item => (
                             <label key={item.key} className="flex items-center gap-2 cursor-pointer">
                               <div
                                 onClick={() => setResidentialLocalities(prev => ({ ...prev, [item.key]: !prev[item.key] }))}
@@ -2839,12 +3058,7 @@ export default function HomePage() {
                           />
                         </div>
                         <div className={`rounded-lg border p-3 space-y-2 ${isDark ? 'border-gray-600 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
-                          {[
-                            { key: 'godrejTiara', label: 'Godrej Tiara' },
-                            { key: 'sobhaInfinia', label: 'Sobha Infinia' },
-                            { key: 'snnClermont', label: 'SNN Clermont' },
-                            { key: 'lntRaintreeBoulevard', label: 'LnT Raintree Boulevard' },
-                          ].map(item => (
+                          {getDynamicSocieties('residential').map(item => (
                             <label key={item.key} className="flex items-center gap-2 cursor-pointer">
                               <div
                                 onClick={() => setResidentialSocieties(prev => ({ ...prev, [item.key]: !prev[item.key] }))}

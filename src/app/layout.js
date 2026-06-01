@@ -1,6 +1,7 @@
 import "./globals.css";
 import LayoutWrapper from "./LayoutWrapper";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { CityProvider } from "@/context/CityContext";
 
 // System font stack – no Google Fonts dependency; avoids connection errors at build/dev
 const fontSans = "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
@@ -23,9 +24,11 @@ export default function RootLayout({ children }) {
         }}
       >
         <ThemeProvider>
-          <LayoutWrapper>
-            {children}
-          </LayoutWrapper>
+          <CityProvider>
+            <LayoutWrapper>
+              {children}
+            </LayoutWrapper>
+          </CityProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -77,6 +77,54 @@ function matchesSeatRange(seatsStr, rangeStr) {
     return true;
 }
 
+const CITY_ALIASES = {
+    // Bangalore
+    'bangalore': 'bengaluru',
+    'bengaluru': 'bengaluru',
+    'bengaluru urban': 'bengaluru',
+    'bengaluru rural': 'bengaluru',
+    // Gurgaon
+    'gurgaon': 'gurugram',
+    'gurugram': 'gurugram',
+    // Mumbai
+    'mumbai': 'mumbai',
+    'bombay': 'mumbai',
+    'navi mumbai': 'mumbai',
+    // Kolkata
+    'kolkata': 'kolkata',
+    'calcutta': 'kolkata',
+    // Chennai
+    'chennai': 'chennai',
+    'madras': 'chennai',
+    // Kochi
+    'kochi': 'kochi',
+    'cochin': 'kochi',
+    // Vadodara
+    'vadodara': 'vadodara',
+    'baroda': 'vadodara',
+    // Visakhapatnam
+    'visakhapatnam': 'visakhapatnam',
+    'vizag': 'visakhapatnam',
+    // Pondicherry
+    'pondicherry': 'puducherry',
+    'puducherry': 'puducherry',
+    // Thiruvananthapuram
+    'thiruvananthapuram': 'trivandrum',
+    'trivandrum': 'trivandrum',
+};
+
+// Helper function to normalize city names for alias matching
+function normalizeCityForMatch(cityName) {
+    const name = (cityName || '').toLowerCase().trim().replace(/-/g, ' ');
+    // Check exact map
+    if (CITY_ALIASES[name]) return CITY_ALIASES[name];
+    // Substring fallback (e.g. "bengaluru urban" -> "bengaluru")
+    for (const [alias, canonical] of Object.entries(CITY_ALIASES)) {
+        if (name.includes(alias)) return canonical;
+    }
+    return name;
+}
+
 export async function GET(request) {
     try {
         const url = new URL(request.url);
@@ -166,8 +214,8 @@ export async function GET(request) {
             
             // Filter by city
             if (city) {
-                const propCity = prop.address?.city?.toLowerCase() || '';
-                const searchCity = city.toLowerCase().replace(/-/g, ' ');
+                const propCity = normalizeCityForMatch(prop.address?.city || prop.city || '');
+                const searchCity = normalizeCityForMatch(city);
                 if (!propCity.includes(searchCity) && !searchCity.includes(propCity)) {
                     return false;
                 }

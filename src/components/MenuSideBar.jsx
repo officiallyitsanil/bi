@@ -169,29 +169,31 @@ export default function MenuSideBar({ onClose }) {
                         </div>
 
                         {/* Tag Along - inside scrollable */}
-                        <div className="px-3 pb-3">
-                            <Link onClick={handleClose} href="/tag-along" className="block">
-                                <div
-                                    className={`rounded-lg p-2 flex items-center gap-2 min-h-[64px] shadow-[0_1px_2px_rgba(0,0,0,0.06)] ${isDark ? "bg-[#282c34]" : ""}`}
-                                    style={isDark ? undefined : { backgroundColor: "#F5F0E6" }}
-                                >
-                                    <div className="min-w-0 flex-1 flex flex-col justify-center">
-                                        <p className={`font-bold text-xs leading-tight ${isDark ? "text-white" : "text-[#212121]"}`}>Tag Along</p>
-                                        <p className={`text-[11px] font-normal mt-0.5 leading-snug ${isDark ? "text-gray-400" : "text-[#212121]"}`}>
-                                            Buy Large Land Parcels with us, starting @ 4 Lakh/ Acre.
-                                        </p>
+                        {false && (
+                            <div className="px-3 pb-3">
+                                <Link onClick={handleClose} href="/tag-along" className="block">
+                                    <div
+                                        className={`rounded-lg p-2 flex items-center gap-2 min-h-[64px] shadow-[0_1px_2px_rgba(0,0,0,0.06)] ${isDark ? "bg-[#282c34]" : ""}`}
+                                        style={isDark ? undefined : { backgroundColor: "#F5F0E6" }}
+                                    >
+                                        <div className="min-w-0 flex-1 flex flex-col justify-center">
+                                            <p className={`font-bold text-xs leading-tight ${isDark ? "text-white" : "text-[#212121]"}`}>Tag Along</p>
+                                            <p className={`text-[11px] font-normal mt-0.5 leading-snug ${isDark ? "text-gray-400" : "text-[#212121]"}`}>
+                                                Buy Large Land Parcels with us, starting @ 4 Lakh/ Acre.
+                                            </p>
+                                        </div>
+                                        <div className="flex-shrink-0 w-[72px] h-[30px] relative rounded overflow-hidden">
+                                            <Image
+                                                src="/tag-along-pic.svg"
+                                                alt="Tag Along"
+                                                fill
+                                                className="object-contain object-right"
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="flex-shrink-0 w-[72px] h-[30px] relative rounded overflow-hidden">
-                                        <Image
-                                            src="/tag-along-pic.svg"
-                                            alt="Tag Along"
-                                            fill
-                                            className="object-contain object-right"
-                                        />
-                                    </div>
-                                </div>
-                            </Link>
-                        </div>
+                                </Link>
+                            </div>
+                        )}
 
                         {/* Download Builderinfo App - inside scrollable */}
                         <div className="px-3 pb-8 max-[525px]:pb-10">
