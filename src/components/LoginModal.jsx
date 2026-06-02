@@ -115,7 +115,8 @@ export default function LoginModal({ onClose, onProceed }) {
       // Small delay to ensure token is ready
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      const formattedPhoneNumber = `+${phoneNumber}`;
+      const cleanPhone = phoneNumber.replace(/\D/g, "");
+      const formattedPhoneNumber = `+${cleanPhone}`;
       const result = await signInWithPhoneNumber(
         auth,
         formattedPhoneNumber,
@@ -215,12 +216,15 @@ export default function LoginModal({ onClose, onProceed }) {
     try {
       const userCredential = await confirmationResult.confirm(otp);
 
+      const cleanPhone = phoneNumber.replace(/\D/g, "");
+      const formattedPhoneNumber = `+${cleanPhone}`;
+
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ phoneNumber: `+${phoneNumber}` }),
+        body: JSON.stringify({ phoneNumber: formattedPhoneNumber }),
       });
 
       if (!response.ok) {
@@ -267,7 +271,7 @@ export default function LoginModal({ onClose, onProceed }) {
     <div
       onClick={onClose}
       style={{ background: "rgba(0,0,0,0.7)" }}
-      className="fixed inset-0 flex items-center justify-center z-50"
+      className="fixed inset-0 flex items-center justify-center z-[9999]"
     >
       <div id="recaptcha-container" style={{ position: 'absolute', left: '-9999px' }}></div>
 
@@ -278,7 +282,7 @@ export default function LoginModal({ onClose, onProceed }) {
         {step === "phone" && (
           <>
             <div className="flex justify-between items-center px-6 py-5 border-b border-gray-200">
-              <h2 className="text-xl font-medium text-black">Login</h2>
+              <h2 className="text-xl font-medium text-black">Login/Register</h2>
               <button
                 onClick={onClose}
                 className="text-gray-400 hover:text-gray-600"
@@ -368,7 +372,7 @@ export default function LoginModal({ onClose, onProceed }) {
                 disabled={loading}
                 className="w-full bg-yellow-400 text-black font-medium py-3 px-6 rounded-xl flex items-center justify-center text-base mb-4 hover:bg-yellow-500 transition-colors disabled:bg-gray-300"
               >
-                {loading ? "Verifying..." : "Login"}
+                {loading ? "Verifying..." : "Login/Register"}
                 {!loading && <ArrowRight className="w-5 h-5 ml-2" />}
               </button>
 

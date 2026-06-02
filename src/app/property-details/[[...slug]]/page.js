@@ -808,9 +808,21 @@ function PropertyDetailsContent() {
                 slugString = slug;
             }
 
-            // The slug IS the property name (normalized with hyphens)
-            const idParam = idParamFromQuery; // No ID from slug anymore
-            const nameParam = !idParam ? (slugString || searchParams.get('name')) : null;
+            // Extract ID from slug if it is appended at the end (e.g. /property-details/name-id)
+            let idFromSlug = "";
+            let nameFromSlug = slugString;
+            const parts = slugString.split('-');
+            if (parts.length > 1) {
+                const lastPart = parts[parts.length - 1];
+                if (/^[a-zA-Z0-9]{12,30}$/.test(lastPart)) {
+                    idFromSlug = lastPart;
+                    nameFromSlug = parts.slice(0, -1).join('-');
+                }
+            }
+
+            // The slug IS the property name (normalized with hyphens) or ends with ID
+            const idParam = idParamFromQuery || idFromSlug;
+            const nameParam = !idParam ? (nameFromSlug || searchParams.get('name')) : null;
 
             if (!idParam && !nameParam) {
                 console.error('No property ID or Name provided');

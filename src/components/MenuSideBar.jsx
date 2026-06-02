@@ -21,6 +21,7 @@ import Link from "next/link";
 import LoginModal from "@/components/LoginModal";
 import VerificationProcessModal from "./VerificationProcessModal";
 import { useTheme } from "@/context/ThemeContext";
+import { loginUser } from "@/utils/auth";
 
 export default function MenuSideBar({ onClose }) {
     const { isDark } = useTheme();
@@ -47,8 +48,13 @@ export default function MenuSideBar({ onClose }) {
     };
 
     const handleLoginSuccess = (userData) => {
+        loginUser(userData);
         setIsLoginOpen(false);
-        window.location.reload();
+        if (!userData || !userData.name) {
+            window.location.href = "/dashboard";
+        } else {
+            window.location.reload();
+        }
     };
 
     return (
@@ -72,7 +78,7 @@ export default function MenuSideBar({ onClose }) {
                     background: ${isDark ? "#6b7280" : "#94a3b8"};
                 }
             `}</style>
-            <div className="fixed inset-0 z-50">
+            <div className="fixed inset-0 z-[9999]">
                 {/* Backdrop - light blur, more transparent */}
                 <div
                     onClick={handleClose}

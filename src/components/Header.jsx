@@ -56,6 +56,11 @@ export default function Header() {
     const handleLoginSuccess = (userData) => {
         loginUser(userData);
         setIsLoginOpen(false);
+        if (!userData || !userData.name) {
+            window.location.href = '/dashboard';
+        } else {
+            window.location.reload();
+        }
     };
 
     const getIcon = (link) => {

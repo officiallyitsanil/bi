@@ -790,6 +790,11 @@ export default function HomePage() {
     loginUser(userWithPhone);
     setCurrentUser(userWithPhone);
     setIsLoginModalOpen(false);
+    if (!userData || !userData.name) {
+      window.location.href = '/dashboard';
+    } else {
+      window.location.reload();
+    }
   };
 
   const handleFavouriteToggle = async (marker) => {
