@@ -99,6 +99,7 @@ export default function Footer() {
                 <footer className={`hidden md:block border-t transition-colors duration-300 ${isDark ? 'bg-[#1A1A1A] border-[#333333]' : 'bg-[#F8F8F8] border-[#E5E7EB]'}`}>
                     <div className="px-4 sm:px-6 lg:px-8 py-5">
                         <div className="grid grid-cols-1 md:grid-cols-5 gap-5">
+                            {/* Brand */}
                             <div className="space-y-2 md:col-span-2">
                                 <Link href="/">
                                     <Image
@@ -110,26 +111,30 @@ export default function Footer() {
                                         unoptimized
                                     />
                                 </Link>
-                                <p className={`text-xs leading-tight ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280]'}`}>India&apos;s first brokerage-free real estate discovery platform.</p>
+                                <p className={`text-xs leading-tight ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280]'}`}>Discover, compare and move into the right space with Buildersinfo.</p>
                             </div>
+
+                            {/* Company — legal & policy links */}
                             <div>
                                 <h3 className={`text-sm font-semibold mb-2 ${isDark ? 'text-white' : 'text-[#4A4A4A]'}`}>Company</h3>
                                 <ul className="space-y-1">
-                                    <li><Link className={`text-xs hover:text-[#007BFF] ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280] hover:text-[#1A6AC4]'}`} href="/about">About Us</Link></li>
-                                    <li><Link className={`text-xs hover:text-[#007BFF] ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280] hover:text-[#1A6AC4]'}`} href="#">Contact Us</Link></li>
-                                    <li><Link className={`text-xs hover:text-[#007BFF] ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280] hover:text-[#1A6AC4]'}`} href="#">Our Verification Process</Link></li>
                                     <li><Link className={`text-xs hover:text-[#007BFF] ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280] hover:text-[#1A6AC4]'}`} href="/terms-and-conditions">Terms & Conditions</Link></li>
                                     <li><Link className={`text-xs hover:text-[#007BFF] ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280] hover:text-[#1A6AC4]'}`} href="/privacy-policy">Privacy Policy</Link></li>
                                     <li><Link className={`text-xs hover:text-[#007BFF] ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280] hover:text-[#1A6AC4]'}`} href="#">Disclaimer</Link></li>
+                                    <li><Link className={`text-xs hover:text-[#007BFF] ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280] hover:text-[#1A6AC4]'}`} href="#">Our Verification Process</Link></li>
                                 </ul>
                             </div>
+
+                            {/* Explore — site sections + company info */}
                             <div>
-                                <h3 className={`text-sm font-semibold mb-2 ${isDark ? 'text-white' : 'text-[#4A4A4A]'}`}>Services</h3>
+                                <h3 className={`text-sm font-semibold mb-2 ${isDark ? 'text-white' : 'text-[#4A4A4A]'}`}>Explore</h3>
                                 <ul className="space-y-1">
-                                    <li><Link className={`text-xs hover:text-[#007BFF] ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280] hover:text-[#1A6AC4]'}`} href="/hand-holding">Hand Holding</Link></li>
-                                    <li><Link className={`text-xs hover:text-[#007BFF] ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280] hover:text-[#1A6AC4]'}`} href="/tag-along">Tag Along</Link></li>
+                                    <li><Link className={`text-xs hover:text-[#007BFF] ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280] hover:text-[#1A6AC4]'}`} href="/about-us">About Us</Link></li>
+                                    <li><Link className={`text-xs hover:text-[#007BFF] ${isDark ? 'text-[#CCCCCC]' : 'text-[#6B7280] hover:text-[#1A6AC4]'}`} href="#">Contact Us</Link></li>
                                 </ul>
                             </div>
+
+                            {/* Follow Us + Contact */}
                             <div>
                                 <h3 className={`text-sm font-semibold mb-2 ${isDark ? 'text-white' : 'text-[#4A4A4A]'}`}>Follow Us</h3>
                                 <div className="flex items-center gap-3">

@@ -1037,7 +1037,8 @@ function PropertyDetailsContent() {
     const firstVideoObj = property?.propertyVideos?.[0];
     const galleryVideoUrl = getNormalizedVideoUrl(firstVideoObj) || getNormalizedVideoUrl(property?.video);
     const galleryVideoContentType = firstVideoObj?.contentType || (typeof property?.video === 'object' ? property?.video?.contentType : '');
-    const galleryVideoThumb = getNormalizedVideoThumb(firstVideoObj) || getNormalizedVideoThumb(property?.video) || images[2] || images[0];
+    // No static image fallback for video thumbnail — show video directly
+    const galleryVideoThumb = getNormalizedVideoThumb(firstVideoObj) || getNormalizedVideoThumb(property?.video) || null;
 
     useEffect(() => {
         setGalleryInlineVideoActive(false);
@@ -1757,11 +1758,7 @@ function PropertyDetailsContent() {
                                     <CornerUpRight className="h-[1.2rem] w-[1.2rem]" />
                                 </a>
                             )}
-                            {propertyDetailsFullUrl && (
-                                <a href={propertyDetailsFullUrl} target="_blank" rel="noopener noreferrer" className={`flex items-center justify-center h-13 w-13 rounded-full transition aria-label="Open property page in new tab" ${isDark ? 'bg-gray-800 text-white hover:bg-gray-700' : 'bg-[#f4f4f5] text-gray-700 hover:bg-[#e4e4e7]'}`}>
-                                    <SquareArrowOutUpRight className="h-[1.2rem] w-[1.2rem]" />
-                                </a>
-                            )}
+                            {/* New tab icon removed */}
                         </div>
                     </div>
                 </div>
@@ -1772,31 +1769,69 @@ function PropertyDetailsContent() {
                     {/* Main Content - ~65% on desktop: gallery + details */}
                     <div className="w-full md:w-[70%] min-w-0">
                         <div className="space-y-6">
-                            {/* Image Gallery - Mobile: single image with arrows */}
+                            {/* Image Gallery - Mobile: single image with arrows | Desktop: 3-col grid */}
                             <div
                                 className="relative group w-full min-w-0"
                                 onTouchStart={handleTouchStart}
                                 onTouchMove={handleTouchMove}
                                 onTouchEnd={handleTouchEnd}
                             >
-                                {/* Single column wrapper so thumb row is same width as the 3-col grid above */}
-                                <div className="grid w-full min-w-0 grid-cols-1 gap-y-3 sm:gap-y-5">
-                                    <div className="property-details-gallery grid w-full min-w-0 grid-cols-1 md:grid-cols-5 md:grid-rows-2 gap-3 sm:gap-5 h-auto md:h-[450px]">
-                                        <div className="relative md:col-span-3 md:row-span-2 rounded-xl sm:rounded-2xl overflow-hidden group cursor-pointer aspect-[16/10] sm:aspect-auto bg-muted border border-gray-200">
+                                <div className="flex flex-col w-full min-w-0 gap-3 sm:gap-5">
+
+                                    {/* ── MOBILE (<768px): image carousel with arrows ── */}
+                                    <div className="md:hidden flex flex-col gap-3">
+                                        {/* Main image slot — images only */}
+                                        <div className="relative w-full overflow-hidden rounded-xl bg-muted border border-gray-200 aspect-[16/10]">
                                             {images[currentImageIndex] ? (
                                                 <img
                                                     src={images[currentImageIndex]}
                                                     alt={safeDisplay(property.propertyName || property.name)}
-                                                    className="w-full h-full object-cover transition-transform duration-300 cursor-pointer"
+                                                    className="w-full h-full object-cover"
                                                     onClick={() => setFullScreenImage(images[currentImageIndex])}
                                                 />
                                             ) : (
                                                 <div className="w-full h-full bg-muted" aria-hidden />
                                             )}
-                                            
-                                            {/* Mobile portrait PDF floating button */}
+
+                                            {/* Left arrow — always visible */}
+                                            {images.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    aria-label="Previous"
+                                                    onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(p => (p - 1 + images.length) % images.length); }}
+                                                    className="absolute left-2 top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white shadow-md"
+                                                >
+                                                    <ChevronLeft className="h-5 w-5" />
+                                                </button>
+                                            )}
+
+                                            {/* Right arrow — always visible */}
+                                            {images.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    aria-label="Next"
+                                                    onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(p => (p + 1) % images.length); }}
+                                                    className="absolute right-2 top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white shadow-md"
+                                                >
+                                                    <ChevronRight className="h-5 w-5" />
+                                                </button>
+                                            )}
+
+                                            {/* Dot indicators */}
+                                            {images.length > 1 && (
+                                                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
+                                                    {images.map((_, i) => (
+                                                        <span
+                                                            key={i}
+                                                            className={`block h-1.5 rounded-full transition-all ${i === currentImageIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/50'}`}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            {/* Mobile PDF button */}
                                             {hasPdf && (
-                                                <div className="absolute top-3 right-3 z-[20] md:hidden pointer-events-none">
+                                                <div className="absolute top-3 right-3 z-[20] pointer-events-none">
                                                     <img
                                                         src="/property-details/pdf-download.png"
                                                         alt="Download PDF Brochure"
@@ -1812,12 +1847,44 @@ function PropertyDetailsContent() {
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="hidden md:block relative md:col-span-2 md:row-span-1 aspect-[4/3] md:aspect-auto z-[1] overflow-visible">
-                                            <div
-                                                className="relative h-full w-full rounded-2xl overflow-hidden cursor-pointer bg-muted border border-gray-200"
-                                                onClick={() => setFullScreenImage(images[1] || images[0])}
-                                                role="presentation"
-                                            >
+
+                                        {/* Video below the image — no thumbnail, plays directly */}
+                                        {galleryVideoUrl && (
+                                            <div className="w-full overflow-hidden rounded-xl bg-black aspect-[16/10]">
+                                                <video
+                                                    key={galleryVideoUrl}
+                                                    src={galleryVideoUrl}
+                                                    className="w-full h-full object-cover"
+                                                    controls
+                                                    playsInline
+                                                    muted
+                                                    preload="metadata"
+                                                >
+                                                    Your browser does not support the video tag.
+                                                </video>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* ── DESKTOP (≥768px): 3-col grid ── */}
+                                    <div className="property-details-gallery hidden md:grid w-full min-w-0 grid-cols-5 grid-rows-2 gap-5 h-[450px]">
+                                        {/* Left big image — spans 2 rows */}
+                                        <div className="relative col-span-3 row-span-2 rounded-2xl overflow-hidden cursor-pointer bg-muted border border-gray-200">
+                                            {images[0] ? (
+                                                <img
+                                                    src={images[0]}
+                                                    alt={safeDisplay(property.propertyName || property.name)}
+                                                    className="w-full h-full object-cover transition-transform duration-300"
+                                                    onClick={() => setFullScreenImage(images[0])}
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full bg-muted" aria-hidden />
+                                            )}
+                                        </div>
+
+                                        {/* Top-right: image[1] */}
+                                        <div className="relative col-span-2 row-span-1 rounded-2xl overflow-hidden cursor-pointer bg-muted border border-gray-200">
+                                            <div className="relative h-full w-full" onClick={() => setFullScreenImage(images[1] || images[0])}>
                                                 {(images[1] || images[0]) ? (
                                                     <img src={images[1] || images[0]} alt="" className="w-full h-full object-cover" />
                                                 ) : (
@@ -1841,50 +1908,23 @@ function PropertyDetailsContent() {
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="hidden md:block relative md:col-span-2 md:row-span-1 aspect-[4/3] md:aspect-auto z-[1] overflow-visible">
+
+                                        {/* Bottom-right: VIDEO if present (no thumbnail, plays directly), else image[2] */}
+                                        <div className="relative col-span-2 row-span-1 rounded-2xl overflow-hidden bg-muted border border-gray-200">
                                             {galleryVideoUrl ? (
                                                 <>
-                                                    <div className="relative h-full w-full overflow-hidden rounded-2xl bg-muted shadow-sm border border-gray-200">
-                                                        {galleryInlineVideoActive ? (
-                                                            <video
-                                                                key={galleryVideoUrl}
-                                                                ref={galleryInlineVideoRef}
-                                                                src={galleryVideoUrl}
-                                                                className="h-full w-full object-cover bg-black"
-                                                                controls
-                                                                playsInline
-                                                                autoPlay
-                                                                muted
-                                                                loop
-                                                                preload="auto"
-                                                                poster={galleryVideoThumb || undefined}
-                                                            >
-                                                                Your browser does not support the video tag.
-                                                            </video>
-                                                        ) : (
-                                                            <>
-                                                                {galleryVideoThumb ? (
-                                                                    <img src={galleryVideoThumb} alt="" className="h-full w-full object-cover" />
-                                                                ) : (
-                                                                    <div className="h-full w-full bg-muted" aria-hidden />
-                                                                )}
-                                                                <div className="pointer-events-none absolute inset-0 bg-black/25" aria-hidden />
-                                                                <button
-                                                                    type="button"
-                                                                    className="absolute left-1/2 top-1/2 z-[5] flex -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setGalleryInlineVideoActive(true);
-                                                                    }}
-                                                                    aria-label="Play video in gallery"
-                                                                >
-                                                                    <span className="flex h-16 w-16 items-center justify-center rounded-full bg-neutral-800/80 text-white shadow-lg ring-2 ring-white/25 md:h-[4.25rem] md:w-[4.25rem]">
-                                                                        <CirclePlay className="h-10 w-10 text-white drop-shadow-md md:h-11 md:w-11" strokeWidth={1.25} />
-                                                                    </span>
-                                                                </button>
-                                                            </>
-                                                        )}
-                                                    </div>
+                                                    <video
+                                                        key={galleryVideoUrl}
+                                                        ref={galleryInlineVideoRef}
+                                                        src={galleryVideoUrl}
+                                                        className="h-full w-full object-cover bg-black"
+                                                        controls
+                                                        playsInline
+                                                        muted
+                                                        preload="metadata"
+                                                    >
+                                                        Your browser does not support the video tag.
+                                                    </video>
                                                     <div className="gallery-watch-video-float pointer-events-none absolute z-[20]">
                                                         <button
                                                             type="button"
@@ -1892,7 +1932,6 @@ function PropertyDetailsContent() {
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 galleryInlineVideoRef.current?.pause?.();
-                                                                setGalleryInlineVideoActive(false);
                                                                 setShowVideoModal(true);
                                                             }}
                                                         >
@@ -1902,9 +1941,8 @@ function PropertyDetailsContent() {
                                                 </>
                                             ) : (
                                                 <div
-                                                    className="relative h-full w-full rounded-2xl overflow-hidden cursor-pointer bg-muted border border-gray-200"
+                                                    className="relative h-full w-full cursor-pointer"
                                                     onClick={() => setFullScreenImage(images[2] || images[0])}
-                                                    role="presentation"
                                                 >
                                                     {(images[2] || images[0]) ? (
                                                         <img src={images[2] || images[0]} alt="" className="w-full h-full object-cover" />
@@ -1915,47 +1953,60 @@ function PropertyDetailsContent() {
                                             )}
                                         </div>
                                     </div>
-                                    {images.length > 3 && (
-                                        <div className="w-full min-w-0 self-stretch pb-2 relative col-span-1">
-                                            <div ref={thumbStripRef} className="gallery-thumb-strip flex w-full min-w-0 flex-nowrap items-center gap-3 overflow-x-auto scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                                                {images.length === 0 ? null : (() => {
-                                                    const total = images.length;
-                                                    /** Dynamic cells: based on measured width, if more than visibleCount images, visibleCount-1 thumbs + "Show all" */
-                                                    const cellClass =
-                                                        "relative m-0 h-20 w-[82px] shrink-0 cursor-pointer overflow-hidden rounded-xl border border-gray-200 min-w-0";
 
-                                                    if (total <= visibleCount) {
-                                                        return images.map((img, i) => (
-                                                            <div key={i} className={cellClass} onClick={() => setCurrentImageIndex(i)}>
+                                    {/* ── DESKTOP: extra images row below grid ── */}
+                                    {/* When video is present: show image[2] + image[3]+ in thumb row */}
+                                    {/* When no video: show image[3]+ in thumb row */}
+                                    {(() => {
+                                        const extraStart = galleryVideoUrl ? 2 : 3;
+                                        const extraImages = images.slice(extraStart);
+                                        if (extraImages.length === 0) return null;
+                                        const total = extraImages.length;
+                                        const plainCount = visibleCount > 1 ? Math.min(total, visibleCount - 1) : total;
+                                        const needSeeAll = total > visibleCount;
+                                        return (
+                                            <div className="hidden md:block w-full min-w-0">
+                                                <div ref={thumbStripRef} className="gallery-thumb-strip flex w-full min-w-0 flex-nowrap items-center gap-3 overflow-x-hidden">
+                                                    {!needSeeAll ? (
+                                                        extraImages.map((img, i) => (
+                                                            <div
+                                                                key={i}
+                                                                className="relative h-20 w-[82px] shrink-0 cursor-pointer overflow-hidden rounded-xl border border-gray-200"
+                                                                onClick={() => setFullScreenImage(img)}
+                                                            >
                                                                 <img src={img} alt="" className="h-full w-full object-cover" />
                                                             </div>
-                                                        ));
-                                                    }
-                                                    const plainCount = visibleCount - 1;
-                                                    return [
-                                                        ...images.slice(0, plainCount).map((img, i) => (
-                                                            <div key={`t-${i}`} className={cellClass} onClick={() => setCurrentImageIndex(i)}>
-                                                                <img src={img} alt="" className="h-full w-full object-cover" />
-                                                            </div>
-                                                        )),
-                                                        <button
-                                                            key="show-all-thumb"
-                                                            type="button"
-                                                            className={`${cellClass} gallery-see-all-thumb border-0 p-0 text-left`}
-                                                            onClick={() => setShowAllPhotosModal(true)}
-                                                            aria-label={`See all ${total} photos`}
-                                                        >
-                                                            <img src={images[plainCount]} alt="" className="gallery-see-all-thumb__img h-full w-full object-cover" />
-                                                            <div className="gallery-see-all-thumb__wash" aria-hidden />
-                                                            <div className="absolute inset-0 flex items-center justify-center p-2">
-                                                                <span className="gallery-see-all-pill">See all</span>
-                                                            </div>
-                                                        </button>,
-                                                    ];
-                                                })()}
+                                                        ))
+                                                    ) : (
+                                                        <>
+                                                            {extraImages.slice(0, plainCount).map((img, i) => (
+                                                                <div
+                                                                    key={`t-${i}`}
+                                                                    className="relative h-20 w-[82px] shrink-0 cursor-pointer overflow-hidden rounded-xl border border-gray-200"
+                                                                    onClick={() => setFullScreenImage(img)}
+                                                                >
+                                                                    <img src={img} alt="" className="h-full w-full object-cover" />
+                                                                </div>
+                                                            ))}
+                                                            <button
+                                                                type="button"
+                                                                className="relative h-20 w-[82px] shrink-0 overflow-hidden rounded-xl border-0 p-0 text-left gallery-see-all-thumb"
+                                                                onClick={() => setShowAllPhotosModal(true)}
+                                                                aria-label={`See all ${images.length} photos`}
+                                                            >
+                                                                <img src={extraImages[plainCount] || extraImages[plainCount - 1]} alt="" className="gallery-see-all-thumb__img h-full w-full object-cover" />
+                                                                <div className="gallery-see-all-thumb__wash" aria-hidden />
+                                                                <div className="absolute inset-0 flex items-center justify-center p-2">
+                                                                    <span className="gallery-see-all-pill">See all</span>
+                                                                </div>
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
+                                        );
+                                    })()}
+
                                 </div>
                             </div>
 
@@ -2109,8 +2160,7 @@ function PropertyDetailsContent() {
                             </div>
 
                             {/* Custom Infrastructure - DB: customInfrastructure */}
-
-
+                            {/* COMMENTED OUT - Custom infrastructure section hidden
                             {normalizedInfra.length > 0 && (
                                 <div
                                     className={`rounded-xl px-5 py-6 transition-colors ${isDark ? 'bg-[#282c34]' : 'bg-[#f4f4fb]'}`}
@@ -2125,7 +2175,6 @@ function PropertyDetailsContent() {
                                                 key={`${item.name}-${i}`}
                                                 className="flex w-full max-w-[9rem] flex-col items-center justify-start text-center md:max-w-none"
                                             >
-                                                {/* Circle Background Like Below Section */}
                                                 <div
                                                     className={`flex items-center justify-center h-16 w-16 rounded-full transition-all ${isDark
                                                             ? "bg-white shadow-none"
@@ -2140,7 +2189,6 @@ function PropertyDetailsContent() {
                                                         height={32}
                                                     />
                                                 </div>
-
                                                 <p
                                                     className={`mt-3 text-center text-sm font-semibold leading-tight ${isDark ? "text-gray-200" : "text-gray-900"
                                                         } md:text-base`}
@@ -2152,6 +2200,7 @@ function PropertyDetailsContent() {
                                     </div>
                                 </div>
                             )}
+                            END COMMENT */}
 
                             {/* Amenities - DB: amenities (id, name, category) */}
                             <div className={`rounded-lg border transition-colors ${isDark ? 'border-gray-800 bg-[#1f2229]' : 'border-gray-200 theme-bg-card theme-shadow-sm'}`} id="amenities">
@@ -2288,35 +2337,39 @@ function PropertyDetailsContent() {
 
                             {/* Office Space Solutions - DB: floorConfigurations */}
                             {property.floorConfigurations && Array.isArray(property.floorConfigurations) && property.floorConfigurations.length > 0 && (() => {
-                                const configs = property.floorConfigurations;
+                                // Check if a card has ANY non-empty value in any field
+                                const cardHasData = (d) => {
+                                    if (!d || typeof d !== 'object') return false;
+                                    return Object.values(d).some(v => {
+                                        if (v === null || v === undefined || v === '' || v === false) return false;
+                                        if (typeof v === 'string' && v.trim() === '') return false;
+                                        return true;
+                                    });
+                                };
 
-                                // Check if there is actual configured data in at least one floor configuration
-                                const hasFloorData = configs.some(cfg => {
-                                    const dc = cfg.dedicatedCabin;
-                                    const df = cfg.dedicatedFloor;
-                                    const dcHasData = dc && (dc.enabled || dc.seats || dc.pricePerSeat || dc.pricePerSqft || dc.billableUnits || dc.readyToMove || dc.readyForFitOut);
-                                    const dfHasData = df && (df.enabled || df.seats || df.pricePerSeat || df.pricePerSqft || df.billableUnits || df.readyToMove || df.readyForFitOut);
-                                    return dcHasData || dfHasData;
-                                });
+                                // Only keep floors that have at least one card with any real data
+                                const configs = property.floorConfigurations.filter(cfg => cardHasData(cfg.dedicatedCabin) || cardHasData(cfg.dedicatedFloor));
 
-                                if (!hasFloorData) return null;
+                                // If no floor has any data at all, hide the whole section
+                                if (configs.length === 0) return null;
 
                                 const activeIdx = Math.min(selectedFloorConfigIdx, configs.length - 1);
                                 const activeConfig = configs[activeIdx];
 
                                 const InfoRow = ({ label, value }) => {
-                                    if (!value && value !== 0) return null;
+                                    // Always show the row — dash if empty
+                                    const display = (value !== null && value !== undefined && value !== '') ? value : '-';
                                     return (
                                         <div className={`flex items-center justify-between py-2 border-b last:border-b-0 ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
                                             <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{label}</span>
-                                            <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>{value}</span>
+                                            <span className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>{display}</span>
                                         </div>
                                     );
                                 };
 
                                 const SolutionCard = ({ title, data }) => {
-                                    if (!data) return null;
-                                    const hasData = data.enabled || data.seats || data.pricePerSeat || data.pricePerSqft || data.billableUnits || data.readyToMove || data.readyForFitOut;
+                                    // If no data object or no real values, don't render the card at all
+                                    if (!cardHasData(data)) return null;
                                     return (
                                         <div className={`flex-1 min-w-0 rounded-xl border p-5 transition-colors ${isDark ? 'border-gray-700 bg-[#282c34]' : 'border-gray-200 bg-white'}`}>
                                             <h4 className={`text-base font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>{title}</h4>
@@ -2333,7 +2386,7 @@ function PropertyDetailsContent() {
                                                         : (isDark ? 'border-gray-700 text-gray-500' : 'border-gray-200 text-gray-400')
                                                 }`}>Ready for Fit Out</span>
                                             </div>
-                                            {/* Details */}
+                                            {/* Details — always show all rows, dash if empty */}
                                             <div className="space-y-0.5">
                                                 <InfoRow label="No. of Seats" value={data.seats} />
                                                 <InfoRow label="Price Per Seat" value={data.pricePerSeat ? `₹${data.pricePerSeat}` : null} />
@@ -2342,9 +2395,6 @@ function PropertyDetailsContent() {
                                                 <InfoRow label="Available From" value={data.availableFrom} />
                                                 <InfoRow label="Timeline" value={data.timeline} />
                                             </div>
-                                            {!hasData && (
-                                                <p className={`text-sm text-center py-4 ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>No details configured</p>
-                                            )}
                                         </div>
                                     );
                                 };
@@ -2364,7 +2414,7 @@ function PropertyDetailsContent() {
                                             </p>
                                         </div>
 
-                                        {/* Floor Tabs */}
+                                        {/* Floor Tabs — always show, only for floors with data */}
                                         <div className="flex justify-center gap-2 px-6 pb-5">
                                             {configs.map((cfg, i) => (
                                                 <button
@@ -2384,7 +2434,7 @@ function PropertyDetailsContent() {
 
                                         <div className={`h-px w-full ${isDark ? 'bg-gray-800' : 'bg-gray-200'}`} />
 
-                                        {/* Two cards side by side */}
+                                        {/* Two cards side by side — cards with no data are not rendered */}
                                         <div className="p-5 md:p-6">
                                             <div className="flex flex-col sm:flex-row gap-4">
                                                 <SolutionCard title="Dedicated Cabin" data={activeConfig?.dedicatedCabin} />
