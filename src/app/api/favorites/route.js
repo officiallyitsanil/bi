@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/utils/dbConnect";
 import Favorite from "@/models/Favorite";
+import Users from "@/models/Users";
+import CommercialProperty from "@/models/CommercialProperty";
+import ResidentialProperty from "@/models/ResidentialProperty";
+import UserActionsLogs from "@/models/UserActionsLogs";
 
 // GET - Fetch user's favorites
 export async function GET(request) {
@@ -70,6 +74,40 @@ export async function POST(request) {
         propertyType,
       });
 
+      // Log the add_favorite action
+      try {
+        const user = await Users.findOne({ phoneNumber: userPhoneNumber });
+        let property = null;
+        if (propertyType === "commercial") {
+          property = await CommercialProperty.findById(propertyId);
+        } else if (propertyType === "residential") {
+          property = await ResidentialProperty.findById(propertyId);
+        }
+
+        const ipAddress = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 
+                          request.headers.get('x-real-ip')?.trim() || 
+                          '127.0.0.1';
+        const device = request.headers.get('user-agent') || 'unknown';
+
+        await UserActionsLogs.create({
+          userPhoneNumber: userPhoneNumber || '',
+          userName: user?.name || '',
+          userEmail: user?.email || '',
+          actionType: 'add_favorite',
+          ipAddress,
+          device,
+          location: property?.address?.city || property?.city || '',
+          details: {
+            propertyId: propertyId || '',
+            propertyName: property?.propertyName || property?.name || '',
+            brandName: property?.builderDetails?.builderName || property?.brandDetails?.name || property?.builderName || property?.builder || '',
+            propertyType: propertyType
+          }
+        });
+      } catch (logErr) {
+        console.error("Failed to log add_favorite action:", logErr);
+      }
+
       return NextResponse.json({
         success: true,
         message: "Property added to favorites",
@@ -89,6 +127,40 @@ export async function POST(request) {
           message: "Favorite not found",
           isFavorite: false,
         });
+      }
+
+      // Log the remove_favorite action
+      try {
+        const user = await Users.findOne({ phoneNumber: userPhoneNumber });
+        let property = null;
+        if (propertyType === "commercial") {
+          property = await CommercialProperty.findById(propertyId);
+        } else if (propertyType === "residential") {
+          property = await ResidentialProperty.findById(propertyId);
+        }
+
+        const ipAddress = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 
+                          request.headers.get('x-real-ip')?.trim() || 
+                          '127.0.0.1';
+        const device = request.headers.get('user-agent') || 'unknown';
+
+        await UserActionsLogs.create({
+          userPhoneNumber: userPhoneNumber || '',
+          userName: user?.name || '',
+          userEmail: user?.email || '',
+          actionType: 'remove_favorite',
+          ipAddress,
+          device,
+          location: property?.address?.city || property?.city || '',
+          details: {
+            propertyId: propertyId || '',
+            propertyName: property?.propertyName || property?.name || '',
+            brandName: property?.builderDetails?.builderName || property?.brandDetails?.name || property?.builderName || property?.builder || '',
+            propertyType: propertyType
+          }
+        });
+      } catch (logErr) {
+        console.error("Failed to log remove_favorite action:", logErr);
       }
 
       return NextResponse.json({

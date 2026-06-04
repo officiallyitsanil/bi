@@ -1,3 +1,5 @@
+import { logUserAction } from './actionLogger';
+
 export const loginUser = (userData) => {
     try {
         const userDataString = JSON.stringify(userData);
@@ -10,6 +12,7 @@ export const loginUser = (userData) => {
 
 export const logoutUser = () => {
     try {
+        logUserAction('logout');
         localStorage.removeItem('currentUser');
         window.dispatchEvent(new CustomEvent('onAuthChange'));
     } catch (error) {

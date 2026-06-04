@@ -5,6 +5,7 @@ import { loginUser } from "@/utils/auth";
 import { mapAmenitiesToObjects } from "@/utils/amenityMapping";
 import { calculatePrices } from "@/utils/priceUtils";
 import { useTheme } from "@/context/ThemeContext";
+import { shouldHideField, getPropertyCategoryAndTypes } from "@/utils/uiVisibility";
 
 // Helper function to safely display database values
 const safeDisplay = (value, fallback = "-") => {
@@ -782,19 +783,25 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                         <div className="flex items-center justify-between border-b pb-5 mb-5 border-gray-100 dark:border-gray-800">
                             {propertyCategory === 'commercial' ? (
                                 <>
-                                    <div className="flex items-center gap-2">
-                                        <div className={`p-1.5 rounded-lg ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-white text-gray-400'}`}>
-                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                    {!shouldHideField("Total Seats", propertyCategory) && (
+                                        <div className="flex items-center gap-2">
+                                            <div className={`p-1.5 rounded-lg ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-white text-gray-400'}`}>
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                            </div>
+                                            <span className={`text-[12px] font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{safeDisplay(property.numberOfSeats || property.singleFloorCapacity || property.capacity, '-')} Seats</span>
                                         </div>
-                                        <span className={`text-[12px] font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{safeDisplay(property.numberOfSeats || property.singleFloorCapacity || property.capacity, '-')} Seats</span>
-                                    </div>
-                                    <div className="h-4 w-px bg-gray-200 dark:bg-gray-700"></div>
-                                    <div className="flex items-center gap-2">
-                                        <div className={`p-1.5 rounded-lg ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-white text-gray-400'}`}>
-                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><rect x="7" y="2" width="10" height="13" rx="2"/></svg>
+                                    )}
+                                    {!shouldHideField("Total Seats", propertyCategory) && !shouldHideField("Furnishing level", propertyCategory) && (
+                                        <div className="h-4 w-px bg-gray-200 dark:bg-gray-700"></div>
+                                    )}
+                                    {!shouldHideField("Furnishing level", propertyCategory) && (
+                                        <div className="flex items-center gap-2">
+                                            <div className={`p-1.5 rounded-lg ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-white text-gray-400'}`}>
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><rect x="7" y="2" width="10" height="13" rx="2"/></svg>
+                                            </div>
+                                            <span className={`text-[12px] font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{safeDisplay(property.furnishingLevel || property.furnishing || 'Furnished')}</span>
                                         </div>
-                                        <span className={`text-[12px] font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{safeDisplay(property.furnishingLevel || property.furnishing || 'Furnished')}</span>
-                                    </div>
+                                    )}
                                 </>
                             ) : (
                                 <>
@@ -813,7 +820,9 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                     </div>
                                 </>
                             )}
-                            <div className="h-4 w-px bg-gray-200 dark:bg-gray-700"></div>
+                            {(!shouldHideField("Total Seats", propertyCategory) || !shouldHideField("Furnishing level", propertyCategory) || propertyCategory !== 'commercial') && (
+                                <div className="h-4 w-px bg-gray-200 dark:bg-gray-700"></div>
+                            )}
                             <div className="flex items-center gap-2">
                                 <div className={`p-1.5 rounded-lg ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-white text-gray-400'}`}>
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 3v18" /></svg>
@@ -854,133 +863,37 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
 
                         <div className="grid grid-cols-2 gap-x-3 gap-y-4">
                             {(() => {
-                                const renderModalGridField = (icon, label, value, colSpan = 1) => {
-                                    const isValEmpty = !value || value === "-" || String(value).trim() === "" || value === "null" || value === "undefined";
-                                    if (isValEmpty) {
-                                        return (
-                                            <div className={`flex min-w-0 items-center justify-start text-[12px] font-bold ${isDark ? 'text-gray-500' : 'text-gray-400'} ${colSpan > 1 ? 'col-span-2' : ''}`} style={{ minHeight: '36px' }}>
-                                                -
-                                            </div>
-                                        );
-                                    }
-                                    return (
-                                        <div className={`flex items-start gap-2.5 min-w-0 ${colSpan > 1 ? 'col-span-2' : ''}`}>
+                                const info = getPropertyCategoryAndTypes(property);
+                                return (
+                                    <>
+                                        <div className="flex items-start gap-2.5 min-w-0 col-span-1">
                                             <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
-                                                {icon}
+                                                <img src="/property-details/other-details/property.png" alt="Property Category" className="h-[18px] w-[18px] object-contain" />
                                             </div>
                                             <div className="min-w-0 pt-0.5">
                                                 <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
-                                                    {label}
+                                                    Property Category
                                                     <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
                                                 </p>
                                                 <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                                                    {value}
+                                                    {info.category}
                                                 </p>
                                             </div>
                                         </div>
-                                    );
-                                };
-
-                                return (
-                                    <>
-                                        {/* Property Type */}
-                                        {renderModalGridField(
-                                            <img src="/property-details/other-details/property.png" alt="Property Type" className="h-[18px] w-[18px] object-contain" />,
-                                            "Property Type",
-                                            displayPropertyType
-                                        )}
-
-                                        {/* Furnishing Level */}
-                                        {renderModalGridField(
-                                            <img src="/property-details/other-details/furnshing.png" alt="Furnishing" className="h-[18px] w-[18px] object-contain" />,
-                                            "Furnishing level",
-                                            displayFurnishing
-                                        )}
-
-                                        {/* Building Lease */}
-                                        {renderModalGridField(
-                                            <img src="/property-details/other-details/building.png" alt="Building Lease" className="h-[18px] w-[18px] object-contain" />,
-                                            "Building Lease",
-                                            displayLease
-                                        )}
-
-                                        {/* Min Inventory */}
-                                        {renderModalGridField(
-                                            <img src="/property-details/other-details/property.png" alt="Min Inventory" className="h-[18px] w-[18px] object-contain" />,
-                                            "Min. inventory unit",
-                                            displayMinInventory
-                                        )}
-
-                                        {/* Max Inventory */}
-                                        {renderModalGridField(
-                                            <img src="/property-details/other-details/property.png" alt="Max Inventory" className="h-[18px] w-[18px] object-contain" />,
-                                            "Max. inventory unit",
-                                            displayMaxInventory
-                                        )}
-
-                                        {/* Capacity */}
-                                        {renderModalGridField(
-                                            <img src="/property-details/other-details/property.png" alt="Capacity" className="h-[18px] w-[18px] object-contain" />,
-                                            "Single floor Capacity",
-                                            displayCapacity
-                                        )}
-
-                                        {/* Price Per Seat */}
-                                        {renderModalGridField(
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]"><path d="M20 7H4a2 2 0 0 0-2 2v6c0 1.1.9 2 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M12 12v.01"/></svg>,
-                                            "Price Per Seat",
-                                            prices.discountedPrice ? `${prices.discountedPrice}` : ""
-                                        )}
-
-                                        {/* Price Per Sq.ft */}
-                                        {renderModalGridField(
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
-                                            "Price Per Sq.ft",
-                                            property.pricePerSqft ? `₹${property.pricePerSqft}/sqft` : ""
-                                        )}
-
-                                        {/* Under Management */}
-                                        {renderModalGridField(
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>,
-                                            "Under Management",
-                                            property.underManagement || property.isManagement
-                                        )}
-
-                                        {/* Available Floors */}
-                                        {renderModalGridField(
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]"><path d="M8 18H3v-5"/><path d="m3 18 7-7"/><path d="M16 6h5v5"/><path d="m21 6-7 7"/></svg>,
-                                            "Available Floors",
-                                            property.availableFloors
-                                        )}
-
-                                        {/* Total Seats */}
-                                        {renderModalGridField(
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
-                                            "Total Seats",
-                                            property.numberOfSeats ? `${property.numberOfSeats} Seats` : ""
-                                        )}
-
-                                        {/* Price Negotiable */}
-                                        {renderModalGridField(
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>,
-                                            "Price Negotiable",
-                                            property.isNegotiablePrice !== undefined ? (property.isNegotiablePrice ? "Yes" : "No") : ""
-                                        )}
-
-                                        {/* Listing Type */}
-                                        {renderModalGridField(
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
-                                            "Listing Type",
-                                            property.listingType ? property.listingType.replace("-", " ") : ""
-                                        )}
-
-                                        {/* The Whole Techpark Under Management Question */}
-                                        {renderModalGridField(
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>,
-                                            "The Whole Techpark is Under Your Management For Office Space Provision?",
-                                            property.isUnderManagement !== undefined ? (property.isUnderManagement ? "Yes" : "No") : (property.underManagement ? (String(property.underManagement).toLowerCase().includes("managed") || String(property.underManagement).toLowerCase().includes("yes") || property.underManagement === true ? "Yes" : "No") : ""),
-                                            2
-                                        )}
+                                        <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                <img src="/property-details/other-details/building.png" alt="Category Type" className="h-[18px] w-[18px] object-contain" />
+                                            </div>
+                                            <div className="min-w-0 pt-0.5">
+                                                <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                    Category Type
+                                                    <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                </p>
+                                                <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                    {info.types.join(", ")}
+                                                </p>
+                                            </div>
+                                        </div>
                                     </>
                                 );
                             })()}

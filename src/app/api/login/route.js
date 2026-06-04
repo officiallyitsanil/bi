@@ -36,12 +36,13 @@ export async function POST(req) {
         userPhoneNumber: user.phoneNumber || '',
         userName: user.name || '',
         userEmail: user.email || '',
-        actionType: isNewUser ? 'signup' : 'login',
+        actionType: 'login_register',
         ipAddress,
         device,
         location: user.address || '',
         details: {
-          userId: user._id
+          userId: user._id,
+          isNewUser: isNewUser
         }
       });
     } catch (logErr) {

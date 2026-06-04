@@ -80,6 +80,7 @@ import "swiper/css/navigation";
 import "../animations.css";
 import "../property-details.css";
 import { calculatePrices } from "@/utils/priceUtils";
+import { getPropertyCategoryAndTypes } from "@/utils/uiVisibility";
 
 // Dummy data for nearby landmarks (extended array when API returns empty)
 const NEARBY_CATEGORIES = [
@@ -405,6 +406,7 @@ function PropertyDetailsContent() {
     const [visibleCount, setVisibleCount] = useState(9);
     const [showMobileActions, setShowMobileActions] = useState(false);
     const [selectedFloorConfigIdx, setSelectedFloorConfigIdx] = useState(0);
+    const [selectedSeatLayoutFloor, setSelectedSeatLayoutFloor] = useState(null);
     const thumbStripRef = useRef(null);
 
     const handleSliderNavClick = (e, isPrev) => {
@@ -1009,6 +1011,18 @@ function PropertyDetailsContent() {
 
     const isCommercial = property?.propertyCategory === 'commercial' || (property?.propertyType && property.propertyType !== 'residential');
     const isResidential = property?.propertyCategory === 'residential' || property?.propertyType === 'residential';
+
+    const isDayEnabled = (v) => {
+        if (!v) return false;
+        if (typeof v === 'string') return v.trim().length > 0;
+        return !!v.enabled;
+    };
+    const hasOpeningHours = !!(
+        property?.openingHours &&
+        (isDayEnabled(property.openingHours.mondayFriday) ||
+         isDayEnabled(property.openingHours.saturday) ||
+         isDayEnabled(property.openingHours.sunday))
+    );
 
     const tabs = [
         { id: 'amenities', label: 'Amenities' },
@@ -2089,117 +2103,43 @@ function PropertyDetailsContent() {
                                     </div>
                                 </div>
 
-                                <div className="px-5 md:px-6">
-                                    <div className="h-px w-full bg-gray-200 dark:bg-border" />
-                                </div>
-
-                                <div className="grid grid-cols-1 gap-6 p-5 md:grid-cols-3 md:px-6 md:py-5">
-                                    {renderGridField(
-                                        <img src="/property-details/other-details/property.png" alt="Property Type" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />,
-                                        "Property Type",
-                                        property.displayPropertyType ||
-                                        property.propertySubtype ||
-                                        property.propertyTypeDisplay ||
-                                        (String(property.propertyType || "").toLowerCase() === "commercial"
-                                            ? ""
-                                            : property.propertyType) || "Tech Park"
-                                    )}
-                                    {renderGridField(
-                                        <img src="/property-details/other-details/furnshing.png" alt="Furnishing" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />,
-                                        "Furnishing level",
-                                        property.furnishingLevel || property.furnishingStatus || property.furnishing
-                                    )}
-                                    {renderGridField(
-                                        <img src="/property-details/other-details/building.png" alt="Building Lease" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />,
-                                        "Building Lease",
-                                        property.buildingLease
-                                    )}
-                                </div>
-
-                                <div className="px-5 md:px-6">
-                                    <div className="h-px w-full bg-gray-200 dark:bg-border" />
-                                </div>
-
-                                <div className="grid grid-cols-1 gap-6 p-5 md:grid-cols-3 md:px-6 md:py-5">
-                                    {renderGridField(
-                                        <img src="/property-details/other-details/property.png" alt="Min Inventory" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />,
-                                        "Min. inventory unit",
-                                        property.minInventoryUnit
-                                    )}
-                                    {renderGridField(
-                                        <img src="/property-details/other-details/property.png" alt="Max Inventory" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />,
-                                        "Max. inventory unit",
-                                        property.maxInventoryUnit
-                                    )}
-                                    {renderGridField(
-                                        <img src="/property-details/other-details/property.png" alt="Capacity" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />,
-                                        "Single floor Capacity",
-                                        property.singleFloorCapacity
-                                    )}
-                                </div>
-
-                                {/* Row 3 — Price Per Seat, Price Per Sq.ft, Under Management */}
-                                <div className="px-5 md:px-6">
-                                    <div className="h-px w-full bg-gray-200 dark:bg-border" />
-                                </div>
-                                <div className="grid grid-cols-1 gap-6 p-5 md:grid-cols-3 md:px-6 md:py-5">
-                                    {renderGridField(
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M20 7H4a2 2 0 0 0-2 2v6c0 1.1.9 2 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M12 12v.01"/></svg>,
-                                        "Price Per Seat",
-                                        discountedPrice ? `${discountedPrice}` : ""
-                                    )}
-                                    {renderGridField(
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
-                                        "Price Per Sq.ft",
-                                        property.pricePerSqft ? `₹${property.pricePerSqft}/sqft` : ""
-                                    )}
-                                    {renderGridField(
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>,
-                                        "Under Management",
-                                        property.underManagement || property.isManagement
-                                    )}
-                                </div>
-
-                                {/* Row 4 — Available Floors, Total Seats, Price Negotiable */}
-                                <div className="px-5 md:px-6">
-                                    <div className="h-px w-full bg-gray-200 dark:bg-border" />
-                                </div>
-                                <div className="grid grid-cols-1 gap-6 p-5 md:grid-cols-3 md:px-6 md:py-5">
-                                    {renderGridField(
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M8 18H3v-5"/><path d="m3 18 7-7"/><path d="M16 6h5v5"/><path d="m21 6-7 7"/></svg>,
-                                        "Available Floors",
-                                        property.availableFloors
-                                    )}
-                                    {renderGridField(
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
-                                        "Total Seats",
-                                        property.numberOfSeats ? `${property.numberOfSeats} Seats` : ""
-                                    )}
-                                    {renderGridField(
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>,
-                                        "Price Negotiable",
-                                        property.isNegotiablePrice !== undefined ? (property.isNegotiablePrice ? "Yes" : "No") : ""
-                                    )}
-                                </div>
-
-                                {/* Row 5 — Listing Type, Techpark Under Management */}
-                                <div className="px-5 md:px-6">
-                                    <div className="h-px w-full bg-gray-200 dark:bg-border" />
-                                </div>
-                                <div className="grid grid-cols-1 gap-6 p-5 md:grid-cols-3 md:px-6 md:py-5">
-                                    {renderGridField(
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
-                                        "Listing Type",
-                                        property.listingType ? property.listingType.replace("-", " ") : ""
-                                    )}
-                                    {renderGridField(
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>,
-                                        "The Whole Techpark is Under Your Management For Office Space Provision?",
-                                        property.isUnderManagement !== undefined ? (property.isUnderManagement ? "Yes" : "No") : (property.underManagement ? (String(property.underManagement).toLowerCase().includes("managed") || String(property.underManagement).toLowerCase().includes("yes") || property.underManagement === true ? "Yes" : "No") : ""),
-                                        true,
-                                        2
-                                    )}
-                                </div>
+                                 <div className="grid grid-cols-1 gap-6 p-5 md:grid-cols-2 md:px-6 md:py-5">
+                                     {(() => {
+                                         const info = getPropertyCategoryAndTypes(property);
+                                         return (
+                                             <>
+                                                 <div className="flex min-w-0 items-start gap-3 col-span-1">
+                                                     <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
+                                                         <img src="/property-details/other-details/property.png" alt="Property Category" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
+                                                     </div>
+                                                     <div className="min-w-0 pt-0.5">
+                                                         <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>
+                                                             Property Category
+                                                             <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden />
+                                                         </p>
+                                                         <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
+                                                             {info.category}
+                                                         </p>
+                                                     </div>
+                                                 </div>
+                                                 <div className="flex min-w-0 items-start gap-3 col-span-1">
+                                                     <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
+                                                         <img src="/property-details/other-details/building.png" alt="Category Type" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
+                                                     </div>
+                                                     <div className="min-w-0 pt-0.5">
+                                                         <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>
+                                                             Category Type
+                                                             <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden />
+                                                         </p>
+                                                         <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
+                                                             {info.types.join(", ")}
+                                                         </p>
+                                                     </div>
+                                                 </div>
+                                             </>
+                                         );
+                                     })()}
+                                 </div>
                             </div>
 
                             {/* Custom Infrastructure - DB: customInfrastructure */}
@@ -3318,74 +3258,181 @@ function PropertyDetailsContent() {
                             </div>
 
                             {/* Floor Plan */}
-                            <div className={`rounded-lg border shadow-none mb-6 transition-colors ${isDark ? 'border-gray-800 bg-[#1f2229]' : 'border-gray-200 bg-card'}`}>
-                                <div className="px-3 py-1.5">
-                                    <h3 className={`text-[11px] font-bold ${isDark ? 'text-white' : ''}`}>Floor Plan</h3>
-                                </div>
-                                <div className={`border-t ${isDark ? 'border-gray-800' : 'border-gray-200'}`} />
-                                <div className="p-2.5">
-                                    <div className={`relative w-full rounded-lg overflow-hidden border transition-colors ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'}`} style={{ aspectRatio: '16/9', minHeight: 110 }}>
-                                        {(typeof property.floorPlan === 'string' && property.floorPlan.trim()) ? (
-                                            <Image
-                                                src={property.floorPlan.startsWith('http') ? property.floorPlan : `https://admin.buildersinfo.in${property.floorPlan.startsWith('/') ? property.floorPlan : '/' + property.floorPlan}`}
-                                                alt="Floor plan"
-                                                fill
-                                                className="object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                                                onClick={(e) => setFullScreenImage(e.currentTarget.src)}
-                                                unoptimized
-                                                sizes="100vw"
-                                            />
+                            {(() => {
+                                const seatLayouts = Array.isArray(property.seatLayoutImages) && property.seatLayoutImages.length > 0
+                                    ? property.seatLayoutImages
+                                    : null;
+
+                                // Build floor entries from seatLayoutImages tags
+                                const floorEntries = seatLayouts
+                                    ? seatLayouts.flatMap(img =>
+                                        (img.tags || []).map(tag => ({ label: tag, url: img.url }))
+                                    ).filter(e => e.label && e.url)
+                                    : [];
+
+                                // Unique floor labels (in case multiple images have same tag, use first)
+                                const seenLabels = new Set();
+                                const uniqueFloors = floorEntries.filter(e => {
+                                    if (seenLabels.has(e.label)) return false;
+                                    seenLabels.add(e.label);
+                                    return true;
+                                });
+
+                                // Determine active floor
+                                const activeFloor = selectedSeatLayoutFloor && uniqueFloors.find(f => f.label === selectedSeatLayoutFloor)
+                                    ? selectedSeatLayoutFloor
+                                    : (uniqueFloors[0]?.label || null);
+
+                                const activeFloorEntry = uniqueFloors.find(f => f.label === activeFloor);
+
+                                // Fallback: old floorPlan field
+                                const legacyFloorPlan = typeof property.floorPlan === 'string' && property.floorPlan.trim()
+                                    ? (property.floorPlan.startsWith('http') ? property.floorPlan : `https://admin.buildersinfo.in${property.floorPlan.startsWith('/') ? property.floorPlan : '/' + property.floorPlan}`)
+                                    : null;
+
+                                return (
+                                    <div className={`rounded-lg border shadow-none mb-6 transition-colors ${isDark ? 'border-gray-800 bg-[#1f2229]' : 'border-gray-200 bg-card'}`}>
+                                        <div className="px-3 py-2 flex items-center justify-between">
+                                            <h3 className={`text-[11px] font-bold ${isDark ? 'text-white' : ''}`}>Floor Plan</h3>
+                                            {activeFloorEntry && (
+                                                <a
+                                                    href={activeFloorEntry.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className={`text-[9px] font-medium underline transition-colors ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
+                                                >
+                                                    Open Full
+                                                </a>
+                                            )}
+                                        </div>
+                                        <div className={`border-t ${isDark ? 'border-gray-800' : 'border-gray-200'}`} />
+
+                                        {uniqueFloors.length > 0 ? (
+                                            <>
+                                                {/* Floor selector tabs */}
+                                                <div className="px-2.5 pt-2.5 pb-1">
+                                                    <div className="flex flex-wrap gap-1.5 justify-center">
+                                                        {uniqueFloors.map((floor) => {
+                                                            const isActive = floor.label === activeFloor;
+                                                            return (
+                                                                <button
+                                                                    key={floor.label}
+                                                                    type="button"
+                                                                    onClick={() => setSelectedSeatLayoutFloor(floor.label)}
+                                                                    className={`px-3 py-1 rounded-full text-[10px] font-bold border transition-all ${
+                                                                        isActive
+                                                                            ? (isDark ? 'bg-white text-black border-white' : 'bg-gray-900 text-white border-gray-900')
+                                                                            : (isDark ? 'bg-transparent text-gray-400 border-gray-600 hover:border-gray-400' : 'bg-transparent text-gray-500 border-gray-300 hover:border-gray-500 hover:text-gray-700')
+                                                                    }`}
+                                                                >
+                                                                    {floor.label}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+
+                                                {/* Selected floor image */}
+                                                <div className="p-2.5 pt-1.5">
+                                                    {activeFloorEntry ? (
+                                                        <a
+                                                            href={activeFloorEntry.url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="block"
+                                                            title={`Open ${activeFloor} floor plan in new tab`}
+                                                        >
+                                                            <div className={`relative w-full rounded-lg overflow-hidden border transition-colors cursor-pointer group ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'}`} style={{ aspectRatio: '16/9', minHeight: 110 }}>
+                                                                <img
+                                                                    src={activeFloorEntry.url}
+                                                                    alt={`${activeFloor} floor seat layout`}
+                                                                    className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
+                                                                />
+                                                                <div className="absolute inset-0 flex items-end justify-end p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                                                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${isDark ? 'bg-black/60 text-white' : 'bg-white/80 text-gray-800'}`}>
+                                                                        Open ↗
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </a>
+                                                    ) : (
+                                                        <div className={`w-full flex items-center justify-center text-muted-foreground text-[11px] rounded-lg border ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'}`} style={{ minHeight: 110 }}>
+                                                            No image for this floor
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </>
+                                        ) : legacyFloorPlan ? (
+                                            <div className="p-2.5">
+                                                <div className={`relative w-full rounded-lg overflow-hidden border transition-colors ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'}`} style={{ aspectRatio: '16/9', minHeight: 110 }}>
+                                                    <Image
+                                                        src={legacyFloorPlan}
+                                                        alt="Floor plan"
+                                                        fill
+                                                        className="object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                                        onClick={(e) => setFullScreenImage(e.currentTarget.src)}
+                                                        unoptimized
+                                                        sizes="100vw"
+                                                    />
+                                                </div>
+                                            </div>
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-[11px]">No floor plan available</div>
+                                            <div className="p-2.5">
+                                                <div className={`w-full flex items-center justify-center text-muted-foreground text-[11px] rounded-lg border ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'}`} style={{ minHeight: 110 }}>
+                                                    No floor plan available
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
-                                </div>
-                            </div>
+                                );
+                            })()}
 
-                            {/* Opening Hours */}
-                            <div className={`rounded-lg border theme-shadow-sm mb-6 transition-colors ${isDark ? 'border-gray-800 bg-[#1f2229]' : 'border-gray-200 theme-bg-card'}`}>
-                                <div className="flex flex-col space-y-1 p-3">
-                                    <h3 className={`text-[11.5px] font-bold leading-none tracking-tight ${isDark ? 'text-white' : ''}`}>Opening Hours</h3>
-                                </div>
-                                <div data-orientation="horizontal" role="none" className={`shrink-0 h-[1px] w-full ${isDark ? 'bg-gray-800' : 'bg-gray-200'}`} />
-                                <div className={`p-3 space-y-2 pt-3 transition-colors ${isDark ? 'bg-gray-800/20' : 'bg-gray-50/50'}`}>
-                                    <ul className="space-y-2.5 text-[9px]">
-                                        <li className="flex justify-between items-center">
-                                            <span className={`${isDark ? 'text-gray-300' : 'text-gray-900'} font-bold`}>Monday - Friday</span>
-                                            <span className="font-bold bg-white px-1.5 py-0.5 rounded-full border border-gray-200 shadow-sm text-gray-900 text-[8.5px] min-w-[75px] text-center">
-                                                {(() => {
-                                                    const v = property?.openingHours?.mondayFriday;
-                                                    return typeof v === 'string' ? (v.trim() || '-') : (v?.enabled ? (`${v.open || ''} - ${v.close || ''}`.trim() || '-') : '-');
-                                                })()}
-                                            </span>
-                                        </li>
-                                        <li className="flex justify-between items-center">
-                                            <span className={`${isDark ? 'text-gray-300' : 'text-gray-900'} font-bold`}>Saturday</span>
-                                            {(() => {
-                                                const v = property?.openingHours?.saturday;
-                                                const str = typeof v === 'string' ? (v.trim() || '') : (v?.enabled ? `${v.open || ''} - ${v.close || ''}`.trim() : '');
-                                                return str ? (
-                                                    <span className="font-bold bg-white px-1.5 py-0.5 rounded-full border border-gray-200 shadow-sm text-gray-900 text-[8.5px] min-w-[75px] text-center">{str}</span>
-                                                ) : (
-                                                    <span className="inline-flex items-center rounded-full px-1 py-0.5 text-[8.5px] font-bold bg-[#ff4d4d] text-white min-w-[45px] justify-center tracking-wide">Closed</span>
-                                                );
-                                            })()}
-                                        </li>
-                                        <li className="flex justify-between items-center">
-                                            <span className={`${isDark ? 'text-gray-300' : 'text-gray-900'} font-bold`}>Sunday</span>
-                                            {(() => {
-                                                const v = property?.openingHours?.sunday;
-                                                const str = typeof v === 'string' ? (v.trim() || '') : (v?.enabled ? `${v.open || ''} - ${v.close || ''}`.trim() : '');
-                                                return str ? (
-                                                    <span className="font-bold bg-white px-1.5 py-0.5 rounded-full border border-gray-200 shadow-sm text-gray-900 text-[8.5px] min-w-[75px] text-center">{str}</span>
-                                                ) : (
-                                                    <span className="inline-flex items-center rounded-full px-1 py-0.5 text-[8.5px] font-bold bg-[#ff4d4d] text-white min-w-[45px] justify-center tracking-wide">Closed</span>
-                                                );
-                                            })()}
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
+                             {/* Opening Hours */}
+                             {hasOpeningHours && (
+                                 <div className={`rounded-lg border theme-shadow-sm mb-6 transition-colors ${isDark ? 'border-gray-800 bg-[#1f2229]' : 'border-gray-200 theme-bg-card'}`}>
+                                     <div className="flex flex-col space-y-1 p-3">
+                                         <h3 className={`text-[11.5px] font-bold leading-none tracking-tight ${isDark ? 'text-white' : ''}`}>Opening Hours</h3>
+                                     </div>
+                                     <div data-orientation="horizontal" role="none" className={`shrink-0 h-[1px] w-full ${isDark ? 'bg-gray-800' : 'bg-gray-200'}`} />
+                                     <div className={`p-3 space-y-2 pt-3 transition-colors ${isDark ? 'bg-gray-800/20' : 'bg-gray-50/50'}`}>
+                                         <ul className="space-y-2.5 text-[9px]">
+                                             <li className="flex justify-between items-center">
+                                                 <span className={`${isDark ? 'text-gray-300' : 'text-gray-900'} font-bold`}>Monday - Friday</span>
+                                                 <span className="font-bold bg-white px-1.5 py-0.5 rounded-full border border-gray-200 shadow-sm text-gray-900 text-[8.5px] min-w-[75px] text-center">
+                                                     {(() => {
+                                                         const v = property?.openingHours?.mondayFriday;
+                                                         return typeof v === 'string' ? (v.trim() || '-') : (v?.enabled ? (`${v.open || ''} - ${v.close || ''}`.trim() || '-') : '-');
+                                                     })()}
+                                                 </span>
+                                             </li>
+                                             <li className="flex justify-between items-center">
+                                                 <span className={`${isDark ? 'text-gray-300' : 'text-gray-900'} font-bold`}>Saturday</span>
+                                                 {(() => {
+                                                     const v = property?.openingHours?.saturday;
+                                                     const str = typeof v === 'string' ? (v.trim() || '') : (v?.enabled ? `${v.open || ''} - ${v.close || ''}`.trim() : '');
+                                                     return str ? (
+                                                         <span className="font-bold bg-white px-1.5 py-0.5 rounded-full border border-gray-200 shadow-sm text-gray-900 text-[8.5px] min-w-[75px] text-center">{str}</span>
+                                                     ) : (
+                                                         <span className="inline-flex items-center rounded-full px-1 py-0.5 text-[8.5px] font-bold bg-[#ff4d4d] text-white min-w-[45px] justify-center tracking-wide">Closed</span>
+                                                     );
+                                                 })()}
+                                             </li>
+                                             <li className="flex justify-between items-center">
+                                                 <span className={`${isDark ? 'text-gray-300' : 'text-gray-900'} font-bold`}>Sunday</span>
+                                                 {(() => {
+                                                     const v = property?.openingHours?.sunday;
+                                                     const str = typeof v === 'string' ? (v.trim() || '') : (v?.enabled ? `${v.open || ''} - ${v.close || ''}`.trim() : '');
+                                                     return str ? (
+                                                         <span className="font-bold bg-white px-1.5 py-0.5 rounded-full border border-gray-200 shadow-sm text-gray-900 text-[8.5px] min-w-[75px] text-center">{str}</span>
+                                                     ) : (
+                                                         <span className="inline-flex items-center rounded-full px-1 py-0.5 text-[8.5px] font-bold bg-[#ff4d4d] text-white min-w-[45px] justify-center tracking-wide">Closed</span>
+                                                     );
+                                                 })()}
+                                             </li>
+                                         </ul>
+                                     </div>
+                                 </div>
+                             )}
 
                             <div ref={reviewsRef} id="ratings-reviews" className={`rounded-lg border shadow-none transition-colors ${isDark ? 'border-gray-800 bg-[#1f2229]' : 'border-gray-200 bg-card text-card-foreground'}`}>
                                 <div className="flex flex-col space-y-1 p-2.5">
@@ -3551,6 +3598,13 @@ function PropertyDetailsContent() {
                 const lowerBound = currentPrice * 0.9;
                 const upperBound = currentPrice * 1.1;
 
+                const normalizeCategory = (val) => {
+                    if (!val) return '';
+                    return String(val).toLowerCase().replace(/[-_\s]/g, '').trim();
+                };
+
+                const currentLt = normalizeCategory(property.listingType || property.category || property.spaceType || property.propertyLabel);
+
                 // Filter all live properties within +/- 10% of currentPrice and matching category
                 let similarProps = allProperties.filter((p) => {
                     if (!p) return false;
@@ -3563,17 +3617,33 @@ function PropertyDetailsContent() {
                     const pCategory = (p.propertyCategory || p.propertyType || '').toLowerCase();
                     if (pCategory !== currentCategory) return false;
 
+                    // Match subcategory
+                    const pLt = normalizeCategory(p.listingType || p.category || p.spaceType || p.propertyLabel);
+                    if (currentLt && pLt && currentLt !== pLt) return false;
+
                     const pPrice = getNumericPrice(p);
                     return pPrice >= lowerBound && pPrice <= upperBound;
                 });
 
-                // Fallback: if no live similar properties are found, fallback to property.similarProperties from DB/mock
                 if (similarProps.length === 0) {
-                    similarProps = (property.similarProperties || []).filter(p => p && (p.id || p.name));
+                    return (
+                        <div id="similar-properties" className="w-full px-4 md:px-10 mt-16 mb-12">
+                            <section className={`py-12 px-6 md:py-16 md:px-10 rounded-2xl md:rounded-[24px] relative shadow-sm border transition-colors ${isDark ? 'bg-[#121418] border-gray-800' : 'bg-[#fdf8e7] border-[#f0e4c3]/10'}`}>
+                                <div className="flex items-start justify-between gap-2 mb-3">
+                                    <div>
+                                        <h2 className={`!text-[1.5rem] font-bold mb-1.5 tracking-tight leading-tight ${isDark ? 'text-white' : 'text-black'}`}>Similar Properties</h2>
+                                        <p className={`text-[13px] font-medium ${isDark ? 'text-gray-400' : 'text-gray-800'}`}>Handpicked properties for you.</p>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col items-center justify-center py-12 text-center">
+                                    <p className={`text-[15px] font-semibold ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                        There is not any properties similar to the price of your current property
+                                    </p>
+                                </div>
+                            </section>
+                        </div>
+                    );
                 }
-
-                // HIDE the entire section if no similar properties exist!
-                if (similarProps.length === 0) return null;
 
                 const getPropertyCity = (p) => {
                     const city = p?.address?.city || p?.city || '';
@@ -3787,6 +3857,28 @@ function PropertyDetailsContent() {
 
                 const currentTypes = getSpaceTypes(property);
 
+                const categoryLabel = currentCategory === 'residential' ? 'Residential' : 'Commercial';
+
+                const getCategoryHeading = () => {
+                    if (currentTypes.length > 0) {
+                        const formatted = currentTypes.map(t => {
+                            if (t === 'managed-space' || t === 'managed') return 'Managed Spaces';
+                            if (t === 'coworking' || t === 'coworking-space') return 'Coworking Spaces';
+                            return t.charAt(0).toUpperCase() + t.slice(1);
+                        });
+                        const uniqueFormatted = [...new Set(formatted)];
+                        return `Explore Top ${uniqueFormatted.join(' & ')}`;
+                    }
+                    return `Explore Top ${categoryLabel} Locations`;
+                };
+
+                const normalizeCategory = (val) => {
+                    if (!val) return '';
+                    return String(val).toLowerCase().replace(/[-_\s]/g, '').trim();
+                };
+
+                const currentLt = normalizeCategory(property.listingType || property.category || property.spaceType || property.propertyLabel);
+
                 let exploreProps = allProperties.filter((p) => {
                     if (!p) return false;
                     const id = p._id || p.id;
@@ -3797,16 +3889,29 @@ function PropertyDetailsContent() {
                     const pCategory = (p.propertyCategory || p.propertyType || '').toLowerCase();
                     if (pCategory !== currentCategory) return false;
 
-                    // Match any of the space types/listing types
-                    if (currentTypes.length > 0) {
-                        const pTypes = getSpaceTypes(p);
-                        return pTypes.some(t => currentTypes.includes(t));
-                    }
+                    // Match subcategory
+                    const pLt = normalizeCategory(p.listingType || p.category || p.spaceType || p.propertyLabel);
+                    if (currentLt && pLt && currentLt !== pLt) return false;
+
                     return true;
                 });
 
-                // HIDE the entire section if no other properties exist in the same category!
-                if (exploreProps.length === 0) return null;
+                if (exploreProps.length === 0) {
+                    return (
+                        <div className="w-full px-4 md:px-10 mt-16 mb-20">
+                            <section className={`py-12 px-6 md:py-16 md:px-10 rounded-2xl md:rounded-[24px] relative shadow-sm border transition-colors ${isDark ? 'bg-[#121418] border-gray-800' : 'bg-[#fdf8e7] border-[#f0e4c3]/10'}`}>
+                                <h2 className={`text-[1.2rem] md:text-xl font-bold mb-6 tracking-tight ${isDark ? 'text-white' : 'text-black'}`}>
+                                    {getCategoryHeading()}
+                                </h2>
+                                <div className="flex flex-col items-center justify-center py-12 text-center">
+                                    <p className={`text-[15px] font-semibold ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                        Nothing to explore, not any properties exist
+                                    </p>
+                                </div>
+                            </section>
+                        </div>
+                    );
+                }
 
                 // Consolidate properties by unique locality or name to prevent duplicate cards
                 const uniqueIdentifiers = [];
@@ -3830,21 +3935,6 @@ function PropertyDetailsContent() {
                         { name: "Indiranagar", image: "https://images.unsplash.com/photo-1577412647305-991150c7d163?auto=format&fit=crop&q=80&w=800" },
                         { name: "Whitefield", image: "https://images.unsplash.com/photo-1604328698692-f76ea9498e76?auto=format&fit=crop&q=80&w=800" }
                       ];
-
-                const categoryLabel = currentCategory === 'residential' ? 'Residential' : 'Commercial';
-
-                const getCategoryHeading = () => {
-                    if (currentTypes.length > 0) {
-                        const formatted = currentTypes.map(t => {
-                            if (t === 'managed-space' || t === 'managed') return 'Managed Spaces';
-                            if (t === 'coworking' || t === 'coworking-space') return 'Coworking Spaces';
-                            return t.charAt(0).toUpperCase() + t.slice(1);
-                        });
-                        const uniqueFormatted = [...new Set(formatted)];
-                        return `Explore Top ${uniqueFormatted.join(' & ')}`;
-                    }
-                    return `Explore Top ${categoryLabel} Locations`;
-                };
 
                 return (
                     <div className="w-full px-4 md:px-10 mt-16 mb-20">
@@ -4617,7 +4707,7 @@ function PropertyDetailsContent() {
                                 </div>
 
                                 {/* Opening Hours - Only for commercial properties */}
-                                {property.propertyType === 'commercial' && property.openingHours && (
+                                {property.propertyType === 'commercial' && hasOpeningHours && (
                                     <div className="mb-10">
                                         <AnimatedText className="text-lg font-bold mb-3 inline-block" delay={700} lineColor="#f8c02f">
                                             <h3>Opening Hours</h3>
@@ -4952,73 +5042,21 @@ function PropertyDetailsContent() {
                                     <h3>Property Details</h3>
                                 </AnimatedText>
                                 <div className="grid grid-cols-3 gap-4 mt-5">
-                                    {(property.category || property.Category) && (
-                                        <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
-                                            <span className="text-sm font-medium text-gray-500 block mb-1">Category</span>
-                                            <span className="text-base font-semibold text-gray-800 capitalize">{safeDisplay(property.category || property.Category)}</span>
-                                        </div>
-                                    )}
-                                    {(property.displayPropertyType || property.propertyType) && (
-                                        <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
-                                            <span className="text-sm font-medium text-gray-500 block mb-1">Property Type</span>
-                                            <span className="text-base font-semibold text-gray-800 capitalize">{safeDisplay(property.displayPropertyType || property.propertyType)}</span>
-                                        </div>
-                                    )}
-                                    {property.isUnderManagement && (
-                                        <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
-                                            <span className="text-sm font-medium text-gray-500 block mb-1">Managed By Platform</span>
-                                            <span className={`text-base font-semibold ${property.isUnderManagement ? 'text-green-600' : 'text-red-600'}`}>
-                                                {property.isUnderManagement ? 'Yes' : 'No'}
-                                            </span>
-                                        </div>
-                                    )}
-                                    {property.selectedFloors && property.selectedFloors.length > 0 && (() => {
-                                        const toOrdinalSpec = (val) => {
-                                            const s = String(val).trim();
-                                            if (/^\d+(?:st|nd|rd|th)$/i.test(s)) return s;
-                                            if (/^\d+$/.test(s)) {
-                                                const n = parseInt(s, 10);
-                                                const mod100 = n % 100;
-                                                const mod10 = n % 10;
-                                                if (mod100 >= 11 && mod100 <= 13) return `${n}th`;
-                                                if (mod10 === 1) return `${n}st`;
-                                                if (mod10 === 2) return `${n}nd`;
-                                                if (mod10 === 3) return `${n}rd`;
-                                                return `${n}th`;
-                                            }
-                                            return s;
-                                        };
+                                    {(() => {
+                                        const info = getPropertyCategoryAndTypes(property);
                                         return (
-                                            <div className="bg-gray-50 p-4 rounded-lg scroll-animate col-span-3" data-animation="animate-fade-up">
-                                                <span className="text-sm font-medium text-gray-500 block mb-2">Available Floors</span>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {property.selectedFloors.map((floor, i) => (
-                                                        <span key={`spec-floor-${i}`} className="inline-flex items-center justify-center min-w-[72px] px-5 py-2 rounded-full border border-gray-300 bg-white text-sm font-semibold text-gray-700">
-                                                            {toOrdinalSpec(floor)}
-                                                        </span>
-                                                    ))}
+                                            <>
+                                                <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
+                                                    <span className="text-sm font-medium text-gray-500 block mb-1">Property Category</span>
+                                                    <span className="text-base font-semibold text-gray-800">{info.category}</span>
                                                 </div>
-                                            </div>
+                                                <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
+                                                    <span className="text-sm font-medium text-gray-500 block mb-1">Category Type</span>
+                                                    <span className="text-base font-semibold text-gray-800">{info.types.join(", ")}</span>
+                                                </div>
+                                            </>
                                         );
                                     })()}
-                                    {property.floorConfigurations && property.floorConfigurations.length > 0 && (
-                                        <div className="bg-gray-50 p-4 rounded-lg scroll-animate col-span-3" data-animation="animate-fade-up">
-                                            <span className="text-sm font-medium text-gray-500 block mb-2">Office Space Solutions</span>
-                                            <div className="space-y-2">
-                                                {property.floorConfigurations.map((config, idx) => (
-                                                    <div key={idx} className="text-sm">
-                                                        {config.floor && <span className="font-semibold text-gray-800">Floor {config.floor}: </span>}
-                                                        {config.dedicatedCabin?.enabled && (
-                                                            <span className="text-gray-700">Dedicated Cabin ({config.dedicatedCabin.seats || 'N/A'} seats, {config.dedicatedCabin.pricePerSeat || 'N/A'}/seat)</span>
-                                                        )}
-                                                        {config.dedicatedFloor?.enabled && (
-                                                            <span className="text-gray-700 ml-2">Dedicated Floor ({config.dedicatedFloor.seats || 'N/A'} seats, {config.dedicatedFloor.pricePerSeat || 'N/A'}/seat)</span>
-                                                        )}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
                                     {((typeof property.facilities === 'string' && property.facilities.trim()) || (Array.isArray(property.facilities) && property.facilities.length > 0)) && (
                                         <div className="bg-gray-50 p-4 rounded-lg scroll-animate col-span-3 md:block hidden" data-animation="animate-fade-up">
                                             <span className="text-sm font-medium text-gray-500 block mb-1">Facilities</span>
@@ -5032,78 +5070,19 @@ function PropertyDetailsContent() {
                                         </div>
                                     )}
                                     
-                                    {/* Mobile-only fields below 768px (formatted dynamically) */}
+                                    {/* Mobile-only fields below 768px */}
                                     {(() => {
-                                        const renderMobileOnlyField = (label, value, isCapitalize = false, colSpan = 1) => {
-                                            const isValEmpty = !value || value === "-" || String(value).trim() === "" || value === "null" || value === "undefined";
-                                            if (isValEmpty) {
-                                                return (
-                                                    <div className={`flex items-center justify-center text-sm font-bold text-gray-500 md:hidden ${colSpan > 1 ? 'col-span-3' : ''}`} style={{ minHeight: '80px' }}>
-                                                        -
-                                                    </div>
-                                                );
-                                            }
-                                            return (
-                                                <div className={`bg-gray-50 p-4 rounded-lg scroll-animate md:hidden ${colSpan > 1 ? 'col-span-3' : ''}`} data-animation="animate-fade-up">
-                                                    <span className="text-sm font-medium text-gray-500 block mb-1">{label}</span>
-                                                    <span className={`text-base font-semibold text-gray-800 ${isCapitalize ? 'capitalize' : ''}`}>{value}</span>
-                                                </div>
-                                            );
-                                        };
-
+                                        const info = getPropertyCategoryAndTypes(property);
                                         return (
                                             <>
-                                                {renderMobileOnlyField(
-                                                    "Furnishing level",
-                                                    property.furnishingLevel || property.furnishingStatus || property.furnishing
-                                                )}
-                                                {renderMobileOnlyField(
-                                                    "Building Lease",
-                                                    property.buildingLease
-                                                )}
-                                                {renderMobileOnlyField(
-                                                    "Min. inventory unit",
-                                                    property.minInventoryUnit
-                                                )}
-                                                {renderMobileOnlyField(
-                                                    "Max. inventory unit",
-                                                    property.maxInventoryUnit
-                                                )}
-                                                {renderMobileOnlyField(
-                                                    "Single floor Capacity",
-                                                    property.singleFloorCapacity
-                                                )}
-                                                {renderMobileOnlyField(
-                                                    "Price Per Seat",
-                                                    discountedPrice ? `${discountedPrice}` : ""
-                                                )}
-                                                {renderMobileOnlyField(
-                                                    "Price Per Sq.ft",
-                                                    property.pricePerSqft ? `₹${property.pricePerSqft}/sqft` : ""
-                                                )}
-                                                {renderMobileOnlyField(
-                                                    "Under Management",
-                                                    property.underManagement || property.isManagement
-                                                )}
-                                                {renderMobileOnlyField(
-                                                    "Total Seats",
-                                                    property.numberOfSeats ? `${property.numberOfSeats} Seats` : ""
-                                                )}
-                                                {renderMobileOnlyField(
-                                                    "Price Negotiable",
-                                                    property.isNegotiablePrice !== undefined ? (property.isNegotiablePrice ? "Yes" : "No") : ""
-                                                )}
-                                                {renderMobileOnlyField(
-                                                    "Listing Type",
-                                                    property.listingType ? property.listingType.replace("-", " ") : "",
-                                                    true
-                                                )}
-                                                {renderMobileOnlyField(
-                                                    "The Whole Techpark is Under Your Management For Office Space Provision?",
-                                                    property.isUnderManagement !== undefined ? (property.isUnderManagement ? "Yes" : "No") : (property.underManagement ? (String(property.underManagement).toLowerCase().includes("managed") || String(property.underManagement).toLowerCase().includes("yes") || property.underManagement === true ? "Yes" : "No") : ""),
-                                                    false,
-                                                    3
-                                                )}
+                                                <div className="bg-gray-50 p-4 rounded-lg scroll-animate md:hidden" data-animation="animate-fade-up">
+                                                    <span className="text-sm font-medium text-gray-500 block mb-1">Property Category</span>
+                                                    <span className="text-base font-semibold text-gray-800">{info.category}</span>
+                                                </div>
+                                                <div className="bg-gray-50 p-4 rounded-lg scroll-animate md:hidden" data-animation="animate-fade-up">
+                                                    <span className="text-sm font-medium text-gray-500 block mb-1">Category Type</span>
+                                                    <span className="text-base font-semibold text-gray-800">{info.types.join(", ")}</span>
+                                                </div>
                                             </>
                                         );
                                     })()}
