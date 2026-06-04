@@ -880,7 +880,7 @@ function PropertyDetailsContent() {
 
                     setProperty(formattedProperty);
                 } else {
-                    console.error('âŒ Property not found in database');
+                    console.error('â Œ Property not found in database');
                     console.error('Response was:', data);
                     console.error('data.success:', data.success);
                     console.error('data.property:', data.property);
@@ -1179,6 +1179,12 @@ function PropertyDetailsContent() {
         const num = agentContactWhatsApp;
         if (num) {
             navigator.clipboard.writeText(num).then(() => {
+                const { logUserAction } = require('@/utils/actionLogger');
+                logUserAction('copy_whatsapp', property, {
+                    copiedText: num,
+                    agentName: property?.agentDetails?.name || property?.sellerName || '',
+                    whatsappNumber: num
+                });
                 alert(`WhatsApp number copied: ${num}`);
             }).catch(() => {
                 alert(`WhatsApp number: ${num}`);
@@ -1194,6 +1200,12 @@ function PropertyDetailsContent() {
         const num = agentContactWhatsApp;
         if (num) {
             navigator.clipboard.writeText(num).then(() => {
+                const { logUserAction } = require('@/utils/actionLogger');
+                logUserAction('copy_whatsapp', property, {
+                    copiedText: num,
+                    agentName: property?.agentDetails?.name || property?.sellerName || '',
+                    whatsappNumber: num
+                });
                 alert(`WhatsApp number copied: ${num}`);
             }).catch(() => {
                 alert(`WhatsApp number: ${num}`);
@@ -1210,9 +1222,21 @@ function PropertyDetailsContent() {
         const telUrl = `tel:+${fullNum}`;
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         if (isMobile) {
+            const { logUserAction } = require('@/utils/actionLogger');
+            logUserAction('copy_phone', property, {
+                copiedText: fullNum,
+                agentName: property?.agentDetails?.name || property?.sellerName || '',
+                phoneNumber: fullNum
+            });
             window.location.href = telUrl;
         } else {
             navigator.clipboard.writeText(fullNum).then(() => {
+                const { logUserAction } = require('@/utils/actionLogger');
+                logUserAction('copy_phone', property, {
+                    copiedText: fullNum,
+                    agentName: property?.agentDetails?.name || property?.sellerName || '',
+                    phoneNumber: fullNum
+                });
                 alert('Phone number copied to clipboard! Paste in your phone or a calling app (Skype, Teams, etc.) to call.');
             }).catch(() => {
                 window.location.href = telUrl;
@@ -1228,6 +1252,12 @@ function PropertyDetailsContent() {
         const num = agentContactPhone;
         if (num) {
             navigator.clipboard.writeText(num).then(() => {
+                const { logUserAction } = require('@/utils/actionLogger');
+                logUserAction('copy_phone', property, {
+                    copiedText: num,
+                    agentName: property?.agentDetails?.name || property?.sellerName || '',
+                    phoneNumber: num
+                });
                 alert(`Phone number copied: ${num}`);
             }).catch(() => {
                 alert(`Phone number: ${num}`);
@@ -1243,9 +1273,21 @@ function PropertyDetailsContent() {
             : `mailto:${email}`;
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         if (isMobile) {
+            const { logUserAction } = require('@/utils/actionLogger');
+            logUserAction('click_email', property, {
+                clickedText: email,
+                agentName: property?.agentDetails?.name || property?.sellerName || '',
+                email: email
+            });
             window.location.href = mailtoUrl;
         } else {
             navigator.clipboard.writeText(email).then(() => {
+                const { logUserAction } = require('@/utils/actionLogger');
+                logUserAction('click_email', property, {
+                    clickedText: email,
+                    agentName: property?.agentDetails?.name || property?.sellerName || '',
+                    email: email
+                });
                 alert('Email address copied to clipboard! Paste in Outlook, Gmail, or your email app to send a message.');
             }).catch(() => {
                 window.location.href = mailtoUrl;
@@ -2756,6 +2798,16 @@ function PropertyDetailsContent() {
                                         }
                                         if (!agentPhone) return;
                                         navigator.clipboard.writeText(agentPhone).then(() => {
+                                            try {
+                                                const { logUserAction } = require('@/utils/actionLogger');
+                                                logUserAction('copy_phone', property, {
+                                                    copiedText: agentPhone,
+                                                    agentName: agentName || '',
+                                                    phoneNumber: agentPhone
+                                                });
+                                            } catch (logErr) {
+                                                console.error('Failed to log agent phone copy:', logErr);
+                                            }
                                             alert(`Agent Phone number copied to clipboard: ${agentPhone}`);
                                         }).catch(() => {
                                             alert('Failed to copy phone number.');
@@ -2775,6 +2827,16 @@ function PropertyDetailsContent() {
                                         }
                                         if (!agentEmail) return;
                                         navigator.clipboard.writeText(agentEmail).then(() => {
+                                            try {
+                                                const { logUserAction } = require('@/utils/actionLogger');
+                                                logUserAction('click_email', property, {
+                                                    clickedText: agentEmail,
+                                                    agentName: agentName || '',
+                                                    email: agentEmail
+                                                });
+                                            } catch (logErr) {
+                                                console.error('Failed to log agent email click:', logErr);
+                                            }
                                             alert(`Agent Email address copied to clipboard: ${agentEmail}`);
                                         }).catch(() => {
                                             alert('Failed to copy email address.');
@@ -2795,6 +2857,16 @@ function PropertyDetailsContent() {
                                         const waNumber = property.agentDetails?.whatsapp || agentPhone;
                                         if (!waNumber) return;
                                         navigator.clipboard.writeText(waNumber).then(() => {
+                                            try {
+                                                const { logUserAction } = require('@/utils/actionLogger');
+                                                logUserAction('copy_whatsapp', property, {
+                                                    copiedText: waNumber,
+                                                    agentName: agentName || '',
+                                                    whatsappNumber: waNumber
+                                                });
+                                            } catch (logErr) {
+                                                console.error('Failed to log agent whatsapp copy:', logErr);
+                                            }
                                             alert(`Agent WhatsApp number copied to clipboard: ${waNumber}`);
                                         }).catch(() => {
                                             alert('Failed to copy WhatsApp number.');
@@ -3972,10 +4044,22 @@ function PropertyDetailsContent() {
                                         className={`w-full px-3 py-2 border rounded-lg transition-colors ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'border-gray-300'}`}
                                     >
                                         <option value="">Select interest</option>
-                                        <option value="New workspace">New workspace</option>
-                                        <option value="Expansion">Expansion</option>
-                                        <option value="Custom solution">Custom solution</option>
-                                        <option value="General inquiry">General inquiry</option>
+                                        {isResidential ? (
+                                            <>
+                                                <option value="Rent">Rent</option>
+                                                <option value="Sale">Sale</option>
+                                                <option value="PG/Hostel">PG/Hostel</option>
+                                                <option value="Flatmates">Flatmates</option>
+                                                <option value="Co-living">Co-living</option>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <option value="Managed Space">Managed Space</option>
+                                                <option value="Unmanaged Space">Unmanaged Space</option>
+                                                <option value="Coworking Shared">Coworking Shared</option>
+                                                <option value="Coworking Dedicated">Coworking Dedicated</option>
+                                            </>
+                                        )}
                                     </select>
                                 </div>
                             )}
@@ -5937,30 +6021,23 @@ function PropertyDetailsContent() {
                                             </button>
                                         </div>
                                     </div>
-                                    <div className="space-y-1.5 relative" ref={timeDropdownRef}>
+                                    <div className="space-y-1.5">
                                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">3. Pick Time</p>
-                                        <button
-                                            type="button"
-                                            onClick={(e) => { e.stopPropagation(); setShowTimeDropdown(!showTimeDropdown); setTourFormErrors((p) => ({ ...p, tourTime: '' })); }}
-                                            className={`w-full flex items-center justify-between bg-gray-50 border rounded-lg px-2 py-1 text-[9px] font-bold text-gray-700 ${tourFormErrors.tourTime ? 'border-red-500' : 'border-gray-100'}`}
-                                        >
-                                            <span className="truncate">{selectedTourTime || "Time"}</span>
-                                            <ChevronDown className="h-2.5 w-2.5 text-gray-400" />
-                                        </button>
-                                        {tourFormErrors.tourTime && <p className="text-[9px] text-red-500 mt-0.5">{tourFormErrors.tourTime}</p>}
-                                        {showTimeDropdown && (
-                                            <div className="absolute bottom-full left-0 right-0 mb-1 z-[60] max-h-32 overflow-y-auto bg-white border border-gray-100 rounded-lg shadow-xl p-1">
+                                        <div className="relative">
+                                            <select
+                                                value={selectedTourTime}
+                                                onChange={(e) => { setSelectedTourTime(e.target.value); setTourFormErrors((p) => ({ ...p, tourTime: '' })); }}
+                                                className={`w-full bg-gray-50 border rounded-lg px-2 py-1.5 text-[9px] font-bold outline-none appearance-none ${tourFormErrors.tourTime ? 'border-red-500' : 'text-gray-700 border-gray-100'}`}
+                                                style={{ paddingRight: '22px' }}
+                                            >
+                                                <option value="" disabled>Time</option>
                                                 {TOUR_TIME_SLOTS.map((slot) => (
-                                                    <button
-                                                        key={slot}
-                                                        onClick={() => { setSelectedTourTime(slot); setShowTimeDropdown(false); }}
-                                                        className={`w-full px-2 py-1 text-left text-[9px] rounded hover:bg-blue-50 transition-colors ${selectedTourTime === slot ? "bg-blue-600 text-white" : "text-gray-600"}`}
-                                                    >
-                                                        {slot}
-                                                    </button>
+                                                    <option key={slot} value={slot}>{slot}</option>
                                                 ))}
-                                            </div>
-                                        )}
+                                            </select>
+                                            <ChevronDown className="h-2.5 w-2.5 text-gray-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                        </div>
+                                        {tourFormErrors.tourTime && <p className="text-[9px] text-red-500 mt-0.5">{tourFormErrors.tourTime}</p>}
                                     </div>
                                 </div>
 

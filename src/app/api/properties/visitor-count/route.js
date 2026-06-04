@@ -16,7 +16,9 @@ export async function POST(request) {
         }
 
         let result;
-        if (type === 'commercial') {
+        const isCommercialType = ['commercial', 'techpark', 'coworking', 'office', 'warehouse', 'tech-park', 'commercial-property'].includes(type?.toLowerCase());
+        
+        if (isCommercialType) {
             result = await CommercialProperty.findByIdAndUpdate(
                 id,
                 { $inc: { visitorCount: 1 } },
@@ -29,10 +31,19 @@ export async function POST(request) {
                 { new: true }
             );
         } else {
-            return NextResponse.json(
-                { success: false, message: 'Invalid property type' },
-                { status: 400 }
+            // Try finding/updating in commercial first, then fallback to residential
+            result = await CommercialProperty.findByIdAndUpdate(
+                id,
+                { $inc: { visitorCount: 1 } },
+                { new: true }
             );
+            if (!result) {
+                result = await ResidentialProperty.findByIdAndUpdate(
+                    id,
+                    { $inc: { visitorCount: 1 } },
+                    { new: true }
+                );
+            }
         }
 
         if (!result) {

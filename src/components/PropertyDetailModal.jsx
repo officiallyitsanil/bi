@@ -519,6 +519,12 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
         const fullNum = num.startsWith('91') ? num : (num.length === 10 ? '91' + num : num);
         const formattedNum = '+' + fullNum;
         navigator.clipboard.writeText(formattedNum).then(() => {
+            const { logUserAction } = require('@/utils/actionLogger');
+            logUserAction('copy_phone', property, {
+                copiedText: formattedNum,
+                agentName: property.agentDetails?.name || property.sellerName || '',
+                phoneNumber: formattedNum
+            });
             alert(`Phone number ${formattedNum} copied to clipboard! Paste in your phone or a calling app (Skype, Teams, etc.) to call.`);
         }).catch(() => {
             alert(`Phone number is: ${formattedNum}`);
@@ -536,6 +542,12 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
         const fullNum = num.startsWith('91') ? num : (num.length === 10 ? '91' + num : num);
         const formattedNum = '+' + fullNum;
         navigator.clipboard.writeText(formattedNum).then(() => {
+            const { logUserAction } = require('@/utils/actionLogger');
+            logUserAction('copy_whatsapp', property, {
+                copiedText: formattedNum,
+                agentName: property.agentDetails?.name || property.sellerName || '',
+                whatsappNumber: formattedNum
+            });
             alert(`WhatsApp number ${formattedNum} copied to clipboard!`);
         }).catch(() => {
             alert(`WhatsApp number is: ${formattedNum}`);
@@ -582,6 +594,8 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
         property.name,
         "-"
     );
+
+    const brandLogoSrc = bld.builderLogo?.url || bld.logo || bd.logo || bd.image || '';
 
     const brandStats = {
         cities: (() => {
@@ -1423,7 +1437,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                 <div className="flex items-center gap-2 mb-1.5">
                                     <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0 bg-white shadow-sm flex items-center justify-center p-0.5">
                                         <Image
-                                            src={property.brandDetails?.image || property.brandDetails?.logo || '/property-details/builder-details/builder-logo.png'}
+                                            src={brandLogoSrc || '/property-details/builder-details/builder-logo.png'}
                                             alt="Brand Logo"
                                             width={22}
                                             height={22}

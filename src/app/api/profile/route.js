@@ -81,6 +81,30 @@ export async function PUT(req) {
       );
     }
 
+    // Log the profile update
+    try {
+      const ipAddress = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 
+                        req.headers.get('x-real-ip')?.trim() || 
+                        '127.0.0.1';
+      const device = req.headers.get('user-agent') || 'unknown';
+      
+      const UserActionsLogs = (await import("@/models/UserActionsLogs")).default;
+      await UserActionsLogs.create({
+        userPhoneNumber: user.phoneNumber || '',
+        userName: user.name || '',
+        userEmail: user.email || '',
+        actionType: 'update_profile',
+        ipAddress,
+        device,
+        location: user.address || '',
+        details: {
+          updatedFields: Object.keys(updateData)
+        }
+      });
+    } catch (logErr) {
+      console.error("Failed to log profile update:", logErr);
+    }
+
     return NextResponse.json({
       success: true,
       message: "Profile updated successfully.",

@@ -1005,6 +1005,12 @@ export default function HomePage() {
     const formattedNum = '+' + fullNum;
 
     navigator.clipboard.writeText(formattedNum).then(() => {
+      const { logUserAction } = require('@/utils/actionLogger');
+      logUserAction('copy_whatsapp', marker, {
+        copiedText: formattedNum,
+        agentName: marker.agentDetails?.name || marker.sellerName || '',
+        whatsappNumber: formattedNum
+      });
       alert(`WhatsApp number ${formattedNum} copied to clipboard!`);
     }).catch((err) => {
       console.error('Failed to copy WhatsApp number:', err);
