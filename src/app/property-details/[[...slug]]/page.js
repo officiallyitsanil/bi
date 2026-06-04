@@ -1081,6 +1081,10 @@ function PropertyDetailsContent() {
     };
 
     const handleShare = () => {
+        if (!currentUser) {
+            setIsLoginOpen(true);
+            return;
+        }
         const c = property?.coordinates || property?.position;
         const lat = c?.latitude ?? c?.lat;
         const lng = c?.longitude ?? c?.lng;
@@ -1172,16 +1176,12 @@ function PropertyDetailsContent() {
             setIsLoginOpen(true);
             return;
         }
-        if (!currentUser.name || !currentUser.email) {
-            alert("Please complete your profile details (Name and Email) to proceed.");
-            router.push('/dashboard');
-            return;
-        }
-        if (agentContactWhatsApp) {
-            navigator.clipboard.writeText(agentContactWhatsApp).then(() => {
-                alert(`Agent WhatsApp number copied to clipboard: ${agentContactWhatsApp}`);
+        const num = agentContactWhatsApp;
+        if (num) {
+            navigator.clipboard.writeText(num).then(() => {
+                alert(`WhatsApp number copied: ${num}`);
             }).catch(() => {
-                alert('Failed to copy WhatsApp number.');
+                alert(`WhatsApp number: ${num}`);
             });
         }
     };
@@ -1191,16 +1191,12 @@ function PropertyDetailsContent() {
             setIsLoginOpen(true);
             return;
         }
-        if (!currentUser.name || !currentUser.email) {
-            alert("Please complete your profile details (Name and Email) to proceed.");
-            router.push('/dashboard');
-            return;
-        }
-        if (agentContactWhatsApp) {
-            navigator.clipboard.writeText(agentContactWhatsApp).then(() => {
-                alert(`Agent WhatsApp number copied to clipboard: ${agentContactWhatsApp}`);
+        const num = agentContactWhatsApp;
+        if (num) {
+            navigator.clipboard.writeText(num).then(() => {
+                alert(`WhatsApp number copied: ${num}`);
             }).catch(() => {
-                alert('Failed to copy WhatsApp number.');
+                alert(`WhatsApp number: ${num}`);
             });
         }
     };
@@ -1229,13 +1225,13 @@ function PropertyDetailsContent() {
             setIsLoginOpen(true);
             return;
         }
-        if (!currentUser.name || !currentUser.email) {
-            alert("Please complete your profile details (Name and Email) to proceed.");
-            router.push('/dashboard');
-            return;
-        }
-        if (agentContactPhone) {
-            handlePhoneClick(null, agentContactPhone);
+        const num = agentContactPhone;
+        if (num) {
+            navigator.clipboard.writeText(num).then(() => {
+                alert(`Phone number copied: ${num}`);
+            }).catch(() => {
+                alert(`Phone number: ${num}`);
+            });
         }
     };
 
@@ -1581,7 +1577,7 @@ function PropertyDetailsContent() {
         const prefix = lt.includes("managed") ? "Managed office" : "Office space";
         return `${prefix} at ${name}`;
     })();
-    const discountPct = property.discountPercent != null && property.discountPercent !== "" ? Number(property.discountPercent) : 15;
+    const discountPct = 10;
     const showSeatOriginalStrike =
         originalPricePerSeat &&
         discountedPricePerSeat &&
@@ -1602,7 +1598,7 @@ function PropertyDetailsContent() {
     const brandStats = {
         cities: (() => {
             const val = bld.cities || bd.cities;
-            if (val === null || val === undefined || val === "") return null;
+            if (val === null || val === undefined || String(val).trim() === "" || String(val).trim() === "-") return null;
             if (typeof val === 'number') return `${val}+`;
             if (typeof val === 'string') {
                 if (!isNaN(val.trim())) return `${val.trim()}+`;
@@ -1613,18 +1609,18 @@ function PropertyDetailsContent() {
         })(),
         projects: (() => {
             const val = bld.projects ?? bd.spaces;
-            if (val === null || val === undefined || val === "") return null;
-            return `${val}+`;
+            if (val === null || val === undefined || String(val).trim() === "" || String(val).trim() === "-") return null;
+            return `${String(val).trim()}+`;
         })(),
         clients: (() => {
             const val = bld.clients ?? bd.clients;
-            if (val === null || val === undefined || val === "") return null;
-            return `${val}+`;
+            if (val === null || val === undefined || String(val).trim() === "" || String(val).trim() === "-") return null;
+            return `${String(val).trim()}+`;
         })(),
         experience: (() => {
             const val = bld.experience ?? bd.experience ?? bld.yearsOfExperience;
-            if (val === null || val === undefined || val === "") return null;
-            return `${val}+`;
+            if (val === null || val === undefined || String(val).trim() === "" || String(val).trim() === "-") return null;
+            return `${String(val).trim()}+`;
         })()
     };
     const rawDesc = bld.readMoreDescription || bld.description || bd.description;
@@ -1664,7 +1660,7 @@ function PropertyDetailsContent() {
                                 <div className="inline-flex items-center rounded-lg border px-2.5 py-0.5 text-xs font-semibold bg-amber-100 text-amber-700 border-amber-200">
                                     {safeDisplay(property.ratings?.overall)} <Star className="h-3 w-3 ml-1 fill-current" />
                                 </div>
-                                <Image src="/property-details/verfication-badge.svg" alt="Verified" width={24} height={24} className="object-contain" unoptimized />
+                                {property.isPremium && <Image src="/property-details/verfication-badge.svg" alt="Verified" width={24} height={24} className="object-contain" unoptimized />}
                             </div>
                         </div>
                         <div className="flex items-center gap-4 pl-8">
@@ -1720,9 +1716,11 @@ function PropertyDetailsContent() {
                                             </div>
                                         </div>
                                         {/* Verified tick */}
-                                        <div className="flex items-center justify-start sm:justify-center shrink-0">
-                                            <Image src="/property-details/verfication-badge.svg" alt="Verified" width={28} height={28} className="sm:w-[36px] sm:h-[36px] object-contain" unoptimized />
-                                        </div>
+                                        {property.isPremium && (
+                                            <div className="flex items-center justify-start sm:justify-center shrink-0">
+                                                <Image src="/property-details/verfication-badge.svg" alt="Verified" width={28} height={28} className="sm:w-[36px] sm:h-[36px] object-contain" unoptimized />
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                 <button
@@ -1754,17 +1752,20 @@ function PropertyDetailsContent() {
                                 <Share2 className="h-[1.2rem] w-[1.2rem]" />
                             </button>
                             {mapsExternalUrl && (
-                                <a href={mapsExternalUrl} target="_blank" rel="noopener noreferrer" className={`flex items-center justify-center h-13 w-13 rounded-full transition aria-label="Directions â€” open in Google Maps" ${isDark ? 'bg-gray-800 text-white hover:bg-gray-700' : 'bg-[#f4f4f5] text-gray-700 hover:bg-[#e4e4e7]'}`}>
+                                <button
+                                    type="button"
+                                    onClick={() => { if (!currentUser) { setIsLoginOpen(true); return; } window.open(mapsExternalUrl, '_blank', 'noopener,noreferrer'); }}
+                                    className={`flex items-center justify-center h-13 w-13 rounded-full transition ${isDark ? 'bg-gray-800 text-white hover:bg-gray-700' : 'bg-[#f4f4f5] text-gray-700 hover:bg-[#e4e4e7]'}`}
+                                    aria-label="Directions"
+                                >
                                     <CornerUpRight className="h-[1.2rem] w-[1.2rem]" />
-                                </a>
+                                </button>
                             )}
+
                             {/* New tab icon removed */}
                         </div>
                     </div>
                 </div>
-                {/* Horizontal line between title and gallery */}
-                <div className={`h-px w-full mb-8 ${isDark ? 'bg-gray-800' : 'bg-gray-200'}`} />
-
                 <div className="flex flex-col md:flex-row items-start gap-7 md:gap-10 w-full min-w-0">
                     {/* Main Content - ~65% on desktop: gallery + details */}
                     <div className="w-full md:w-[70%] min-w-0">
@@ -2024,7 +2025,7 @@ function PropertyDetailsContent() {
                                                 <span className={`text-xl sm:text-[24px] font-bold tracking-tight ${isDark ? 'text-emerald-400' : 'text-[#17592f]'}`}>
                                                     {safeDisplay(discountedPricePerSeat ?? discountedPrice)}
                                                 </span>
-                                                <span className={`text-xs sm:text-[13.5px] ${isDark ? 'text-gray-400' : 'text-gray-900'}`}>/ seat / month</span>
+                                                <span className={`text-xs sm:text-[13.5px] ${isDark ? 'text-gray-400' : 'text-gray-900'}`}>/ month</span>
                                             </div>
                                         </div>
                                         <div
@@ -2103,7 +2104,7 @@ function PropertyDetailsContent() {
                                     {renderGridField(
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M20 7H4a2 2 0 0 0-2 2v6c0 1.1.9 2 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M12 12v.01"/></svg>,
                                         "Price Per Seat",
-                                        property.pricePerSeat ? `₹${property.pricePerSeat}/seat` : ""
+                                        discountedPrice ? `${discountedPrice}` : ""
                                     )}
                                     {renderGridField(
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
@@ -2389,7 +2390,7 @@ function PropertyDetailsContent() {
                                             {/* Details — always show all rows, dash if empty */}
                                             <div className="space-y-0.5">
                                                 <InfoRow label="No. of Seats" value={data.seats} />
-                                                <InfoRow label="Price Per Seat" value={data.pricePerSeat ? `₹${data.pricePerSeat}` : null} />
+                                                <InfoRow label="Price Per Seat" value={discountedPrice ? `${discountedPrice}` : null} />
                                                 <InfoRow label="Price Per Sq.ft" value={data.pricePerSqft ? `₹${data.pricePerSqft}` : null} />
                                                 <InfoRow label="Billable Units" value={data.billableUnits} />
                                                 <InfoRow label="Available From" value={data.availableFrom} />
@@ -3839,7 +3840,7 @@ function PropertyDetailsContent() {
                             className="w-5 h-5 object-contain"
                             style={{ filter: 'brightness(0) invert(1)' }}
                         />
-                        Request for call
+                        Contact
                     </button>
                 </div>
             </div >
@@ -4481,7 +4482,7 @@ function PropertyDetailsContent() {
                                             alt="Call"
                                             className="w-4 h-4 object-contain"
                                         />
-                                        Request for call
+                                        Contact
                                     </button>
                                 </div>
 
@@ -4990,7 +4991,7 @@ function PropertyDetailsContent() {
                                                 )}
                                                 {renderMobileOnlyField(
                                                     "Price Per Seat",
-                                                    property.pricePerSeat ? `₹${property.pricePerSeat}/seat` : ""
+                                                    discountedPrice ? `${discountedPrice}` : ""
                                                 )}
                                                 {renderMobileOnlyField(
                                                     "Price Per Sq.ft",
@@ -6035,6 +6036,26 @@ function PropertyDetailsContent() {
                             Schedule a Tour
                         </span>
                     )}
+                </button>
+            </div>
+
+            {/* Mobile fixed bottom bar — WhatsApp + Call (below 768px) */}
+            <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex gap-3 px-4 py-3 bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.08)]">
+                <button
+                    type="button"
+                    onClick={handleWhatsApp}
+                    className="flex-1 flex items-center justify-center gap-2 bg-[#25D366] text-white font-semibold text-sm py-3 rounded-xl active:scale-95 transition-transform"
+                >
+                    <img src="/property-details/agent-social/whatsapp.png" alt="WhatsApp" className="w-5 h-5 object-contain brightness-0 invert" />
+                    WhatsApp
+                </button>
+                <button
+                    type="button"
+                    onClick={handleCall}
+                    className="flex-1 flex items-center justify-center gap-2 bg-[#22c55e] text-white font-semibold text-sm py-3 rounded-xl active:scale-95 transition-transform"
+                >
+                    <Phone className="w-4 h-4" />
+                    Contact
                 </button>
             </div>
 

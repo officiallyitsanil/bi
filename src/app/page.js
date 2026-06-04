@@ -104,6 +104,7 @@ export default function HomePage() {
   const [isLocating, setIsLocating] = useState(false);
   const [detectedUserLocation, setDetectedUserLocation] = useState(null); // { lat, lng } when user detects location
   const [zoomingCityName, setZoomingCityName] = useState(null); // Show "Zooming on {city}" overlay
+  const [isAutoDetectingCity, setIsAutoDetectingCity] = useState(true);
   const [isApplyingFilters, setIsApplyingFilters] = useState(false); // Show "Loading..." overlay when Apply Filters
   const [mapType, setMapType] = useState('hybrid'); // 'roadmap', 'satellite', 'hybrid', 'terrain'
   const [showTraffic, setShowTraffic] = useState(false);
@@ -326,6 +327,16 @@ export default function HomePage() {
   useEffect(() => {
     const initializeLocation = async () => {
       try {
+        const savedCity = localStorage.getItem('selectedCity');
+        if (savedCity) {
+          setIsLoadingLocation(false);
+          return;
+        }
+      } catch (e) {
+        console.error('Error reading saved city in initializeLocation:', e);
+      }
+
+      try {
         const locationData = await getUserLocation();
         setUserLocationInfo(locationData);
         setMapCenter({ lat: locationData.lat, lng: locationData.lng });
@@ -506,7 +517,7 @@ export default function HomePage() {
               id: String(property._id || property.id || `temp-id-${index}`),
               position,
               coordinates: position ?? coord,
-              isVerified: property.verificationStatus === 'verified' || property.verificationStatus === 'confirmed' || property.isVerified === true
+              isVerified: property.isPremium === true
             };
           });
 
@@ -521,6 +532,102 @@ export default function HomePage() {
     };
 
     loadProperties();
+  }, []);
+
+  // Auto-detect user city on first load and set as active city filter
+  useEffect(() => {
+    let cancelled = false;
+    const autoDetectCity = async () => {
+      // Skip if city already set in context or saved in localStorage
+      try {
+        const savedCity = localStorage.getItem('selectedCity');
+        if (savedCity) {
+          if (!activeCityFilter) {
+            setZoomingCityName(savedCity);
+            setActiveCityFilter(savedCity);
+            setCitySearchQuery(savedCity);
+            // Check if city exists in predefined cityCoordinates
+            if (cityCoordinates[savedCity]) {
+              setMapCenter(cityCoordinates[savedCity]);
+              setZoomLevel(ZOOM_CITY);
+            } else {
+              // Fallback to geocoding API
+              const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+              if (apiKey) {
+                const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(savedCity + ', India')}&key=${apiKey}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.status === "OK" && data.results?.length > 0 && !cancelled) {
+                  const { lat, lng } = data.results[0].geometry.location;
+                  setMapCenter({ lat, lng });
+                  setZoomLevel(ZOOM_CITY);
+                }
+              }
+            }
+            setTimeout(() => {
+              if (!cancelled) setZoomingCityName(null);
+            }, 1500);
+          }
+          setIsAutoDetectingCity(false);
+          return;
+        }
+      } catch (e) {
+        console.error('Error reading saved city:', e);
+      }
+
+      if (activeCityFilter) {
+        setIsAutoDetectingCity(false);
+        return;
+      }
+      try {
+        const loc = await getUserLocation();
+        if (cancelled || !loc || loc.isFallback) {
+          setIsAutoDetectingCity(false);
+          return;
+        }
+
+        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+        if (!apiKey) {
+          setIsAutoDetectingCity(false);
+          return;
+        }
+
+        const geocodeRes = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${loc.lat},${loc.lng}&key=${apiKey}`
+        );
+        const geocodeData = await geocodeRes.json();
+        if (cancelled) return;
+
+        if (geocodeData.status === 'OK' && geocodeData.results?.length > 0) {
+          const components = geocodeData.results[0].address_components;
+          let cityName = null;
+          for (const c of components) {
+            if (c.types.includes('locality')) { cityName = c.long_name; break; }
+            if (c.types.includes('administrative_area_level_2')) cityName = c.long_name;
+          }
+          if (cityName && !cancelled) {
+            setZoomingCityName(cityName);
+            setActiveCityFilter(cityName);
+            setCitySearchQuery(cityName);
+            setDetectedUserLocation({ lat: loc.lat, lng: loc.lng });
+            setMapCenter({ lat: loc.lat, lng: loc.lng });
+            setZoomLevel(ZOOM_CITY);
+            setTimeout(() => {
+              if (!cancelled) setZoomingCityName(null);
+            }, 1500);
+          }
+        }
+      } catch {
+        // Silently ignore — user may have denied permission
+      } finally {
+        if (!cancelled) {
+          setIsAutoDetectingCity(false);
+        }
+      }
+    };
+    autoDetectCity();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Location tracking is handled by VisitorTracker component
@@ -740,25 +847,35 @@ export default function HomePage() {
 
   const zoomToCity = async (cityName, options = {}) => {
     setZoomingCityName(cityName);
-    try {
-      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(cityName + ', India')}&key=${apiKey}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      if (data.status === "OK" && data.results?.length > 0) {
-        const { lat, lng } = data.results[0].geometry.location;
-        setMapCenter({ lat, lng });
-        setZoomLevel(options.zoomLevel ?? ZOOM_CITY);
-        setCitySearchQuery(cityName);
-        
-        setActiveCityFilter(cityName);
+    // Always update search query and active city filter immediately to make the UI responsive
+    setCitySearchQuery(cityName);
+    setActiveCityFilter(cityName);
+    setSelectedMarker(null);
+    setSelectedCity(null);
+    setShowCitySelector(false);
 
-        const isMobileOrTablet = typeof window !== 'undefined' && window.innerWidth < 768;
-        if (isMobileOrTablet) {
-          setShowCitySelector(false);
-          setIsDrawerCollapsed(true);
-          setSelectedMarker(null);
-          setSelectedCity(null);
+    const isMobileOrTablet = typeof window !== 'undefined' && window.innerWidth < 768;
+    if (isMobileOrTablet) {
+      setIsDrawerCollapsed(true);
+    }
+
+    try {
+      // First check if we have predefined coordinates for this city
+      if (cityCoordinates[cityName]) {
+        const coords = cityCoordinates[cityName];
+        setMapCenter({ lat: coords.lat, lng: coords.lng });
+        setZoomLevel(options.zoomLevel ?? ZOOM_CITY);
+      } else {
+        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+        if (apiKey) {
+          const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(cityName + ', India')}&key=${apiKey}`;
+          const res = await fetch(url);
+          const data = await res.json();
+          if (data.status === "OK" && data.results?.length > 0) {
+            const { lat, lng } = data.results[0].geometry.location;
+            setMapCenter({ lat, lng });
+            setZoomLevel(options.zoomLevel ?? ZOOM_CITY);
+          }
         }
       }
       await new Promise(r => setTimeout(r, 1000)); // 1s delay so overlay is visible
@@ -869,6 +986,30 @@ export default function HomePage() {
         alert('Failed to update favorite. Please try again.');
       }
     }
+  };
+
+  const handleWhatsAppClick = (e, marker) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    // Check if user is logged in
+    if (!currentUser) {
+      setIsLoginModalOpen(true);
+      return;
+    }
+    const phone = marker.agentDetails?.phone || marker.sellerPhoneNumber || defaultWhatsappForWa;
+    if (!phone) return;
+    const num = String(phone).replace(/[^0-9+]/g, '');
+    const fullNum = num.startsWith('91') ? num : (num.length === 10 ? '91' + num : num);
+    const formattedNum = '+' + fullNum;
+
+    navigator.clipboard.writeText(formattedNum).then(() => {
+      alert(`WhatsApp number ${formattedNum} copied to clipboard!`);
+    }).catch((err) => {
+      console.error('Failed to copy WhatsApp number:', err);
+      alert(`WhatsApp number is: ${formattedNum}`);
+    });
   };
 
 
@@ -1121,6 +1262,9 @@ export default function HomePage() {
   };
 
   const getFilteredMarkers = () => {
+    if (isAutoDetectingCity) {
+      return [];
+    }
     let filtered = markers.filter(marker => !marker.isSearchResult); // Exclude search result markers
 
     // Filter by selected city
@@ -1181,7 +1325,7 @@ export default function HomePage() {
     if (listingTypeFilter && listingTypeFilter !== 'all') {
       filtered = filtered.filter(marker => {
         const markerListingType = (marker.listingType || marker.propertyLabel || marker.saleType || marker.type || '').toString().toLowerCase();
-        if (listingTypeFilter === 'verified') return marker.isVerified || marker.verificationStatus === 'verified' || marker.verificationStatus === 'confirmed';
+        if (listingTypeFilter === 'verified') return marker.isVerified;
         if (listingTypeFilter === 'video') return !!(marker.video || (marker.propertyVideos && marker.propertyVideos.length > 0));
         // DB values: "for-rent", "Standard", etc.; also accept display form "For Rent"
         const match = {
@@ -2215,35 +2359,51 @@ export default function HomePage() {
                         setMapCenter({ lat: loc.lat, lng: loc.lng });
                         setZoomLevel(loc.isFallback ? ZOOM_INDIA : loc.isApproximate ? ZOOM_CITY : ZOOM_LOCATION);
                         setDetectedUserLocation({ lat: loc.lat, lng: loc.lng });
-                        if (typeof window !== 'undefined' && window.innerWidth < 480) setShowCitySelector(false);
 
-                        // Optional: reverse geocode to show city name in search
+                        // Reverse geocode to show city name in search and filter
                         const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+                        let resolvedCityName = null;
                         if (apiKey) {
                           try {
                             const reverseGeocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${loc.lat},${loc.lng}&key=${apiKey}`;
                             const geocodeRes = await fetch(reverseGeocodeUrl);
                             const geocodeData = await geocodeRes.json();
 
-                            let cityName = null;
                             if (geocodeData.status === "OK" && geocodeData.results?.length > 0) {
                               const addressComponents = geocodeData.results[0].address_components;
                               for (const component of addressComponents) {
                                 if (component.types.includes('locality')) {
-                                  cityName = component.long_name;
+                                  resolvedCityName = component.long_name;
                                   break;
                                 } else if (component.types.includes('administrative_area_level_2')) {
-                                  cityName = component.long_name;
+                                  resolvedCityName = component.long_name;
                                 }
                               }
                             }
-                            if (cityName) setCitySearchQuery(cityName);
-                            else setCitySearchQuery('');
-                          } catch {
-                            setCitySearchQuery('');
+                          } catch (err) {
+                            console.error('Error reverse geocoding:', err);
                           }
+                        }
+
+                        if (resolvedCityName) {
+                          setCitySearchQuery(resolvedCityName);
+                          setActiveCityFilter(resolvedCityName);
+                          setZoomingCityName(resolvedCityName);
+                          setTimeout(() => {
+                            setZoomingCityName(null);
+                          }, 1500);
                         } else {
                           setCitySearchQuery('');
+                          setActiveCityFilter(null);
+                        }
+
+                        // Close selector and reset selections so they see the result
+                        setSelectedMarker(null);
+                        setSelectedCity(null);
+                        setShowCitySelector(false);
+                        const isMobileOrTablet = typeof window !== 'undefined' && window.innerWidth < 768;
+                        if (isMobileOrTablet) {
+                          setIsDrawerCollapsed(true);
                         }
                       } catch (error) {
                         console.error('Error detecting location:', error);
@@ -3395,12 +3555,21 @@ export default function HomePage() {
             ) : !showCitySelector ? (
               /* Property List */
               <div className={`flex-1 min-h-0 overflow-y-auto drawer-scroll p-2.5 space-y-2 ${isDark ? 'bg-[#1f2229]' : 'bg-gray-50'}`}>
-                {getFilteredMarkers().length === 0 ? (
+                {isAutoDetectingCity || isLoadingProperties ? (
+                  <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+                    <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-3" />
+                    <p className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {isAutoDetectingCity ? "Detecting your location..." : "Loading properties..."}
+                    </p>
+                  </div>
+                ) : getFilteredMarkers().length === 0 ? (
                   <div className={`flex flex-col items-center justify-center py-12 px-4 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                     <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-3 ${isDark ? 'bg-[#282c34]' : 'bg-gray-200'}`}>
                       <Search className={`w-7 h-7 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                     </div>
-                    <p className="font-medium text-sm mb-0.5">No property found</p>
+                    <p className="font-medium text-sm mb-0.5">
+                      No property found{activeCityFilter ? ` in ${activeCityFilter}` : ""}
+                    </p>
                     <p className="text-xs">Try changing your search or filters.</p>
                   </div>
                 ) : getFilteredMarkers().map((marker, index) => {
@@ -3456,15 +3625,12 @@ export default function HomePage() {
                                   strokeWidth={2}
                                 />
                               </button>
-                              <a
-                                href={`https://wa.me/${(marker.agentDetails?.phone || marker.sellerPhoneNumber)?.replace(/[^0-9]/g, '') || defaultWhatsappForWa}?text=Hi,%20I%20am%20interested%20in%20${encodeURIComponent(marker.propertyName || 'this property')}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
+                              <button
+                                onClick={(e) => handleWhatsAppClick(e, marker)}
                                 className={`p-0.5 rounded-full transition-colors ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
                               >
                                 <Image src="/whatsapp.svg" alt="WhatsApp" width={14} height={14} />
-                              </a>
+                              </button>
                             </div>
                           </div>
                           <p className={`text-[9px] mb-0.5 truncate ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>

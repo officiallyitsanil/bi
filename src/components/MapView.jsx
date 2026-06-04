@@ -326,11 +326,7 @@ export default function MapView({ center, markers, selectedMarker, onMarkerClick
               }
             }
 
-            const discountedPriceValue = property?.discountPercent
-              ? originalPriceValue * (1 - property.discountPercent / 100)
-              : originalPriceValue > 0 ? originalPriceValue * 0.95 : 0;
-
-            return discountedPriceValue;
+            return originalPriceValue;
           };
 
           // Get price for display - check ALL possible price fields

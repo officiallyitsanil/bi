@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 const CityContext = createContext({
     activeCityFilter: null,
@@ -10,8 +10,34 @@ const CityContext = createContext({
 });
 
 export function CityProvider({ children }) {
-    const [activeCityFilter, setActiveCityFilter] = useState(null);
+    const [activeCityFilter, setActiveCityFilterState] = useState(null);
     const [citySearchQuery, setCitySearchQuery] = useState('');
+
+    const setActiveCityFilter = (city) => {
+        setActiveCityFilterState(city);
+        try {
+            if (city) {
+                localStorage.setItem('selectedCity', city);
+            } else {
+                localStorage.removeItem('selectedCity');
+            }
+        } catch (e) {
+            console.error('Error saving selectedCity to localStorage:', e);
+        }
+    };
+
+    // Load initial city from localStorage on client-side mount
+    useEffect(() => {
+        try {
+            const savedCity = localStorage.getItem('selectedCity');
+            if (savedCity) {
+                setActiveCityFilterState(savedCity);
+                setCitySearchQuery(savedCity);
+            }
+        } catch (e) {
+            console.error('Error loading selectedCity from localStorage:', e);
+        }
+    }, []);
 
     const value = {
         activeCityFilter,

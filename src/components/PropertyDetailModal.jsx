@@ -504,26 +504,42 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
 
     // Schema field names: propertyName, address.locality, address.district, agentDetails, brandDetails
     const name = property.propertyName || property.name;
-    const is_verified = property.verificationStatus === 'verified' || property.verificationStatus === 'confirmed' || property.is_verified;
+    const is_verified = property.isPremium === true;
     const location_district = property.address?.district || property.location_district;
     const layer_location = property.address?.locality || property.layer_location;
     const sellerPhoneNumber = property.agentDetails?.phone || property.sellerPhoneNumber;
     const handlePhoneClick = (e, phone) => {
         if (e) e.preventDefault();
+        if (!currentUser) {
+            setIsLoginModalOpen(true);
+            return;
+        }
         if (!phone) return;
         const num = String(phone).replace(/[^0-9+]/g, '');
         const fullNum = num.startsWith('91') ? num : (num.length === 10 ? '91' + num : num);
-        const telUrl = `tel:+${fullNum}`;
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        if (isMobile) {
-            window.location.href = telUrl;
-        } else {
-            navigator.clipboard.writeText('+' + fullNum).then(() => {
-                alert('Phone number copied to clipboard! Paste in your phone or a calling app (Skype, Teams, etc.) to call.');
-            }).catch(() => {
-                window.location.href = telUrl;
-            });
+        const formattedNum = '+' + fullNum;
+        navigator.clipboard.writeText(formattedNum).then(() => {
+            alert(`Phone number ${formattedNum} copied to clipboard! Paste in your phone or a calling app (Skype, Teams, etc.) to call.`);
+        }).catch(() => {
+            alert(`Phone number is: ${formattedNum}`);
+        });
+    };
+
+    const handleWhatsAppClick = (e, phone) => {
+        if (e) e.preventDefault();
+        if (!currentUser) {
+            setIsLoginModalOpen(true);
+            return;
         }
+        if (!phone) return;
+        const num = String(phone).replace(/[^0-9+]/g, '');
+        const fullNum = num.startsWith('91') ? num : (num.length === 10 ? '91' + num : num);
+        const formattedNum = '+' + fullNum;
+        navigator.clipboard.writeText(formattedNum).then(() => {
+            alert(`WhatsApp number ${formattedNum} copied to clipboard!`);
+        }).catch(() => {
+            alert(`WhatsApp number is: ${formattedNum}`);
+        });
     };
     const createdBy = property.agentDetails ? { name: property.agentDetails.name } : property.createdBy;
     const {
@@ -570,7 +586,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
     const brandStats = {
         cities: (() => {
             const val = bld.cities || bd.cities || property.brandStats?.cities;
-            if (val === null || val === undefined || val === "") return "-";
+            if (val === null || val === undefined || String(val).trim() === "" || String(val).trim() === "-") return "-";
             if (typeof val === 'number') return `${val}+`;
             if (typeof val === 'string') {
                 if (!isNaN(val.trim())) return `${val.trim()}+`;
@@ -581,23 +597,28 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
         })(),
         projects: (() => {
             const val = bld.projects ?? bd.spaces ?? bd.projects ?? bld.projectsCount ?? property.brandStats?.spaces;
-            if (val === null || val === undefined || val === "") return "-";
-            return `${val}+`;
+            if (val === null || val === undefined || String(val).trim() === "" || String(val).trim() === "-") return "-";
+            return `${String(val).trim()}+`;
         })(),
         clients: (() => {
             const val = bld.clients ?? bd.clients ?? bld.clientsCount ?? property.brandStats?.clients;
-            if (val === null || val === undefined || val === "") return "-";
-            return `${val}+`;
+            if (val === null || val === undefined || String(val).trim() === "" || String(val).trim() === "-") return "-";
+            return `${String(val).trim()}+`;
         })(),
         spaces: (() => {
             const val = bld.projects ?? bd.spaces ?? bd.projects ?? bld.projectsCount ?? property.brandStats?.spaces;
-            if (val === null || val === undefined || val === "") return "-";
-            return `${val}+`;
+            if (val === null || val === undefined || String(val).trim() === "" || String(val).trim() === "-") return "-";
+            return `${String(val).trim()}+`;
+        })(),
+        seats: (() => {
+            const val = bld.seats ?? bd.seats ?? bld.numberOfSeats ?? property.builderDetails?.seats ?? property.brandDetails?.seats;
+            if (val === null || val === undefined || String(val).trim() === "" || String(val).trim() === "-") return "-";
+            return typeof val === 'number' || !isNaN(Number(val)) ? `${val} Seat` : `${val} Seat`;
         })(),
         experience: (() => {
-            const val = bld.experience ?? bd.experience ?? bld.yearsOfExperience ?? bd.seats ?? property.brandDetails?.seats;
-            if (val === null || val === undefined || val === "") return "-";
-            return typeof val === 'number' || !isNaN(Number(val)) ? `${val} Year` : val;
+            const val = bld.experience ?? bd.experience ?? bld.yearsOfExperience ?? property.builderDetails?.experience ?? property.brandDetails?.experience;
+            if (val === null || val === undefined || String(val).trim() === "" || String(val).trim() === "-") return "-";
+            return typeof val === 'number' || !isNaN(Number(val)) ? `${val}+` : `${val}+`;
         })()
     };
     const brandDescription = safeDisplay(bld.readMoreDescription || bld.description || bd.description || property.brandDescription);
@@ -612,8 +633,11 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
         : 0;
 
     // Dynamic Stats calculations
-    const expValue = property.agentDetails?.experience || property.brandDetails?.experience || property.builderDetails?.experience || property.builderDetails?.yearsOfExperience || brandStats.experience;
-    const displayExperience = expValue != null && expValue !== "" ? (typeof expValue === 'number' || !isNaN(Number(expValue)) ? `${expValue} Year` : expValue) : "-";
+    const seatsValue = property.builderDetails?.seats || property.brandDetails?.seats || property.builderDetails?.numberOfSeats || brandStats.seats;
+    const displaySeats = seatsValue != null && seatsValue !== "" ? (typeof seatsValue === 'number' || !isNaN(Number(seatsValue)) ? `${seatsValue} Seat` : `${seatsValue} Seat`) : "-";
+
+    const experienceValue = property.builderDetails?.experience ?? property.brandDetails?.experience ?? property.builderDetails?.yearsOfExperience ?? brandStats.experience;
+    const displayExperience = experienceValue != null && experienceValue !== "" ? (typeof experienceValue === 'number' || !isNaN(Number(experienceValue)) ? `${experienceValue}+` : `${experienceValue}+`) : "-";
 
     const clientValue = property.brandDetails?.clients || property.agentDetails?.clients || property.builderDetails?.clients || property.brandStats?.clients || brandStats.clients;
     const displayClients = clientValue != null && clientValue !== "" ? (typeof clientValue === 'number' || !isNaN(Number(clientValue)) ? `${clientValue}+` : clientValue) : "-";
@@ -800,15 +824,9 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                         <div>
                             <p className="text-2xl font-bold text-blue-600">
                                 {safeDisplay(discountedPrice)}
-                                {propertyCategory === 'commercial' ? (
-                                    <span className={`text-sm font-normal ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                                        {property.pricePerSeat ? ' / seat' : ''}
-                                    </span>
-                                ) : (
-                                    <span className={`text-sm font-normal ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                                        {discountedPrice && !discountedPrice.toLowerCase().includes('hourly') ? ' / Month' : ''}
-                                    </span>
-                                )}
+                                <span className={`text-sm font-normal ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                                    {discountedPrice && !discountedPrice.toLowerCase().includes('hourly') ? ' / Month' : ''}
+                                </span>
                             </p>
                         </div>
                     </div>
@@ -897,7 +915,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                         {renderModalGridField(
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]"><path d="M20 7H4a2 2 0 0 0-2 2v6c0 1.1.9 2 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M12 12v.01"/></svg>,
                                             "Price Per Seat",
-                                            property.pricePerSeat ? `₹${property.pricePerSeat}/seat` : ""
+                                            prices.discountedPrice ? `${prices.discountedPrice}` : ""
                                         )}
 
                                         {/* Price Per Sq.ft */}
@@ -984,15 +1002,13 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                             >
                                 <Phone className="w-5 h-5" />
                             </button>
-                            <a 
-                                href={`https://wa.me/${safeDisplay(sellerPhoneNumber)?.replace(/[^0-9]/g, '') || '918151915199'}?text=Hi, I am interested in ${encodeURIComponent(name || 'this property')}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                            <button 
+                                onClick={(e) => sellerPhoneNumber && handleWhatsAppClick(e, sellerPhoneNumber)}
                                 className="w-11 h-11 rounded-full bg-green-50 flex items-center justify-center text-green-500 hover:bg-green-100 transition-colors cursor-pointer"
                                 aria-label="Message Agent on WhatsApp"
                             >
                                 <Image src="/whatsapp.svg" alt="wa" width={24} height={24} />
-                            </a>
+                            </button>
                         </div>
                     </div>
 
@@ -1325,49 +1341,35 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                             </span>
                                             <Info className="w-2 h-2 text-[#307f43] opacity-70 shrink-0 mt-0.5" strokeWidth={1.5} />
                                         </div>
-                                        <a
-                                            href={sellerPhoneNumber ? `tel:${String(sellerPhoneNumber).replace(/[^0-9+]/g, '')}` : '#'}
+                                        <button
                                             onClick={(e) => sellerPhoneNumber && handlePhoneClick(e, sellerPhoneNumber)}
                                             className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-gray-100 hover:bg-gray-200'}`}
+                                            aria-label="Call Agent"
                                         >
                                             <svg className={`w-3 h-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                             </svg>
-                                        </a>
-                                        <a
-                                            href={`https://wa.me/${safeDisplay(sellerPhoneNumber)?.replace(/[^0-9]/g, '') || '918151915199'}?text=Hi, I am interested in ${encodeURIComponent(name || 'this property')}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
+                                        </button>
+                                        <button
+                                            onClick={(e) => sellerPhoneNumber && handleWhatsAppClick(e, sellerPhoneNumber)}
                                             className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-gray-100 hover:bg-gray-200'}`}
+                                            aria-label="WhatsApp Agent"
                                         >
                                             <Image src="/whatsapp.svg" alt="WhatsApp" width={14} height={14} />
-                                        </a>
+                                        </button>
                                     </div>
                                 </div>
                                 {/* Price on Right Side - Stacked vertically */}
                                 <div className="ml-2 mt-1.5 flex flex-col items-end flex-shrink-0">
                                     <div className={`flex items-center gap-1.5 px-3 py-1.5 justify-center rounded-xl border ${isDark ? 'bg-[#282c34] border-gray-700' : 'bg-white border-gray-100 shadow-sm'}`}>
-                                        {originalPrice && originalPrice !== discountedPrice ? (
-                                            <>
-                                                <div className="relative px-1">
-                                                    <span className={`text-xs ${isDark ? 'text-green-500 text-opacity-80' : 'text-green-700 text-opacity-80'}`}>
-                                                        {safeDisplay(originalPrice)}
-                                                    </span>
-                                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                                        <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
-                                                            <line x1="0" y1="100" x2="100" y2="0" stroke="#ef4444" strokeWidth="6" />
-                                                            <line x1="0" y1="0" x2="100" y2="100" stroke="#ef4444" strokeWidth="6" />
-                                                        </svg>
-                                                    </div>
-                                                </div>
-                                                <svg width="24" height="12" viewBox="0 0 24 12" fill="none" className={isDark ? 'text-gray-400' : 'text-gray-500'}>
-                                                    <path d="M1 6H23M23 6L17 1M23 6L17 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                                </svg>
-                                            </>
-                                        ) : null}
                                         <span className={`text-base font-bold ${isDark ? 'text-green-400' : 'text-green-700'}`}>
                                             {safeDisplay(discountedPrice)}
                                         </span>
+                                        {originalPrice && originalPrice !== discountedPrice ? (
+                                            <span className={`line-through ml-1.5 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                                                {safeDisplay(originalPrice)}
+                                            </span>
+                                        ) : null}
                                     </div>
                                 </div>
                             </div>
@@ -1446,14 +1448,10 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                     </div>
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-4 h-4 rounded-full flex-shrink-0 bg-white shadow-sm flex items-center justify-center p-0.5">
-                                            <Image src="/property-details/builder-details/coworking.png" alt="Coworking" width={7} height={7} className="object-contain" />
+                                            <Image src="/property-details/builder-details/coworking.png" alt="Projects" width={7} height={7} className="object-contain" />
                                         </div>
                                         <span className={`text-[7.5px] font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                                            {(() => {
-                                                const v = typeof brandStats.spaces === 'number' ? `${brandStats.spaces}+` : String(safeDisplay(brandStats.spaces)).replace(/Coworking\s*/gi, '').trim();
-                                                const final = v.toLowerCase().endsWith('spaces') ? v : `${v} Coworking Spaces`;
-                                                return final.length > 20 ? v : final;
-                                            })()}
+                                            {brandStats.projects && brandStats.projects !== "-" ? (String(brandStats.projects).toLowerCase().includes('projects') ? brandStats.projects : `${brandStats.projects} Projects`) : "-"}
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-1.5">
@@ -1466,10 +1464,10 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                     </div>
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-4 h-4 rounded-full flex-shrink-0 bg-white shadow-sm flex items-center justify-center p-0.5">
-                                            <Image src="/property-details/builder-details/seats.png" alt="Seats" width={7} height={7} className="object-contain" />
+                                            <Image src="/property-details/builder-details/seats.png" alt="Experience" width={7} height={7} className="object-contain" />
                                         </div>
                                         <span className={`text-[7.5px] font-semibold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                                            {typeof brandStats.seats === 'number' ? `${brandStats.seats}+ Seats` : (String(brandStats.seats || '').toLowerCase().includes('seats') ? brandStats.seats : `${safeDisplay(brandStats.seats)} Seats`)}
+                                            {brandStats.experience && brandStats.experience !== "-" ? (String(brandStats.experience).toLowerCase().includes('experience') ? brandStats.experience : `${brandStats.experience} Experience`) : "-"}
                                         </span>
                                     </div>
                                 </div>

@@ -33,28 +33,26 @@ export function calculatePrices(property) {
     }
   }
 
-  const discountedPriceValue = property?.discountPercent
-    ? originalPriceValue * (1 - property.discountPercent / 100)
-    : originalPriceValue > 0 ? originalPriceValue * 0.95 : 0;
+  // Left price (actual/discounted) = totalPrice
+  const discountedPriceValue = originalPriceValue;
+
+  // Right price (original/strike-through) = totalPrice * 1.1 (increase by 10% markup)
+  const calculatedOriginalPriceValue = originalPriceValue > 0 ? originalPriceValue * 1.1 : 0;
 
   const formatPrice = (price) => {
     if (price === 0) return '₹XX';
     return `₹${Math.round(price).toLocaleString('en-IN')}`;
   };
 
-  // Schema: pricePerSeat - compute discounted per-seat when discountPercent exists
-  const rawPricePerSeat = property?.pricePerSeat || property?.floorConfigurations?.[0]?.dedicatedCabin?.pricePerSeat;
-  const perSeatNum = rawPricePerSeat ? parseFloat(String(rawPricePerSeat).replace(/[₹,]/g, '')) || 0 : 0;
-  const originalPricePerSeat = rawPricePerSeat ?? null;
-  const discountedPricePerSeat = rawPricePerSeat
-    ? (property?.discountPercent ? formatPrice(perSeatNum * (1 - property.discountPercent / 100)) : rawPricePerSeat)
-    : null;
+  // Schema: pricePerSeat - show originalPrice * 1.1 and discountedPrice mapped to totalPrice
+  const originalPricePerSeat = formatPrice(calculatedOriginalPriceValue);
+  const discountedPricePerSeat = formatPrice(discountedPriceValue);
 
   return {
-    originalPrice: formatPrice(originalPriceValue),
+    originalPrice: formatPrice(calculatedOriginalPriceValue),
     discountedPrice: formatPrice(discountedPriceValue),
     pricePerSqft: property?.pricePerSqft ?? null,
-    pricePerSeat: property?.pricePerSeat ?? null,
+    pricePerSeat: formatPrice(discountedPriceValue), // Show totalPrice for pricePerSeat too!
     originalPricePerSeat,
     discountedPricePerSeat,
     isNegotiablePrice: property?.isNegotiablePrice ?? null,
