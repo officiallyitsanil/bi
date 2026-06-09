@@ -13,6 +13,20 @@ export function CityProvider({ children }) {
     const [activeCityFilter, setActiveCityFilterState] = useState(null);
     const [citySearchQuery, setCitySearchQuery] = useState('');
 
+    // Clear manual city selection from localStorage synchronously on mount/render if not on a details page.
+    // This prevents race conditions with child components' autoDetectCity GPS updates.
+    if (typeof window !== 'undefined') {
+        try {
+            const isDetailsPage = window.location.pathname.includes('/property-details');
+            if (!isDetailsPage) {
+                localStorage.removeItem('selectedCity');
+                localStorage.removeItem('isManualCitySelection');
+            }
+        } catch (e) {
+            console.error('Error clearing localStorage in CityProvider:', e);
+        }
+    }
+
     const setActiveCityFilter = (city) => {
         setActiveCityFilterState(city);
         try {
@@ -26,11 +40,13 @@ export function CityProvider({ children }) {
         }
     };
 
-    // Load initial city from localStorage on client-side mount
+    // Load initial city from localStorage on client-side mount if manually selected and on details page
     useEffect(() => {
         try {
+            const isDetailsPage = window.location.pathname.includes('/property-details');
             const savedCity = localStorage.getItem('selectedCity');
-            if (savedCity) {
+            const isManual = localStorage.getItem('isManualCitySelection') === 'true';
+            if (savedCity && isManual && isDetailsPage) {
                 setActiveCityFilterState(savedCity);
                 setCitySearchQuery(savedCity);
             }

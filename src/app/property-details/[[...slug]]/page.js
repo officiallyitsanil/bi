@@ -80,7 +80,7 @@ import "swiper/css/navigation";
 import "../animations.css";
 import "../property-details.css";
 import { calculatePrices } from "@/utils/priceUtils";
-import { getPropertyCategoryAndTypes } from "@/utils/uiVisibility";
+import { getPropertyCategoryAndTypes, getPropertyTypeFormatted, getUnderManagementFormatted } from "@/utils/uiVisibility";
 
 // Dummy data for nearby landmarks (extended array when API returns empty)
 const NEARBY_CATEGORIES = [
@@ -2136,6 +2136,34 @@ function PropertyDetailsContent() {
                                                          </p>
                                                      </div>
                                                  </div>
+                                                 <div className="flex min-w-0 items-start gap-3 col-span-1">
+                                                     <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
+                                                         <img src="/property-details/other-details/building.png" alt="Property Type" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
+                                                     </div>
+                                                     <div className="min-w-0 pt-0.5">
+                                                         <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>
+                                                             Property Type
+                                                             <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden />
+                                                         </p>
+                                                         <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
+                                                             {getPropertyTypeFormatted(property)}
+                                                         </p>
+                                                     </div>
+                                                 </div>
+                                                 <div className="flex min-w-0 items-start gap-3 col-span-1">
+                                                     <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-primary/35 bg-background'}`}>
+                                                         <img src="/property-details/other-details/property.png" alt="Under Management" className="h-[22px] w-[22px] object-contain drop-shadow-sm" />
+                                                     </div>
+                                                     <div className="min-w-0 pt-0.5">
+                                                         <p className={`flex items-center gap-1 text-xs ${isDark ? 'text-gray-500' : 'text-muted-foreground'}`}>
+                                                             Under Management
+                                                             <Info className="h-3 w-3 shrink-0 text-sky-500" aria-hidden />
+                                                         </p>
+                                                         <p className={`mt-1 break-words text-sm font-bold ${isDark ? 'text-white' : 'text-foreground'}`}>
+                                                             {getUnderManagementFormatted(property)}
+                                                         </p>
+                                                     </div>
+                                                 </div>
                                              </>
                                          );
                                      })()}
@@ -3571,6 +3599,16 @@ function PropertyDetailsContent() {
             {(() => {
                 const getNumericPrice = (prop) => {
                     if (!prop) return 0;
+                    try {
+                        const calculated = calculatePrices(prop);
+                        if (calculated && calculated.discountedPrice && calculated.discountedPrice !== '₹XX') {
+                            const priceStr = String(calculated.discountedPrice).replace(/[₹,]/g, '');
+                            const val = parseFloat(priceStr);
+                            if (val > 0) return val;
+                        }
+                    } catch (e) {
+                        console.error("Error in getNumericPrice calculation:", e);
+                    }
                     const p = prop.totalPrice || prop.originalPrice || prop.discountedPrice || prop.expectedRent || prop.price;
                     if (!p || p === '₹XX' || p === 'N/A') return 0;
                     const priceStr = String(p).replace(/[₹,]/g, '');
@@ -3598,12 +3636,15 @@ function PropertyDetailsContent() {
                 const lowerBound = currentPrice * 0.9;
                 const upperBound = currentPrice * 1.1;
 
-                const normalizeCategory = (val) => {
-                    if (!val) return '';
-                    return String(val).toLowerCase().replace(/[-_\s]/g, '').trim();
-                };
+                const currentInfo = getPropertyCategoryAndTypes(property);
+                const currentTypes = (currentInfo?.types || []).map(t => t.toLowerCase());
 
-                const currentLt = normalizeCategory(property.listingType || property.category || property.spaceType || property.propertyLabel);
+                const isCommercial = (val) => {
+                    if (!val) return false;
+                    const v = String(val).toLowerCase();
+                    return v.includes('commercial') || v.includes('techpark') || v.includes('coworking') || v.includes('office') || v.includes('warehouse') || v.includes('tech-park');
+                };
+                const isCurrentComm = isCommercial(property.propertyCategory) || isCommercial(property.propertyType);
 
                 // Filter all live properties within +/- 10% of currentPrice and matching category
                 let similarProps = allProperties.filter((p) => {
@@ -3612,14 +3653,19 @@ function PropertyDetailsContent() {
                     const currentId = property?._id || property?.id;
                     if (id === currentId) return false; // Exclude current property
 
-                    // Match property category (commercial vs residential)
-                    const currentCategory = (property.propertyCategory || property.propertyType || '').toLowerCase();
-                    const pCategory = (p.propertyCategory || p.propertyType || '').toLowerCase();
-                    if (pCategory !== currentCategory) return false;
+                    // 1. Only show properties with verificationStatus === 'verified' or 'confirmed'
+                    const isVerified = p.verificationStatus === 'verified' || p.verificationStatus === 'confirmed';
+                    if (!isVerified) return false;
 
-                    // Match subcategory
-                    const pLt = normalizeCategory(p.listingType || p.category || p.spaceType || p.propertyLabel);
-                    if (currentLt && pLt && currentLt !== pLt) return false;
+                    // 2. Match main property category (commercial vs residential)
+                    const isPComm = isCommercial(p.propertyCategory) || isCommercial(p.propertyType);
+                    if (isCurrentComm !== isPComm) return false;
+
+                    // 3. Match subcategory (e.g. Managed Space, Coworking Shared, etc.)
+                    const pInfo = getPropertyCategoryAndTypes(p);
+                    const pTypes = (pInfo?.types || []).map(t => t.toLowerCase());
+                    const hasOverlap = pTypes.some(t => currentTypes.includes(t));
+                    if (!hasOverlap) return false;
 
                     const pPrice = getNumericPrice(p);
                     return pPrice >= lowerBound && pPrice <= upperBound;
@@ -3829,7 +3875,13 @@ function PropertyDetailsContent() {
 
             {/* Explore Top Coworking Locations */}
             {(() => {
-                const currentCategory = (property.propertyCategory || property.propertyType || '').toLowerCase();
+                const isCommercial = (val) => {
+                    if (!val) return false;
+                    const v = String(val).toLowerCase();
+                    return v.includes('commercial') || v.includes('techpark') || v.includes('coworking') || v.includes('office') || v.includes('warehouse') || v.includes('tech-park');
+                };
+                const isCurrentComm = isCommercial(property.propertyCategory) || isCommercial(property.propertyType);
+                const currentCategory = isCurrentComm ? 'commercial' : 'residential';
 
                 const getSpaceTypes = (p) => {
                     if (!p) return [];
@@ -3872,12 +3924,8 @@ function PropertyDetailsContent() {
                     return `Explore Top ${categoryLabel} Locations`;
                 };
 
-                const normalizeCategory = (val) => {
-                    if (!val) return '';
-                    return String(val).toLowerCase().replace(/[-_\s]/g, '').trim();
-                };
-
-                const currentLt = normalizeCategory(property.listingType || property.category || property.spaceType || property.propertyLabel);
+                const currentInfo = getPropertyCategoryAndTypes(property);
+                const currentTypesList = (currentInfo?.types || []).map(t => t.toLowerCase());
 
                 let exploreProps = allProperties.filter((p) => {
                     if (!p) return false;
@@ -3885,13 +3933,19 @@ function PropertyDetailsContent() {
                     const currentId = property?._id || property?.id;
                     if (id === currentId) return false;
 
-                    // Match property category (commercial vs residential)
-                    const pCategory = (p.propertyCategory || p.propertyType || '').toLowerCase();
-                    if (pCategory !== currentCategory) return false;
+                    // 1. Only show properties with verificationStatus === 'verified' or 'confirmed'
+                    const isVerified = p.verificationStatus === 'verified' || p.verificationStatus === 'confirmed';
+                    if (!isVerified) return false;
 
-                    // Match subcategory
-                    const pLt = normalizeCategory(p.listingType || p.category || p.spaceType || p.propertyLabel);
-                    if (currentLt && pLt && currentLt !== pLt) return false;
+                    // 2. Match main property category (commercial vs residential)
+                    const isPComm = isCommercial(p.propertyCategory) || isCommercial(p.propertyType);
+                    if (isCurrentComm !== isPComm) return false;
+
+                    // 3. Match subcategory (e.g. Managed Space, Coworking Shared, etc.)
+                    const pInfo = getPropertyCategoryAndTypes(p);
+                    const pTypes = (pInfo?.types || []).map(t => t.toLowerCase());
+                    const hasOverlap = pTypes.some(t => currentTypesList.includes(t));
+                    if (!hasOverlap) return false;
 
                     return true;
                 });
@@ -3901,7 +3955,7 @@ function PropertyDetailsContent() {
                         <div className="w-full px-4 md:px-10 mt-16 mb-20">
                             <section className={`py-12 px-6 md:py-16 md:px-10 rounded-2xl md:rounded-[24px] relative shadow-sm border transition-colors ${isDark ? 'bg-[#121418] border-gray-800' : 'bg-[#fdf8e7] border-[#f0e4c3]/10'}`}>
                                 <h2 className={`text-[1.2rem] md:text-xl font-bold mb-6 tracking-tight ${isDark ? 'text-white' : 'text-black'}`}>
-                                    {getCategoryHeading()}
+                                    Explore more spaces
                                 </h2>
                                 <div className="flex flex-col items-center justify-center py-12 text-center">
                                     <p className={`text-[15px] font-semibold ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -3940,7 +3994,7 @@ function PropertyDetailsContent() {
                     <div className="w-full px-4 md:px-10 mt-16 mb-20">
                         <section className={`py-12 px-6 md:py-16 md:px-10 rounded-2xl md:rounded-[24px] relative shadow-sm border transition-colors ${isDark ? 'bg-[#121418] border-gray-800' : 'bg-[#fdf8e7] border-[#f0e4c3]/10'}`}>
                             <h2 className={`text-[1.2rem] md:text-xl font-bold mb-6 tracking-tight ${isDark ? 'text-white' : 'text-black'}`}>
-                                {getCategoryHeading()}
+                                Explore more spaces
                             </h2>
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-5">
                                 {displayItems.map((item, i) => {
@@ -5054,6 +5108,14 @@ function PropertyDetailsContent() {
                                                     <span className="text-sm font-medium text-gray-500 block mb-1">Category Type</span>
                                                     <span className="text-base font-semibold text-gray-800">{info.types.join(", ")}</span>
                                                 </div>
+                                                <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
+                                                    <span className="text-sm font-medium text-gray-500 block mb-1">Property Type</span>
+                                                    <span className="text-base font-semibold text-gray-800">{getPropertyTypeFormatted(property)}</span>
+                                                </div>
+                                                <div className="bg-gray-50 p-4 rounded-lg scroll-animate" data-animation="animate-fade-up">
+                                                    <span className="text-sm font-medium text-gray-500 block mb-1">Under Management</span>
+                                                    <span className="text-base font-semibold text-gray-800">{getUnderManagementFormatted(property)}</span>
+                                                </div>
                                             </>
                                         );
                                     })()}
@@ -5082,6 +5144,14 @@ function PropertyDetailsContent() {
                                                 <div className="bg-gray-50 p-4 rounded-lg scroll-animate md:hidden" data-animation="animate-fade-up">
                                                     <span className="text-sm font-medium text-gray-500 block mb-1">Category Type</span>
                                                     <span className="text-base font-semibold text-gray-800">{info.types.join(", ")}</span>
+                                                </div>
+                                                <div className="bg-gray-50 p-4 rounded-lg scroll-animate md:hidden" data-animation="animate-fade-up">
+                                                    <span className="text-sm font-medium text-gray-500 block mb-1">Property Type</span>
+                                                    <span className="text-base font-semibold text-gray-800">{getPropertyTypeFormatted(property)}</span>
+                                                </div>
+                                                <div className="bg-gray-50 p-4 rounded-lg scroll-animate md:hidden" data-animation="animate-fade-up">
+                                                    <span className="text-sm font-medium text-gray-500 block mb-1">Under Management</span>
+                                                    <span className="text-base font-semibold text-gray-800">{getUnderManagementFormatted(property)}</span>
                                                 </div>
                                             </>
                                         );

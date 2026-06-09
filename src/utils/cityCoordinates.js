@@ -5,6 +5,7 @@ export const cityCoordinates = {
   Chennai: { lat: 13.0827, lng: 80.2707 },
   Delhi: { lat: 28.7041, lng: 77.1025 },
   Gurgaon: { lat: 28.4595, lng: 77.0266 },
+  Gurugram: { lat: 28.4595, lng: 77.0266 },
   Hyderabad: { lat: 17.385, lng: 78.4867 },
   Kolkata: { lat: 22.5726, lng: 88.3639 },
   Lucknow: { lat: 26.8467, lng: 80.9462 },

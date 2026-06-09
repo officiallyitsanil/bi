@@ -37,54 +37,67 @@ export async function getUserLocation() {
   // Try multiple IP geolocation APIs as fallbacks
   const ipApis = [
     'https://ipapi.co/json/',
-    'https://ip-api.com/json/',
-    'https://api.ipify.org?format=json'
+    'https://freeipapi.com/api/json',
+    'https://ipwho.is/'
   ];
 
   let ipLocation = null;
+
+  // Try same-origin server proxy first to bypass browser CORS policy
+  try {
+    const response = await fetch('/api/geolocate');
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success && result.data) {
+        ipLocation = result.data;
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to fetch from same-origin geolocate proxy:', err.message);
+  }
   
-  // Try IP-based location (no permission needed)
-  for (const apiUrl of ipApis) {
-    try {
-      let ipData;
-      
-      if (apiUrl.includes('ipify')) {
-        // ipify only returns IP, skip it for now
-        continue;
-      }
-      
-      ipData = await fetchIPLocation(apiUrl);
-      
-      if (ipData) {
-        // Handle different API response formats
-        let lat, lng, city, country;
+  // Try IP-based location directly (client-side fallback, might hit CORS)
+  if (!ipLocation) {
+    for (const apiUrl of ipApis) {
+      try {
+        let ipData = await fetchIPLocation(apiUrl);
         
-        if (apiUrl.includes('ipapi.co')) {
-          lat = ipData.latitude;
-          lng = ipData.longitude;
-          city = ipData.city;
-          country = ipData.country_name;
-        } else if (apiUrl.includes('ip-api.com')) {
-          lat = ipData.lat;
-          lng = ipData.lon;
-          city = ipData.city;
-          country = ipData.country;
+        if (ipData) {
+          // Handle different API response formats
+          let lat, lng, city, country;
+          
+          if (apiUrl.includes('ipapi.co')) {
+            lat = ipData.latitude;
+            lng = ipData.longitude;
+            city = ipData.city;
+            country = ipData.country_name;
+          } else if (apiUrl.includes('freeipapi.com')) {
+            lat = ipData.latitude;
+            lng = ipData.longitude;
+            city = ipData.cityName;
+            country = ipData.countryName;
+          } else if (apiUrl.includes('ipwho.is')) {
+            lat = ipData.latitude;
+            lng = ipData.longitude;
+            city = ipData.city;
+            country = ipData.country;
+          }
+          
+          if (lat && lng) {
+            ipLocation = {
+              lat: parseFloat(lat),
+              lng: parseFloat(lng),
+              city: city || 'Unknown',
+              country: country || 'Unknown',
+              isApproximate: true
+            };
+            break; // Success, exit loop
+          }
         }
-        
-        if (lat && lng) {
-          ipLocation = {
-            lat,
-            lng,
-            city: city || 'Unknown',
-            country: country || 'Unknown',
-            isApproximate: true
-          };
-          break; // Success, exit loop
-        }
+      } catch (error) {
+        console.warn(`Failed to fetch from ${apiUrl}:`, error);
+        continue; // Try next API
       }
-    } catch (error) {
-      console.warn(`Failed to fetch from ${apiUrl}:`, error);
-      continue; // Try next API
     }
   }
 

@@ -135,32 +135,109 @@ const VisitorTracker = ({ onLocationUpdate }) => {
 
   // Get IP-based location (no permission needed)
   const getIPLocation = async () => {
+    // Try same-origin server proxy first to bypass browser CORS policy
     try {
-      const response = await fetch('https://ipapi.co/json/');
-      const data = await response.json();
+      const response = await fetch('/api/geolocate');
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          const data = result.data;
+          // Get detailed location from Google Maps API
+          const detailedLocation = await getDetailedLocation(data.lat, data.lng);
 
-      if (data.latitude && data.longitude) {
-        // Get detailed location from Google Maps API
-        const detailedLocation = await getDetailedLocation(data.latitude, data.longitude);
-
-        const ipLocation = {
-          latitude: data.latitude,
-          longitude: data.longitude,
-          city: data.city,
-          region: data.region,
-          country: data.country_name,
-          postal: data.postal,
-          timezone: data.timezone,
-          org: data.org,
-          ...(detailedLocation || {})
-        };
-        return ipLocation;
+          return {
+            latitude: parseFloat(data.lat),
+            longitude: parseFloat(data.lng),
+            city: data.city || 'Unknown',
+            region: 'Unknown',
+            country: data.country || 'Unknown',
+            postal: '',
+            timezone: '',
+            org: '',
+            ...(detailedLocation || {})
+          };
+        }
       }
-      return null;
-    } catch (error) {
-      console.error('❌ Error getting IP location:', error);
-      return null;
+    } catch (err) {
+      console.warn('VisitorTracker failed to fetch from same-origin geolocate proxy:', err.message);
     }
+
+    const ipApis = [
+      'https://ipapi.co/json/',
+      'https://freeipapi.com/api/json',
+      'https://ipwho.is/'
+    ];
+
+    for (const apiUrl of ipApis) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        const response = await fetch(apiUrl, {
+          signal: controller.signal,
+          headers: { 'Accept': 'application/json' }
+        });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) continue;
+
+        const data = await response.json();
+        if (data) {
+          let lat, lng, city, region, country, postal, timezone, org;
+
+          if (apiUrl.includes('ipapi.co')) {
+            lat = data.latitude;
+            lng = data.longitude;
+            city = data.city;
+            region = data.region;
+            country = data.country_name;
+            postal = data.postal;
+            timezone = data.timezone;
+            org = data.org;
+          } else if (apiUrl.includes('freeipapi.com')) {
+            lat = data.latitude;
+            lng = data.longitude;
+            city = data.cityName;
+            region = data.regionName;
+            country = data.countryName;
+            postal = data.zipCode;
+            timezone = data.timeZone;
+            org = '';
+          } else if (apiUrl.includes('ipwho.is')) {
+            lat = data.latitude;
+            lng = data.longitude;
+            city = data.city;
+            region = data.region;
+            country = data.country;
+            postal = data.postal;
+            timezone = data.timezone?.utc;
+            org = data.connection?.asn;
+          }
+
+          if (lat && lng) {
+            // Get detailed location from Google Maps API
+            const detailedLocation = await getDetailedLocation(lat, lng);
+
+            const ipLocation = {
+              latitude: parseFloat(lat),
+              longitude: parseFloat(lng),
+              city: city || 'Unknown',
+              region: region || 'Unknown',
+              country: country || 'Unknown',
+              postal: postal || '',
+              timezone: timezone || '',
+              org: org || '',
+              ...(detailedLocation || {})
+            };
+            return ipLocation;
+          }
+        }
+      } catch (error) {
+        console.warn(`VisitorTracker failed to fetch from ${apiUrl}:`, error.message);
+        continue;
+      }
+    }
+    return null;
   };
 
   // Get GPS location (requires permission)

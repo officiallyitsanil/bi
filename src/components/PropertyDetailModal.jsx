@@ -5,7 +5,7 @@ import { loginUser } from "@/utils/auth";
 import { mapAmenitiesToObjects } from "@/utils/amenityMapping";
 import { calculatePrices } from "@/utils/priceUtils";
 import { useTheme } from "@/context/ThemeContext";
-import { shouldHideField, getPropertyCategoryAndTypes } from "@/utils/uiVisibility";
+import { shouldHideField, getPropertyCategoryAndTypes, getPropertyTypeFormatted, getUnderManagementFormatted } from "@/utils/uiVisibility";
 
 // Helper function to safely display database values
 const safeDisplay = (value, fallback = "-") => {
@@ -894,6 +894,34 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                                 </p>
                                             </div>
                                         </div>
+                                        <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                <img src="/property-details/other-details/building.png" alt="Property Type" className="h-[18px] w-[18px] object-contain" />
+                                            </div>
+                                            <div className="min-w-0 pt-0.5">
+                                                <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                    Property Type
+                                                    <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                </p>
+                                                <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                    {getPropertyTypeFormatted(property)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                <img src="/property-details/other-details/property.png" alt="Under Management" className="h-[18px] w-[18px] object-contain" />
+                                            </div>
+                                            <div className="min-w-0 pt-0.5">
+                                                <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                    Under Management
+                                                    <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                </p>
+                                                <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                    {getUnderManagementFormatted(property)}
+                                                </p>
+                                            </div>
+                                        </div>
                                     </>
                                 );
                             })()}
@@ -941,6 +969,17 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
 
                     {/* Stats Section - Three cards in a row, now six cards total */}
                     <div className="mx-4 mt-4 grid grid-cols-3 gap-3">
+                        {/* Builder Card */}
+                        <div className={`px-2 py-4 rounded-[2rem] flex flex-col items-center justify-center text-center transition-colors ${isDark ? 'bg-[#1A1D23]' : 'bg-[#FFFBEB]'}`}>
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-1.5">
+                                <Building2 className="w-6 h-6 text-amber-500" strokeWidth={2.5} />
+                            </div>
+                            <span className={`text-[11px] font-bold line-clamp-2 break-words max-w-full px-0.5 leading-tight ${isDark ? 'text-white' : 'text-[#2D3142]'}`}>
+                                {brandName}
+                            </span>
+                            <span className={`text-[10px] mt-0.5 ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>Builder</span>
+                        </div>
+
                         {/* Experience Card */}
                         <div className={`p-5 rounded-[2rem] flex flex-col items-center text-center transition-colors ${isDark ? 'bg-[#1A1D23]' : 'bg-[#EBF7FF]'}`}>
                             <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-2">
@@ -988,17 +1027,6 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                 {brandStats.projects ?? brandStats.spaces ?? "-"}
                             </span>
                             <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>Projects</span>
-                        </div>
-
-                        {/* Per Seat Price Card */}
-                        <div className={`p-5 rounded-[2rem] flex flex-col items-center text-center transition-colors ${isDark ? 'bg-[#1A1D23]' : 'bg-[#EFF6FF]'}`}>
-                            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-2">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 18v3h16v-3"/><path d="M6 18V8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v10"/><path d="M2 10h20"/><circle cx="12" cy="14" r="2"/></svg>
-                            </div>
-                            <span className={`text-[12.5px] font-bold truncate max-w-full ${isDark ? 'text-white' : 'text-blue-600'}`}>
-                                {prices.discountedPricePerSeat || prices.pricePerSeat || property.pricePerSeat || "-"}
-                            </span>
-                            <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>Per Seat</span>
                         </div>
                     </div>
 

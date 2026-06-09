@@ -161,3 +161,26 @@ export const getPropertyCategoryAndTypes = (p) => {
     
     return { category: categoryLabel, types: Array.from(matchedTypes) };
 };
+
+export const getPropertyTypeFormatted = (p) => {
+    if (!p) return "-";
+    const type = p.propertyType || p.propertyTypeDisplay || p.propertySubtype || p.displayPropertyType;
+    if (!type) return "-";
+    
+    const t = String(type).toLowerCase().trim();
+    if (t === "techpark" || t === "tech park") return "Tech Park";
+    if (t === "standalone") return "Standalone";
+    if (t === "villa/house" || t === "villa-house" || t === "villa_house") return "Villa/House";
+    
+    // Capitalize each word as fallback
+    return t.split(/[\s_-]+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+};
+
+export const getUnderManagementFormatted = (p) => {
+    if (!p) return "No";
+    const isManaged = p.isUnderManagement === true || 
+                      p.wholeBuildingUnderManagement === true || 
+                      String(p.isManagement).toLowerCase() === 'yes' ||
+                      String(p.underManagement).toLowerCase() === 'yes';
+    return isManaged ? "Yes" : "No";
+};

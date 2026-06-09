@@ -156,6 +156,7 @@ const ResidentialPropertySchema = new mongoose.Schema({
   floorPlan: String,
   openingHours: OpeningHoursSchema,
   visitorCount: Number,
+  views: Number,
   nearbyPlaces: NearbyPlacesSchema,
   ratings: RatingsSchema,
   reviews: [ReviewSchema],

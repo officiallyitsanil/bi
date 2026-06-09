@@ -21,26 +21,26 @@ export async function POST(request) {
         if (isCommercialType) {
             result = await CommercialProperty.findByIdAndUpdate(
                 id,
-                { $inc: { visitorCount: 1 } },
+                { $inc: { visitorCount: 1, views: 1 } },
                 { new: true }
             );
         } else if (type === 'residential') {
             result = await ResidentialProperty.findByIdAndUpdate(
                 id,
-                { $inc: { visitorCount: 1 } },
+                { $inc: { visitorCount: 1, views: 1 } },
                 { new: true }
             );
         } else {
             // Try finding/updating in commercial first, then fallback to residential
             result = await CommercialProperty.findByIdAndUpdate(
                 id,
-                { $inc: { visitorCount: 1 } },
+                { $inc: { visitorCount: 1, views: 1 } },
                 { new: true }
             );
             if (!result) {
                 result = await ResidentialProperty.findByIdAndUpdate(
                     id,
-                    { $inc: { visitorCount: 1 } },
+                    { $inc: { visitorCount: 1, views: 1 } },
                     { new: true }
                 );
             }
@@ -55,8 +55,9 @@ export async function POST(request) {
 
         return NextResponse.json({
             success: true,
-            message: 'Visitor count incremented',
-            visitorCount: result.visitorCount
+            message: 'Visitor count and views incremented',
+            visitorCount: result.visitorCount,
+            views: result.views
         });
 
     } catch (error) {
