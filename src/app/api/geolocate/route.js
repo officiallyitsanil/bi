@@ -1,5 +1,73 @@
 import { NextResponse } from 'next/server';
 
+async function fetchGeoFromApi(getApiUrl, ip) {
+  const url = getApiUrl(ip);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 seconds timeout per API
+
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+      }
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (!data) {
+      throw new Error("No data returned");
+    }
+
+    let lat, lng, city, country;
+
+    if (url.includes('freeipapi.com')) {
+      lat = data.latitude;
+      lng = data.longitude;
+      city = data.cityName;
+      country = data.countryName;
+    } else if (url.includes('ipwho.is')) {
+      if (data.success === false) {
+        throw new Error(data.message || "ipwho.is failed");
+      }
+      lat = data.latitude;
+      lng = data.longitude;
+      city = data.city;
+      country = data.country;
+    } else if (url.includes('ipapi.co')) {
+      if (data.error) {
+        throw new Error(data.reason || "ipapi.co failed");
+      }
+      lat = data.latitude;
+      lng = data.longitude;
+      city = data.city;
+      country = data.country_name;
+    }
+
+    if (lat && lng) {
+      return {
+        lat: parseFloat(lat),
+        lng: parseFloat(lng),
+        city: city || 'Unknown',
+        country: country || 'Unknown',
+        isApproximate: true,
+        ip: ip || data.ip || 'local'
+      };
+    } else {
+      throw new Error("Invalid lat/lng in response");
+    }
+  } catch (err) {
+    clearTimeout(timeoutId);
+    console.warn(`Server side geolocation lookup failed for URL ${url}:`, err.message);
+    throw err;
+  }
+}
+
 export async function GET(request) {
   try {
     // 1. Get client IP address from headers
@@ -29,61 +97,14 @@ export async function GET(request) {
       (clientIp) => isLocal ? 'https://ipapi.co/json/' : `https://ipapi.co/${clientIp}/json/`
     ];
 
+    // Try APIs sequentially for consistent results (avoid Promise.any race returning different cities)
     let geoData = null;
-
     for (const getApiUrl of ipApis) {
-      const url = getApiUrl(ip);
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 4000);
-
-        const response = await fetch(url, {
-          signal: controller.signal,
-          headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-          }
-        });
-        clearTimeout(timeoutId);
-
-        if (!response.ok) continue;
-
-        const data = await response.json();
-        if (data) {
-          let lat, lng, city, country;
-
-          if (url.includes('freeipapi.com')) {
-            lat = data.latitude;
-            lng = data.longitude;
-            city = data.cityName;
-            country = data.countryName;
-          } else if (url.includes('ipwho.is')) {
-            lat = data.latitude;
-            lng = data.longitude;
-            city = data.city;
-            country = data.country;
-          } else if (url.includes('ipapi.co')) {
-            lat = data.latitude;
-            lng = data.longitude;
-            city = data.city;
-            country = data.country_name;
-          }
-
-          if (lat && lng) {
-            geoData = {
-              lat: parseFloat(lat),
-              lng: parseFloat(lng),
-              city: city || 'Unknown',
-              country: country || 'Unknown',
-              isApproximate: true,
-              ip: ip || data.ip || 'local'
-            };
-            break; // Found working geolocation, stop loop
-          }
-        }
+        geoData = await fetchGeoFromApi(getApiUrl, ip);
+        if (geoData) break;
       } catch (err) {
-        console.warn(`Server side geolocation lookup failed for URL ${url}:`, err.message);
-        continue;
+        // try next provider
       }
     }
 

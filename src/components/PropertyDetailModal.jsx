@@ -28,6 +28,32 @@ const safeNumber = (value) => {
     return Number.isFinite(n) ? n : 0;
 };
 
+const isValidField = (val) => {
+    return val !== null && val !== undefined && String(val).trim() !== "" && String(val).trim() !== "-";
+};
+
+const formatRentOrDeposit = (val) => {
+    if (val === null || val === undefined || String(val).trim() === "") return "-";
+    const strVal = String(val).trim();
+    if (/^\d+$/.test(strVal)) {
+        return `₹${Number(strVal).toLocaleString('en-IN')}`;
+    }
+    if (strVal.includes('₹') || isNaN(Number(strVal.replace(/[^0-9.]/g, '')))) {
+        return strVal;
+    }
+    return `₹${Number(strVal.replace(/[^0-9.]/g, '')).toLocaleString('en-IN')}`;
+};
+
+const formatValue = (val) => {
+    if (val === null || val === undefined || String(val).trim() === "") return "-";
+    const strVal = String(val).trim();
+    return strVal
+        .replace(/-/g, ' ')
+        .split(' ')
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+};
+
 const resolveAgentImageSrc = (src) => {
     if (!src) return "";
     if (typeof src === "string" && src.includes("google.com/imgres")) {
@@ -38,6 +64,9 @@ const resolveAgentImageSrc = (src) => {
         } catch (e) {
             // Fall back to original
         }
+    }
+    if (typeof src === "string" && src.startsWith("/")) {
+        return `https://admin.buildersinfo.in${src}`;
     }
     return src;
 };
@@ -468,7 +497,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
         const cleanName = (property.propertyName || property.name || 'property').toLowerCase().replace(/\s+/g, '-');
         const mapUrl = (lat != null && lng != null)
             ? `https://maps.google.com/maps?q=${lat},${lng}&z=14&t=h`
-            : `${window.location.origin}/property-details/${cleanName}`;
+            : `${window.location.origin}/property-details/${cleanName}?id=${property._id || property.id}&type=${property.propertyCategory || property.propertyType || ''}`;
 
         try {
             await navigator.clipboard.writeText(mapUrl);
@@ -516,19 +545,18 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
             return;
         }
         if (!phone) return;
-        const num = String(phone).replace(/[^0-9+]/g, '');
-        const fullNum = num.startsWith('91') ? num : (num.length === 10 ? '91' + num : num);
-        const formattedNum = '+' + fullNum;
-        navigator.clipboard.writeText(formattedNum).then(() => {
+        const cleanNum = String(phone).replace(/\D/g, '');
+        const finalNum = cleanNum.length > 10 ? cleanNum.slice(-10) : cleanNum;
+        navigator.clipboard.writeText(finalNum).then(() => {
             const { logUserAction } = require('@/utils/actionLogger');
             logUserAction('copy_phone', property, {
-                copiedText: formattedNum,
+                copiedText: finalNum,
                 agentName: property.agentDetails?.name || property.sellerName || '',
-                phoneNumber: formattedNum
+                phoneNumber: finalNum
             });
-            alert(`Phone number ${formattedNum} copied to clipboard! Paste in your phone or a calling app (Skype, Teams, etc.) to call.`);
+            alert(`Phone number ${finalNum} copied to clipboard! Paste in your phone or a calling app (Skype, Teams, etc.) to call.`);
         }).catch(() => {
-            alert(`Phone number is: ${formattedNum}`);
+            alert(`Phone number is: ${finalNum}`);
         });
     };
 
@@ -539,19 +567,18 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
             return;
         }
         if (!phone) return;
-        const num = String(phone).replace(/[^0-9+]/g, '');
-        const fullNum = num.startsWith('91') ? num : (num.length === 10 ? '91' + num : num);
-        const formattedNum = '+' + fullNum;
-        navigator.clipboard.writeText(formattedNum).then(() => {
+        const cleanNum = String(phone).replace(/\D/g, '');
+        const finalNum = cleanNum.length > 10 ? cleanNum.slice(-10) : cleanNum;
+        navigator.clipboard.writeText(finalNum).then(() => {
             const { logUserAction } = require('@/utils/actionLogger');
             logUserAction('copy_whatsapp', property, {
-                copiedText: formattedNum,
+                copiedText: finalNum,
                 agentName: property.agentDetails?.name || property.sellerName || '',
-                whatsappNumber: formattedNum
+                whatsappNumber: finalNum
             });
-            alert(`WhatsApp number ${formattedNum} copied to clipboard!`);
+            alert(`WhatsApp number ${finalNum} copied to clipboard!`);
         }).catch(() => {
-            alert(`WhatsApp number is: ${formattedNum}`);
+            alert(`WhatsApp number is: ${finalNum}`);
         });
     };
     const createdBy = property.agentDetails ? { name: property.agentDetails.name } : property.createdBy;
@@ -658,7 +685,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
     const displayClients = clientValue != null && clientValue !== "" ? (typeof clientValue === 'number' || !isNaN(Number(clientValue)) ? `${clientValue}+` : clientValue) : "-";
 
     const reviewsCount = (property.reviews || []).length || property.ratings?.totalRatings || property.ratings?.totalReviews;
-    const displayReviews = reviewsCount != null && reviewsCount !== "" && reviewsCount !== 0 ? reviewsCount : "-";
+    const displayReviews = reviewsCount != null && reviewsCount !== "" ? reviewsCount : 0;
 
     // Dynamic Details from screenshot
     const displayPropertyType = property.displayPropertyType || property.propertySubtype || property.propertyTypeDisplay || (String(property.propertyType || "").toLowerCase() === "commercial" ? "" : property.propertyType);
@@ -738,20 +765,22 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                         </div>
                     </div>
 
-                    {/* Thumbnail Row */}
-                    <div className="mt-4 px-4">
-                        <div className="flex gap-2 overflow-x-auto scrollbar-hide py-1">
-                            {images.map((img, i) => (
-                                <div
-                                    key={i}
-                                    onClick={() => setMobileSwiperIndex(i)}
-                                    className={`shrink-0 w-16 h-16 rounded-2xl overflow-hidden border-2 transition-all ${i === mobileSwiperIndex ? 'border-blue-500 p-0.5 scale-105 shadow-md' : 'border-transparent opacity-60'}`}
-                                >
-                                    <Image src={img} alt="thumb" width={64} height={64} className="w-full h-full object-cover rounded-xl" unoptimized />
-                                </div>
-                            ))}
+                    {/* Thumbnail Row — only images not shown in the hero above */}
+                    {images.length > 1 && (
+                        <div className="mt-4 px-4">
+                            <div className="flex gap-2 overflow-x-auto scrollbar-hide py-1">
+                                {images.map((_, i) => i).filter((i) => i !== mobileSwiperIndex).map((i) => (
+                                    <div
+                                        key={i}
+                                        onClick={() => setMobileSwiperIndex(i)}
+                                        className="shrink-0 w-16 h-16 rounded-2xl overflow-hidden border-2 border-transparent opacity-80 hover:opacity-100 hover:scale-105 transition-all cursor-pointer"
+                                    >
+                                        <Image src={images[i]} alt="thumb" width={64} height={64} className="w-full h-full object-cover rounded-xl" unoptimized />
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Property Details Card */}
                     <div className={`mx-4 mt-5 p-6 rounded-[2.5rem] shadow-sm transition-colors ${isDark ? 'bg-[#1A1D23] border border-gray-800' : 'bg-[#F2FBFF] border border-blue-50/50'}`}>
@@ -922,6 +951,449 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                                 </p>
                                             </div>
                                         </div>
+
+                                        {/* Residential specific details */}
+                                        {propertyCategory === 'residential' && (
+                                            <>
+                                                {isValidField(property.bedroom || property.bhkType) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/building.png" alt="Bedrooms / BHK" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Bedrooms / BHK
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {safeDisplay(property.bedroom || property.bhkType)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {isValidField(property.furnishingStatus || property.furnishing) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/property.png" alt="Furnishing Status" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Furnishing Status
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight capitalize ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {safeDisplay(property.furnishingStatus || property.furnishing)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {isValidField(property.furnishingLevel) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/furnshing.png" alt="Furnishing Level" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Furnishing Level
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight capitalize ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {safeDisplay(property.furnishingLevel)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {isValidField(property.society) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/building.png" alt="Society" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Society
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {safeDisplay(property.society)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {isValidField(property.facing) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/property.png" alt="Facing" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Facing
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight capitalize ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {safeDisplay(property.facing)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {isValidField(property.propertyAge) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/property.png" alt="Property Age" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Property Age
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {safeDisplay(property.propertyAge)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {isValidField(property.expectedDeposit) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/property.png" alt="Security Deposit" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Security Deposit
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {formatRentOrDeposit(property.expectedDeposit)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {isValidField(property.monthlyMaintenance) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/building.png" alt="Monthly Maintenance" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Monthly Maintenance
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {formatRentOrDeposit(property.monthlyMaintenance)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {isValidField(property.availableFrom) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/property.png" alt="Available From" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Available From
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {safeDisplay(property.availableFrom)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {isValidField(property.availableFor) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/property.png" alt="Available For" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Available For
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {safeDisplay(property.availableFor)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {isValidField(property.parking) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/building.png" alt="Parking" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Parking
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {safeDisplay(property.parking)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {isValidField(property.whoWillShow) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/property.png" alt="Who Will Show" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Who Will Show
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {safeDisplay(property.whoWillShow)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {isValidField(property.currentSituation) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/property.png" alt="Current Situation" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Current Situation
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {safeDisplay(property.currentSituation)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {isValidField(property.waterSupply) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/building.png" alt="Water Supply" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Water Supply
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {safeDisplay(property.waterSupply)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {isValidField(property.propertySize) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/building.png" alt="Property Size" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Property Size
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {isNaN(property.propertySize) ? safeDisplay(property.propertySize) : `${Number(property.propertySize).toLocaleString('en-IN')} Sq.ft`}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {isValidField(property.constructionStatus) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/building.png" alt="Construction Status" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Construction Status
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {safeDisplay(property.constructionStatus)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {isValidField(property.washrooms) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/building.png" alt="Washrooms" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Washrooms
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {safeDisplay(property.washrooms)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {(property.isRera === true || property.isRera === false) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/property.png" alt="RERA Approved" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                RERA Approved
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {property.isRera === true ? 'Yes' : 'No'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {(property.isTopRated === true || property.isTopRated === false) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/property.png" alt="Top Rated" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Top Rated
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {property.isTopRated === true ? 'Yes' : 'No'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {isValidField(property.verificationStatus) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/property.png" alt="Verification Status" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Verification Status
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight capitalize ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {safeDisplay(property.verificationStatus)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
+
+                                        {propertyCategory === 'commercial' && (
+                                            <>
+                                                {isValidField(property.buildingType) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/building.png" alt="Building Type" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Building Type
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {formatValue(property.buildingType)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {(property.wholeBuildingUnderManagement === true || property.wholeBuildingUnderManagement === false) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/property.png" alt="Whole Building Under Management" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Whole Building Under Management
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {property.wholeBuildingUnderManagement === true ? "Yes" : "No"}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {isValidField(property.availability) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/property.png" alt="Availability" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Availability
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {formatValue(property.availability)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {isValidField(property.parking) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/building.png" alt="Parking" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Parking
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {formatValue(property.parking)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {(property.propertyAge !== null && property.propertyAge !== undefined && property.propertyAge !== "") && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/property.png" alt="Property Age" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Property Age
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {property.propertyAge === 0 || property.propertyAge === "0" ? "New" : `${property.propertyAge} Years`}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {isValidField(property.postedBy) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/property.png" alt="Posted By" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Posted By
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {formatValue(property.postedBy)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {isValidField(property.uploadedDate || property.date_added) && (
+                                                    <div className="flex items-start gap-2.5 min-w-0 col-span-1">
+                                                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${isDark ? 'bg-[#282c34] border-gray-700' : 'border-blue-100 bg-blue-50/30'}`}>
+                                                            <img src="/property-details/other-details/property.png" alt="Uploaded Date" className="h-[18px] w-[18px] object-contain" />
+                                                        </div>
+                                                        <div className="min-w-0 pt-0.5">
+                                                            <p className={`flex items-center gap-0.5 text-[10px] leading-none ${isDark ? 'text-gray-500' : 'text-gray-400 font-medium'}`}>
+                                                                Uploaded Date
+                                                                <Info className="h-2.5 w-2.5 shrink-0 text-sky-500" />
+                                                            </p>
+                                                            <p className={`mt-1 break-words text-[12px] font-bold leading-tight ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                                {safeDisplay(property.uploadedDate || property.date_added)}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
                                     </>
                                 );
                             })()}
@@ -1120,7 +1592,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                 {/* Bottom Action Bar */}
                 <div className={`p-4 pt-5 pb-14 border-t flex-shrink-0 transition-colors ${isDark ? 'bg-[#121417] border-gray-800' : 'bg-white border-gray-100'}`}>
                     <a
-                        href={`/property-details/${(property.propertyName || property.name || 'property').toLowerCase().replace(/\s+/g, '-')}`}
+                        href={`/property-details/${(property.propertyName || property.name || 'property').toLowerCase().replace(/\s+/g, '-')}?id=${property._id || property.id}&type=${property.propertyCategory || property.propertyType || ''}`}
                         onClick={handleViewDetailsClick}
                         className="block w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-[1.5rem] text-center font-bold text-[15px] shadow-xl shadow-blue-500/20 active:scale-[0.98] transition-all"
                     >
@@ -1193,7 +1665,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                 <CornerUpRight className={`w-2.5 h-2.5 ${isDark ? 'text-gray-300' : 'text-gray-700'}`} />
                             </a>
                             <a
-                                href={`/property-details/${(property.propertyName || property.name || 'property').toLowerCase().replace(/\s+/g, '-')}`}
+                                href={`/property-details/${(property.propertyName || property.name || 'property').toLowerCase().replace(/\s+/g, '-')}?id=${property._id || property.id}&type=${property.propertyCategory || property.propertyType || ''}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={handleViewDetailsClick}
@@ -1432,7 +1904,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
                                         {brandDescription}
                                     </p>
                                     <a
-                                        href={`/property-details/${(property.propertyName || property.name || 'property').toLowerCase().replace(/\s+/g, '-')}`}
+                                        href={`/property-details/${(property.propertyName || property.name || 'property').toLowerCase().replace(/\s+/g, '-')}?id=${property._id || property.id}&type=${property.propertyCategory || property.propertyType || ''}`}
                                         onClick={handleViewDetailsClick}
                                         className="text-blue-700 text-[8px] font-bold flex items-center gap-0.5 hover:underline transition-all"
                                     >
@@ -1446,7 +1918,7 @@ export default function PropertyDetailModal({ property, onClose, onViewDetailsCl
 
                 {/* View Details Button - HALF inside, HALF outside, 70% height, ROTATED to point left, THIN text, FIXED position */}
                 <a
-                    href={`/property-details/${(property.propertyName || property.name || 'property').toLowerCase().replace(/\s+/g, '-')}`}
+                    href={`/property-details/${(property.propertyName || property.name || 'property').toLowerCase().replace(/\s+/g, '-')}?id=${property._id || property.id}&type=${property.propertyCategory || property.propertyType || ''}`}
                     onClick={handleViewDetailsClick}
                     className="absolute -right-[9px] top-1/2 -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white rounded-none shadow-xl transition-all cursor-pointer writing-vertical-rl text-[9px] h-[70%] w-[20px] flex items-center justify-center z-50 py-3 rotate-180"
                     style={{ writingMode: 'vertical-rl' }}

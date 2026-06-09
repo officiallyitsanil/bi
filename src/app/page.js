@@ -12,9 +12,10 @@ import VisitorTracker from '@/components/VisitorTracker';
 import CollapsedDrawerSearch from '@/components/CollapsedDrawerSearch';
 import PlacesAutocompleteInput from '@/components/PlacesAutocompleteInput';
 import { getUserLocation } from '@/utils/geolocation';
+import { reverseGeocodeCity } from '@/utils/reverseGeocode';
 import { loginUser } from '@/utils/auth';
 import { indianCities } from '@/utils/indianCities';
-import { sortCitiesByDistance, cityCoordinates } from '@/utils/cityCoordinates';
+import { cityCoordinates } from '@/utils/cityCoordinates';
 import { useTheme } from '@/context/ThemeContext';
 import { calculatePrices } from '@/utils/priceUtils';
 import { useCity } from '@/context/CityContext';
@@ -70,6 +71,40 @@ export default function HomePage() {
   const [markers, setMarkers] = useState([]);
   const [selectedCity, setSelectedCity] = useState(null);
   const [selectedMarker, setSelectedMarker] = useState(null);
+  const [showPropertyModal, setShowPropertyModal] = useState(false);
+
+  const syncCityFilterFromProperty = (propertyObj, markManual = false) => {
+    if (!propertyObj) return;
+    const propertyCity = propertyObj.address?.city || propertyObj.city;
+    if (!propertyCity) return;
+
+    const normCity = normalizeCityForMatch(propertyCity);
+    let matchedCity = null;
+    for (const key of Object.keys(cityCoordinates)) {
+      if (normalizeCityForMatch(key) === normCity) {
+        matchedCity = key;
+        break;
+      }
+    }
+    const cityToSet = matchedCity || propertyCity.trim();
+    setActiveCityFilter(cityToSet);
+    setCitySearchQuery(cityToSet);
+    if (markManual) {
+      try {
+        localStorage.setItem('selectedCity', cityToSet);
+        localStorage.setItem('isManualCitySelection', 'true');
+      } catch (e) {
+        console.error('Error saving city selection to localStorage:', e);
+      }
+    }
+  };
+
+  const setSelectedCityAndSyncCity = (propertyObj) => {
+    setSelectedCity(propertyObj);
+    if (propertyObj) {
+      syncCityFilterFromProperty(propertyObj, true);
+    }
+  };
 
   const [zoomLevel, setZoomLevel] = useState(ZOOM_INDIA);
   const [, setLocationError] = useState(null);
@@ -179,7 +214,6 @@ export default function HomePage() {
   const [washrooms, setWashrooms] = useState(''); // '1' | '2' | '3' | '4' | '5' | ''
   const [floorFilter, setFloorFilter] = useState(''); // 'basement' | 'ground' | '1to4' | '5to8' | '9to12' | '13to16' | '16plus' | ''
   const [facing, setFacing] = useState(''); // east, northEast, south, southWest, north, northWest, southEast, west
-  const [reraRegistered, setReraRegistered] = useState(false);
   const [propertiesWithOffers, setPropertiesWithOffers] = useState(false);
   const [furnishingStatus, setFurnishingStatus] = useState(''); // 'furnished' | 'semiFurnished' | 'unfurnished' | 'gatedCommunities' | ''
   const [postedBy, setPostedBy] = useState(''); // 'owners' | 'partnerAgents' | ''
@@ -247,7 +281,6 @@ export default function HomePage() {
     washrooms: '',
     floorFilter: '',
     facing: '',
-    reraRegistered: false,
     propertiesWithOffers: false,
     furnishingStatus: '',
     postedBy: '',
@@ -293,7 +326,6 @@ export default function HomePage() {
     washrooms,
     floorFilter,
     facing,
-    reraRegistered,
     propertiesWithOffers,
     furnishingStatus,
     postedBy,
@@ -509,260 +541,83 @@ export default function HomePage() {
     }
   }, [activeCityFilter]);
 
-  // Auto-detect user city on first load and set as active city filter
+  // Auto-detect user city on first load — GPS first, IP only if GPS fails (avoids city flash)
   useEffect(() => {
     let cancelled = false;
+
+    const finishLoading = () => {
+      if (!cancelled) {
+        setIsAutoDetectingCity(false);
+        setIsLoadingLocation(false);
+      }
+    };
+
+    const setDetectedCity = (cityName, lat, lng, isApproximate) => {
+      if (!cityName || cancelled) return;
+      setUserLocationInfo({ lat, lng, isApproximate });
+      setDetectedUserLocation({ lat, lng });
+      setMapCenter({ lat, lng });
+      setZoomLevel(isApproximate ? ZOOM_CITY : ZOOM_LOCATION);
+      setZoomingCityName(cityName);
+      setActiveCityFilter(cityName);
+      setCitySearchQuery(cityName);
+      setTimeout(() => {
+        if (!cancelled) setZoomingCityName(null);
+      }, 1500);
+    };
+
     const autoDetectCity = async () => {
       setIsLoadingLocation(true);
       setIsAutoDetectingCity(true);
 
-      // Skip if city already set in context or saved in localStorage AND manually selected
-      try {
-        const savedCity = localStorage.getItem('selectedCity');
-        const isManual = localStorage.getItem('isManualCitySelection') === 'true';
-        const isDetailsPage = window.location.pathname.includes('/property-details');
-        if (savedCity && isManual && isDetailsPage) {
-          if (!activeCityFilter) {
-            setZoomingCityName(savedCity);
-            setActiveCityFilter(savedCity);
-            setCitySearchQuery(savedCity);
-            // Check if city exists in predefined cityCoordinates
-            if (cityCoordinates[savedCity]) {
-              setMapCenter(cityCoordinates[savedCity]);
-              setZoomLevel(ZOOM_CITY);
-            } else {
-              // Fallback to geocoding API
-              const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-              if (apiKey) {
-                const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(savedCity + ', India')}&key=${apiKey}`;
-                const res = await fetch(url);
-                const data = await res.json();
-                if (data.status === "OK" && data.results?.length > 0 && !cancelled) {
-                  const { lat, lng } = data.results[0].geometry.location;
-                  setMapCenter({ lat, lng });
-                  setZoomLevel(ZOOM_CITY);
-                }
-              }
-            }
-            setTimeout(() => {
-              if (!cancelled) setZoomingCityName(null);
-            }, 1500);
-          }
-          setIsAutoDetectingCity(false);
-          setIsLoadingLocation(false);
-          return;
-        }
-      } catch (e) {
-        console.error('Error reading saved city:', e);
+      if (localStorage.getItem('isManualCitySelection') === 'true') {
+        finishLoading();
+        return;
       }
 
       try {
-        // Step 1: Immediately fetch IP-based location to avoid any UI wait or "flash of India"
-        let ipLoc = null;
-        try {
-          const response = await fetch('/api/geolocate');
-          if (response.ok) {
-            const result = await response.json();
-            if (result.success && result.data) {
-              ipLoc = result.data;
-            }
-          }
-        } catch (err) {
-          console.warn('IP geolocate fetch failed:', err);
-        }
+        // GPS first — only fall back to IP inside getUserLocation if GPS fails/denied
+        const loc = await getUserLocation();
+        if (cancelled) return;
 
-        let ipCityMatched = false;
-        if (ipLoc && !cancelled) {
-          setUserLocationInfo(ipLoc);
-          setMapCenter({ lat: ipLoc.lat, lng: ipLoc.lng });
-          setDetectedUserLocation({ lat: ipLoc.lat, lng: ipLoc.lng });
-          setZoomLevel(ZOOM_CITY);
+        const cityName =
+          loc.city && loc.city !== 'Unknown' && loc.city !== 'India'
+            ? loc.city
+            : await reverseGeocodeCity(loc.lat, loc.lng, loc.city);
 
-          let cityName = ipLoc.city && ipLoc.city !== 'Unknown' && ipLoc.city !== 'India' ? ipLoc.city : null;
-          let matchedCity = null;
-
-          if (cityName) {
-            const normCity = normalizeCityForMatch(cityName);
-            for (const key of Object.keys(cityCoordinates)) {
-              if (normalizeCityForMatch(key) === normCity) {
-                matchedCity = key;
-                break;
-              }
-            }
-          }
-
-          if (!matchedCity && ipLoc.lat && ipLoc.lng) {
-            const sorted = sortCitiesByDistance(Object.keys(cityCoordinates), ipLoc.lat, ipLoc.lng, 1);
-            if (sorted.length > 0) {
-              matchedCity = sorted[0];
-            }
-          }
-
-          if (matchedCity) {
-            ipCityMatched = true;
-            setZoomingCityName(matchedCity);
-            setActiveCityFilter(matchedCity);
-            setCitySearchQuery(matchedCity);
-            if (cityCoordinates[matchedCity]) {
-              setMapCenter(cityCoordinates[matchedCity]);
-            }
-            setTimeout(() => {
-              if (!cancelled) setZoomingCityName(null);
-            }, 1500);
-          }
-        }
-
-        // Step 2: Request browser precise GPS location in the background
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            async (position) => {
-              if (cancelled) return;
-              // Check if user manually selected a city while GPS prompt was pending
-              if (localStorage.getItem('isManualCitySelection') === 'true') {
-                console.log('User has manually selected a city, ignoring background GPS update.');
-                return;
-              }
-
-              // Check if we already have a matched IP city and the GPS accuracy is low (desktop Wi-Fi/IP estimate)
-              const isGpsAccurate = position.coords.accuracy && position.coords.accuracy < 1000;
-              if (ipCityMatched && !isGpsAccurate) {
-                console.log('GPS is not accurate (accuracy:', position.coords.accuracy, 'm) and we already have a supported IP city. Ignoring background GPS update.');
-                setIsAutoDetectingCity(false);
-                setIsLoadingLocation(false);
-                return;
-              }
-              const gpsLat = position.coords.latitude;
-              const gpsLng = position.coords.longitude;
-              const gpsLoc = {
-                lat: gpsLat,
-                lng: gpsLng,
-                isApproximate: false,
-                accuracy: position.coords.accuracy
-              };
-
-              setUserLocationInfo(gpsLoc);
-              setDetectedUserLocation({ lat: gpsLat, lng: gpsLng });
-              setMapCenter({ lat: gpsLat, lng: gpsLng });
-              setZoomLevel(ZOOM_LOCATION);
-
-              // Reverse geocode to find precise city name
-              const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-              if (apiKey) {
-                try {
-                  const geocodeRes = await fetch(
-                    `https://maps.googleapis.com/maps/api/geocode/json?latlng=${gpsLat},${gpsLng}&key=${apiKey}`
-                  );
-                  const geocodeData = await geocodeRes.json();
-                  if (cancelled) return;
-
-                  let gpsCitySet = false;
-                  if (geocodeData.status === 'OK' && geocodeData.results?.length > 0) {
-                    const components = geocodeData.results[0].address_components;
-                    let resolvedCityName = null;
-                    for (const c of components) {
-                      if (c.types.includes('locality')) { resolvedCityName = c.long_name; break; }
-                      if (c.types.includes('administrative_area_level_2')) resolvedCityName = c.long_name;
-                    }
-
-                    if (resolvedCityName) {
-                      let matchedCity = null;
-                      const normCity = normalizeCityForMatch(resolvedCityName);
-                      for (const key of Object.keys(cityCoordinates)) {
-                        if (normalizeCityForMatch(key) === normCity) {
-                          matchedCity = key;
-                          break;
-                        }
-                      }
-                      
-                      if (!matchedCity) {
-                        const sorted = sortCitiesByDistance(Object.keys(cityCoordinates), gpsLat, gpsLng, 1);
-                        if (sorted.length > 0) matchedCity = sorted[0];
-                      }
-
-                      if (matchedCity) {
-                        gpsCitySet = true;
-                        setZoomingCityName(matchedCity);
-                        setActiveCityFilter(matchedCity);
-                        setCitySearchQuery(matchedCity);
-                        if (cityCoordinates[matchedCity]) {
-                          setMapCenter(cityCoordinates[matchedCity]);
-                        }
-                        setZoomLevel(ZOOM_CITY);
-                        setTimeout(() => {
-                          if (!cancelled) setZoomingCityName(null);
-                        }, 1500);
-                      }
-                    }
-                  }
-
-                  if (!gpsCitySet) {
-                    // Geocoding failed to match a city. If no city filter is active yet, clear loaders
-                    const currentCity = localStorage.getItem('selectedCity') || activeCityFilter;
-                    if (!currentCity) {
-                      setIsAutoDetectingCity(false);
-                      setIsLoadingLocation(false);
-                    }
-                  }
-                } catch (err) {
-                  console.error('Error reverse geocoding GPS coordinates:', err);
-                  const currentCity = localStorage.getItem('selectedCity') || activeCityFilter;
-                  if (!currentCity) {
-                    setIsAutoDetectingCity(false);
-                    setIsLoadingLocation(false);
-                  }
-                }
-              } else {
-                // No API key. If no city filter is active yet, clear loaders
-                const currentCity = localStorage.getItem('selectedCity') || activeCityFilter;
-                if (!currentCity) {
-                  setIsAutoDetectingCity(false);
-                  setIsLoadingLocation(false);
-                }
-              }
-            },
-            (error) => {
-              console.log('GPS precise location access denied/failed, staying on IP location.');
-              if (cancelled) return;
-              if (localStorage.getItem('isManualCitySelection') === 'true') {
-                console.log('User has manually selected a city, ignoring background GPS update.');
-                return;
-              }
-              const currentCity = localStorage.getItem('selectedCity') || activeCityFilter;
-              if (!currentCity) {
-                setMapCenter({ lat: 20.5937, lng: 78.9629 });
-                setZoomLevel(ZOOM_INDIA);
-                setIsAutoDetectingCity(false);
-                setIsLoadingLocation(false);
-              }
-            },
-            {
-              enableHighAccuracy: true,
-              timeout: 5000,
-              maximumAge: 0
-            }
-          );
+        if (cityName && cityName !== 'India') {
+          setDetectedCity(cityName, loc.lat, loc.lng, !!(loc.isApproximate || loc.isFallback));
         } else {
-          // Geolocation not supported by browser. If no city filter is active yet, clear loaders
-          const currentCity = localStorage.getItem('selectedCity') || activeCityFilter;
-          if (!currentCity) {
-            setMapCenter({ lat: 20.5937, lng: 78.9629 });
-            setZoomLevel(ZOOM_INDIA);
-            setIsAutoDetectingCity(false);
-            setIsLoadingLocation(false);
-          }
+          setMapCenter({ lat: 20.5937, lng: 78.9629 });
+          setZoomLevel(ZOOM_INDIA);
         }
-      } catch (e) {
-        console.error('Error in autoDetectCity:', e);
-        const currentCity = localStorage.getItem('selectedCity') || activeCityFilter;
-        if (!currentCity) {
-          setIsAutoDetectingCity(false);
-          setIsLoadingLocation(false);
+      } catch (err) {
+        console.error('Auto-detect city failed:', err);
+        if (!cancelled) {
+          setMapCenter({ lat: 20.5937, lng: 78.9629 });
+          setZoomLevel(ZOOM_INDIA);
         }
+      } finally {
+        finishLoading();
       }
     };
+
     autoDetectCity();
     return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Listen to geolocation permission status changes. If granted (user clicks "Allow" on prompt),
+  // reload the page to initialize search and center map on the correct precise location.
+  useEffect(() => {
+    if (typeof window !== 'undefined' && navigator.permissions && navigator.permissions.query) {
+      navigator.permissions.query({ name: 'geolocation' }).then((permissionStatus) => {
+        permissionStatus.onchange = () => {
+          if (permissionStatus.state === 'granted') {
+            window.location.reload();
+          }
+        };
+      }).catch(err => console.warn('Permissions API query failed:', err));
+    }
   }, []);
 
   // Location tracking is handled by VisitorTracker component
@@ -923,19 +778,34 @@ export default function HomePage() {
 
 
 
+  // Search: zoom + highlight list/map + sync city — modal only on explicit card/map click
+  const focusPropertyFromSearch = (marker) => {
+    if (!marker) return;
+    if (marker.position) {
+      setMapCenter(marker.position);
+      setZoomLevel(ZOOM_LOCATION);
+    }
+    setSelectedMarker(marker);
+    setSelectedCity(marker);
+    syncCityFilterFromProperty(marker, false);
+    setShowPropertyModal(false);
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setIsDrawerCollapsed(false);
+    }
+  };
+
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) {
-      // Clear search filter if empty
       setSearchQuery("");
+      setSelectedMarker(null);
+      setSelectedCity(null);
+      setShowPropertyModal(false);
       return;
     }
 
     setShowSuggestions(false);
 
-    // Top search bar: consistently filter properties by name/location in ALL views (initial, filters, country)
-    // The search query will be used in getFilteredMarkers to filter properties
-    // If there are matching properties, zoom to show them
     const matchingProperties = markers.filter(marker => {
       if (marker.isSearchResult) return false;
       const query = searchQuery.toLowerCase().trim();
@@ -954,11 +824,9 @@ export default function HomePage() {
         matchesSearchQuery(address, query);
     });
 
-    if (matchingProperties.length > 0 && matchingProperties[0].position) {
-      setMapCenter(matchingProperties[0].position);
-      setZoomLevel(ZOOM_LOCATION);
+    if (matchingProperties.length > 0) {
+      focusPropertyFromSearch(matchingProperties[0]);
     }
-    // The filtering will be handled by getFilteredMarkers
   };
 
   const handleMarkerClick = (marker) => {
@@ -967,7 +835,8 @@ export default function HomePage() {
       setZoomLevel(ZOOM_LOCATION);
     }
     setSelectedMarker(marker);
-    setSelectedCity(marker);
+    setSelectedCityAndSyncCity(marker);
+    setShowPropertyModal(true);
 
     // On mobile, collapse the property list drawer when a property is selected
     if (typeof window !== 'undefined' && window.innerWidth < 768) {
@@ -976,8 +845,33 @@ export default function HomePage() {
   };
 
   const closeCityModal = () => {
+    setShowPropertyModal(false);
     setSelectedCity(null);
     setSelectedMarker(null);
+  };
+
+  const applyLocationResult = async (loc) => {
+    setMapCenter({ lat: loc.lat, lng: loc.lng });
+    setZoomLevel(loc.isFallback ? ZOOM_INDIA : loc.isApproximate ? ZOOM_CITY : ZOOM_LOCATION);
+    setDetectedUserLocation({ lat: loc.lat, lng: loc.lng });
+    setUserLocationInfo(loc);
+
+    let cityName = loc.city;
+    if (!cityName || cityName === 'Unknown' || cityName === 'India') {
+      cityName = await reverseGeocodeCity(loc.lat, loc.lng, loc.city);
+    }
+
+    if (cityName && cityName !== 'India') {
+      setCitySearchQuery(cityName);
+      setActiveCityFilter(cityName);
+      setZoomingCityName(cityName);
+      setTimeout(() => setZoomingCityName(null), 1500);
+      return cityName;
+    }
+
+    setCitySearchQuery('');
+    setActiveCityFilter(null);
+    return null;
   };
 
   const zoomToCity = async (cityName, options = {}) => {
@@ -1140,21 +1034,20 @@ export default function HomePage() {
     }
     const phone = marker.agentDetails?.phone || marker.sellerPhoneNumber || defaultWhatsappForWa;
     if (!phone) return;
-    const num = String(phone).replace(/[^0-9+]/g, '');
-    const fullNum = num.startsWith('91') ? num : (num.length === 10 ? '91' + num : num);
-    const formattedNum = '+' + fullNum;
+    const cleanNum = String(phone).replace(/\D/g, '');
+    const finalNum = cleanNum.length > 10 ? cleanNum.slice(-10) : cleanNum;
 
-    navigator.clipboard.writeText(formattedNum).then(() => {
+    navigator.clipboard.writeText(finalNum).then(() => {
       const { logUserAction } = require('@/utils/actionLogger');
       logUserAction('copy_whatsapp', marker, {
-        copiedText: formattedNum,
+        copiedText: finalNum,
         agentName: marker.agentDetails?.name || marker.sellerName || '',
-        whatsappNumber: formattedNum
+        whatsappNumber: finalNum
       });
-      alert(`WhatsApp number ${formattedNum} copied to clipboard!`);
+      alert(`WhatsApp number ${finalNum} copied to clipboard!`);
     }).catch((err) => {
       console.error('Failed to copy WhatsApp number:', err);
-      alert(`WhatsApp number is: ${formattedNum}`);
+      alert(`WhatsApp number is: ${finalNum}`);
     });
   };
 
@@ -1203,6 +1096,9 @@ export default function HomePage() {
   };
 
   const CITY_ALIASES = {
+    // Hyderabad / Rangareddy
+    'rangareddy': 'hyderabad',
+    'hyderabad': 'hyderabad',
     // Bangalore
     'bangalore': 'bengaluru',
     'bengaluru': 'bengaluru',
@@ -1390,8 +1286,8 @@ export default function HomePage() {
     }
     let filtered = markers.filter(marker => !marker.isSearchResult); // Exclude search result markers
 
-    // Filter by selected city
-    if (activeCityFilter) {
+    // Filter by selected city — skip while searching so cross-city results still show on map/list
+    if (activeCityFilter && !(searchQuery && searchQuery.trim())) {
       filtered = filtered.filter(marker => {
         const markerCity = normalizeCityForMatch(marker.address?.city || marker.city || '');
         const selectedCityName = normalizeCityForMatch(activeCityFilter);
@@ -1467,7 +1363,6 @@ export default function HomePage() {
     const hasResidentialWashroomsFilter = f.washrooms && f.washrooms !== '';
     const hasResidentialFloorFilter = f.floorFilter && f.floorFilter !== '';
     const hasResidentialFacingFilter = f.facing && f.facing !== '';
-    const hasResidentialReraFilter = f.reraRegistered === true;
     const hasResidentialOffersFilter = f.propertiesWithOffers === true;
     const hasResidentialFurnishingStatusFilter = f.furnishingStatus && f.furnishingStatus !== '';
     const hasResidentialPostedByFilter = f.postedBy && f.postedBy !== '';
@@ -1609,9 +1504,7 @@ export default function HomePage() {
           return mFacing.includes(expectedFacing);
         });
       }
-      if (hasResidentialReraFilter) {
-        filtered = filtered.filter(marker => !!(marker.reraRegistered || marker.rera_registered || marker.isRera));
-      }
+
       if (hasResidentialOffersFilter) {
         filtered = filtered.filter(marker => !!(marker.hasOffers || marker.offers || marker.discount));
       }
@@ -2017,6 +1910,18 @@ export default function HomePage() {
       });
     }
 
+    // Always keep the highlighted/searched property visible on map and in list
+    if (selectedMarker) {
+      const selectedId = String(selectedMarker._id || selectedMarker.id);
+      const alreadyIncluded = filtered.some((m) => String(m._id || m.id) === selectedId);
+      if (!alreadyIncluded) {
+        const fullMarker = markers.find((m) => String(m._id || m.id) === selectedId);
+        if (fullMarker?.position) {
+          filtered = [fullMarker, ...filtered];
+        }
+      }
+    }
+
     return filtered;
   };
 
@@ -2196,10 +2101,8 @@ export default function HomePage() {
                                 setShowCitySelector(false);
                               }
 
-                              // If suggestion has a marker (property), zoom to it
-                              if (suggestion.marker && suggestion.marker.position) {
-                                setMapCenter(suggestion.marker.position);
-                                setZoomLevel(ZOOM_LOCATION);
+                              if (suggestion.marker) {
+                                focusPropertyFromSearch(suggestion.marker);
                                 setSearchQuery(suggestion.text);
                                 return;
                               }
@@ -2483,89 +2386,16 @@ export default function HomePage() {
                       setIsDetectingLocation(true);
                       try {
                         const loc = await getUserLocation();
-                        // Core behavior: same as Locate Me - center map and zoom
-                        setMapCenter({ lat: loc.lat, lng: loc.lng });
-                        setZoomLevel(loc.isFallback ? ZOOM_INDIA : loc.isApproximate ? ZOOM_CITY : ZOOM_LOCATION);
-                        setDetectedUserLocation({ lat: loc.lat, lng: loc.lng });
-
-                        // Check if loc has city name directly (e.g. from IP geolocation)
-                        let resolvedCityName = loc.city && loc.city !== 'Unknown' && loc.city !== 'India' ? loc.city : null;
-
-                        // Reverse geocode to show city name in search and filter if not set
-                        if (!resolvedCityName) {
-                          const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-                          if (apiKey) {
-                            try {
-                              const reverseGeocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${loc.lat},${loc.lng}&key=${apiKey}`;
-                              const geocodeRes = await fetch(reverseGeocodeUrl);
-                              const geocodeData = await geocodeRes.json();
-
-                              if (geocodeData.status === "OK" && geocodeData.results?.length > 0) {
-                                const addressComponents = geocodeData.results[0].address_components;
-                                for (const component of addressComponents) {
-                                  if (component.types.includes('locality')) {
-                                    resolvedCityName = component.long_name;
-                                    break;
-                                  } else if (component.types.includes('administrative_area_level_2')) {
-                                    resolvedCityName = component.long_name;
-                                  }
-                                }
-                              }
-                            } catch (err) {
-                              console.error('Error reverse geocoding:', err);
-                            }
-                          }
+                        await applyLocationResult(loc);
+                        try {
+                          localStorage.removeItem('isManualCitySelection');
+                        } catch (e) {
+                          console.error(e);
                         }
-
-                        // Normalize the resolved city name to see if it is directly supported
-                        let matchedCity = null;
-                        if (resolvedCityName) {
-                          const normCity = normalizeCityForMatch(resolvedCityName);
-                          for (const key of Object.keys(cityCoordinates)) {
-                            if (normalizeCityForMatch(key) === normCity) {
-                              matchedCity = key;
-                              break;
-                            }
-                          }
-                        }
-
-                        // If the city is not directly supported, fallback to the closest supported city from coordinates
-                        if (!matchedCity && loc.lat && loc.lng) {
-                          const sorted = sortCitiesByDistance(Object.keys(cityCoordinates), loc.lat, loc.lng, 1);
-                          if (sorted.length > 0) {
-                            matchedCity = sorted[0];
-                          }
-                        }
-
-                        if (matchedCity) {
-                          resolvedCityName = matchedCity;
-                          setCitySearchQuery(resolvedCityName);
-                          setActiveCityFilter(resolvedCityName);
-                          try {
-                            localStorage.setItem('isManualCitySelection', 'true');
-                          } catch (e) {
-                            console.error(e);
-                          }
-                          setZoomingCityName(resolvedCityName);
-                          setTimeout(() => {
-                            setZoomingCityName(null);
-                          }, 1500);
-                        } else {
-                          setCitySearchQuery('');
-                          setActiveCityFilter(null);
-                          try {
-                            localStorage.removeItem('isManualCitySelection');
-                          } catch (e) {
-                            console.error(e);
-                          }
-                        }
-
-                        // Close selector and reset selections so they see the result
                         setSelectedMarker(null);
                         setSelectedCity(null);
                         setShowCitySelector(false);
-                        const isMobileOrTablet = typeof window !== 'undefined' && window.innerWidth < 768;
-                        if (isMobileOrTablet) {
+                        if (typeof window !== 'undefined' && window.innerWidth < 768) {
                           setIsDrawerCollapsed(true);
                         }
                       } catch (error) {
@@ -2581,22 +2411,31 @@ export default function HomePage() {
                     <span className="text-sm font-medium">{isDetectingLocation ? 'Detecting...' : 'Detect my location'}</span>
                   </button>
                   <button
-                    onClick={() => {
+                    onClick={async () => {
+                      if (isLoadingProperties || isDetectingLocation) return;
+                      setIsDetectingLocation(true);
                       setSelectedCity(null);
                       setSelectedMarker(null);
-                      setMapCenter({ lat: 20.5937, lng: 78.9629 });
-                      setZoomLevel(ZOOM_INDIA);
-                      setCitySearchQuery('');
-                      setDetectedUserLocation(null);
-                      setActiveCityFilter(null);
                       try {
-                        localStorage.removeItem('isManualCitySelection');
-                      } catch (e) {
-                        console.error(e);
+                        const loc = await getUserLocation();
+                        await applyLocationResult(loc);
+                        try {
+                          localStorage.removeItem('isManualCitySelection');
+                        } catch (e) {
+                          console.error(e);
+                        }
+                        setShowCitySelector(false);
+                        if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                          setIsDrawerCollapsed(true);
+                        }
+                      } catch (error) {
+                        console.error('Error resetting city:', error);
+                      } finally {
+                        setIsDetectingLocation(false);
                       }
                     }}
-                    disabled={isLoadingProperties}
-                    className={`text-sm transition-colors ${isLoadingProperties ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
+                    disabled={isLoadingProperties || isDetectingLocation}
+                    className={`text-sm transition-colors ${(isLoadingProperties || isDetectingLocation) ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-800'}`}
                   >
                     Reset City
                   </button>
@@ -2725,7 +2564,6 @@ export default function HomePage() {
                       setWashrooms('');
                       setFloorFilter('');
                       setFacing('');
-                      setReraRegistered(false);
                       setPropertiesWithOffers(false);
                       setFurnishingStatus('');
                       setPostedBy('');
@@ -3570,19 +3408,7 @@ export default function HomePage() {
                         </div>
                       </div>
 
-                      {/* RERA Registered Properties - toggle (residential only) */}
-                      <div className="flex items-center justify-between">
-                        <h3 className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>RERA Registered Properties</h3>
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={reraRegistered}
-                          onClick={() => setReraRegistered(prev => !prev)}
-                          className={`relative w-10 h-6 rounded-full transition-colors cursor-pointer ${reraRegistered ? 'bg-blue-500' : isDark ? 'bg-gray-600' : 'bg-gray-300'}`}
-                        >
-                          <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${reraRegistered ? 'left-5' : 'left-1'}`} />
-                        </button>
-                      </div>
+
 
                       {/* Properties with Offers - toggle (residential only) */}
                       <div className="flex items-center justify-between">
@@ -3741,11 +3567,12 @@ export default function HomePage() {
                     <p className="text-xs">Try changing your search or filters.</p>
                   </div>
                 ) : getFilteredMarkers().map((marker, index) => {
-                  const isActive = selectedCity && (String(marker._id || marker.id) === String(selectedCity._id || selectedCity.id));
+                  const highlightTarget = selectedCity || selectedMarker;
+                  const isActive = highlightTarget && (String(marker._id || marker.id) === String(highlightTarget._id || highlightTarget.id));
                   return (
                     <div
                       key={`${marker.id}-${marker.propertyCategory || 'c'}-${index}`}
-                      className={`rounded-lg p-2 cursor-pointer transition-all shadow-sm ${isActive ? 'border-2 border-blue-500' : 'border border-transparent'} ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-white hover:bg-[#fff3c5] hover:shadow-md'}`}
+                      className={`rounded-lg p-2 cursor-pointer transition-all shadow-sm ${isActive ? 'border-2 border-blue-500 ring-1 ring-blue-500/30' : 'border border-transparent'} ${isDark ? 'bg-[#282c34] hover:bg-[#3a3f4b]' : 'bg-white hover:bg-[#fff3c5] hover:shadow-md'}`}
                       onClick={() => handleMarkerClick(marker)}
                     >
                       <div className="flex gap-2">
@@ -3858,9 +3685,8 @@ export default function HomePage() {
                     setShowFiltersView(false);
                     setShowCitySelector(false);
                   }
-                  if (suggestion.marker?.position) {
-                    setMapCenter(suggestion.marker.position);
-                    setZoomLevel(ZOOM_LOCATION);
+                  if (suggestion.marker) {
+                    focusPropertyFromSearch(suggestion.marker);
                   }
                 }}
                 suggestions={suggestions}
@@ -3920,9 +3746,8 @@ export default function HomePage() {
                               e.preventDefault();
                               if (suggestion.isNoResult) return;
                               setSearchQuery(suggestion.text);
-                              if (suggestion.marker?.position) {
-                                setMapCenter(suggestion.marker.position);
-                                setZoomLevel(ZOOM_LOCATION);
+                              if (suggestion.marker) {
+                                focusPropertyFromSearch(suggestion.marker);
                               }
                               setShowSuggestions(false);
                             }}
@@ -4049,7 +3874,7 @@ export default function HomePage() {
 
 
           {/* Property Detail Modal - bottom-aligned, horizontally centered in map area */}
-          {selectedCity && (
+          {showPropertyModal && selectedCity && (
             <div className="absolute inset-0 flex items-end justify-center z-40 pointer-events-none">
               <div className="pointer-events-auto">
                 <PropertyDetailModal
@@ -4064,7 +3889,7 @@ export default function HomePage() {
           )}
 
           {/* Map Controls - Vertical Panel - Same as desktop; move to top when property modal open */}
-          <div className={`absolute right-3 md:right-4 z-10 ${selectedCity ? 'top-3 md:top-4' : 'bottom-20 md:bottom-12'}`}>
+          <div className={`absolute right-3 md:right-4 z-10 ${showPropertyModal && selectedCity ? 'top-3 md:top-4' : 'bottom-20 md:bottom-12'}`}>
             <div className={`rounded-xl overflow-hidden shadow-xl ${isDark ? 'bg-[#282c34]' : 'bg-gray-200'}`}>
               {/* Add Property Button */}
               <button
@@ -4081,15 +3906,14 @@ export default function HomePage() {
               <button
                 onClick={async () => {
                   if (isLocating) return;
-                  if (typeof window !== 'undefined' && window.innerWidth < 480) {
+                  if (typeof window !== 'undefined' && window.innerWidth < 768) {
                     setSelectedMarker(null);
                     setSelectedCity(null);
                   }
                   setIsLocating(true);
                   try {
                     const loc = await getUserLocation();
-                    setMapCenter({ lat: loc.lat, lng: loc.lng });
-                    setZoomLevel(loc.isFallback ? ZOOM_INDIA : loc.isApproximate ? ZOOM_CITY : ZOOM_LOCATION);
+                    await applyLocationResult(loc);
                   } catch (e) {
                     console.error('Locate failed:', e);
                   } finally {

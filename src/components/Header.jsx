@@ -9,6 +9,7 @@ import LoginModal from '@/components/LoginModal';
 import { usePathname } from 'next/navigation';
 import { loginUser, logoutUser } from '@/utils/auth';
 import { useTheme } from '@/context/ThemeContext';
+import { useCity } from '@/context/CityContext';
 
 export default function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -17,6 +18,7 @@ export default function Header() {
     const [globalConfig, setGlobalConfig] = useState({ isFullNavVisible: false });
     const pathname = usePathname();
     const { theme, toggleTheme, isDark } = useTheme();
+    const { activeCityFilter } = useCity();
 
     useEffect(() => {
         const syncUser = () => {
@@ -110,9 +112,9 @@ export default function Header() {
                                     unoptimized
                                 />
                             </Link>
-                            <div className="hidden md:flex items-center gap-1">
-                                <Globe className={`w-3.5 h-3.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} strokeWidth={1.5} />
-                                <span className={`text-xs ${isDark ? 'text-white' : 'text-black'}`}>India</span>
+                            <div className="flex items-center gap-1 min-w-0 max-w-[110px] sm:max-w-none">
+                                <Globe className={`w-3.5 h-3.5 flex-shrink-0 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} strokeWidth={1.5} />
+                                <span className={`text-xs truncate ${isDark ? 'text-white' : 'text-black'}`}>{activeCityFilter || 'India'}</span>
                             </div>
                         </div>
 

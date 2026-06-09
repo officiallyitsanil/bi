@@ -78,6 +78,9 @@ function matchesSeatRange(seatsStr, rangeStr) {
 }
 
 const CITY_ALIASES = {
+    // Hyderabad / Rangareddy
+    'rangareddy': 'hyderabad',
+    'hyderabad': 'hyderabad',
     // Bangalore
     'bangalore': 'bengaluru',
     'bengaluru': 'bengaluru',

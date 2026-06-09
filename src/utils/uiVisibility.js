@@ -164,7 +164,7 @@ export const getPropertyCategoryAndTypes = (p) => {
 
 export const getPropertyTypeFormatted = (p) => {
     if (!p) return "-";
-    const type = p.propertyType || p.propertyTypeDisplay || p.propertySubtype || p.displayPropertyType;
+    const type = p.propertyType || p.propertyTypeDisplay || p.propertySubtype || p.displayPropertyType || p.apartmentType;
     if (!type) return "-";
     
     const t = String(type).toLowerCase().trim();

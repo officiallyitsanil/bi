@@ -192,7 +192,10 @@ export default function MapView({ center, markers, selectedMarker, onMarkerClick
             return null; // Skip invalid markers
           }
 
-          const isSelected = selectedMarker && selectedMarker.id === marker.id;
+          const isSelected = selectedMarker && (
+            selectedMarker.id === marker.id ||
+            String(selectedMarker._id || selectedMarker.id) === String(marker._id || marker.id)
+          );
           const markerType = marker.propertyType || 'residential';
 
           // Format price to compact format (₹300, ₹450, ₹30K, etc.) - max 3 chars + ₹

@@ -1,29 +1,30 @@
+import { reverseGeocodeCity, getGeolocationTimeout } from './reverseGeocode';
+
 /**
  * Get user's location using browser geolocation API (with permission)
- * or fallback to IP-based geolocation
+ * or fallback to IP-based geolocation. City is always resolved from
+ * coordinates via reverse geocoding when possible.
  */
 export async function getUserLocation() {
-  // Helper function to fetch IP location with timeout and error handling
   const fetchIPLocation = async (url) => {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-      
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
       const response = await fetch(url, {
         signal: controller.signal,
         headers: {
-          'Accept': 'application/json',
-        }
+          Accept: 'application/json',
+        },
       });
-      
+
       clearTimeout(timeoutId);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
-      const data = await response.json();
-      return data;
+
+      return await response.json();
     } catch (error) {
       if (error.name === 'AbortError') {
         console.warn('IP location request timed out');
@@ -34,38 +35,35 @@ export async function getUserLocation() {
     }
   };
 
-  // Try multiple IP geolocation APIs as fallbacks
-  const ipApis = [
-    'https://ipapi.co/json/',
-    'https://freeipapi.com/api/json',
-    'https://ipwho.is/'
-  ];
+  const getIPFallback = async () => {
+    const ipApis = [
+      'https://ipapi.co/json/',
+      'https://freeipapi.com/api/json',
+      'https://ipwho.is/',
+    ];
 
-  let ipLocation = null;
+    let ipLocation = null;
 
-  // Try same-origin server proxy first to bypass browser CORS policy
-  try {
-    const response = await fetch('/api/geolocate');
-    if (response.ok) {
-      const result = await response.json();
-      if (result.success && result.data) {
-        ipLocation = result.data;
+    try {
+      const response = await fetch('/api/geolocate');
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          ipLocation = result.data;
+        }
       }
+    } catch (err) {
+      console.warn('Failed to fetch from same-origin geolocate proxy:', err.message);
     }
-  } catch (err) {
-    console.warn('Failed to fetch from same-origin geolocate proxy:', err.message);
-  }
-  
-  // Try IP-based location directly (client-side fallback, might hit CORS)
-  if (!ipLocation) {
-    for (const apiUrl of ipApis) {
-      try {
-        let ipData = await fetchIPLocation(apiUrl);
-        
-        if (ipData) {
-          // Handle different API response formats
+
+    if (!ipLocation) {
+      for (const apiUrl of ipApis) {
+        try {
+          const ipData = await fetchIPLocation(apiUrl);
+          if (!ipData) continue;
+
           let lat, lng, city, country;
-          
+
           if (apiUrl.includes('ipapi.co')) {
             lat = ipData.latitude;
             lng = ipData.longitude;
@@ -82,75 +80,74 @@ export async function getUserLocation() {
             city = ipData.city;
             country = ipData.country;
           }
-          
+
           if (lat && lng) {
             ipLocation = {
               lat: parseFloat(lat),
               lng: parseFloat(lng),
               city: city || 'Unknown',
               country: country || 'Unknown',
-              isApproximate: true
+              isApproximate: true,
             };
-            break; // Success, exit loop
+            break;
           }
+        } catch (error) {
+          console.warn(`Failed to fetch from ${apiUrl}:`, error);
         }
-      } catch (error) {
-        console.warn(`Failed to fetch from ${apiUrl}:`, error);
-        continue; // Try next API
       }
+    }
+
+    if (ipLocation) {
+      const resolvedCity = await reverseGeocodeCity(
+        ipLocation.lat,
+        ipLocation.lng,
+        ipLocation.city
+      );
+      if (resolvedCity) ipLocation.city = resolvedCity;
+    }
+
+    return ipLocation;
+  };
+
+  const geoTimeout = getGeolocationTimeout();
+
+  if (typeof window !== 'undefined' && navigator.geolocation) {
+    try {
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: geoTimeout,
+          maximumAge: 0,
+        });
+      });
+
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      const city = await reverseGeocodeCity(lat, lng);
+
+      return {
+        lat,
+        lng,
+        city: city || undefined,
+        isApproximate: false,
+        accuracy: position.coords.accuracy,
+      };
+    } catch (error) {
+      console.warn('Browser geolocation failed or timed out, trying IP fallback:', error.message);
     }
   }
 
-  // Now try to get exact location with browser geolocation
-  if (navigator.geolocation) {
-    return new Promise((resolve) => {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          // User granted permission - use exact location
-          resolve({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            isApproximate: false,
-            accuracy: position.coords.accuracy
-          });
-        },
-        (error) => {
-          // User denied or error - use IP location if available, otherwise fallback
-          if (ipLocation) {
-            resolve(ipLocation);
-          } else {
-            // Fallback to default location
-            resolve({
-              lat: 20.5937,
-              lng: 78.9629,
-              city: 'India',
-              country: 'India',
-              isApproximate: true,
-              isFallback: true
-            });
-          }
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0
-        }
-      );
-    });
-  }
-
-  // Geolocation not supported - return IP location or fallback
+  const ipLocation = await getIPFallback();
   if (ipLocation) {
     return ipLocation;
   }
 
-  // Fallback to default location if everything fails
   return {
     lat: 20.5937,
     lng: 78.9629,
     city: 'India',
     country: 'India',
     isApproximate: true,
-    isFallback: true
+    isFallback: true,
   };
 }
