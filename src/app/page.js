@@ -583,7 +583,7 @@ export default function HomePage() {
         const cityName =
           loc.city && loc.city !== 'Unknown' && loc.city !== 'India'
             ? loc.city
-            : await reverseGeocodeCity(loc.lat, loc.lng, loc.city);
+            : await reverseGeocodeCity(loc.lat, loc.lng, loc.city, !!(loc.isApproximate || loc.isFallback));
 
         if (cityName && cityName !== 'India') {
           setDetectedCity(cityName, loc.lat, loc.lng, !!(loc.isApproximate || loc.isFallback));
@@ -858,7 +858,7 @@ export default function HomePage() {
 
     let cityName = loc.city;
     if (!cityName || cityName === 'Unknown' || cityName === 'India') {
-      cityName = await reverseGeocodeCity(loc.lat, loc.lng, loc.city);
+      cityName = await reverseGeocodeCity(loc.lat, loc.lng, loc.city, !!(loc.isApproximate || loc.isFallback));
     }
 
     if (cityName && cityName !== 'India') {

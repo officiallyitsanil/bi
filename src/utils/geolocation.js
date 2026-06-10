@@ -101,7 +101,8 @@ export async function getUserLocation() {
       const resolvedCity = await reverseGeocodeCity(
         ipLocation.lat,
         ipLocation.lng,
-        ipLocation.city
+        ipLocation.city,
+        true
       );
       if (resolvedCity) ipLocation.city = resolvedCity;
     }
